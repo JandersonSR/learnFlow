@@ -1,0 +1,1311 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha SAA-C03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"athena.sql": "-- Athena: SQL direto no S3, cobrado por dado lido\nCREATE EXTERNAL TABLE vendas_csv (\n  pedido_id  string,\n  cliente_id string,\n  valor      decimal(10,2),\n  criado_em  timestamp\n)\nPARTITIONED BY (dia string)\nROW FORMAT DELIMITED FIELDS TERMINATED BY ','\nLOCATION 's3://loja-lake/bruto/vendas/'\nTBLPROPERTIES ('skip.header.line.count' = '1');\n\n-- descobre as pastas dia=2026-10-09/ (ou use um crawler do Glue)\nMSCK REPAIR TABLE vendas_csv;\n\n-- CTAS: de CSV para Parquet particionado, colunar e comprimido\nCREATE TABLE vendas\nWITH (\n  format = 'PARQUET',\n  write_compression = 'SNAPPY',\n  external_location = 's3://loja-lake/curado/vendas/',\n  partitioned_by = ARRAY['dia']\n) AS\nSELECT pedido_id, cliente_id, valor, criado_em, dia\nFROM vendas_csv;\n\n-- lê só uma partição e três colunas: menos bytes, menos custo\nSELECT cliente_id, sum(valor) AS total\nFROM vendas\nWHERE dia = '2026-10-09'\nGROUP BY cliente_id\nORDER BY total DESC\nLIMIT 10;", "bucket-policy.json": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"NegarSemTLS\",\n      \"Effect\": \"Deny\",\n      \"Principal\": \"*\",\n      \"Action\": \"s3:*\",\n      \"Resource\": [\n        \"arn:aws:s3:::loja-relatorios\",\n        \"arn:aws:s3:::loja-relatorios/*\"\n      ],\n      \"Condition\": { \"Bool\": { \"aws:SecureTransport\": \"false\" } }\n    },\n    {\n      \"Sid\": \"LeituraPelaContaDeAnalytics\",\n      \"Effect\": \"Allow\",\n      \"Principal\": { \"AWS\": \"arn:aws:iam::444455556666:role/leitor-relatorios\" },\n      \"Action\": \"s3:GetObject\",\n      \"Resource\": \"arn:aws:s3:::loja-relatorios/mensal/*\"\n    },\n    {\n      \"Sid\": \"GravarSoPeloEndpointDaVpc\",\n      \"Effect\": \"Deny\",\n      \"Principal\": \"*\",\n      \"Action\": [\"s3:PutObject\", \"s3:DeleteObject\"],\n      \"Resource\": \"arn:aws:s3:::loja-relatorios/*\",\n      \"Condition\": {\n        \"StringNotEquals\": { \"aws:SourceVpce\": \"vpce-0a1b2c3d4e5f67890\" }\n      }\n    }\n  ]\n}", "ciclo-vida.json": "{\n  \"Rules\": [\n    {\n      \"ID\": \"logs-esfriam-e-expiram\",\n      \"Filter\": { \"Prefix\": \"logs/\" },\n      \"Status\": \"Enabled\",\n      \"Transitions\": [\n        { \"Days\": 30, \"StorageClass\": \"STANDARD_IA\" },\n        { \"Days\": 90, \"StorageClass\": \"GLACIER_IR\" },\n        { \"Days\": 180, \"StorageClass\": \"DEEP_ARCHIVE\" }\n      ],\n      \"Expiration\": { \"Days\": 2555 }\n    },\n    {\n      \"ID\": \"versoes-antigas-e-uploads-pela-metade\",\n      \"Filter\": {},\n      \"Status\": \"Enabled\",\n      \"NoncurrentVersionExpiration\": { \"NoncurrentDays\": 30 },\n      \"AbortIncompleteMultipartUpload\": { \"DaysAfterInitiation\": 7 }\n    },\n    {\n      \"ID\": \"uploads-de-usuario-acesso-incerto\",\n      \"Filter\": { \"Prefix\": \"uploads/\" },\n      \"Status\": \"Enabled\",\n      \"Transitions\": [\n        { \"Days\": 0, \"StorageClass\": \"INTELLIGENT_TIERING\" }\n      ]\n    }\n  ]\n}", "web-ha.yaml": "Parameters:\n  VpcId: { Type: 'AWS::EC2::VPC::Id' }\n  Subnets: { Type: 'List<AWS::EC2::Subnet::Id>' }     # 2+ zonas diferentes\n  Ami: { Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>',\n         Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 }\nResources:\n  AlbSg:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: HTTP vindo da internet\n      VpcId: !Ref VpcId\n      SecurityGroupIngress: [{ IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }]\n  WebSg:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: so o ALB alcanca as instancias\n      VpcId: !Ref VpcId\n      SecurityGroupIngress:          # fonte = outro security group, não um IP\n        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, SourceSecurityGroupId: !Ref AlbSg }\n  Modelo:\n    Type: AWS::EC2::LaunchTemplate\n    Properties:\n      LaunchTemplateData:\n        ImageId: !Ref Ami\n        InstanceType: t4g.micro      # Graviton: melhor preço por desempenho\n        SecurityGroupIds: [!Ref WebSg]\n        MetadataOptions: { HttpTokens: required }      # só IMDSv2\n        UserData: !Base64 |\n          #!/bin/bash\n          dnf install -y nginx && systemctl enable --now nginx\n          echo \"ok $(hostname)\" > /usr/share/nginx/html/index.html\n  Alb:\n    Type: AWS::ElasticLoadBalancingV2::LoadBalancer\n    Properties: { Subnets: !Ref Subnets, SecurityGroups: [!Ref AlbSg] }\n  Alvo:\n    Type: AWS::ElasticLoadBalancingV2::TargetGroup\n    Properties: { VpcId: !Ref VpcId, Port: 80, Protocol: HTTP, HealthCheckPath: / }\n  Ouvinte:\n    Type: AWS::ElasticLoadBalancingV2::Listener\n    Properties: { LoadBalancerArn: !Ref Alb, Port: 80, Protocol: HTTP,\n                  DefaultActions: [{ Type: forward, TargetGroupArn: !Ref Alvo }] }\n  Grupo:\n    Type: AWS::AutoScaling::AutoScalingGroup\n    Properties:\n      VPCZoneIdentifier: !Ref Subnets\n      LaunchTemplate: { LaunchTemplateId: !Ref Modelo,\n                        Version: !GetAtt Modelo.LatestVersionNumber }\n      MinSize: '2'\n      MaxSize: '6'\n      TargetGroupARNs: [!Ref Alvo]\n      HealthCheckType: ELB           # troca a instância que o ALB marcar como doente\n  CpuAlvo:\n    Type: AWS::AutoScaling::ScalingPolicy\n    Properties:\n      AutoScalingGroupName: !Ref Grupo\n      PolicyType: TargetTrackingScaling\n      TargetTrackingConfiguration: { TargetValue: 50,\n        PredefinedMetricSpecification: { PredefinedMetricType: ASGAverageCPUUtilization } }\nOutputs:\n  Url: { Value: !Sub 'http://${Alb.DNSName}' }"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Cert · AWS Certified Solutions Architect – Associate (SAA-C03) =====================
+const CONF = {
+  title: 'Trilha SAA-C03', file: 'Cert - AWS Solutions Architect Associate', key: 'csaa',
+  eyebrow: 'Certificação · AWS', h1: 'SAA-C03: decisões de arquitetura na AWS',
+  lead: 'Roteiro em vídeo para a prova AWS Certified Solutions Architect – Associate, versão SAA-C03, a vigente em outubro de 2026 segundo o exam guide oficial. Segue os quatro domínios e os pesos: seguro (30%), resiliente (26%), alto desempenho (24%) e custo otimizado (20%), sempre pela decisão que a prova cobra, "quando usar X em vez de Y", com comandos aws cli reais, um template CloudFormation de alta disponibilidade, pegadinhas, estratégia de prova e simulado com questões originais.',
+  pills: ['IAM, SCP e STS', 'VPC e endpoints', 'KMS e S3', 'SQS · SNS · EventBridge', 'Multi-AZ e DR', 'EBS · EFS · FSx', 'CloudFront × Global Accelerator', 'Savings Plans e Spot'],
+  term: 'bash · ~/saa-lab',
+  faqPlaceholder: 'Buscar: SCP, endpoint, Multi-AZ, pilot light, EFS, Kinesis, Spot, NAT…',
+  matriz: {title: 'Domínios da SAA-C03', desc: 'Os quatro domínios do exam guide oficial, com o peso sobre as questões pontuadas, o que mais cai e onde estudar nas trilhas. Confira a página oficial antes de agendar.', cols: ['Domínio', 'Peso', 'O que cai', 'Onde estudar']},
+};
+const TITLE = {k: 'Certificação · AWS · SAA-C03', h: 'Arquiteto associado: escolher o serviço certo',
+  p: 'A prova não pede comando: pede decisão. Ache a restrição no enunciado, elimine o que não a cumpre e escolha a opção gerenciada mais simples.',
+  chips: ['seguro 30%', 'resiliente 26%', 'desempenho 24%', 'custo 20%', '65 questões', '130 minutos']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Restrição primeiro, serviço depois',
+  p: 'Abaixo do vídeo estão a matriz de domínios, os links para a trilha AWS na Prática e outras cenas já vistas, a trilha de estudo oficial, o checklist de prontidão e o simulado.',
+  chips: ['menor privilégio', 'Multi-AZ por padrão', 'desacoplar com fila', 'pagar pelo padrão de uso']};
+
+const SCENES = [
+/* ---------- A PROVA ---------- */
+{ id:'intro', ch:'A prova', title:'O que a SAA-C03 valida',
+  say:'A Solutions Architect Associate valida quem desenha soluções na AWS seguindo o Well-Architected: seguras, resilientes, de alto desempenho e com custo otimizado. Referência: o exam guide da versão SAA-C03, a vigente em outubro de dois mil e vinte e seis. São sessenta e cinco questões em cento e trinta minutos, de múltipla escolha e de múltipla resposta, com prova em português do Brasil. Não há pré-requisito; a AWS recomenda um ano de prática. A certificação vale três anos. Preço e idiomas mudam: confira a página oficial.',
+  v:{type:'title'} },
+
+{ id:'formato', ch:'A prova', title:'Domínios, pesos e pontuação',
+  say:'Quatro domínios, com o peso sobre as questões pontuadas: arquiteturas seguras, trinta por cento; resilientes, vinte e seis; de alto desempenho, vinte e quatro; e com custo otimizado, vinte. Das sessenta e cinco questões, cinquenta contam e quinze são experimentais, sem identificação. A nota vai de cem a mil e a aprovação é setecentos e vinte, no modelo compensatório: o total decide, não cada domínio. Questão em branco conta como erro e chutar não é penalizado, então responda todas. Os nomes curtos dos serviços aparecem na ajuda da prova.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:84, cls:'green', html:B('Seguro · 30%','IAM e contas · VPC e serviços de proteção · dados e criptografia')},
+    {at:2.5, x:36,y:192,w:888,h:66, cls:'blue', html:B('Resiliente · 26%','desacoplar e escalar · alta disponibilidade e DR')},
+    {at:4, x:36,y:274,w:888,h:66, cls:'blue', html:B('Alto desempenho · 24%','armazenamento · computação · banco · rede · ingestão de dados')},
+    {at:5.5, x:36,y:356,w:888,h:66, cls:'amber', html:B('Custo otimizado · 20%','armazenamento · computação · banco · rede')},
+    {at:9, x:36,y:438,w:888,h:64, cls:'ext', html:NOTE('65 questões (50 contam + 15 sem nota) · 130 min · nota 100–1000, aprovação 720 · compensatório · em branco = erro', 'amber')},
+  ]}},
+
+/* ---------- SEGURO (30%) ---------- */
+{ id:'iam', ch:'Seguro 30%', title:'IAM: usuários, grupos, roles e políticas',
+  say:'Primeira tarefa do domínio: acesso seguro. Usuário raiz com MFA e sem chaves de acesso. Pessoas entram pelo IAM Identity Center, federado com o diretório da empresa; quando a questão fala em Active Directory existente, a resposta é federar e mapear para roles, não criar usuários IAM. Grupos juntam permissões de usuários, mas não são principal: não aparecem numa política de recurso. Serviços usam roles, nunca chave no código. E a política mais segura é a de menor privilégio, com ações e recursos explícitos. Responsabilidade compartilhada: a AWS cuida da nuvem; você, do que põe nela.',
+  v:GRID(3, [
+    ['Pessoas','IAM Identity Center',['SSO com o diretório','AD existente: federar','credencial temporária'],'green'],
+    ['Serviços','roles',['EC2: instance profile','Lambda, ECS: execution role','nada de chave no código'],'blue'],
+    ['Raiz e usuários','',['raiz: MFA, sem chaves','grupo não é principal','menor privilégio'],'amber'],
+  ], {h:230, step:4, rodape:'Modelo de responsabilidade compartilhada: AWS = segurança DA nuvem · cliente = segurança NA nuvem (dados, IAM, SO, rede)'}) },
+
+{ id:'contas', ch:'Seguro 30%', title:'Várias contas, SCP e acesso cruzado',
+  say:'Várias contas é o padrão: o Organizations agrupa em unidades organizacionais e aplica SCPs, que nunca concedem, só limitam, inclusive o administrador da conta-membro; a conta de gerenciamento não é afetada. Control Tower monta a landing zone pronta, com guardrails. Acesso entre contas: a role na conta de destino confia na conta de origem, e quem precisa faz AssumeRole pelo STS, recebendo credenciais temporárias. Políticas de recurso, como a bucket policy, a key policy do KMS ou a política de uma fila SQS, dão acesso direto a outra conta sem trocar de role.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:520,h:410, cls:'region', html:'<span class="rl">AWS Organizations</span>'},
+    {at:2, x:60,y:132,w:472,h:60, html:B('Conta de gerenciamento','billing consolidado · SCP não se aplica a ela')},
+    {at:3.5, x:60,y:212,w:226,h:150, cls:'green', html:B('OU Produção','')+UL('SCP: só sa-east-1','não desligar CloudTrail')},
+    {at:4.5, x:306,y:212,w:226,h:150, cls:'blue', html:B('OU Dev','')+UL('SCP: sem instâncias GPU','orçamento menor')},
+    {at:6, x:60,y:382,w:472,h:100, cls:'amber', html:B('Control Tower','landing zone + guardrails preventivos e detectivos')},
+    {at:9, x:580,y:92,w:344,h:200, cls:'blue', html:B('Entre contas: role','')+UL('trust policy na conta destino','sts:AssumeRole da origem','credencial temporária','terceiro: exija ExternalId')},
+    {at:13, x:580,y:312,w:344,h:190, cls:'green', html:B('Ou política de recurso','sem trocar de role')+UL('bucket policy do S3','key policy do KMS','política de SQS, SNS, Lambda')},
+  ]}},
+
+{ id:'politica-recurso', ch:'Seguro 30%', title:'Uma bucket policy de prova',
+  say:'Três declarações que a prova adora. A primeira nega qualquer requisição sem TLS, pela condição aws SecureTransport falso. A segunda dá leitura a uma role de outra conta, mas só no prefixo mensal; lembre que, entre contas, a política de identidade do outro lado também precisa permitir, e, se o bucket usa SSE-KMS, a key policy também. A terceira só aceita gravação vinda do VPC endpoint, pela condição aws SourceVpce. Regra de avaliação: um Deny explícito vence qualquer Allow.',
+  v:S('bucket-policy.json','bucket-policy.json','json')},
+
+{ id:'vpc-seg', ch:'Seguro 30%', title:'VPC segura: camadas e conexões',
+  say:'Segmentação clássica: sub-rede pública com o balanceador e o NAT gateway; privada com aplicação e banco. Security group é por recurso, com estado e só Allow; NACL é por sub-rede, sem estado, com Allow e Deny: para bloquear um IP específico, a resposta é NACL. Para falar com o S3 e o DynamoDB sem internet, gateway endpoint; para outros serviços, interface endpoint com PrivateLink. Até o data center: Site-to-Site VPN sobe em horas pela internet e cifrada; Direct Connect é link dedicado, estável, mas leva semanas e não cifra sozinho.',
+  v:GRID(3, [
+    ['Camadas','',['pública: ALB, NAT','privada: app e banco','SG referencia SG'],'blue'],
+    ['Filtrar','',['SG: com estado, só Allow','NACL: sem estado, Deny','bloquear IP → NACL'],'amber'],
+    ['Conectar','',['gateway endpoint: S3, Dynamo','interface: PrivateLink','VPN rápida · DX dedicado'],'green'],
+  ], {h:230, step:4, rodape:'Direct Connect + cifra: VPN sobre o DX ou MACsec · DX redundante: duas conexões em locais diferentes ou VPN de backup'}) },
+
+{ id:'protecao', ch:'Seguro 30%', title:'WAF, Shield, GuardDuty e companhia',
+  say:'Cada serviço de segurança tem uma frase-gatilho. SQL injection ou cross-site scripting na aplicação web: WAF, no CloudFront, no ALB ou no API Gateway. DDoS: Shield Standard já vem de graça; Advanced dá proteção ampliada e time de resposta. Detectar ameaça lendo logs da conta: GuardDuty. Achar dados pessoais no S3: Macie. Vulnerabilidade em EC2, imagem ou Lambda: Inspector. Login de usuários de aplicativo: Cognito, com user pools; credencial AWS temporária para o app: identity pools. Senha de banco com rotação: Secrets Manager.',
+  v:GRID(3, [
+    ['WAF','camada 7',['SQLi, XSS, rate limit','CloudFront, ALB, API GW'],'blue'],
+    ['Shield','DDoS',['Standard: grátis','Advanced: time de resposta'],'blue'],
+    ['GuardDuty','detecção',['CloudTrail, VPC Flow, DNS','conta comprometida'],'amber'],
+    ['Macie','dados no S3',['PII e dados sensíveis','classificação'],'amber'],
+    ['Cognito','usuários do app',['user pool: login','identity pool: credencial AWS'],'green'],
+    ['Secrets Manager','segredos',['rotação automática','Parameter Store: config'],'green'],
+  ], {step:2.4, rodape:'Inspector: vulnerabilidades em EC2, ECR e Lambda · Security Hub: painel único · Config: conformidade de recursos'}) },
+
+{ id:'dados-seg', ch:'Seguro 30%', title:'Criptografia, chaves e retenção',
+  say:'Dados em repouso: KMS. Chave gerenciada pela AWS é simples; chave do cliente dá key policy própria, rotação configurável e cada uso no CloudTrail. No S3, SSE-S3 é o padrão, SSE-KMS dá controle e auditoria, SSE-C usa chave sua. Em trânsito: TLS com certificado do ACM, gratuito e renovado sozinho; para o CloudFront, o certificado fica em us-east-1. Retenção e proteção: versionamento, Object Lock para gravação única, no modo compliance nem a raiz apaga, e AWS Backup para planos centralizados com cópia para outra região e conta.',
+  v:T('c|aws kms create-key --description "dados-loja" --query KeyMetadata.KeyId --output text',
+      'o|1234abcd-12ab-34cd-56ef-1234567890ab',
+      'c|aws kms enable-key-rotation --key-id $KEY --rotation-period-in-days 365',
+      'c|aws s3api put-bucket-encryption --bucket loja-relatorios \\',
+      'c|  --server-side-encryption-configuration file://sse-kms.json   # aws:kms + BucketKey',
+      'c|aws s3api put-bucket-versioning --bucket loja-relatorios \\',
+      'c|  --versioning-configuration Status=Enabled',
+      'c|aws acm request-certificate --domain-name loja.com.br --validation-method DNS \\',
+      'c|  --region us-east-1                    # exigência do CloudFront',
+      'c|aws backup start-backup-job --backup-vault-name cofre-prd \\',
+      'c|  --resource-arn $RDS_ARN --iam-role-arn $BACKUP_ROLE',
+      'ok|"BackupJobId": "a1b2c3d4-…"   # plano + cópia para outra região/conta')},
+
+/* ---------- RESILIENTE (26%) ---------- */
+{ id:'desacoplar', ch:'Resiliente 26%', title:'Desacoplar: fila, tópico e evento',
+  say:'Acoplamento fraco é a palavra-chave do domínio. Pedido que chega mais rápido do que se processa: SQS no meio, e o consumidor escala pelo tamanho da fila. Padrão entrega pelo menos uma vez; FIFO mantém ordem e deduplica. Um evento para vários destinos: SNS para várias filas, o fan-out. Roteamento por conteúdo, eventos de serviços AWS e de SaaS: EventBridge. Fluxo de várias etapas com espera, retry e compensação: Step Functions. Streaming com releitura e ordem por shard: Kinesis Data Streams. Na frente, o API Gateway.',
+  v:GRID(3, [
+    ['SQS','fila',['absorve pico','padrão × FIFO','DLQ e visibility timeout'],'blue'],
+    ['SNS','pub/sub',['fan-out para SQS','filtro por atributo','e-mail, SMS, HTTP'],'green'],
+    ['EventBridge','barramento',['regras por padrão JSON','eventos AWS e SaaS','Scheduler'],'green'],
+    ['Step Functions','orquestração',['etapas, retry, espera','Standard × Express','saga'],'amber'],
+    ['Kinesis Data Streams','streaming',['shards, ordem','releitura','tempo real'],'amber'],
+    ['API Gateway','entrada',['REST, HTTP, WebSocket','throttling e cache','Lambda por trás'],'blue'],
+  ], {step:2.4}) },
+
+{ id:'escalar', ch:'Resiliente 26%', title:'Escalar: horizontal e sem estado',
+  say:'Escalar horizontal exige aplicação sem estado: a sessão sai da instância e vai para o ElastiCache ou o DynamoDB. O Auto Scaling group mantém o mínimo, substitui instância doente pelo health check do balanceador e escala por política: target tracking mira uma métrica, como CPU a cinquenta por cento; step reage a faixas de alarme; scheduled para horários conhecidos; e predictive aprende o ciclo diário. Contêineres no ECS ou EKS, com Fargate sem servidor para gerenciar, e Lambda para eventos curtos. Escala vertical tem teto e quase sempre para tudo.',
+  v:FLOW([['Usuário','HTTPS',''],['ALB','várias zonas','blue'],['Auto Scaling','mín 2 · máx 6','amber'],['Sessão fora','ElastiCache, DynamoDB','green']],
+    {y:96, h:96, step:1.8, cards:[
+      ['Políticas do ASG','',['target tracking: mira métrica','step: faixas de alarme','scheduled · predictive'],'amber'],
+      ['Onde roda','',['EC2 + ASG: controle total','ECS/EKS com Fargate','Lambda: evento curto'],'green'],
+    ]}) },
+
+{ id:'multi-az', ch:'Resiliente 26%', title:'Alta disponibilidade: zonas e réplicas',
+  say:'Alta disponibilidade começa por duas zonas ou mais: balanceador e Auto Scaling espalhados, sem ponto único de falha. No RDS, Multi-AZ é standby síncrono em outra zona com failover automático, mas o standby não serve leitura no modo clássico. Réplica de leitura é assíncrona, escala leitura e pode ir para outra região e ser promovida. O Aurora guarda seis cópias em três zonas e qualquer réplica vira primária. Sem estado no disco: EFS é regional, multi-zona; EBS vive numa zona só. E o RDS Proxy segura o pool de conexões e acelera o failover.',
+  v:GRID(2, [
+    ['RDS Multi-AZ','disponibilidade',['standby síncrono','failover automático','mesmo endpoint DNS','não escala leitura'],'green'],
+    ['Réplica de leitura','desempenho',['assíncrona, pode atrasar','escala leitura','outra região, promovível','Aurora: até a réplica assume'],'blue'],
+  ], {h:250, step:5, rodape:'EBS = uma zona (snapshot para mover) · EFS = regional, várias zonas · S3 = regional, 11 noves de durabilidade'}) },
+
+{ id:'route53', ch:'Resiliente 26%', title:'Route 53: as políticas de roteamento',
+  say:'O Route 53 é DNS com health check, e cada política responde a um enunciado. Simple: um destino. Failover: primário e secundário, troca quando o health check falha, a base de DR. Weighted: porcentagem, como dez por cento na versão nova. Latency: manda para a região de menor latência. Geolocation: pela localização do usuário, para conteúdo ou lei por país. Geoproximity: por distância, com viés ajustável. Multivalue: várias respostas saudáveis. Alias aponta para recursos da AWS, inclusive no apex do domínio, e não cobra a consulta.',
+  v:GRID(3, [
+    ['Failover','DR',['primário + secundário','health check decide'],'ext'],
+    ['Weighted','',['divide por peso','canary, migração'],'blue'],
+    ['Latency','',['região mais rápida','multi-região ativa'],'green'],
+    ['Geolocation','',['país ou continente','lei, idioma, licença'],'amber'],
+    ['Geoproximity','',['distância + viés','desloca tráfego'],'amber'],
+    ['Multivalue','',['até 8 respostas sãs','não é balanceador'],'blue'],
+  ], {step:2.4, rodape:'Alias: aponta para ALB, CloudFront, S3 · funciona no apex (loja.com.br) · consulta alias para recurso AWS sem custo'}) },
+
+{ id:'dr', ch:'Resiliente 26%', title:'DR: RPO, RTO e as quatro estratégias',
+  say:'RPO é quanto dado você aceita perder; RTO, quanto tempo pode ficar fora. As estratégias, da mais barata à mais cara. Backup e restore: horas de RPO e RTO. Pilot light: dados replicados e o núcleo mínimo pronto, mas servidores desligados; dezenas de minutos. Warm standby: uma cópia menor rodando, que escala no desastre; minutos. Multi-site ativo-ativo: quase zero, pelo dobro do preço. Peças que a prova cita: Aurora Global Database, tabelas globais do DynamoDB, replicação entre regiões do S3, AWS Backup e Elastic Disaster Recovery.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:50, cls:'region', html:'<span class="rl">mais barato, RTO/RPO maior  →  mais caro, RTO/RPO perto de zero</span>'},
+    {at:2.5, x:36,y:160,w:204,h:180, cls:'blue', html:B('Backup e restore','horas')+UL('snapshots, AWS Backup','recria tudo no desastre')},
+    {at:5, x:264,y:160,w:204,h:180, cls:'green', html:B('Pilot light','dezenas de minutos')+UL('dados replicados','servidores desligados')},
+    {at:7.5, x:492,y:160,w:204,h:180, cls:'amber', html:B('Warm standby','minutos')+UL('cópia menor rodando','escala no desastre')},
+    {at:10, x:720,y:160,w:204,h:180, cls:'ext', html:B('Multi-site','quase zero')+UL('ativo-ativo','Route 53 entre regiões')},
+    {at:13, x:36,y:360,w:888,h:142, cls:'', html:B('Peças de replicação','')+UL('Aurora Global Database · DynamoDB global tables · S3 Cross-Region Replication','AWS Backup com cópia entre regiões · Elastic Disaster Recovery para servidores','cotas de serviço já aumentadas na região de standby')},
+  ]}},
+
+{ id:'legado', ch:'Resiliente 26%', title:'Confiabilidade sem mudar o código',
+  say:'O blueprint pede melhorar a confiabilidade de aplicações legadas quando não se pode mudar o código. Coloque-as atrás de um balanceador com Auto Scaling e health check; disco compartilhado entre instâncias, EFS; banco com muitas conexões curtas, RDS Proxy; trabalho pesado síncrono, fila no meio. Infraestrutura imutável: troque a instância em vez de corrigi-la, com AMI e launch template versionados pelo CloudFormation. Veja os gargalos com X-Ray e CloudWatch, e cuide das cotas de serviço, inclusive no ambiente de standby, para o failover não esbarrar num limite.',
+  v:GRID(3, [
+    ['Sem tocar no código','',['ALB + ASG + health check','EFS para disco comum','RDS Proxy para conexões'],'blue'],
+    ['Imutável e automatizado','',['AMI + launch template','CloudFormation versionado','trocar, não consertar'],'green'],
+    ['Visibilidade e limites','',['X-Ray: onde demora','CloudWatch: alarmes','Service Quotas no standby'],'amber'],
+  ], {h:230, step:4, rodape:'Ponto único de falha: uma instância, uma zona, um NAT, um link de DX · cada um tem a sua resposta redundante'}) },
+
+/* ---------- ALTO DESEMPENHO (24%) ---------- */
+{ id:'storage', ch:'Performance 24%', title:'Objeto, bloco e arquivo',
+  say:'Primeiro, o tipo. Objeto: S3, escala sem limite, acesso por API; upload grande em multipart, e Transfer Acceleration para quem envia de longe. Bloco: EBS, o disco de uma instância numa zona; gp3 para quase tudo, io2 para IOPS altíssimo e consistente, st1 HDD para leitura sequencial, sc1 para o frio. Instance store é o mais rápido e some ao parar a instância. Arquivo: EFS, NFS para Linux, compartilhado entre muitas instâncias; FSx for Windows para SMB e Active Directory; FSx for Lustre para HPC ligado ao S3; FSx for NetApp ONTAP para multiprotocolo.',
+  v:GRID(4, [
+    ['S3','objeto',['escala ilimitada','multipart upload','Transfer Acceleration'],'blue'],
+    ['EBS','bloco, uma zona',['gp3: padrão','io2: IOPS alto','st1 · sc1: HDD'],'green'],
+    ['EFS','arquivo NFS',['Linux, várias zonas','muitas instâncias','escala sozinho'],'amber'],
+    ['FSx','arquivo gerenciado',['Windows: SMB + AD','Lustre: HPC + S3','ONTAP · OpenZFS'],'amber'],
+  ], {h:240, step:3, rodape:'Instance store: NVMe local mais rápido, efêmero · Storage Gateway: arquivo, volume ou fita on-premises com o S3 por trás'}) },
+
+{ id:'compute', ch:'Performance 24%', title:'Computação: família, tamanho e lugar',
+  say:'A letra da família diz o perfil: C para computação, R e X para memória, M para uso geral, T com créditos de CPU para carga intermitente, I para disco local rápido, P e G para GPU; o sufixo g indica Graviton. Placement group cluster junta instâncias numa zona para latência mínima em HPC; spread separa em hardware diferente para poucas instâncias críticas; partition isola grupos para Hadoop, Kafka e Cassandra. Na Lambda, memória define também a CPU. Lote gerenciado: AWS Batch; Spark e Hadoop: EMR. Desacople com fila para escalar cada parte sozinha.',
+  v:GRID(3, [
+    ['Famílias EC2','',['C: CPU · R/X: memória','M: geral · T: intermitente','I: disco · P/G: GPU','sufixo g: Graviton'],'blue'],
+    ['Placement groups','',['cluster: latência, 1 zona','spread: hardware separado','partition: Hadoop, Kafka'],'green'],
+    ['Gerenciados','',['Lambda: memória = CPU','Batch: lotes','EMR: Spark e Hadoop','Fargate: contêiner'],'amber'],
+  ], {h:250, step:4, rodape:'Métrica de escala certa: CPU para web · tamanho da fila (por instância) para workers · requisições por alvo no ALB'}) },
+
+{ id:'banco', ch:'Performance 24%', title:'Banco certo para o padrão de acesso',
+  say:'Relacional com SQL e transações: RDS, ou Aurora para mais desempenho e réplicas. Leitura pesada: réplicas de leitura ou cache. Chave-valor com milissegundos em qualquer escala: DynamoDB, on-demand para carga imprevisível e provisionado com auto scaling para estável; DAX dá microssegundos de leitura. ElastiCache com Valkey ou Redis OSS tem replicação e estruturas ricas; Memcached é simples e multithread. Propósito específico: Redshift para analytics colunar, Neptune para grafos, Timestream para séries temporais, DocumentDB compatível com MongoDB, Keyspaces para Cassandra.',
+  v:GRID(3, [
+    ['RDS · Aurora','relacional',['SQL e transações','réplicas de leitura','Aurora Serverless v2'],'blue'],
+    ['DynamoDB','chave-valor',['milissegundos em escala','on-demand × provisionado','DAX: microssegundos'],'green'],
+    ['ElastiCache','memória',['Valkey/Redis: réplicas','Memcached: simples','sessão e cache'],'amber'],
+    ['Redshift','analytics',['colunar, data warehouse','Spectrum lê o S3'],'blue'],
+    ['Neptune · Timestream','',['grafo','série temporal'],'green'],
+    ['DocumentDB · Keyspaces','',['compatível com MongoDB','compatível com Cassandra'],'amber'],
+  ], {step:2.4, rodape:'Migração: mesmo motor = homogênea (DMS) · motor diferente = heterogênea (Schema Conversion + DMS)'}) },
+
+{ id:'rede-perf', ch:'Performance 24%', title:'CloudFront, Global Accelerator e LBs',
+  say:'CloudFront é CDN: guarda conteúdo HTTP perto do usuário, estático e dinâmico, com origem no S3 protegida pelo origin access control. Global Accelerator dá dois IPs anycast fixos e leva o tráfego pela rede da AWS até a região saudável, para TCP e UDP, jogos, VoIP e failover rápido sem depender de cache DNS. Balanceadores: ALB em camada sete, por caminho e domínio; NLB em camada quatro, com IP fixo por zona e latência mínima; Gateway Load Balancer para appliances de firewall. Muitas VPCs e on-premises: Transit Gateway, porque peering não é transitivo.',
+  v:GRID(3, [
+    ['CloudFront','CDN',['cache HTTP na borda','origem S3 com OAC','signed URL e cookies'],'blue'],
+    ['Global Accelerator','anycast',['2 IPs estáticos','TCP e UDP','failover sem DNS'],'green'],
+    ['ALB','camada 7',['caminho e domínio','alvo Lambda, IP, EC2'],'blue'],
+    ['NLB','camada 4',['IP fixo por zona','milhões de req/s'],'amber'],
+    ['Gateway LB','appliances',['firewall de terceiros','GENEVE'],'amber'],
+    ['Conectar VPCs','',['peering: 1 a 1, não transitivo','Transit Gateway: hub'],'green'],
+  ], {step:2.4}) },
+
+{ id:'ingestao', ch:'Performance 24%', title:'Ingestão, transformação e data lake',
+  say:'O último tema de desempenho é o caminho do dado. Tempo real: Kinesis Data Streams, com consumidores próprios, ou Amazon Data Firehose, que entrega sozinho no S3, no Redshift ou no OpenSearch, sem código. Transformar e catalogar: Glue, com crawlers e jobs Spark, inclusive de CSV para Parquet. Governar o data lake no S3: Lake Formation, com permissão por coluna. Consultar sem servidor: Athena; visualizar: Amazon Quick, o antigo QuickSight. Mover dados: DataSync online, Transfer Family para SFTP, Storage Gateway para híbrido.',
+  v:FLOW([['Ingerir','Data Streams · Firehose',''],['Guardar','S3 bruto → curado','blue'],['Transformar','Glue: CSV → Parquet','amber'],['Consultar','Athena · Amazon Quick','green']],
+    {y:96, h:96, step:1.8, cards:[
+      ['Mover para a AWS','',['DataSync: NFS/SMB online','Transfer Family: SFTP, FTPS','Storage Gateway: híbrido'],'amber'],
+      ['Governar e processar','',['Lake Formation: permissões','EMR: Spark em escala','Firehose: sem código'],'green'],
+    ]}) },
+
+{ id:'athena', ch:'Performance 24%', title:'Athena: CSV para Parquet',
+  say:'O Athena cobra por dado lido, então o formato é custo e desempenho ao mesmo tempo. A tabela externa aponta para o CSV bruto no S3, particionado por dia. O MSCK REPAIR, ou um crawler do Glue, descobre as partições. O CREATE TABLE AS SELECT converte para Parquet comprimido e particionado numa pasta curada. A consulta final filtra uma partição e lê só três colunas: em formato colunar, isso costuma reduzir drasticamente os bytes lidos. É a resposta para consultas ad hoc no S3 sem servidor.',
+  v:S('athena.sql','athena.sql','sql')},
+
+/* ---------- CUSTO (20%) ---------- */
+{ id:'custo-compute', ch:'Custo 20%', title:'On-Demand, Savings Plans, RI e Spot',
+  say:'Opções de compra. On-Demand: sem compromisso, para o imprevisível. Savings Plans: compromisso de gasto por hora por um ou três anos; o Compute Savings Plan cobre EC2 de qualquer família e região, Fargate e Lambda, e o EC2 Instance Savings Plan dá mais desconto preso a uma família na região. Reserved Instances: Standard com mais desconto, Convertible que troca de tipo. Spot: até noventa por cento mais barato, mas pode ser interrompido com dois minutos de aviso; serve para lote, CI e workers tolerantes. Dedicated Host para licença por soquete.',
+  v:GRID(4, [
+    ['On-Demand','',['sem compromisso','imprevisível, curto'],'blue'],
+    ['Savings Plans','1 ou 3 anos',['Compute: EC2, Fargate, Lambda','EC2 Instance: + desconto'],'green'],
+    ['Reserved','1 ou 3 anos',['Standard: + desconto','Convertible: troca tipo'],'green'],
+    ['Spot','até 90% menos',['aviso de 2 minutos','lote, CI, workers'],'amber'],
+  ], {h:200, step:3, rodape:'Rightsizing: Compute Optimizer · hibernação guarda a RAM e religa rápido · dev desligado à noite · Graviton barateia'}) },
+
+{ id:'custo-storage', ch:'Custo 20%', title:'Classes do S3 e ciclo de vida',
+  say:'Classe errada sai mais caro. Standard para o quente; Intelligent-Tiering quando o acesso é imprevisível; Standard-IA para o raro, com mínimo de trinta dias e taxa por leitura; One Zone-IA para o que dá para recriar. Glacier Instant Retrieval devolve em milissegundos; Flexible Retrieval em minutos a horas; Deep Archive em até doze horas, o mais barato. Este ciclo de vida esfria os logs aos trinta, noventa e cento e oitenta dias e apaga em sete anos, expira versões antigas e aborta uploads pela metade. Quem baixa paga: Requester Pays.',
+  v:S('ciclo-vida.json','ciclo-vida.json','json')},
+
+{ id:'custo-db', ch:'Custo 20%', title:'Banco e backup sem desperdício',
+  say:'Banco também tem modo de compra. DynamoDB on-demand para tráfego irregular ou novo; provisionado com auto scaling e capacidade reservada para estável. Aurora Serverless v2 para carga variável; RDS com instâncias reservadas para a base. Cache na frente reduz o tamanho do banco. Retenção: snapshots automáticos com a janela que o negócio exige, cópias antigas para classes frias e TTL do DynamoDB apagando itens vencidos de graça. Para o volume EBS, gp3 costuma sair mais barato que gp2 com o mesmo desempenho, e snapshots antigos vão para o archive tier.',
+  v:GRID(3, [
+    ['DynamoDB','',['on-demand: irregular','provisionado + auto scaling','TTL apaga de graça'],'blue'],
+    ['Relacional','',['RDS reservado: a base','Aurora Serverless v2','cache reduz o banco'],'green'],
+    ['Disco e backup','',['gp2 → gp3','snapshot archive tier','retenção pelo negócio'],'amber'],
+  ], {h:230, step:4, rodape:'Formato também é custo: colunar (Parquet, Redshift) para analytics · Timestream para séries temporais'}) },
+
+{ id:'custo-rede', ch:'Custo 20%', title:'Rede: NAT, transferência e ferramentas',
+  say:'A fatura de rede esconde surpresas. NAT gateway cobra hora e gigabyte: um por zona dá disponibilidade, um compartilhado economiza mas cria tráfego entre zonas; NAT instance é mais barata e você administra. Gateway endpoint para S3 e DynamoDB não cobra e tira esse tráfego do NAT. Transferência entre zonas e entre regiões é cobrada; saída para a internet também, e o CloudFront costuma baratear. Para medir: Cost Explorer, Budgets com alerta, o relatório de custo e uso, e tags de alocação de custo, que só valem depois de ativadas.',
+  v:GRID(2, [
+    ['Rede','',['NAT: hora + GB processado','1 por zona × 1 compartilhado','gateway endpoint: grátis','CloudFront corta saída'],'ext'],
+    ['Ferramentas','',['Cost Explorer: tendência','Budgets: alerta','Cost and Usage Report','tags ativadas no billing'],'green'],
+  ], {h:250, step:5, rodape:'Link: VPN sobre a internet (barata, rápida de subir) × Direct Connect (dedicado, previsível, tráfego alto)'}) },
+
+/* ---------- ESTRATÉGIA ---------- */
+{ id:'gatilhos', ch:'Estratégia de prova', title:'Palavra-gatilho, serviço na resposta',
+  say:'Muitas questões se resolvem pela palavra-gatilho. Menor esforço operacional: serviço gerenciado ou sem servidor. Mais econômico: Spot, Savings Plans, classe fria, gateway endpoint. Desacoplar ou absorver pico: SQS. Vários consumidores do mesmo evento: SNS com SQS. IP fixo global ou UDP: Global Accelerator. Arquivo compartilhado Linux: EFS; Windows: FSx. Dados pessoais no S3: Macie. Ameaça na conta: GuardDuty. SQL injection: WAF. Consulta ad hoc no S3: Athena. Sem perder nenhum dado entre regiões: replicação síncrona não existe; busque o menor RPO.',
+  v:GRID(3, [
+    ['Operação e custo','',['menor esforço → gerenciado','mais barato → Spot, SP','tráfego S3 → endpoint'],'blue'],
+    ['Arquitetura','',['pico → SQS','fan-out → SNS + SQS','IP fixo, UDP → GA'],'green'],
+    ['Dados e segurança','',['Linux → EFS · Win → FSx','PII → Macie · SQLi → WAF','S3 ad hoc → Athena'],'amber'],
+  ], {h:230, step:4, rodape:'Leia o último período primeiro: é ali que está o critério (custo, esforço, disponibilidade, segurança)'}) },
+
+{ id:'pegadinhas', ch:'Estratégia de prova', title:'Pegadinhas da SAA-C03',
+  say:'As confusões clássicas. Multi-AZ não escala leitura; réplica não é failover síncrono. SCP não concede permissão e não afeta a conta de gerenciamento. Security group não tem Deny. EBS fica numa zona; EFS não roda Windows. Peering não é transitivo. CloudFront faz cache; Global Accelerator não. Standard-IA e Glacier têm duração mínima e taxa de recuperação. Spot pode ser interrompido. Direct Connect não é cifrado por padrão e leva semanas. Certificado do CloudFront só em us-east-1. E a resposta mais trabalhosa raramente é a certa.',
+  v:GRID(2, [
+    ['Disponibilidade e rede','',['Multi-AZ ≠ réplica de leitura','peering não é transitivo','SG sem Deny → NACL','DX: sem cifra, semanas'],'ext'],
+    ['Identidade e dados','',['SCP só limita','EBS: 1 zona · EFS: Linux','IA e Glacier: mínimo + taxa','ACM do CloudFront: us-east-1'],'amber'],
+  ], {h:250, step:5, rodape:'Entre duas certas, fique com a gerenciada, a mais simples e a que atende exatamente o pedido — nem mais, nem menos'}) },
+
+{ id:'estrategia', ch:'Estratégia de prova', title:'Tempo, eliminação e revisão',
+  say:'Cento e trinta minutos para sessenta e cinco questões dá dois minutos cada. Leia o pedido primeiro, depois o cenário, e sublinhe mentalmente as restrições: sem mudar o código, menor custo, região única, RPO de minutos. Elimine as alternativas que violam uma restrição; em geral sobram duas, e o critério desempata. Na múltipla resposta, o enunciado diz quantas marcar. Marque para revisão o que demorar mais de dois minutos e siga. Não deixe nada em branco: não há penalidade por chute. Antes: o simulado oficial e o Skill Builder.',
+  v:FLOW([['Ler o pedido','custo? esforço? HA?',''],['Achar restrição','sem código, RPO, região','blue'],['Eliminar','sobram duas','amber'],['Desempatar','pelo critério','green']],
+    {y:96, h:96, step:1.8, cards:[
+      ['Na prova','',['~2 min por questão','marcar e revisar no fim','nenhuma em branco'],'amber'],
+      ['Antes da prova','',['simulado oficial gratuito','AWS Skill Builder','labs no free tier'],'green'],
+    ]}) },
+
+/* ---------- LABORATÓRIO ---------- */
+{ id:'lab-stack', ch:'Laboratório', title:'Lab 1: web em duas zonas',
+  say:'O laboratório monta a arquitetura que mais cai: balanceador e Auto Scaling em duas zonas. O template recebe a VPC, duas sub-redes de zonas diferentes e a AMI mais recente do Amazon Linux pelo Parameter Store. O security group das instâncias só aceita o do ALB, sem IP nenhum. O launch template usa Graviton e exige IMDSv2. O grupo tem mínimo de dois, health check pelo balanceador, que troca instância doente, e uma política de target tracking que mantém a CPU média perto de cinquenta por cento.',
+  v:S('lab/web-ha.yaml','web-ha.yaml','yaml')},
+
+{ id:'lab-run', ch:'Laboratório', title:'Lab 2: subir, derrubar, observar',
+  say:'Use a VPC padrão de uma conta de estudo com alerta de orçamento. Descubra a VPC e duas sub-redes, faça o deploy da stack e pegue a URL na saída. Chame a URL algumas vezes: o nome do host muda, é o balanceador alternando entre zonas. Agora simule falha: termine uma instância sem reduzir a capacidade desejada. O Auto Scaling registra a substituição e o serviço continua no ar. Desafios: troque o target tracking por step scaling, ponha um CloudFront na frente e, no fim, apague a stack.',
+  v:T('c|VPC=$(aws ec2 describe-vpcs --filters Name=is-default,Values=true \\',
+      'c|  --query "Vpcs[0].VpcId" --output text)',
+      'c|SUBNETS=$(aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC \\',
+      'c|  --query "Subnets[0:2].SubnetId" --output text | tr "\\t" ",")',
+      'c|aws cloudformation deploy --template-file web-ha.yaml --stack-name web-ha \\',
+      'c|  --parameter-overrides VpcId=$VPC Subnets=$SUBNETS',
+      'ok|Successfully created/updated stack - web-ha',
+      'c|URL=$(aws cloudformation describe-stacks --stack-name web-ha \\',
+      'c|  --query "Stacks[0].Outputs[0].OutputValue" --output text)',
+      'c|for i in 1 2 3; do curl -s $URL; done',
+      'o|ok ip-172-31-7-21 · ok ip-172-31-40-9 · ok ip-172-31-7-21',
+      'c|aws autoscaling terminate-instance-in-auto-scaling-group --instance-id i-0a1b2c3d \\',
+      'c|  --no-should-decrement-desired-capacity',
+      'ok|"Description": "Launching a new EC2 instance: i-0f9e8d7c" · serviço no ar',
+      'c|aws cloudformation delete-stack --stack-name web-ha     # fim do lab, fim do custo')},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Prontidão para a SAA-C03',
+  say:'Você está pronto quando: escolhe entre usuário, grupo, role e política de recurso; explica SCP e acesso entre contas; desenha VPC com sub-redes, NAT e endpoints; casa cada serviço de segurança com sua ameaça; escolhe KMS, ACM e Object Lock; desacopla com SQS, SNS e EventBridge; diferencia Multi-AZ de réplica; escolhe estratégia de DR por RPO e RTO; acerta o armazenamento e o banco pelo padrão de acesso; e passa com folga no simulado oficial.',
+  v:CK('Role × usuário × recurso', 'SCP e AssumeRole', 'Pública, privada, NAT, endpoint', 'WAF, Shield, GuardDuty, Macie', 'KMS, ACM, Object Lock', 'SQS, SNS, EventBridge', 'Multi-AZ × réplica', 'DR por RPO e RTO', 'S3 · EBS · EFS · FSx', 'CloudFront × Global Accelerator', 'Spot, SP, RI e classes do S3', 'Simulado oficial > 80%')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a matriz dos domínios com os pesos, os links para as cenas da trilha AWS na Prática e de outras trilhas, a trilha de estudo oficial, o checklist e um simulado com questões originais no estilo da prova. Faça o laboratório, leia os whitepapers do Well-Architected e o simulado oficial. Antes de agendar, confira na página oficial a versão do exame, o preço e os idiomas.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['AWS sem decorar duzentos serviços', 'naws', 'intro', 'A trilha prática que esta prova pressupõe'],
+  ['Contas, Organizations e SCPs', 'naws', 'conta', 'Domínio 1: estratégia de várias contas'],
+  ['Pessoas, serviços e o usuário legado', 'naws', 'identidades', 'Identity Center, roles e usuários IAM'],
+  ['Como a AWS avalia uma política', 'naws', 'politica', 'Deny explícito e acesso entre contas'],
+  ['STS e assume role entre contas', 'naws', 'sts', 'Role switching e credenciais temporárias'],
+  ['VPC: públicas, privadas e o NAT', 'naws', 'vpc', 'Segmentação e custo do NAT'],
+  ['Security groups × NACLs', 'naws', 'sg-nacl', 'Com estado × sem estado'],
+  ['VPC endpoints e PrivateLink', 'naws', 'endpoints', 'Gateway grátis, interface pago'],
+  ['EC2, Fargate ou Lambda', 'naws', 'compute', 'Decisão de computação do domínio 2'],
+  ['RDS e Aurora', 'naws', 'rds', 'Multi-AZ, réplicas e Aurora'],
+  ['DynamoDB: modele pelo acesso', 'naws', 'dynamo', 'Partition key e índices'],
+  ['S3 e ElastiCache', 'naws', 's3-cache', 'Classes, políticas e cache'],
+  ['SQS, SNS e o fan-out', 'naws', 'sqs-sns', 'Desacoplamento na prática'],
+  ['EventBridge, Kinesis ou MSK', 'naws', 'eventos', 'Eventos × streaming'],
+  ['API Gateway ou ALB', 'naws', 'entrada', 'Entrada da aplicação'],
+  ['Secrets Manager, Parameter Store e KMS', 'naws', 'segredos', 'Segredos e chaves'],
+  ['As armadilhas da fatura', 'naws', 'armadilhas', 'NAT, transferência e logs'],
+  ['Disponibilidade em números', 'v06', 'nove', 'O que significa cada nove de SLA'],
+  ['Réplicas, particionamento e sharding', 'v03', 'replicas', 'Por que réplica é assíncrona'],
+  ['OLTP e OLAP: trabalhos opostos', 'v17', 'oltp-olap', 'Por que Redshift e Athena, não o RDS'],
+  ['Criptografia de envelope', 'v14', 'envelope', 'O que o KMS faz por baixo'],
+  ['Autoscaling e seus limites', 'nperf', 'autoscaling', 'Métricas e atrasos de escala'],
+  ['As camadas de cache até a CDN', 'nperf', 'cdn', 'Antes do CloudFront'],
+];
+
+const MATRIZ = [
+  ['1 · Arquiteturas seguras', '30%', 'IAM, Identity Center e federação; Organizations, SCP, Control Tower; STS e políticas de recurso; VPC, SG × NACL, endpoints, VPN × DX; WAF, Shield, GuardDuty, Macie, Cognito; KMS, ACM, backup e retenção', 'AWS na Prática · conta, politica, sts, vpc, sg-nacl, segredos'],
+  ['2 · Arquiteturas resilientes', '26%', 'SQS, SNS, EventBridge, Step Functions, API Gateway; ASG e escala horizontal; contêineres e serverless; Multi-AZ × réplica, Aurora, Route 53; DR: backup, pilot light, warm standby, multi-site', 'AWS na Prática · sqs-sns, eventos, compute, rds · Vol 06 · nove'],
+  ['3 · Arquiteturas de alto desempenho', '24%', 'S3, EBS, EFS, FSx, instance store; famílias EC2 e placement groups; RDS, Aurora, DynamoDB, DAX, ElastiCache, bancos de propósito; CloudFront × Global Accelerator, ALB/NLB/GWLB, Transit Gateway; Kinesis, Firehose, Glue, Athena, Lake Formation', 'AWS na Prática · dynamo, s3-cache · Vol 17 · oltp-olap · Performance · cdn'],
+  ['4 · Arquiteturas com custo otimizado', '20%', 'On-Demand, Savings Plans, RI, Spot; classes e ciclo de vida do S3; DynamoDB on-demand × provisionado; NAT e transferência; Cost Explorer, Budgets, CUR, tags', 'AWS na Prática · custos, armadilhas'],
+];
+
+const STUDY = [
+  ['Página da certificação', 'Formato, preço, idiomas e agendamento', 'https://aws.amazon.com/certification/certified-solutions-architect-associate/', 'intro'],
+  ['Exam guide SAA-C03', 'Domínios, tarefas e serviços no escopo', 'https://docs.aws.amazon.com/aws-certification/latest/solutions-architect-associate-03/solutions-architect-associate-03.html', 'formato'],
+  ['Serviços no escopo', 'A lista oficial do que pode cair', 'https://docs.aws.amazon.com/aws-certification/latest/solutions-architect-associate-03/saa-03-in-scope-services.html', 'gatilhos'],
+  ['AWS Well-Architected Framework', 'Os pilares que estruturam a prova', 'https://aws.amazon.com/architecture/well-architected/', 'intro'],
+  ['AWS Skill Builder', 'Cursos, simulado oficial e labs', 'https://skillbuilder.aws/', 'estrategia'],
+  ['IAM: lógica de avaliação de políticas', 'Deny explícito, SCP e acesso entre contas', 'https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html', 'politica-recurso'],
+  ['Disaster recovery na AWS (whitepaper)', 'Backup, pilot light, warm standby e multi-site', 'https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html', 'dr'],
+  ['Route 53: políticas de roteamento', 'Quando usar cada uma', 'https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html', 'route53'],
+  ['S3: classes de armazenamento', 'Durabilidade, mínimo e recuperação', 'https://aws.amazon.com/s3/storage-classes/', 'custo-storage'],
+  ['EC2: tipos de instância', 'Famílias e tamanhos', 'https://aws.amazon.com/ec2/instance-types/', 'compute'],
+  ['Savings Plans', 'Compute × EC2 Instance', 'https://aws.amazon.com/savingsplans/', 'custo-compute'],
+  ['Amazon Athena: guia', 'Partições, Parquet e CTAS', 'https://docs.aws.amazon.com/athena/latest/ug/what-is.html', 'athena'],
+];
+
+const CHECK = [
+  ['Prova', 'Ler o exam guide e a lista de serviços no escopo', 'formato'],
+  ['Seguro', 'Criar uma SCP que bloqueia regiões numa OU de teste', 'contas'],
+  ['Seguro', 'Escrever bucket policy com TLS obrigatório e acesso entre contas', 'politica-recurso'],
+  ['Seguro', 'Desenhar VPC com pública, privada, NAT e endpoints', 'vpc-seg'],
+  ['Seguro', 'Ligar SSE-KMS com rotação e versionamento num bucket', 'dados-seg'],
+  ['Resiliente', 'Montar fan-out SNS → SQS com DLQ', 'desacoplar'],
+  ['Resiliente', 'Explicar Multi-AZ × réplica de leitura sem hesitar', 'multi-az'],
+  ['Resiliente', 'Escolher a estratégia de DR para 3 pares de RPO/RTO', 'dr'],
+  ['Desempenho', 'Associar S3, EBS, EFS e FSx a um caso cada', 'storage'],
+  ['Desempenho', 'Converter CSV em Parquet com Athena e comparar bytes lidos', 'athena'],
+  ['Custo', 'Aplicar um ciclo de vida que esfria e expira logs', 'custo-storage'],
+  ['Custo', 'Achar a maior linha da fatura no Cost Explorer', 'custo-rede'],
+  ['Laboratório', 'Subir ALB + ASG em 2 zonas e derrubar uma instância', 'lab-run'],
+  ['Prova', 'Passar de 80% no simulado oficial', 'estrategia'],
+];
+
+const FAQ = [
+ ['Seguro','Simulado 1 · Uma empresa tem 40 contas no AWS Organizations e precisa impedir que qualquer conta, inclusive seus administradores, crie recursos fora de sa-east-1 e us-east-1. Qual a solução com menor esforço?',`<p>A) Uma política IAM em cada usuário de cada conta. B) Uma SCP na raiz da organização negando ações fora das duas regiões. C) AWS Config com regra de região e correção manual. D) Um alarme do CloudWatch para cada região.</p><p><b>Resposta: B.</b> A SCP limita todas as contas-membro, inclusive administradores, num lugar só. A é trabalhoso e o administrador pode remover; C detecta depois do fato; D só avisa.</p>`],
+ ['Seguro','Simulado 2 · Um app em EC2 precisa ler um bucket S3. A equipe hoje guarda access keys num arquivo de configuração. Qual a forma mais segura?',`<p>A) Guardar as chaves no Secrets Manager. B) Uma role IAM anexada à instância via instance profile. C) Chaves de um usuário IAM com rotação a cada 90 dias. D) Tornar o bucket público só para o IP da instância.</p><p><b>Resposta: B.</b> A role entrega credenciais temporárias renovadas sozinhas. A e C mantêm chaves de longo prazo; D expõe o bucket e IP de instância muda.</p>`],
+ ['Seguro','Simulado 3 · Instâncias em sub-redes privadas enviam terabytes por mês ao S3 pela NAT gateway, e o custo de NAT disparou. O que fazer?',`<p>A) Trocar a NAT gateway por uma NAT instance maior. B) Criar um gateway endpoint do S3 e associá-lo às tabelas de rotas privadas. C) Mover as instâncias para sub-redes públicas. D) Criar um interface endpoint para o EC2.</p><p><b>Resposta: B.</b> O gateway endpoint é gratuito e tira o tráfego do NAT, mantendo-o privado. A ainda cobra e vira gargalo; C expõe as instâncias; D não tem relação com o S3.</p>`],
+ ['Seguro','Simulado 4 · Uma auditoria exige que logs no S3 não possam ser apagados nem alterados por 7 anos, nem pelo usuário raiz. Qual recurso?',`<p>A) Versionamento com MFA Delete. B) S3 Object Lock no modo compliance com retenção de 7 anos. C) Bucket policy negando DeleteObject. D) Ciclo de vida para Glacier Deep Archive.</p><p><b>Resposta: B.</b> Compliance mode impede exclusão e alteração por qualquer usuário até o fim da retenção. A e C podem ser desfeitos por quem tem permissão suficiente; D muda a classe, não impede apagar.</p>`],
+ ['Seguro','Simulado 5 · Um site atrás de um ALB sofre tentativas de SQL injection. Qual serviço bloqueia essas requisições?',`<p>A) Amazon GuardDuty. B) AWS WAF associado ao ALB. C) AWS Shield Standard. D) Amazon Inspector.</p><p><b>Resposta: B.</b> O WAF filtra requisições HTTP com regras de SQLi. GuardDuty detecta ameaças em logs, não bloqueia; Shield trata DDoS; Inspector procura vulnerabilidades em instâncias e imagens.</p>`],
+ ['Resiliente','Simulado 6 · Um sistema de pedidos recebe picos de 10 vezes o normal e o serviço de faturamento cai sob carga. A empresa aceita processamento assíncrono. O que fazer?',`<p>A) Aumentar o tamanho das instâncias de faturamento. B) Colocar uma fila SQS entre pedidos e faturamento e escalar os consumidores pelo tamanho da fila. C) Usar um NLB na frente do faturamento. D) Usar réplicas de leitura no banco.</p><p><b>Resposta: B.</b> A fila absorve o pico e desacopla os serviços. A tem teto e custa o tempo todo; C só distribui a mesma sobrecarga; D não resolve escrita nem processamento.</p>`],
+ ['Resiliente','Simulado 7 · Um banco RDS MySQL precisa sobreviver à falha de uma zona com failover automático e sem mudar a string de conexão. O que configurar?',`<p>A) Uma réplica de leitura na mesma região. B) Implantação Multi-AZ. C) Snapshots a cada hora. D) Uma réplica em outra região.</p><p><b>Resposta: B.</b> Multi-AZ mantém standby síncrono e o endpoint DNS aponta para o novo primário. A e D são assíncronas e exigem promoção manual e nova conexão; C tem RPO e RTO altos.</p>`],
+ ['Resiliente','Simulado 8 · Requisito de DR: RTO de 15 minutos e RPO de segundos, com o menor custo possível. A aplicação roda em EC2 com Aurora. Qual estratégia?',`<p>A) Backup e restore com snapshots diários. B) Warm standby: Aurora Global Database e uma frota reduzida rodando na região secundária, escalando no failover. C) Multi-site ativo-ativo com capacidade total nas duas regiões. D) Pilot light com snapshots semanais.</p><p><b>Resposta: B.</b> Aurora Global Database dá RPO de segundos e a frota pequena atende o RTO. A e D não cumprem RPO nem RTO; C cumpre, mas custa muito mais.</p>`],
+ ['Resiliente','Simulado 9 · Uma aplicação global precisa mandar cada usuário para a região com menor latência e trocar automaticamente se a região falhar. Qual configuração do Route 53?',`<p>A) Simple routing. B) Latency routing com health checks. C) Geolocation routing sem health checks. D) Weighted routing 50/50.</p><p><b>Resposta: B.</b> Latency escolhe a região mais rápida e o health check retira a que falhou. A não decide por latência; C decide por país, não por latência, e sem health check não troca; D divide tráfego sem olhar latência.</p>`],
+ ['Desempenho','Simulado 10 · Vinte instâncias Linux em três zonas precisam ler e gravar os mesmos arquivos ao mesmo tempo. Qual armazenamento?',`<p>A) Um volume EBS gp3 compartilhado. B) Amazon EFS. C) Instance store. D) Amazon FSx for Windows File Server.</p><p><b>Resposta: B.</b> EFS é NFS regional, montado por muitas instâncias em várias zonas. A fica numa zona e Multi-Attach é limitado; C é local e efêmero; D é para SMB e Windows.</p>`],
+ ['Desempenho','Simulado 11 · Um jogo multiplayer usa UDP e precisa de IPs estáticos globais com failover rápido entre regiões. Qual serviço?',`<p>A) Amazon CloudFront. B) AWS Global Accelerator. C) ALB com Route 53. D) API Gateway.</p><p><b>Resposta: B.</b> Global Accelerator dá IPs anycast estáticos, suporta UDP e faz failover sem depender de cache DNS. CloudFront é para HTTP com cache; ALB não trata UDP; API Gateway é para APIs HTTP.</p>`],
+ ['Desempenho','Simulado 12 · Uma tabela DynamoDB recebe leituras repetidas dos mesmos itens e o time quer latência de microssegundos sem mudar o modelo de dados. O que adicionar?',`<p>A) ElastiCache for Memcached com código de cache próprio. B) DynamoDB Accelerator (DAX). C) Réplicas de leitura do DynamoDB. D) Mais capacidade de leitura provisionada.</p><p><b>Resposta: B.</b> DAX é cache em memória compatível com a API do DynamoDB, com microssegundos e mudança mínima. A exige reescrever o acesso; C não existe nesse formato; D mantém milissegundos.</p>`],
+ ['Custo','Simulado 13 · Um processamento em lote noturno pode ser interrompido e retomado, roda 4 horas e não tem prazo rígido. Qual opção de compra mais barata?',`<p>A) On-Demand. B) Instâncias Spot. C) Reserved Instances Standard de 3 anos. D) Dedicated Hosts.</p><p><b>Resposta: B.</b> Carga tolerante a interrupção é o caso do Spot, com o maior desconto. A custa mais; C exige uso contínuo para compensar; D é para licenciamento e conformidade.</p>`],
+ ['Custo','Simulado 14 · Relatórios no S3 são acessados com frequência no primeiro mês, raramente até um ano e precisam ser guardados por 7 anos para auditoria, com recuperação em até 12 horas. Qual a solução mais econômica?',`<p>A) Manter tudo no S3 Standard. B) Ciclo de vida: Standard → Standard-IA aos 30 dias → Glacier Deep Archive aos 365 dias, expirando aos 7 anos. C) Tudo em One Zone-IA. D) Intelligent-Tiering sem ciclo de vida, para sempre.</p><p><b>Resposta: B.</b> O ciclo de vida casa cada fase com a classe mais barata, e o Deep Archive atende a recuperação em 12 horas. A paga caro pelo frio; C perde dados se a zona falhar; D não expira e custa mais que o Deep Archive no longo prazo.</p>`],
+ ['Custo','Simulado 15 · Uma empresa roda EC2 de famílias variadas, Fargate e Lambda, com gasto base estável, e quer desconto sem se prender a família ou região. O que comprar?',`<p>A) Reserved Instances Standard. B) Compute Savings Plans. C) EC2 Instance Savings Plans. D) Instâncias Spot para tudo.</p><p><b>Resposta: B.</b> O Compute Savings Plan cobre EC2 de qualquer família e região, Fargate e Lambda. A e C prendem a família ou o tipo; D não serve para carga que não tolera interrupção.</p>`],
+];
+
+const CMDS = [
+  ['aws sts get-caller-identity', 'Quem sou eu nesta credencial'],
+  ['aws sts assume-role --role-arn ARN --role-session-name ana', 'Assumir uma role de outra conta'],
+  ['aws organizations attach-policy --policy-id p-… --target-id ou-…', 'Aplicar uma SCP numa OU'],
+  ['aws ec2 create-vpc-endpoint --vpc-id VPC --service-name com.amazonaws.sa-east-1.s3 --route-table-ids RT', 'Gateway endpoint do S3'],
+  ['aws kms enable-key-rotation --key-id KEY --rotation-period-in-days 365', 'Rotação da chave do cliente'],
+  ['aws s3api put-bucket-lifecycle-configuration --bucket B --lifecycle-configuration file://ciclo-vida.json', 'Aplicar ciclo de vida'],
+  ['aws s3api put-bucket-policy --bucket B --policy file://bucket-policy.json', 'Aplicar bucket policy'],
+  ['aws cloudformation deploy --template-file web-ha.yaml --stack-name web-ha', 'Subir a stack do laboratório'],
+  ['aws autoscaling terminate-instance-in-auto-scaling-group --instance-id ID --no-should-decrement-desired-capacity', 'Simular falha de instância'],
+  ['aws ce get-cost-and-usage --time-period Start=…,End=… --granularity MONTHLY --metrics UnblendedCost', 'Custo por mês'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

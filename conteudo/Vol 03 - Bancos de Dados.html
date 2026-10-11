@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha de Bancos de Dados por Dentro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"concorrencia.sql": "-- Pessimista: trava antes de mexer (conflito frequente, operação curta)\nBEGIN;\nSELECT estoque FROM produtos WHERE id = 10 FOR UPDATE;   -- trava a linha\nUPDATE produtos SET estoque = estoque - 1 WHERE id = 10;\nCOMMIT;\n\n-- Otimista: não trava; detecta o conflito na hora de gravar (conflito raro)\nUPDATE produtos SET estoque = estoque - 1, versao = versao + 1\nWHERE id = 10 AND versao = 7;     -- 0 linhas afetadas = alguém mudou antes\n\n-- Atômica: a mais simples quando cabe; sem ler antes, sem janela\nUPDATE produtos SET estoque = estoque - 1\nWHERE id = 10 AND estoque > 0;    -- 0 linhas = acabou o estoque\n\n-- Rede de segurança: mesmo com bug no código, o dado errado não entra\nALTER TABLE produtos ADD CONSTRAINT estoque_nao_negativo CHECK (estoque >= 0);\n\n-- Tabela como fila: cada worker pega o que ninguém travou\nSELECT id FROM tarefas WHERE status = 'pendente'\nORDER BY criada_em LIMIT 10\nFOR UPDATE SKIP LOCKED;", "isolamento.sql": "-- Dois terminais, A e B, na ordem indicada\n\n-- Experimento 1 · Read Committed (padrão do PostgreSQL)\n-- A: BEGIN;\n-- A: SELECT total FROM pedidos WHERE id = 1;            → 100\n-- B: UPDATE pedidos SET total = total + 100 WHERE id = 1;\n-- A: SELECT total FROM pedidos WHERE id = 1;            → 200  (não repetível)\n-- A: COMMIT;\n\n-- Experimento 2 · Repeatable Read\n-- A: BEGIN ISOLATION LEVEL REPEATABLE READ;\n-- A: SELECT total FROM pedidos WHERE id = 1;            → 200\n-- B: UPDATE pedidos SET total = total + 100 WHERE id = 1;\n-- A: SELECT total FROM pedidos WHERE id = 1;            → 200  (snapshot fixo)\n-- A: COMMIT;\n\n-- Experimento 3 · Trava pessimista\n-- A: BEGIN;\n-- A: SELECT total FROM pedidos WHERE id = 1 FOR UPDATE;\n-- B: UPDATE pedidos SET total = 0 WHERE id = 1;          … fica esperando\n-- A: COMMIT;                                             → só agora B termina\n\n-- Desafio · Deadlock\n-- A: BEGIN; UPDATE pedidos SET total = 1 WHERE id = 1;\n-- B: BEGIN; UPDATE pedidos SET total = 2 WHERE id = 2;\n-- A: UPDATE pedidos SET total = 1 WHERE id = 2;          … espera B\n-- B: UPDATE pedidos SET total = 2 WHERE id = 1;          → ERROR: deadlock detected", "lab-indices.sql": "-- 1 milhão de pedidos para medir de verdade\nINSERT INTO pedidos (cliente_id, status, total, criado_em)\nSELECT (random() * 50000)::int,\n       (ARRAY['pendente','pago','enviado','cancelado'])[1 + floor(random() * 4)::int],\n       round((random() * 1000)::numeric, 2),\n       now() - random() * interval '365 days'\nFROM generate_series(1, 1000000);\nANALYZE pedidos;\n\n-- Sem índice: Seq Scan + Sort\nEXPLAIN ANALYZE\nSELECT * FROM pedidos WHERE cliente_id = 123 ORDER BY criado_em DESC LIMIT 10;\n\n-- Composto: igualdade primeiro, ordenação depois → Index Scan, o Sort some\nCREATE INDEX idx_pedidos_cliente_data ON pedidos (cliente_id, criado_em DESC);\n\n-- Seletividade: 25% das linhas → o banco pode preferir ler a tabela toda\nCREATE INDEX idx_pedidos_status ON pedidos (status);\nEXPLAIN ANALYZE SELECT count(*) FROM pedidos WHERE status = 'pago';\n\n-- Índice parcial: só a fatia pequena que você consulta\nCREATE INDEX idx_pendentes ON pedidos (criado_em) WHERE status = 'pendente';\n\n-- Paginação: OFFSET lê e descarta 900 mil linhas…\nEXPLAIN ANALYZE SELECT * FROM pedidos ORDER BY criado_em DESC OFFSET 900000 LIMIT 20;\n-- …o cursor (keyset) parte do último valor visto: tempo constante\nEXPLAIN ANALYZE SELECT * FROM pedidos\nWHERE criado_em < :ultimo_visto ORDER BY criado_em DESC LIMIT 20;", "migracao.sql": "-- Renomear nome → nome_completo sem parar o sistema (expandir e contrair)\nSET lock_timeout = '3s';               -- sem a trava em 3 s: falha e tenta depois\n\n-- Deploy 1 · expandir: coluna nova e opcional, nada quebra\nALTER TABLE clientes ADD COLUMN nome_completo text;\n-- código: grava nas duas, lê da antiga\n\n-- Job · backfill em lotes pequenos (repita até 0 linhas)\nUPDATE clientes SET nome_completo = nome\nWHERE id IN (SELECT id FROM clientes WHERE nome_completo IS NULL LIMIT 5000);\n\n-- Deploy 2 · trocar a leitura para nome_completo\n-- Deploy 3 · contrair: ninguém usa mais a antiga\nALTER TABLE clientes DROP COLUMN nome;\n\n-- Índice sem bloquear escritas\nCREATE INDEX CONCURRENTLY idx_clientes_nome ON clientes (nome_completo);\n\n-- NOT NULL e FK sem varrer com trava: crie NOT VALID, valide depois\nALTER TABLE clientes ADD CONSTRAINT nome_ok CHECK (nome_completo IS NOT NULL) NOT VALID;\nALTER TABLE clientes VALIDATE CONSTRAINT nome_ok;", "modelagem.sql": "-- Cada fato num só lugar; o banco defende as regras de negócio\nCREATE TABLE clientes (\n  id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,  -- chave substituta\n  email      text NOT NULL UNIQUE,                             -- natural, mas não é a PK\n  nome       text NOT NULL,\n  criado_em  timestamptz NOT NULL DEFAULT now()                -- sempre com fuso, em UTC\n);\n\nCREATE TABLE produtos (\n  id     bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  nome   text NOT NULL,\n  preco  numeric(12,2) NOT NULL CHECK (preco >= 0),            -- dinheiro: nunca float\n  atributos jsonb NOT NULL DEFAULT '{}'                         -- só o que varia de verdade\n);\n\nCREATE TABLE pedidos (\n  id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  cliente_id  bigint NOT NULL REFERENCES clientes(id),         -- FK: um para muitos\n  endereco_entrega text NOT NULL,                              -- desnormalizado de propósito\n  total       numeric(12,2) NOT NULL CHECK (total >= 0)\n);\n\n-- Muitos para muitos: tabela associativa que lembra o preço da época\nCREATE TABLE itens_pedido (\n  pedido_id      bigint REFERENCES pedidos(id),\n  produto_id     bigint REFERENCES produtos(id),\n  quantidade     int NOT NULL CHECK (quantidade > 0),\n  preco_unitario numeric(12,2) NOT NULL,                       -- o produto muda, o pedido não\n  PRIMARY KEY (pedido_id, produto_id)\n);", "mongo.js": "// Modelagem a partir das consultas: pedido com itens embutidos\n// e referência estendida ao cliente (id + o nome mais exibido)\nuse loja\n\ndb.pedidos.insertMany([\n  { clienteId: 1, nomeCliente: 'Ana', status: 'pago', criadoEm: new Date('2026-09-10'),\n    itens: [ { produtoId: 10, nome: 'Teclado', quantidade: 2, preco: 150 },\n             { produtoId: 11, nome: 'Mouse', quantidade: 1, preco: 80 } ] },\n  { clienteId: 2, nomeCliente: 'Bruno', status: 'pago', criadoEm: new Date('2026-09-12'),\n    itens: [ { produtoId: 10, nome: 'Teclado', quantidade: 1, preco: 150 } ] },\n])\n\n// Índice ESR: Equality (clienteId), Sort (criadoEm), Range\ndb.pedidos.createIndex({ clienteId: 1, criadoEm: -1 })\ndb.pedidos.find({ clienteId: 1 }).sort({ criadoEm: -1 }).explain('executionStats')\n// procure IXSCAN no winningPlan (COLLSCAN = varreu a coleção)\n\n// Pipeline de agregação: $match o mais cedo possível\ndb.pedidos.aggregate([\n  { $match: { status: 'pago' } },\n  { $unwind: '$itens' },\n  { $group: { _id: '$itens.nome', vendidos: { $sum: '$itens.quantidade' } } },\n  { $sort: { vendidos: -1 } },\n  { $limit: 10 },\n])"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Vol 3 · Bancos de Dados =====================
+const CONF = {
+  title: 'Trilha de Bancos de Dados por Dentro', file: 'Vol 03 - Bancos de Dados', key: 'v03',
+  eyebrow: 'Guia Técnico · Volume 3', h1: 'Bancos de dados por dentro: SQL e MongoDB',
+  lead: 'Roteiro em vídeo para diagnosticar e decidir, não só escrever consultas: modelagem e normalização, B-tree e índices compostos, planos de execução, transações e isolamento, a escada da escala, MongoDB a fundo, o mapa dos tipos de banco e migrações sem indisponibilidade. Fecha com três laboratórios em Docker.',
+  pills: ['PostgreSQL', 'Índices', 'EXPLAIN', 'Isolamento', 'Réplicas e sharding', 'MongoDB', 'Migrações'],
+  term: 'bash · ~/lab-bancos',
+  faqPlaceholder: 'Buscar: índice, N+1, isolamento, OFFSET, embutir…',
+  matriz: {title: 'O mapa dos tipos de banco', desc: 'A pergunta certa não é SQL ou NoSQL, e sim qual o formato dos dados e como serão acessados. Comece pelo PostgreSQL e adicione um especializado quando um requisito medido justificar.', cols: ['Tipo', 'Exemplos', 'Ponto forte', 'Uso típico', 'Cuidado']},
+};
+const TITLE = {k: 'Guia Técnico · Volume 3', h: 'Bancos de dados por dentro',
+  p: 'A maior parte dos problemas de performance e de dados inconsistentes nasce no banco. Do modelo ao plano de execução, das travas à escala, no nível em que você diagnostica e decide.',
+  chips: ['modelagem', 'B-tree', 'EXPLAIN ANALYZE', 'MVCC', 'réplicas', 'MongoDB', 'expand/contract']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Meça, depois mude',
+  p: 'Abaixo do vídeo estão o mapa dos tipos de banco, os links para o que já foi coberto, a trilha de estudo, o checklist e as perguntas de entrevista.',
+  chips: ['restrições no banco', 'EXPLAIN antes de chutar', 'transações curtas', 'nada incompatível de uma vez']};
+
+const SCENES = [
+/* ---------- MODELAGEM ---------- */
+{ id:'intro', ch:'Modelagem relacional', title:'Onde nascem os problemas',
+  say:'A maior parte dos problemas de performance e de dados inconsistentes em sistemas reais nasce no banco. Este roteiro explica SQL e MongoDB por dentro, no nível em que você consegue diagnosticar e decidir: modelagem, índices, planos de execução, transações, escala, documentos, tipos de banco e migrações seguras, com três laboratórios para ver tudo acontecer.',
+  v:{type:'title'} },
+
+{ id:'chaves', ch:'Modelagem relacional', title:'Chaves, restrições e relacionamentos',
+  say:'Modelar bem é decidir onde cada fato mora uma única vez. Prefira chaves substitutas, um id gerado, a chaves naturais como CPF ou e-mail, que mudam ou têm exceções. Inteiros são menores; UUIDs nascem fora do banco, mas os aleatórios espalham inserções pelo índice: use UUID versão sete, ordenado por tempo. Deixe o banco garantir as chaves estrangeiras e as regras com NOT NULL, UNIQUE e CHECK. E veja o preço unitário na tabela associativa: o pedido lembra o preço da época.',
+  v:S('db/modelagem.sql','modelagem.sql','sql')},
+
+{ id:'normalizacao', ch:'Modelagem relacional', title:'Normalizar e desnormalizar com motivo',
+  say:'Normalizar é eliminar repetição que pode ficar inconsistente. Primeira forma normal: valores atômicos, nada de lista de telefones numa coluna. Segunda: em chave composta, toda coluna depende da chave inteira. Terceira: nenhuma coluna depende de outra não chave, como cidade dependendo do CEP. Desnormalize de propósito para histórico, como o endereço no pedido, para totais caros e para leitura analítica. E os tipos importam: dinheiro em numeric, datas com fuso, JSONB só para o que varia.',
+  v:GRID(3, [
+    ['Normalizar','cada fato num só lugar',['1FN: valores atômicos','2FN: depende da chave inteira','3FN: nada depende de não chave'],'blue'],
+    ['Desnormalizar com motivo','copiar para ler rápido',['histórico: endereço no pedido','totais caros de somar','views para relatórios'],'amber'],
+    ['Tipos','',['dinheiro: numeric(12,2) ou centavos','0,1 + 0,2 ≠ 0,3 em float','timestamptz em UTC','JSONB só para o variável'],'green'],
+  ], {step:4, rodape:'Regra de arquiteto: normalize por padrão; desnormalize com motivo medido e mecanismo de sincronização'}) },
+
+/* ---------- ÍNDICES ---------- */
+{ id:'btree', ch:'Índices por dentro', title:'A B-tree: poucos saltos até a linha',
+  say:'Um índice é uma estrutura ordenada, separada da tabela, que leva direto às linhas certas. Na B-tree, cada nó cabe numa página de disco e guarda centenas de chaves, então três ou quatro níveis alcançam milhões de linhas. As folhas são ligadas entre si: buscar um intervalo é achar o início e caminhar para o lado. Ela acelera igualdade, intervalo, ordenação e prefixo de texto. Já LIKE com porcentagem no início não usa a B-tree: para isso existem trigramas.',
+  v:{type:'boxes', items:[
+    {at:.8, x:340,y:92,w:280,h:56, cls:'amber', html:B('raiz','… 40 · 80 …')},
+    {at:2.5, x:96,y:186,w:220,h:56, cls:'blue', html:B('nó','10 · 20 · 30')},
+    {at:3, x:370,y:186,w:220,h:56, cls:'blue', html:B('nó','50 · 60 · 70')},
+    {at:3.5, x:644,y:186,w:220,h:56, cls:'blue', html:B('nó','90 · 100 · 110')},
+    {at:5, x:36,y:280,w:200,h:56, cls:'green', html:B('folha','→ linhas 1–39')},
+    {at:5.5, x:266,y:280,w:200,h:56, cls:'green', html:B('folha','→ linhas 40–79')},
+    {at:6, x:496,y:280,w:200,h:56, cls:'green', html:B('folha','→ linhas 80–119')},
+    {at:6.5, x:726,y:280,w:198,h:56, cls:'green', html:B('folha','→ …')},
+    {at:9, x:36,y:366,w:430,h:136, cls:'ext', html:B('Acelera','')+UL("igualdade: email = 'x'","intervalo e ORDER BY","prefixo: LIKE 'jo%'")},
+    {at:12, x:494,y:366,w:430,h:136, cls:'ext', html:B('Não acelera','')+UL("LIKE '%jo%': início desconhecido","use trigramas ou índice textual")},
+  ], lines:[
+    {at:2.5, d:'M400 148 L 206 186', cls:'dim'}, {at:3, d:'M480 148 L 480 186', cls:'dim'}, {at:3.5, d:'M560 148 L 754 186', cls:'dim'},
+    {at:5, d:'M206 242 L 136 280', cls:'dim'}, {at:5.5, d:'M480 242 L 366 280', cls:'flow'}, {at:6, d:'M480 242 L 596 280', cls:'flow'},
+    {at:7, d:'M236 308 L 266 308', cls:'green'}, {at:7, d:'M466 308 L 496 308', cls:'green'}, {at:7, d:'M696 308 L 726 308', cls:'green'},
+  ]}},
+
+{ id:'compostos', ch:'Índices por dentro', title:'Compostos, cobertura e seletividade',
+  say:'Um índice em cliente, status e data funciona como uma lista telefônica ordenada por sobrenome e depois nome. Serve para filtrar por cliente, cliente e status, ou os três, mas não só por status: é a regra do prefixo à esquerda. Coloque primeiro as colunas de igualdade, depois a de intervalo ou ordenação. Com INCLUDE, o índice cobre a consulta e o banco nem visita a tabela. E um índice só compensa quando o filtro elimina a maior parte das linhas; o índice parcial resolve o meio-termo.',
+  v:GRID(2, [
+    ['Prefixo à esquerda','(cliente_id, status, criado_em)',['✓ cliente · cliente + status · os três','✗ só status: a lista telefônica não acha "João"','igualdade primeiro, intervalo depois'],'blue'],
+    ['Cobertura','index-only scan',['tudo que a consulta precisa está no índice','INCLUDE (total) só para leitura'],'green'],
+    ['Seletividade','o filtro elimina a maioria?',['email único: perfeito','status com 50%: lê a tabela'],'amber'],
+    ['Índice parcial','só a fatia consultada',["WHERE status = 'pendente'",'pequeno e rápido'],'green'],
+  ], {step:3.6}) },
+
+{ id:'custos-indice', ch:'Índices por dentro', title:'O custo dos índices e o que os anula',
+  say:'Toda escrita atualiza todos os índices da tabela, e eles disputam memória com os dados. Índices não usados só custam: revise as estatísticas e remova. Conheça outros tipos: GIN para JSONB, arrays e texto; GiST para geografia e intervalos; BRIN para tabelas enormes ordenadas por data; e os vetoriais, base do RAG. E três armadilhas anulam um índice: função na coluna, como LOWER de email, tipo diferente na comparação, e OR entre colunas diferentes.',
+  v:GRID(3, [
+    ['Custo','',['toda escrita atualiza todos','ocupam disco e memória','não usado: remova'],'amber'],
+    ['Outros tipos','',['GIN: JSONB, arrays, texto','GiST: geografia, intervalos','BRIN: logs por data','HNSW: vetores'],'blue'],
+    ['O que anula','',['LOWER(email) = … → índice de expressão','texto comparado com número','OR entre colunas → UNION'],'ext'],
+  ], {step:4}) },
+
+/* ---------- PLANOS ---------- */
+{ id:'explain', ch:'Planos de execução', title:'Lendo um plano de execução',
+  say:'SQL diz o que você quer; o otimizador decide como buscar, e o plano mostra essa decisão. EXPLAIN mostra o estimado; EXPLAIN ANALYZE executa e mostra o real. Cuidado: num UPDATE ele altera de verdade, então rode numa transação com ROLLBACK. Leia de dentro para fora. As leituras: Seq Scan, a tabela inteira; Index Scan, índice e linha; Index Only Scan, só o índice; Bitmap, para quantidades médias. As junções: Nested Loop, Hash Join e Merge Join.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:200, cls:'region', html:'<span class="rl">EXPLAIN (ANALYZE, BUFFERS)</span><pre class="kql">Limit  (actual rows=10)\n  -> Sort  (rows=10 / 412)\n       -> Seq Scan on pedidos\n            Filter: cliente_id = 123\n            Rows Removed: 999588</pre>'},
+    {at:4, x:494,y:92,w:430,h:200, cls:'green', html:B('Leituras','')+UL('Seq Scan: tabela inteira','Index Scan: índice + linha','Index Only: só o índice','Bitmap: quantidade média')},
+    {at:9, x:36,y:312,w:280,h:190, cls:'blue', html:B('Nested Loop','um lado pequeno + índice')+UL('ótimo com índice na junção','desastre: dois lados grandes')},
+    {at:11.5, x:340,y:312,w:280,h:190, cls:'blue', html:B('Hash Join','hash do lado menor')+UL('grandes volumes sem índice')},
+    {at:14, x:644,y:312,w:280,h:190, cls:'blue', html:B('Merge Join','entradas já ordenadas')+UL('ambas vindas de índice')},
+  ]}},
+
+{ id:'estimado', ch:'Planos de execução', title:'Estimado × real, N+1 e consulta lenta',
+  say:'O sinal mais importante: compare as linhas estimadas com as reais. Esperava dez e vieram quinhentas mil? Estatísticas velhas: rode ANALYZE. O N+1 é buscar cem pedidos e, num laço, o cliente de cada um: cento e uma consultas. Resolva com JOIN, IN ou o carregamento antecipado do ORM. O roteiro: pegue a consulta real, ache o nó mais caro, compare estimado e real, procure índice ausente ou anulado, revise junções e ordenações. Só depois reescreva ou cacheie.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:150, cls:'amber', html:B('Estimado × real','rows=10 → actual rows=500000')+UL('estatísticas velhas: ANALYZE','resolve muita lentidão "misteriosa"')},
+    {at:4, x:494,y:92,w:430,h:150, cls:'ext', html:B('N+1','1 lista + 1 por item = 101 consultas')+UL('JOIN ou WHERE id IN (…)','include / eager loading / preload')},
+    {at:8, x:36,y:262,w:888,h:240, cls:'region', html:'<span class="rl">roteiro para consulta lenta</span>'+UL('1. a consulta real, com parâmetros reais (log de lentas)','2. EXPLAIN ANALYZE e o nó que gasta mais tempo','3. estimado × real divergem? atualize estatísticas','4. Seq Scan com filtro seletivo? índice ausente ou anulado','5. junção explodindo linhas? Sort em disco? índice na ordem certa','6. só então: reescrever, desnormalizar, cachear')},
+  ]}},
+
+{ id:'lab-indices', ch:'Planos de execução', title:'Lab 1: um índice transformando a consulta',
+  say:'Primeiro laboratório: um milhão de pedidos no PostgreSQL em Docker. Sem índice, a consulta por cliente ordenada por data faz Seq Scan e Sort. Com o índice composto, igualdade primeiro e data depois, troca para Index Scan e o Sort some. Veja também a seletividade: com vinte e cinco por cento das linhas, o banco pode ignorar o índice de status. E compare OFFSET de novecentas mil linhas com a paginação por cursor, que responde rápido em qualquer página.',
+  v:S('lab/indices.sql','lab-indices.sql','sql')},
+
+{ id:'lab-indices-run', ch:'Planos de execução', title:'O antes e o depois',
+  say:'O resultado típico: a consulta sem índice lê quase um milhão de linhas e leva centenas de milissegundos. Depois do índice composto, o plano vira Index Scan e cai para menos de um milissegundo. O cursor faz o mesmo com a paginação. Anote os seus números: é essa diferença que você vai contar numa entrevista.',
+  v:T('c|docker run -d --name pg -e POSTGRES_PASSWORD=senha -p 5432:5432 postgres:16', 'c|docker exec -it pg psql -U postgres', 'c|EXPLAIN ANALYZE SELECT * FROM pedidos WHERE cliente_id = 123 ORDER BY criado_em DESC LIMIT 10;', 'o|  ->  Sort  (actual time=112.4..112.4 rows=10)', 'o|        ->  Seq Scan on pedidos  (rows=19 loops=3)  Rows Removed by Filter: 333327', 'err| Execution Time: 113.902 ms', 'c|CREATE INDEX idx_pedidos_cliente_data ON pedidos (cliente_id, criado_em DESC);', 'c|EXPLAIN ANALYZE SELECT * FROM pedidos WHERE cliente_id = 123 ORDER BY criado_em DESC LIMIT 10;', 'o|  ->  Index Scan using idx_pedidos_cliente_data on pedidos  (rows=10)', 'ok| Execution Time: 0.071 ms')},
+
+/* ---------- TRANSAÇÕES ---------- */
+{ id:'acid', ch:'Transações e concorrência', title:'ACID e as anomalias',
+  say:'Bugs de concorrência aparecem em produção, às sextas, com dinheiro envolvido. ACID: atomicidade, tudo ou nada; consistência, respeitando as restrições; isolamento, sem ver trabalho pela metade; durabilidade, sobrevivendo à queda de energia graças ao WAL. As anomalias: leitura suja, leitura não repetível, fantasma e a mais traiçoeira, write skew, como dois médicos saindo do plantão ao mesmo tempo, cada um achando que o outro fica.',
+  v:{type:'boxes', defs:[
+    ['Atomicidade','tudo ou nada: débito e crédito juntos', .8],
+    ['Consistência','de um estado válido a outro', 2.5],
+    ['Isolamento','sem ver trabalho pela metade', 4],
+    ['Durabilidade','commit sobrevive à queda (WAL)', 5.5],
+  ], items:[
+    {at:8, x:470,y:92,w:454,h:76, cls:'ext', html:B('Leitura suja','dado ainda não confirmado')},
+    {at:10, x:470,y:180,w:454,h:76, cls:'ext', html:B('Não repetível','a mesma linha, dois valores')},
+    {at:12, x:470,y:268,w:454,h:76, cls:'ext', html:B('Fantasma','linhas novas aparecem')},
+    {at:14, x:470,y:356,w:454,h:146, cls:'amber', html:B('Atualização perdida e write skew','ler, decidir e gravar com base no que leu')+UL('dois médicos saem do plantão juntos','cada um achou que o outro ficava')},
+  ]}},
+
+{ id:'isolamento', ch:'Transações e concorrência', title:'Níveis de isolamento e MVCC',
+  say:'Read Committed evita leitura suja e é o padrão do PostgreSQL, Oracle e SQL Server: cada comando vê o que já foi confirmado. Repeatable Read também evita leitura não repetível; no PostgreSQL, a transação inteira vê um snapshot fixo. Serializable evita todas, mas pode abortar transações, e o código precisa repetir. Por baixo, o MVCC cria uma nova versão da linha a cada atualização: leitores e escritores não se bloqueiam. O custo é limpar versões antigas, o VACUUM, que transações longas impedem.',
+  v:GRID(3, [
+    ['Read Committed','evita leitura suja',['padrão PostgreSQL, Oracle, SQL Server','cada comando vê o confirmado'],'blue'],
+    ['Repeatable Read','evita também não repetível',['padrão MySQL InnoDB','PostgreSQL: snapshot fixo'],'green'],
+    ['Serializable','evita todas',['como se fosse uma de cada vez','pode abortar: repita no código'],'amber'],
+  ], {step:4, rodape:'MVCC: atualizar cria versão nova · leitores não bloqueiam escritores · VACUUM limpa · transação longa incha a tabela'}) },
+
+{ id:'travas', ch:'Transações e concorrência', title:'Pessimista, otimista e atômica',
+  say:'Três estratégias. Pessimista: SELECT FOR UPDATE trava a linha antes de mexer, bom quando o conflito é frequente e a operação curta. Otimista: grava com a versão esperada; zero linhas afetadas significa que alguém mudou antes, bom para conflito raro. E a atômica, a mais simples quando cabe: um único UPDATE com a condição, sem ler antes. Uma restrição CHECK é a rede de segurança. E SKIP LOCKED transforma uma tabela numa fila de trabalho.',
+  v:S('db/concorrencia.sql','concorrencia.sql','sql')},
+
+{ id:'deadlock', ch:'Transações e concorrência', title:'Deadlocks e as regras de ouro',
+  say:'Deadlock: a transação um trava A e espera B; a dois trava B e espera A. O banco detecta e aborta uma delas. Para evitar, trave sempre na mesma ordem, por exemplo por id crescente, mantenha transações curtas e nunca faça chamada de rede com transação aberta. As regras de ouro: abra, faça o mínimo, feche; nunca espere o usuário ou uma API dentro da transação; repita automaticamente em erro de serialização; e deixe as restrições do banco serem a última linha de defesa.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:96,w:200,h:76, cls:'blue', html:B('Transação 1','trava A')},
+    {at:2, x:36,y:236,w:200,h:76, cls:'green', html:B('Transação 2','trava B')},
+    {at:3.5, x:330,y:96,w:200,h:76, cls:'amber', html:B('linha A','presa por T1')},
+    {at:4, x:330,y:236,w:200,h:76, cls:'amber', html:B('linha B','presa por T2')},
+    {at:6, x:600,y:150,w:324,h:110, cls:'ext', html:B('deadlock detected','o banco aborta uma das duas')+'<span class="tag am">a outra segue</span>'},
+    {at:9, x:36,y:352,w:888,h:150, cls:'region', html:'<span class="rl">regras de ouro</span>'+UL('trave sempre na mesma ordem (id crescente) · transações curtas: abra, faça o mínimo, feche','nunca espere usuário, e-mail ou API externa com a transação aberta','repita automaticamente, com limite, em deadlock e erro de serialização · restrições como última defesa')},
+  ], lines:[
+    {at:3.5, d:'M236 134 L 330 134', cls:'flow'}, {at:4, d:'M236 274 L 330 274', cls:'green'},
+    {at:5, d:'M236 150 C 290 180, 290 240, 330 258', cls:'amber'}, {at:5, d:'M236 258 C 290 230, 290 160, 330 150', cls:'amber'},
+  ]}},
+
+{ id:'lab-isolamento', ch:'Transações e concorrência', title:'Lab 2: isolamento e travas na prática',
+  say:'Segundo laboratório: dois terminais do banco, A e B. No Read Committed, A lê, B atualiza, e A lê o valor novo: leitura não repetível. No Repeatable Read, A continua vendo o valor antigo, porque tem um snapshot fixo. Com FOR UPDATE, o comando de B fica esperando até A confirmar. E o desafio: provoque um deadlock atualizando as linhas um e dois em ordens opostas, leia a mensagem e explique em voz alta.',
+  v:S('lab/isolamento.sql','isolamento.sql','sql')},
+
+/* ---------- ESCALA ---------- */
+{ id:'escada', ch:'Escalando bancos relacionais', title:'A escada da escala, na ordem certa',
+  say:'Um único PostgreSQL bem configurado aguenta muito mais do que a maioria das empresas precisa. Escalar começa por otimizar, porque cada passo de distribuição adiciona complexidade permanente. A escada: consultas e índices, quase de graça; pool de conexões, porque cada conexão é um processo; cache; máquina maior, que muitas vezes é o mais barato no total; réplicas de leitura; particionamento; e, por último, sharding, o degrau mais caro de manter.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:430,w:120,h:72, cls:'green', html:B('1 · Consultas','índices')},
+    {at:2, x:162,y:378,w:120,h:124, cls:'green', html:B('2 · Pool','PgBouncer')},
+    {at:3.2, x:288,y:326,w:120,h:176, cls:'green', html:B('3 · Cache','Volume 1')},
+    {at:4.4, x:414,y:274,w:120,h:228, cls:'blue', html:B('4 · Vertical','máquina maior')},
+    {at:5.6, x:540,y:222,w:120,h:280, cls:'blue', html:B('5 · Réplicas','de leitura')},
+    {at:6.8, x:666,y:170,w:120,h:332, cls:'amber', html:B('6 · Partições','mesmo banco')},
+    {at:8, x:792,y:118,w:132,h:384, cls:'amber', html:B('7 · Sharding','vários bancos')+'<span class="tag am">último degrau</span>'},
+    {at:11, x:36,y:92,w:560,h:110, cls:'ext', html:B('Cada degrau acima custa para sempre','otimize antes de distribuir')+UL('pool: centenas de instâncias × dezenas de conexões derrubam o banco')},
+  ]}},
+
+{ id:'replicas', ch:'Escalando bancos relacionais', title:'Réplicas, particionamento e sharding',
+  say:'Na replicação assíncrona, a réplica fica milissegundos ou segundos atrás. O bug clássico: o usuário salva o perfil e vê o dado antigo ao recarregar. Leia do principal logo após escrever e mande às réplicas só o que tolera atraso. O particionamento divide uma tabela enorme, por exemplo por mês: consultas com a chave leem só o necessário, e apagar dados antigos vira remover uma partição. O sharding divide entre bancos por uma chave, como o tenant; junções e transações entre shards ficam difíceis.',
+  v:GRID(3, [
+    ['Réplicas','assíncronas, um pouco atrás',['read-your-writes: leia do principal','réplica: relatórios, listagens','base da alta disponibilidade'],'blue'],
+    ['Particionamento','uma tabela, vários pedaços',['por intervalo, lista ou hash','apagar mês antigo: instantâneo','sem a chave: varre tudo'],'green'],
+    ['Sharding','vários bancos',['chave: tenant_id em SaaS','junção entre shards: difícil','antes: Citus, CockroachDB'],'amber'],
+  ], {step:4, rodape:'Operação: backup testado com restauração · PITR · monitore conexões, lag e inchaço · statement_timeout'}) },
+
+/* ---------- MONGODB ---------- */
+{ id:'mongo-modelo', ch:'MongoDB a fundo', title:'Modelar a partir das consultas',
+  say:'MongoDB guarda documentos em coleções. A mudança de mentalidade: no relacional você modela os dados e depois escreve as consultas; no MongoDB, modela a partir das consultas. Um documento pode ter campos aninhados e arrays, até dezesseis megabytes, e ler um documento inteiro é uma operação só. A decisão central é embutir ou referenciar. Embuta o que é lido junto, pertence ao pai e tem tamanho limitado. Referencie o que tem vida própria, é compartilhado ou cresce sem limite.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'green', html:B('Embutir quando','')+UL('lidos juntos quase sempre','"pertence a": itens do pedido','array limitado e previsível','cópia histórica que não muda')},
+    {at:5, x:494,y:92,w:430,h:250, cls:'blue', html:B('Referenciar quando','')+UL('lidos separadamente','vida própria: produtos','array cresce sem limite','mudança precisa refletir em todo lugar')},
+    {at:10, x:36,y:362,w:280,h:140, cls:'amber', html:B('Extended reference','id + campos exibidos')+NOTE('clienteId + nomeCliente', 'dim')},
+    {at:12, x:340,y:362,w:280,h:140, cls:'amber', html:B('Bucket','um doc por sensor por hora')},
+    {at:14, x:644,y:362,w:280,h:140, cls:'amber', html:B('Subset','os 10 comentários recentes embutidos')},
+  ]}},
+
+{ id:'mongo-codigo', ch:'MongoDB a fundo', title:'Índices ESR e o pipeline de agregação',
+  say:'MongoDB usa B-trees, e as mesmas regras valem: prefixo à esquerda, seletividade e custo nas escritas. A regra própria dos compostos é ESR: Equality, depois Sort, depois Range. Explain com executionStats mostra IXSCAN ou COLLSCAN. O pipeline de agregação processa em etapas; coloque o match o mais cedo possível. E se você precisa de lookup em toda consulta, a modelagem provavelmente está errada. Este é o terceiro laboratório: pedidos com itens embutidos e os mais vendidos.',
+  v:S('lab/mongo.js','mongo.js','js')},
+
+{ id:'mongo-quando', ch:'MongoDB a fundo', title:'Consistência, escala e quando usar',
+  say:'Operações num único documento são atômicas: modelar para a escrita importante caber num documento é a consistência mais simples. Transações com vários documentos existem, mas custam mais. O replica set tem eleição automática, e write concern majority garante que a escrita chegou à maioria. Use MongoDB para dados hierárquicos lidos como um todo e schemas que evoluem rápido. Evite para relacionamentos consultados de formas imprevisíveis e regras fortes de integridade. E o schema sempre existe: só passa a morar no código.',
+  v:GRID(3, [
+    ['Consistência','',['um documento: atômico','multi-documento: custa mais','write concern majority'],'blue'],
+    ['Use para','',['catálogos, perfis, conteúdo','schema em descoberta','escrita alta, acesso conhecido'],'green'],
+    ['Evite para','',['consultas cruzadas imprevisíveis','contabilidade e financeiro','"não precisa de schema"'],'amber'],
+  ], {step:4}) },
+
+/* ---------- TIPOS DE BANCO ---------- */
+{ id:'tipos', ch:'SQL, NoSQL e outros', title:'Como decidir o banco, em quatro perguntas',
+  say:'Sistemas maduros usam vários bancos, cada um onde é melhor. Quatro perguntas decidem. A integridade entre entidades é crítica? Dinheiro, estoque, contratos: relacional. Como os dados são lidos? Sempre o objeto inteiro por id: documento ou chave-valor; cruzando entidades: relacional. Qual o volume de escrita? Massivo e previsível: colunas largas. E o time sabe operar? Um banco que ninguém domina é um risco maior que qualquer ganho teórico. O padrão para começar é PostgreSQL.',
+  v:GRID(2, [
+    ['1 · Integridade é crítica?','dinheiro, estoque, contratos',['→ relacional'],'blue'],
+    ['2 · Como os dados são lidos?','',['objeto inteiro por id → documento ou chave-valor','cruzando entidades → relacional'],'green'],
+    ['3 · Volume e padrão de escrita?','',['massivo, distribuído, previsível → colunas largas'],'amber'],
+    ['4 · O time sabe operar?','',['banco que ninguém domina é risco operacional'],''],
+  ], {step:3.6, rodape:'Padrão: PostgreSQL (JSONB, busca textual, pgvector, Timescale, PostGIS) + especializado com requisito medido'}) },
+
+{ id:'cap', ch:'SQL, NoSQL e outros', title:'O teorema CAP, sem mito',
+  say:'Em um sistema distribuído, quando a rede se divide, é preciso escolher entre responder com dados possivelmente desatualizados, a disponibilidade, ou recusar até ter certeza, a consistência. Sem partição, a troca do dia a dia é entre latência e consistência. Na prática, a maioria dos bancos permite ajustar por operação, como o write concern do MongoDB ou o nível de consistência do Cassandra. Em entrevista, mostre que entende o trade-off, não que decorou a sigla.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:96,w:250,h:110, cls:'blue', html:B('Nó A','São Paulo')},
+    {at:1.5, x:674,y:96,w:250,h:110, cls:'blue', html:B('Nó B','Virgínia')},
+    {at:3, x:330,y:126,w:300,h:50, cls:'ext', html:B('✂ partição de rede','')},
+    {at:6, x:36,y:236,w:430,h:150, cls:'green', html:B('Disponibilidade (AP)','responde, talvez desatualizado')+UL('carrinho, feed, contadores')},
+    {at:8.5, x:494,y:236,w:430,h:150, cls:'amber', html:B('Consistência (CP)','recusa até ter certeza')+UL('saldo, estoque crítico')},
+    {at:11, x:36,y:406,w:888,h:96, cls:'region', html:'<span class="rl">sem partição: latência × consistência</span>'+UL('ajuste por operação: write concern no MongoDB, nível de consistência no Cassandra')},
+  ], lines:[
+    {at:3, d:'M286 151 L 330 151', cls:'dim'}, {at:3, d:'M630 151 L 674 151', cls:'dim'},
+  ]}},
+
+/* ---------- MIGRAÇÕES ---------- */
+{ id:'migracoes', ch:'Migrações seguras', title:'Expandir e contrair',
+  say:'Mudar o schema com o sistema no ar é uma das operações mais arriscadas do dia a dia. Durante o deploy, versões nova e antiga rodam juntas; algumas alterações travam a tabela; e o rollback do código não desfaz a migração. A regra: nunca uma mudança incompatível de uma vez. Para renomear uma coluna: expandir com a nova, escrita dupla, backfill em lotes, trocar a leitura e só depois contrair. São vários deploys, o preço de zero indisponibilidade.',
+  v:FLOW([['1 · Expandir','coluna nova, opcional','blue'],['2 · Escrita dupla','grava nas duas','blue'],['3 · Backfill','em lotes pequenos','amber'],['4 · Trocar leitura','lê da nova','green'],['5 · Contrair','remove a antiga','green']],
+    {y:100, h:96, step:1.8, cards:[
+      ['Por que é perigoso','',['versões nova e antiga rodam juntas','ALTER pode travar 50 milhões de linhas','rollback do código não desfaz a migração'],'amber'],
+      ['Boas práticas de time','',['migrações versionadas, aplicadas pelo pipeline','lock_timeout curto · teste numa cópia de produção','backfill como job com lote, pausa e retomada'],'green'],
+    ]}) },
+
+{ id:'migracao-codigo', ch:'Migrações seguras', title:'As operações e seus riscos',
+  say:'No PostgreSQL: adicionar coluna anulável é direto; com valor padrão, as versões recentes não reescrevem a tabela. NOT NULL e chave estrangeira varrem com trava: crie como NOT VALID e valide depois. CREATE INDEX comum bloqueia escritas: use CONCURRENTLY. Mudar tipo geralmente reescreve a tabela: coluna nova, backfill e troca. E lock timeout curto faz a migração falhar e tentar depois, em vez de enfileirar todo o tráfego. No MongoDB, um campo schemaVersion e um job fazem o mesmo papel.',
+  v:S('db/migracao.sql','migracao.sql','sql')},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de bancos de dados',
+  say:'Antes de dizer que domina: você modela com chaves, restrições e normalização, escolhe índices compostos pela regra do prefixo, lê um EXPLAIN ANALYZE comparando estimado e real, elimina N+1 e OFFSET grande, escolhe o isolamento e a estratégia de trava, sobe a escada da escala na ordem certa, decide entre embutir e referenciar e migra sem indisponibilidade.',
+  v:CK('Chaves, FK e CHECK no banco', 'Normalizar e desnormalizar com motivo', 'Índice composto: igualdade, depois intervalo', 'EXPLAIN ANALYZE: estimado × real', 'Eliminar N+1', 'Paginação por cursor', 'Níveis de isolamento e MVCC', 'Pessimista, otimista ou atômica', 'Escada da escala na ordem', 'Réplicas com read-your-writes', 'Embutir ou referenciar no MongoDB', 'Expandir e contrair')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão o mapa dos tipos de banco, os links para as cenas que aprofundam estes temas nas outras trilhas, a trilha de estudo com a documentação oficial, o checklist e as perguntas de entrevista. Em entrevista, pergunte sobre volume, padrão de acesso e consistência antes de propor a solução.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Como um índice funciona', 'db', 'indices', 'B-tree e índices para consultas reais'],
+  ['Lendo um plano real', 'db', 'plano', 'Operadores e um plano comentado'],
+  ['Estatísticas e parameter sniffing', 'db', 'estatisticas', 'Quando o plano muda sozinho'],
+  ['Níveis de isolamento e anomalias', 'db', 'isolamento', 'Outra explicação com SQL Server'],
+  ['Migrations sem parar a aplicação', 'db', 'migracoes', 'O mesmo padrão em .NET'],
+  ['EF Core sem surpresas', 'cs', 'efcore', 'N+1, tracking e consultas no ORM'],
+  ['MongoDB ou SQL?', 'node', 'mongosql', 'A decisão no ecossistema Node'],
+  ['Modelagem no MongoDB', 'node', 'mongo-modelo', 'Documentos com o driver oficial'],
+  ['SQL tipado com Kysely', 'node', 'sql', 'Consultas tipadas em TypeScript'],
+  ['Particionamento e hashing consistente', 'bt', 'sharding', 'Sharding em entrevista de system design'],
+  ['Consistência, replicação e CAP', 'bt', 'consistencia', 'O trade-off em system design'],
+  ['pgvector e busca híbrida', 'ia', 'pgvector', 'Índices vetoriais no PostgreSQL'],
+];
+
+const MATRIZ = [
+  ['Relacional', 'PostgreSQL, MySQL, SQL Server', 'Integridade, transações, consultas flexíveis', 'Núcleo do negócio: pedidos, financeiro', 'Escala horizontal exige planejamento'],
+  ['Documentos', 'MongoDB, Couchbase, Firestore', 'Hierárquico lido como um todo', 'Catálogos, perfis, conteúdo', 'Junções e integridade entre entidades'],
+  ['Chave-valor', 'Redis, DynamoDB', 'Acesso por chave em altíssima escala', 'Cache, sessões, carrinhos', 'Consultas por outros campos'],
+  ['Colunas largas', 'Cassandra, ScyllaDB', 'Escrita massiva distribuída', 'Telemetria, mensagens', 'Modelar por consulta; sem junções'],
+  ['Séries temporais', 'TimescaleDB, InfluxDB', 'Agregações por tempo e retenção', 'Métricas, IoT', 'Dados que não são temporais'],
+  ['Busca', 'Elasticsearch, OpenSearch', 'Relevância e filtros facetados', 'Busca de produtos, logs', 'Não é fonte de verdade'],
+  ['Grafo', 'Neo4j, Neptune', 'Relações profundas', 'Recomendação, fraude', 'Operação especializada'],
+  ['Vetorial', 'pgvector, Qdrant, Pinecone', 'Similaridade de embeddings', 'RAG, busca semântica', 'Comece pelo pgvector se já tem PostgreSQL'],
+  ['Analítico colunar', 'BigQuery, Snowflake, ClickHouse', 'Agregar bilhões de linhas', 'BI, data warehouse', 'Não serve para OLTP'],
+];
+
+const STUDY = [
+  ['Use The Index, Luke', 'Índices e SQL para desenvolvedores, de graça', 'https://use-the-index-luke.com/', 'btree'],
+  ['PostgreSQL: documentação de índices', 'Tipos, compostos, parciais e de expressão', 'https://www.postgresql.org/docs/current/indexes.html', 'compostos'],
+  ['PostgreSQL: usando EXPLAIN', 'Como ler planos', 'https://www.postgresql.org/docs/current/using-explain.html', 'explain'],
+  ['PostgreSQL: isolamento de transações', 'Níveis e comportamento real', 'https://www.postgresql.org/docs/current/transaction-iso.html', 'isolamento'],
+  ['PostgreSQL: travas explícitas', 'FOR UPDATE, SKIP LOCKED e deadlocks', 'https://www.postgresql.org/docs/current/explicit-locking.html', 'travas'],
+  ['PostgreSQL: particionamento', 'Particionamento declarativo', 'https://www.postgresql.org/docs/current/ddl-partitioning.html', 'replicas'],
+  ['explain.dalibo.com', 'Visualizador de planos do PostgreSQL', 'https://explain.dalibo.com/', 'estimado'],
+  ['PgBouncer', 'Pool de conexões', 'https://www.pgbouncer.org/', 'escada'],
+  ['MongoDB: modelagem de dados', 'Embutir, referenciar e padrões', 'https://www.mongodb.com/docs/manual/data-modeling/', 'mongo-modelo'],
+  ['MongoDB: regra ESR', 'Ordem dos campos em índices compostos', 'https://www.mongodb.com/docs/manual/tutorial/equality-sort-range-guideline/', 'mongo-codigo'],
+  ['MongoDB: agregação', 'Pipeline e operadores', 'https://www.mongodb.com/docs/manual/aggregation/', 'mongo-codigo'],
+  ['Mudanças de schema sem downtime', 'Strong Migrations: regras práticas', 'https://github.com/ankane/strong_migrations', 'migracao-codigo'],
+  ['Designing Data-Intensive Applications', 'Replicação, partições e transações', 'https://dataintensive.net/', 'cap'],
+];
+
+const CHECK = [
+  ['Modelagem', 'Modelar pedidos com FK, CHECK e tabela associativa', 'chaves'],
+  ['Modelagem', 'Explicar 1FN, 2FN e 3FN com exemplo', 'normalizacao'],
+  ['Índices', 'Escolher a ordem das colunas de um índice composto', 'compostos'],
+  ['Índices', 'Criar índice parcial e de cobertura', 'compostos'],
+  ['Índices', 'Identificar o que anula um índice', 'custos-indice'],
+  ['Planos', 'Ler um EXPLAIN ANALYZE de dentro para fora', 'explain'],
+  ['Planos', 'Comparar linhas estimadas e reais', 'estimado'],
+  ['Planos', 'Eliminar um N+1 no ORM', 'estimado'],
+  ['Planos', 'Paginação por cursor', 'lab-indices'],
+  ['Transações', 'Explicar as anomalias e o write skew', 'acid'],
+  ['Transações', 'Escolher o nível de isolamento', 'isolamento'],
+  ['Transações', 'Pessimista, otimista ou atômica para um caso', 'travas'],
+  ['Transações', 'Provocar e explicar um deadlock', 'lab-isolamento'],
+  ['Escala', 'Explicar a escada da escala', 'escada'],
+  ['Escala', 'Tratar o atraso de réplica', 'replicas'],
+  ['MongoDB', 'Decidir embutir ou referenciar', 'mongo-modelo'],
+  ['MongoDB', 'Índice ESR e pipeline com $match primeiro', 'mongo-codigo'],
+  ['Decisão', 'Escolher o banco pelas quatro perguntas', 'tipos'],
+  ['Migrações', 'Renomear coluna com expandir e contrair', 'migracoes'],
+  ['Migrações', 'CONCURRENTLY, NOT VALID e lock_timeout', 'migracao-codigo'],
+  ['Laboratório', 'Lab 1 medido: antes e depois do índice', 'lab-indices-run'],
+];
+
+const FAQ = [
+ ['Planos','Uma consulta ficou lenta de repente. Por onde começa?',`<p>Pego a consulta real e rodo <code>EXPLAIN ANALYZE</code>. Procuro o nó mais caro e comparo linhas estimadas com reais. Divergência grande indica estatísticas velhas (<code>ANALYZE</code>). Depois verifico índice ausente ou anulado, mudança no volume de dados e travas causadas por outra transação.</p>`],
+ ['Índices','Você tem um índice em (a, b). Ele ajuda em WHERE b = 1?',`<p>Em geral não, pela regra do prefixo à esquerda. Ajuda em <code>a</code>, em <code>a e b</code>, e em <code>a</code> com ordenação por <code>b</code>.</p>`],
+ ['Índices','Por que não criar índice em todas as colunas?',`<p>Cada índice deixa todas as escritas mais lentas, ocupa disco e memória e compete pelo cache. Índices devem servir consultas reais e frequentes.</p>`],
+ ['Transações','Como evitar vender o último item do estoque para dois clientes?',`<p>Atualização atômica com condição (<code>UPDATE … SET estoque = estoque - 1 WHERE id = ? AND estoque > 0</code> e checar linhas afetadas), ou <code>SELECT … FOR UPDATE</code> na transação. Com uma restrição <code>CHECK (estoque >= 0)</code> como rede de segurança.</p>`],
+ ['Transações','Explique os níveis de isolamento.',`<p>Read Committed evita leitura suja; Repeatable Read também evita leitura não repetível; Serializable evita todas as anomalias, ao custo de abortar transações que precisam ser repetidas. Bônus: o comportamento exato varia por banco e o padrão do PostgreSQL é Read Committed.</p>`],
+ ['Planos','O que é o problema N+1 e como resolve?',`<p>Uma consulta para a lista e uma por item no laço. Resolve com JOIN ou <code>IN</code> numa única consulta, via carregamento antecipado do ORM.</p>`],
+ ['MongoDB','Quando escolheria MongoDB em vez de PostgreSQL?',`<p>Quando os dados são hierárquicos e lidos como um todo, o schema varia ou evolui muito, e não há integridade forte entre entidades. Para financeiro e consultas cruzadas imprevisíveis, fico com relacional.</p>`],
+ ['MongoDB','Embutir ou referenciar os comentários de um post?',`<p>Depende do volume: poucos e limitados, embutir. Posts que podem ter milhares de comentários, referenciar numa coleção própria, talvez embutindo só os mais recentes (padrão subset).</p>`],
+ ['Escala','O usuário salva o perfil e vê o dado antigo ao recarregar. O que pode ser?',`<p>Leitura de réplica com atraso de replicação, ou cache não invalidado. Solução: ler do principal logo após escrever e invalidar o cache na atualização.</p>`],
+ ['Migrações','Como renomear uma coluna sem derrubar o sistema?',`<p>Expandir e contrair: coluna nova, escrita dupla, backfill em lotes, troca da leitura, remoção da antiga num deploy posterior.</p>`],
+ ['Planos','Paginação com OFFSET está lenta nas últimas páginas. Por quê?',`<p>O banco lê e descarta todas as linhas anteriores ao offset. Uso paginação por cursor, filtrando pelo último valor visto numa coluna indexada.</p>`],
+ ['Design','Projete o banco de um sistema de reservas de hotel.',`<p>Tabelas de hotéis, quartos, hóspedes e reservas com intervalo de datas. A regra crítica é não haver duas reservas do mesmo quarto em datas sobrepostas: garantida no banco (no PostgreSQL, uma restrição de exclusão sobre intervalos) ou com trava do quarto na transação. Índices por quarto e período. Discuta disponibilidade em cache, picos e reservas pendentes de pagamento.</p>`],
+];
+
+const CMDS = [
+  ['EXPLAIN (ANALYZE, BUFFERS) SELECT …', 'Plano real, com cache e disco'],
+  ['BEGIN; EXPLAIN ANALYZE UPDATE …; ROLLBACK;', 'Medir uma escrita sem alterar dados'],
+  ['ANALYZE pedidos;', 'Atualizar estatísticas'],
+  ['CREATE INDEX CONCURRENTLY …', 'Índice sem bloquear escritas'],
+  ['SET lock_timeout = \'3s\';', 'Migração que desiste em vez de enfileirar'],
+  ['SET statement_timeout = \'5s\';', 'Consulta descontrolada não trava o banco'],
+  ['SELECT … FOR UPDATE SKIP LOCKED', 'Tabela como fila de trabalho'],
+  ['WHERE criado_em < :ultimo ORDER BY criado_em DESC LIMIT 20', 'Paginação por cursor'],
+  ['db.col.find(q).explain(\'executionStats\')', 'IXSCAN ou COLLSCAN no MongoDB'],
+  ['B-tree: 3–4 níveis ≈ milhões de linhas', 'Por que o índice é tão rápido'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

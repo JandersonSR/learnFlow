@@ -1,0 +1,1229 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Preparatório Big Tech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:392px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Squad · preparatório de entrevistas</span>
+    <h1>Preparatório para entrevistas de big tech</h1>
+    <p class="lead">Roteiro em vídeo para processos do nível de Google, Meta, Amazon, Apple, Netflix e Microsoft: como é o processo, o método para resolver problemas, os padrões de estruturas de dados e algoritmos, design de sistemas com estimativas e exemplos completos, e a entrevista comportamental. Abaixo do vídeo estão a tabela de padrões, a trilha de estudo, o checklist de prontidão, as perguntas frequentes e a cola de complexidade.</p>
+    <div class="meta">
+      <span class="pill">Estruturas de dados</span><span class="pill">Algoritmos</span><span class="pill">Design de sistemas</span><span class="pill">Comportamental</span><span class="pill">Código em C#</span>
+    </div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow">Decisão</span><h2>Padrões de algoritmo</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch">Leia o enunciado procurando o sinal. Os nomes dos problemas são os usados no LeetCode, para facilitar a busca.</p>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Padrão</th><th>Sinal no enunciado</th><th>Problemas clássicos</th><th>Quando não serve</th><th>Complexidade</th></tr></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Plataformas de problemas, livros e guias de referência. Os links levam a sites externos. A marcação fica salva só neste navegador.</p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prontidão</span><h2>Checklist antes do loop</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Cada item vale quando foi aplicado em código, não só lido. O botão ao lado leva à cena do vídeo.</p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" placeholder="Buscar: travar, linguagem, DP, inglês…" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Revisão de véspera</span><h2>Cola de complexidade</h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer>Material de estudo da AGX. Os códigos em C# são didáticos e não foram compilados neste material. Formatos de entrevista mudam: confirme sempre com o recrutador de cada empresa.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const SNIP = {"arvores.cs": "public sealed class Arvore(int valor, Arvore? esq = null, Arvore? dir = null)\n{\n    public int Valor = valor;\n    public Arvore? Esq = esq, Dir = dir;\n}\n\n// DFS recursivo: altura\npublic int Altura(Arvore? r) => r is null ? 0 : 1 + Math.Max(Altura(r.Esq), Altura(r.Dir));\n\n// BFS por nível com fila\npublic List<List<int>> PorNivel(Arvore? raiz)\n{\n    var niveis = new List<List<int>>();\n    if (raiz is null) return niveis;\n    var fila = new Queue<Arvore>();\n    fila.Enqueue(raiz);\n    while (fila.Count > 0)\n    {\n        var nivel = new List<int>();\n        for (var n = fila.Count; n > 0; n--)             // só os nós deste nível\n        {\n            var no = fila.Dequeue();\n            nivel.Add(no.Valor);\n            if (no.Esq is not null) fila.Enqueue(no.Esq);\n            if (no.Dir is not null) fila.Enqueue(no.Dir);\n        }\n        niveis.Add(nivel);\n    }\n    return niveis;\n}\n\n// Validar BST: passe os limites para baixo (comparar só com o pai não basta)\npublic bool EhBst(Arvore? r, long min = long.MinValue, long max = long.MaxValue) =>\n    r is null || (r.Valor > min && r.Valor < max\n                  && EhBst(r.Esq, min, r.Valor) && EhBst(r.Dir, r.Valor, max));\n\n// Menor ancestral comum em árvore binária qualquer\npublic Arvore? Lca(Arvore? r, Arvore p, Arvore q)\n{\n    if (r is null || r == p || r == q) return r;\n    var e = Lca(r.Esq, p, q);\n    var d = Lca(r.Dir, p, q);\n    return e is not null && d is not null ? r : e ?? d;\n}", "backtracking.cs": "// Subconjuntos: escolher ou não cada elemento, O(n · 2ⁿ)\npublic List<List<int>> Subconjuntos(int[] nums)\n{\n    var resultado = new List<List<int>>();\n    var atual = new List<int>();\n    void Ir(int i)\n    {\n        if (i == nums.Length) { resultado.Add([.. atual]); return; }\n        atual.Add(nums[i]); Ir(i + 1);                   // escolhe\n        atual.RemoveAt(atual.Count - 1); Ir(i + 1);      // desfaz e não escolhe\n    }\n    Ir(0);\n    return resultado;\n}\n\n// Combinações que somam o alvo (pode repetir número), com poda\npublic List<List<int>> SomaAlvo(int[] candidatos, int alvo)\n{\n    Array.Sort(candidatos);\n    var resultado = new List<List<int>>();\n    var atual = new List<int>();\n    void Ir(int inicio, int resta)\n    {\n        if (resta == 0) { resultado.Add([.. atual]); return; }\n        for (var i = inicio; i < candidatos.Length && candidatos[i] <= resta; i++)   // poda\n        {\n            atual.Add(candidatos[i]);\n            Ir(i, resta - candidatos[i]);\n            atual.RemoveAt(atual.Count - 1);\n        }\n    }\n    Ir(0, alvo);\n    return resultado;\n}\n// Molde: escolher → explorar → desfazer. Serve para permutações, N-rainhas, sudoku, palavra na grade", "busca.cs": "// Busca binária: escreva o invariante antes do código\npublic int Buscar(int[] a, int alvo)\n{\n    int lo = 0, hi = a.Length - 1;                       // se existir, o alvo está em [lo, hi]\n    while (lo <= hi)\n    {\n        var mid = lo + (hi - lo) / 2;                    // evita overflow\n        if (a[mid] == alvo) return mid;\n        if (a[mid] < alvo) lo = mid + 1; else hi = mid - 1;\n    }\n    return -1;\n}\n\n// Busca binária na resposta: menor velocidade para comer as pilhas em h horas\n// Se a velocidade k serve, qualquer k maior também serve: a resposta é monotônica\npublic int MenorVelocidade(int[] pilhas, int h)\n{\n    int lo = 1, hi = pilhas.Max();\n    while (lo < hi)                                      // primeiro k que serve\n    {\n        var k = lo + (hi - lo) / 2;\n        long horas = 0;\n        foreach (var p in pilhas) horas += (p + k - 1) / k;   // teto de p / k\n        if (horas <= h) hi = k; else lo = k + 1;\n    }\n    return lo;\n}\n\n// Array ordenado e rotacionado: uma das metades sempre está ordenada\npublic int BuscarRotacionado(int[] a, int alvo)\n{\n    int lo = 0, hi = a.Length - 1;\n    while (lo <= hi)\n    {\n        var mid = lo + (hi - lo) / 2;\n        if (a[mid] == alvo) return mid;\n        if (a[lo] <= a[mid])                             // esquerda ordenada\n        {\n            if (a[lo] <= alvo && alvo < a[mid]) hi = mid - 1; else lo = mid + 1;\n        }\n        else                                             // direita ordenada\n        {\n            if (a[mid] < alvo && alvo <= a[hi]) lo = mid + 1; else hi = mid - 1;\n        }\n    }\n    return -1;\n}", "dijkstra.cs": "// Dijkstra: menor caminho com pesos não negativos, O((V + E) log V)\npublic int[] Dijkstra(List<(int Para, int Peso)>[] adj, int origem)\n{\n    var dist = Enumerable.Repeat(int.MaxValue, adj.Length).ToArray();\n    dist[origem] = 0;\n    var heap = new PriorityQueue<int, int>();\n    heap.Enqueue(origem, 0);\n    while (heap.TryDequeue(out var u, out var d))\n    {\n        if (d > dist[u]) continue;                       // entrada antiga no heap\n        foreach (var (v, w) in adj[u])\n            if (d + w < dist[v])\n            {\n                dist[v] = d + w;\n                heap.Enqueue(v, dist[v]);\n            }\n    }\n    return dist;\n}\n\n// Union-Find com compressão de caminho e união por tamanho: quase O(1) por operação\npublic sealed class UnionFind\n{\n    private readonly int[] _pai, _tamanho;\n    public int Componentes { get; private set; }\n\n    public UnionFind(int n)\n    {\n        _pai = Enumerable.Range(0, n).ToArray();\n        _tamanho = Enumerable.Repeat(1, n).ToArray();\n        Componentes = n;\n    }\n\n    public int Raiz(int x) => _pai[x] == x ? x : _pai[x] = Raiz(_pai[x]);\n\n    public bool Unir(int a, int b)\n    {\n        int ra = Raiz(a), rb = Raiz(b);\n        if (ra == rb) return false;                      // já conectados: esta aresta fecha ciclo\n        if (_tamanho[ra] < _tamanho[rb]) (ra, rb) = (rb, ra);\n        _pai[rb] = ra;\n        _tamanho[ra] += _tamanho[rb];\n        Componentes--;\n        return true;\n    }\n}\n// Usos: componentes conectados, ciclo em grafo não direcionado, Kruskal, contas duplicadas", "dp.cs": "// Roteiro de DP: 1) estado  2) transição  3) caso base  4) ordem de cálculo  5) resposta\n\n// Troco mínimo, bottom-up, O(valor × moedas)\npublic int TrocoMinimo(int[] moedas, int valor)\n{\n    var dp = new int[valor + 1];                         // dp[v] = menor nº de moedas para v\n    Array.Fill(dp, int.MaxValue);\n    dp[0] = 0;\n    for (var v = 1; v <= valor; v++)\n        foreach (var m in moedas)\n            if (m <= v && dp[v - m] != int.MaxValue)\n                dp[v] = Math.Min(dp[v], dp[v - m] + 1);\n    return dp[valor] == int.MaxValue ? -1 : dp[valor];\n}\n\n// Maior subsequência comum, tabela 2D, O(n × m)\npublic int Lcs(string a, string b)\n{\n    var dp = new int[a.Length + 1, b.Length + 1];\n    for (var i = 1; i <= a.Length; i++)\n        for (var j = 1; j <= b.Length; j++)\n            dp[i, j] = a[i - 1] == b[j - 1]\n                ? dp[i - 1, j - 1] + 1\n                : Math.Max(dp[i - 1, j], dp[i, j - 1]);\n    return dp[a.Length, b.Length];\n}\n\n// Top-down com memo: caminhos numa grade com obstáculos\npublic int Caminhos(int[][] grade)\n{\n    var memo = new Dictionary<(int, int), int>();\n    int Ir(int i, int j)\n    {\n        if (i >= grade.Length || j >= grade[0].Length || grade[i][j] == 1) return 0;\n        if (i == grade.Length - 1 && j == grade[0].Length - 1) return 1;\n        if (memo.TryGetValue((i, j), out var r)) return r;\n        return memo[(i, j)] = Ir(i + 1, j) + Ir(i, j + 1);\n    }\n    return Ir(0, 0);\n}\n// Famílias: mochila 0/1, LIS, distância de edição, intervalos, DP em árvore, bitmask", "grafos.cs": "// Número de ilhas: DFS em grade, O(linhas × colunas)\npublic int Ilhas(char[][] g)\n{\n    var total = 0;\n    for (var i = 0; i < g.Length; i++)\n        for (var j = 0; j < g[0].Length; j++)\n            if (g[i][j] == '1') { total++; Afundar(g, i, j); }\n    return total;\n}\n\nvoid Afundar(char[][] g, int i, int j)\n{\n    if (i < 0 || j < 0 || i >= g.Length || j >= g[0].Length || g[i][j] != '1') return;\n    g[i][j] = '0';                                       // marca como visitado\n    Afundar(g, i + 1, j); Afundar(g, i - 1, j);\n    Afundar(g, i, j + 1); Afundar(g, i, j - 1);\n}\n\n// BFS: menor caminho em grafo sem peso\npublic int MenorCaminho(Dictionary<int, List<int>> adj, int origem, int destino)\n{\n    var dist = new Dictionary<int, int> { [origem] = 0 };\n    var fila = new Queue<int>();\n    fila.Enqueue(origem);\n    while (fila.TryDequeue(out var u))\n    {\n        if (u == destino) return dist[u];\n        foreach (var v in adj.GetValueOrDefault(u, []))\n            if (dist.TryAdd(v, dist[u] + 1)) fila.Enqueue(v);   // TryAdd: só a primeira visita\n    }\n    return -1;\n}\n\n// Ordenação topológica (Kahn): ordem dos cursos com pré-requisitos; detecta ciclo\npublic int[] OrdemCursos(int n, int[][] prereq)\n{\n    var adj = Enumerable.Range(0, n).Select(_ => new List<int>()).ToArray();\n    var grauEntrada = new int[n];\n    foreach (var p in prereq) { adj[p[1]].Add(p[0]); grauEntrada[p[0]]++; }\n\n    var fila = new Queue<int>(Enumerable.Range(0, n).Where(i => grauEntrada[i] == 0));\n    var ordem = new List<int>();\n    while (fila.TryDequeue(out var u))\n    {\n        ordem.Add(u);\n        foreach (var v in adj[u]) if (--grauEntrada[v] == 0) fila.Enqueue(v);\n    }\n    return ordem.Count == n ? [.. ordem] : [];          // faltou alguém: existe ciclo\n}", "hash.cs": "// Two Sum: O(n) tempo, O(n) espaço. Troca o laço duplo O(n²) por um dicionário\npublic int[] TwoSum(int[] nums, int alvo)\n{\n    var visto = new Dictionary<int, int>();             // valor → índice\n    for (var i = 0; i < nums.Length; i++)\n    {\n        if (visto.TryGetValue(alvo - nums[i], out var j)) return [j, i];\n        visto[nums[i]] = i;\n    }\n    return [];\n}\n\n// Agrupar anagramas: chave canônica = letras ordenadas. O(n · k log k)\npublic IList<IList<string>> AgruparAnagramas(string[] palavras)\n{\n    var grupos = new Dictionary<string, IList<string>>();\n    foreach (var p in palavras)\n    {\n        var letras = p.ToCharArray();\n        Array.Sort(letras);\n        var chave = new string(letras);\n        if (!grupos.TryGetValue(chave, out var lista)) grupos[chave] = lista = new List<string>();\n        lista.Add(p);\n    }\n    return grupos.Values.ToList();\n}\n\n// Maior sequência de inteiros consecutivos em O(n): só conta a partir de quem não tem x - 1\npublic int MaiorSequencia(int[] nums)\n{\n    var conjunto = nums.ToHashSet();\n    var melhor = 0;\n    foreach (var x in conjunto)\n    {\n        if (conjunto.Contains(x - 1)) continue;\n        var tamanho = 1;\n        while (conjunto.Contains(x + tamanho)) tamanho++;\n        melhor = Math.Max(melhor, tamanho);\n    }\n    return melhor;\n}", "heap.cs": "// Top K mais frequentes: heap de tamanho k, O(n log k)\npublic int[] TopK(int[] nums, int k)\n{\n    var freq = new Dictionary<int, int>();\n    foreach (var x in nums) freq[x] = freq.GetValueOrDefault(x) + 1;\n\n    var heap = new PriorityQueue<int, int>();            // min-heap pela frequência\n    foreach (var (valor, f) in freq)\n    {\n        heap.Enqueue(valor, f);\n        if (heap.Count > k) heap.Dequeue();              // descarta o menos frequente\n    }\n    var resposta = new int[heap.Count];\n    for (var i = resposta.Length - 1; i >= 0; i--) resposta[i] = heap.Dequeue();\n    return resposta;\n}\n\n// Juntar k listas ordenadas: heap com a cabeça de cada lista, O(N log k)\npublic No? JuntarK(No?[] listas)\n{\n    var heap = new PriorityQueue<No, int>();\n    foreach (var l in listas) if (l is not null) heap.Enqueue(l, l.Valor);\n    var sentinela = new No(0);\n    var cauda = sentinela;\n    while (heap.TryDequeue(out var no, out _))\n    {\n        cauda = cauda.Proximo = no;\n        if (no.Proximo is not null) heap.Enqueue(no.Proximo, no.Proximo.Valor);\n    }\n    return sentinela.Proximo;\n}\n\n// Mediana de um fluxo: max-heap à esquerda, min-heap à direita\npublic sealed class Mediana\n{\n    private readonly PriorityQueue<int, int> _esq = new(Comparer<int>.Create((a, b) => b.CompareTo(a)));\n    private readonly PriorityQueue<int, int> _dir = new();\n\n    public void Adicionar(int x)\n    {\n        _esq.Enqueue(x, x);\n        var maior = _esq.Dequeue();\n        _dir.Enqueue(maior, maior);                      // tudo da esquerda ≤ tudo da direita\n        if (_dir.Count > _esq.Count) { var m = _dir.Dequeue(); _esq.Enqueue(m, m); }\n    }\n\n    public double Valor => _esq.Count > _dir.Count\n        ? _esq.Peek()\n        : (_esq.Peek() + (double)_dir.Peek()) / 2;\n}", "lista.cs": "public sealed class No(int valor, No? proximo = null)\n{\n    public int Valor = valor;\n    public No? Proximo = proximo;\n}\n\n// Inverter lista: três ponteiros, O(n) tempo e O(1) espaço\npublic No? Inverter(No? atual)\n{\n    No? anterior = null;\n    while (atual is not null)\n    {\n        var proximo = atual.Proximo;\n        atual.Proximo = anterior;\n        anterior = atual;\n        atual = proximo;\n    }\n    return anterior;\n}\n\n// Lento e rápido (Floyd): detecta ciclo; a mesma técnica acha o meio da lista\npublic bool TemCiclo(No? cabeca)\n{\n    No? lento = cabeca, rapido = cabeca;\n    while (rapido?.Proximo is not null)\n    {\n        lento = lento!.Proximo;\n        rapido = rapido.Proximo.Proximo;\n        if (ReferenceEquals(lento, rapido)) return true;\n    }\n    return false;\n}\n\n// Nó sentinela elimina casos de borda: juntar duas listas ordenadas\npublic No? Juntar(No? a, No? b)\n{\n    var sentinela = new No(0);\n    var cauda = sentinela;\n    while (a is not null && b is not null)\n    {\n        if (a.Valor <= b.Valor) { cauda.Proximo = a; a = a.Proximo; }\n        else { cauda.Proximo = b; b = b.Proximo; }\n        cauda = cauda.Proximo;\n    }\n    cauda.Proximo = a ?? b;\n    return sentinela.Proximo;\n}", "pilha.cs": "// Parênteses válidos: pilha clássica, O(n)\npublic bool Valido(string s)\n{\n    var pilha = new Stack<char>();\n    foreach (var c in s)\n    {\n        if (c is '(' or '[' or '{') { pilha.Push(c); continue; }\n        if (pilha.Count == 0) return false;\n        var abre = pilha.Pop();\n        if ((c, abre) is not ((')', '(') or (']', '[') or ('}', '{'))) return false;\n    }\n    return pilha.Count == 0;\n}\n\n// Pilha monotônica: quantos dias até uma temperatura maior, O(n)\npublic int[] DiasAteEsquentar(int[] t)\n{\n    var resposta = new int[t.Length];\n    var pilha = new Stack<int>();                        // índices com temperatura decrescente\n    for (var i = 0; i < t.Length; i++)\n    {\n        while (pilha.Count > 0 && t[pilha.Peek()] < t[i])\n        {\n            var j = pilha.Pop();\n            resposta[j] = i - j;                         // i é o primeiro dia mais quente que j\n        }\n        pilha.Push(i);\n    }\n    return resposta;\n}\n\n// A mesma ideia resolve: próximo maior elemento, maior retângulo no histograma,\n// água da chuva acumulada, preço de ações (stock span)", "ponteiros.cs": "// Dois ponteiros em array ordenado: par com soma alvo em O(n) e O(1) de espaço\npublic (int, int) ParComSoma(int[] ordenado, int alvo)\n{\n    int i = 0, j = ordenado.Length - 1;\n    while (i < j)\n    {\n        var soma = ordenado[i] + ordenado[j];\n        if (soma == alvo) return (i, j);\n        if (soma < alvo) i++; else j--;\n    }\n    return (-1, -1);\n}\n\n// Janela deslizante: maior substring sem caractere repetido, O(n)\npublic int MaiorSemRepetir(string s)\n{\n    var ultimo = new Dictionary<char, int>();\n    int inicio = 0, melhor = 0;\n    for (var fim = 0; fim < s.Length; fim++)\n    {\n        if (ultimo.TryGetValue(s[fim], out var pos) && pos >= inicio)\n            inicio = pos + 1;                            // encolhe até a janela ficar válida\n        ultimo[s[fim]] = fim;\n        melhor = Math.Max(melhor, fim - inicio + 1);\n    }\n    return melhor;\n}\n\n// Janela variável: menor subarray com soma ≥ alvo (só números positivos), O(n)\npublic int MenorSubarray(int alvo, int[] nums)\n{\n    int inicio = 0, soma = 0, melhor = int.MaxValue;\n    for (var fim = 0; fim < nums.Length; fim++)\n    {\n        soma += nums[fim];\n        while (soma >= alvo)\n        {\n            melhor = Math.Min(melhor, fim - inicio + 1);\n            soma -= nums[inicio++];\n        }\n    }\n    return melhor == int.MaxValue ? 0 : melhor;\n}", "ratelimiter.cs": "// Token bucket: capacidade C, reposição de R fichas por segundo\npublic sealed class TokenBucket(double capacidade, double porSegundo, TimeProvider relogio)\n{\n    private readonly Lock _trava = new();                // .NET 9+\n    private double _fichas = capacidade;\n    private long _ultimo = relogio.GetTimestamp();\n\n    public bool Permitir(double custo = 1)\n    {\n        lock (_trava)\n        {\n            var agora = relogio.GetTimestamp();\n            var segundos = relogio.GetElapsedTime(_ultimo, agora).TotalSeconds;\n            _fichas = Math.Min(capacidade, _fichas + segundos * porSegundo);   // repõe\n            _ultimo = agora;\n            if (_fichas < custo) return false;           // responde 429 com Retry-After\n            _fichas -= custo;\n            return true;\n        }\n    }\n}\n\n// Distribuído: o mesmo cálculo num script Lua no Redis, atômico, uma chave por cliente\n//   HMGET balde:{cliente} fichas ultimo → repõe pelo tempo → se fichas >= custo, desconta\n//   HSET e PEXPIRE na mesma execução: nenhuma réplica vê estado pela metade\n// Alternativas: janela fixa (simples, permite rajada na virada) e janela deslizante (mais justa)", "trie.cs": "// Trie: busca por prefixo em O(tamanho da palavra)\npublic sealed class Trie\n{\n    private sealed class No\n    {\n        public readonly Dictionary<char, No> Filhos = new();\n        public bool Fim;\n    }\n    private readonly No _raiz = new();\n\n    public void Inserir(string palavra)\n    {\n        var no = _raiz;\n        foreach (var c in palavra)\n        {\n            if (!no.Filhos.TryGetValue(c, out var prox)) no.Filhos[c] = prox = new No();\n            no = prox;\n        }\n        no.Fim = true;\n    }\n\n    public bool TemPrefixo(string prefixo) => Achar(prefixo) is not null;\n    public bool Contem(string palavra) => Achar(palavra)?.Fim == true;\n\n    private No? Achar(string s)\n    {\n        No? no = _raiz;\n        foreach (var c in s)\n            if (no is null || !no.Filhos.TryGetValue(c, out no)) return null;\n        return no;\n    }\n}\n\n// Intervalos: ordenar pelo início resolve a maioria dos problemas\npublic int[][] JuntarIntervalos(int[][] intervalos)\n{\n    var resultado = new List<int[]>();\n    foreach (var atual in intervalos.OrderBy(x => x[0]))\n    {\n        if (resultado.Count > 0 && resultado[^1][1] >= atual[0])\n            resultado[^1][1] = Math.Max(resultado[^1][1], atual[1]);   // sobrepõe: estende\n        else\n            resultado.Add([atual[0], atual[1]]);\n    }\n    return [.. resultado];\n}\n// Salas de reunião: min-heap com os horários de término das reuniões em andamento"};
+// ===================== CENAS =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const TITLE = {k:'Preparatório · nível big tech', h:'Algoritmos, design de sistemas e comportamento',
+  p:'O que as entrevistas de empresas como Google, Meta, Amazon, Apple, Netflix e Microsoft avaliam, os padrões de algoritmos que resolvem a maioria dos problemas, o método de design de sistemas e como contar a sua história.',
+  chips:['estruturas de dados','15 padrões de algoritmo','design de sistemas','estimativas','STAR e liderança']};
+const OUTRO = {k:'Fim do roteiro', h:'Agora, treine com relógio',
+  p:'Abaixo do vídeo estão a tabela de padrões com sinais e complexidades, a trilha de estudo, o checklist de prontidão, as perguntas frequentes e a cola de complexidade.',
+  chips:['45 minutos por problema','fale enquanto pensa','teste antes de dizer pronto','mock toda semana']};
+const S = (file, key) => ({type:'code', file, lang:'cs', code: SNIP[key]});
+
+const SCENES = [
+/* ---------- VISÃO GERAL ---------- */
+{ id:'intro', ch:'Visão geral', title:'Preparação para entrevistas de big tech',
+  say:'Este é o preparatório para processos seletivos de empresas do nível de Google, Meta, Amazon, Apple, Netflix e Microsoft. Ele junta o que vimos nas outras trilhas com o que essas entrevistas cobram: estruturas de dados e algoritmos, design de sistemas em escala e entrevistas comportamentais. Os códigos estão em C#, mas a linguagem é escolha sua.',
+  v:{type:'title'} },
+
+{ id:'processo', ch:'Visão geral', title:'Como é o processo',
+  say:'O formato varia por empresa, mas o caminho é parecido. Uma conversa com recrutador, uma ou duas entrevistas técnicas de triagem, e então o loop: em geral duas a três de código, uma ou duas de design de sistemas para níveis pleno e sênior, e uma comportamental. Depois, um comitê ou debrief decide o nível, e em algumas empresas ainda há a escolha de time.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:120,w:150,h:110, html:B('Recrutador','30 min')+UL('histórico','nível alvo')},
+    {at:2.5, x:194,y:120,w:170,h:110, cls:'blue', html:B('Triagem técnica','45–60 min')+UL('1–2 problemas','editor compartilhado')},
+    {at:4.5, x:384,y:96,w:330,h:200, cls:'region', html:'<span class="rl">Loop (4–6 entrevistas)</span>'+UL('2–3 de código (DSA)','1–2 de design de sistemas','1 comportamental','às vezes: domínio, produto, debugging')},
+    {at:7.5, x:734,y:120,w:200,h:110, cls:'amber', html:B('Decisão','comitê ou debrief')+UL('nível e oferta','escolha de time')},
+    {at:10, x:24,y:320,w:445,h:180, cls:'green', html:B('O que muda com o nível','')+UL('júnior/pleno: código limpo e correto','sênior: design com trade-offs e liderança','staff: escopo de organização, ambiguidade')},
+    {at:13, x:489,y:320,w:445,h:180, cls:'ext', html:B('Diferenças comuns','')+UL('Amazon: princípios de liderança em todas','Google: comitê e "googleyness"','Meta: ritmo forte no código, 2 problemas em 45 min','confirme o formato com o recrutador')},
+  ], lines:[
+    {at:2.5, d:'M174 175 L 194 175', cls:'flow'},
+    {at:4.5, d:'M364 175 L 384 175', cls:'flow'},
+    {at:7.5, d:'M714 175 L 734 175', cls:'flow'},
+  ]}},
+
+{ id:'rubrica', ch:'Visão geral', title:'O que o entrevistador anota',
+  say:'Cada entrevista tem uma rubrica. No código: entender o problema, chegar a uma solução eficiente, escrever código correto e legível, testar sozinho e comunicar o raciocínio. No design: delimitar o escopo, propor uma arquitetura que funciona, aprofundar onde importa e explicar trade-offs. No comportamental: impacto, responsabilidade, conflito e aprendizado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:300, cls:'blue', html:B('Código','')+UL('entende e pergunta','solução eficiente','código correto e legível','testa sem pedirem','comunica enquanto pensa')},
+    {at:5, x:340,y:92,w:280,h:300, cls:'green', html:B('Design de sistemas','')+UL('requisitos e números','arquitetura que funciona','aprofunda os gargalos','trade-offs explícitos','conduz a conversa')},
+    {at:9.5, x:644,y:92,w:280,h:300, cls:'amber', html:B('Comportamental','')+UL('impacto mensurável','dono do problema','conflito e influência','falha e aprendizado','escopo do nível')},
+    {at:14, x:36,y:412,w:888,h:90, cls:'ext', html:B('Sinal mais forte','resolver não basta: o entrevistador precisa ouvir como você chegou lá. Silêncio por dez minutos é nota baixa, mesmo com a resposta certa.')},
+  ]}},
+
+{ id:'plano', ch:'Visão geral', title:'Plano de 12 semanas',
+  say:'Um plano realista para quem trabalha: doze semanas, uma a duas horas por dia. As primeiras semanas firmam estruturas de dados e padrões. As do meio aprofundam grafos e programação dinâmica e começam design de sistemas. As últimas são simulação: entrevistas cronometradas, histórias comportamentais ensaiadas e revisão dos erros.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:205,h:300, cls:'blue', html:B('Semanas 1–3','base')+UL('Big-O','arrays, hash, strings','dois ponteiros, janela','pilha, busca binária','~40 problemas fáceis/médios')},
+    {at:4, x:257,y:92,w:205,h:300, cls:'blue', html:B('Semanas 4–6','estruturas')+UL('listas, árvores, BST','heaps, tries','grafos: BFS, DFS, topo','backtracking','~40 médios')},
+    {at:7.5, x:478,y:92,w:205,h:300, cls:'green', html:B('Semanas 7–9','profundidade')+UL('programação dinâmica','Dijkstra, union-find','intervalos, bits','design: blocos e método','3 designs completos')},
+    {at:11, x:699,y:92,w:225,h:300, cls:'amber', html:B('Semanas 10–12','simulação')+UL('2–3 mocks por semana','problemas cronometrados','8–10 histórias STAR','revisar o caderno de erros','descansar antes do loop')},
+    {at:15, x:36,y:412,w:888,h:90, cls:'ext', html:B('Qualidade acima de quantidade','150–200 problemas bem entendidos valem mais que 600 decorados · refaça depois de uma semana os que errou')},
+  ]}},
+
+/* ---------- MÉTODO ---------- */
+{ id:'metodo', ch:'Algoritmos: método', title:'Os seis passos em 45 minutos',
+  say:'Use o mesmo método em todo problema. Repita o enunciado e pergunte sobre entradas, limites e casos estranhos. Faça um exemplo à mão. Diga a solução de força bruta e a complexidade dela. Otimize procurando o padrão. Só então escreva o código, falando. E teste com o exemplo e com casos de borda antes de dizer que terminou.',
+  v:{type:'check', items:[
+    '1. Entender: perguntas, limites, entrada vazia',
+    '2. Exemplo à mão, incluindo um caso de borda',
+    '3. Força bruta em voz alta, com Big-O',
+    '4. Otimizar: qual padrão reduz o custo?',
+    '5. Combinar a abordagem antes de codar',
+    '6. Codar com nomes claros, falando',
+    '7. Rodar o exemplo linha a linha',
+    '8. Bordas: vazio, um item, duplicados, negativos',
+    '9. Complexidade final de tempo e espaço',
+    '10. Melhorias e trade-offs, se sobrar tempo',
+    'Travou? Diga o que está tentando',
+    'Dica do entrevistador é ajuda, não penalidade',
+  ]}},
+
+{ id:'bigo', ch:'Algoritmos: método', title:'Big-O e o tamanho da entrada',
+  say:'O limite da entrada revela a complexidade esperada. Com n até 20, exponencial passa: backtracking. Até 500, cúbico. Até alguns milhares, quadrático. Até um milhão, n log n ou linear: ordenação, hash, dois ponteiros. Acima disso, logarítmico ou constante. Lembre também do espaço e do custo das operações de cada estrutura.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:56, html:'<b>n ≤ 10–12</b> <small>O(n!) · permutações</small>'},
+    {at:2, x:36,y:156,w:888,h:56, html:'<b>n ≤ 20–25</b> <small>O(2ⁿ) · subconjuntos, backtracking, DP com bitmask</small>'},
+    {at:3.2, x:36,y:220,w:888,h:56, html:'<b>n ≤ 500</b> <small>O(n³) · DP em intervalos, Floyd-Warshall</small>'},
+    {at:4.4, x:36,y:284,w:888,h:56, cls:'blue', html:'<b>n ≤ 5.000</b> <small>O(n²) · DP 2D, comparar pares</small>'},
+    {at:5.6, x:36,y:348,w:888,h:56, cls:'green', html:'<b>n ≤ 10⁶</b> <small>O(n log n) ou O(n) · ordenar, hash, heap, dois ponteiros, janela</small>'},
+    {at:6.8, x:36,y:412,w:888,h:56, cls:'amber', html:'<b>n ≥ 10⁸ ou consultas repetidas</b> <small>O(log n) ou O(1) · busca binária, matemática, pré-cálculo</small>'},
+    {at:9, x:36,y:476,w:888,h:30, cls:'ext', html:'<small>Regra prática: ~10⁸ operações simples por segundo · espaço também conta: diga os dois</small>'},
+  ]}},
+
+/* ---------- PADRÕES ---------- */
+{ id:'hash', ch:'Algoritmos: padrões', title:'Hash: trocar tempo por memória',
+  say:'O padrão mais comum: usar um dicionário ou conjunto para lembrar o que já foi visto e transformar uma busca de O de n em O de 1. Two Sum troca o laço duplo por um dicionário. Anagramas viram grupos por uma chave canônica. E a maior sequência consecutiva fica linear começando a contar só de quem não tem antecessor.',
+  v:S('Hash.cs','hash.cs')},
+
+{ id:'janela', ch:'Algoritmos: padrões', title:'Dois ponteiros e janela deslizante',
+  say:'Em arrays ordenados, dois ponteiros andando um em direção ao outro resolvem pares e triplas em tempo linear. Para subarrays e substrings contíguos, a janela deslizante cresce pela direita e encolhe pela esquerda enquanto a condição não vale. O sinal no enunciado é: contíguo, maior ou menor, com alguma restrição.',
+  v:S('Ponteiros.cs','ponteiros.cs')},
+
+{ id:'binaria', ch:'Algoritmos: padrões', title:'Busca binária, inclusive na resposta',
+  say:'Busca binária não é só para achar um número num array ordenado. Sempre que a resposta é monotônica, ou seja, se um valor funciona, todos os maiores também funcionam, dá para buscar binariamente o menor valor que funciona. Escreva o invariante antes, calcule o meio sem overflow e cuide de quando o laço termina.',
+  v:S('BuscaBinaria.cs','busca.cs')},
+
+{ id:'pilha', ch:'Algoritmos: padrões', title:'Pilha e pilha monotônica',
+  say:'Pilha resolve tudo que é aninhado: parênteses, expressões, desfazer. A pilha monotônica guarda índices em ordem crescente ou decrescente e resolve em tempo linear problemas de próximo maior ou menor elemento, como dias até esquentar, o maior retângulo no histograma e a água da chuva.',
+  v:S('Pilha.cs','pilha.cs')},
+
+{ id:'lista', ch:'Algoritmos: padrões', title:'Listas ligadas',
+  say:'Listas ligadas testam manipulação de ponteiros sem erro. Três técnicas cobrem quase tudo: inverter com três ponteiros, lento e rápido para ciclo e meio da lista, e um nó sentinela no começo para não tratar a cabeça como caso especial. Desenhe as setas antes de codar.',
+  v:S('Lista.cs','lista.cs')},
+
+{ id:'arvores', ch:'Algoritmos: padrões', title:'Árvores: DFS e BFS',
+  say:'Em árvores, DFS recursivo resolve altura, caminhos e validações; BFS com fila resolve tudo que é por nível. Para validar uma árvore de busca, passe os limites mínimo e máximo para baixo, porque comparar só com o pai não basta. O menor ancestral comum sai de uma DFS que devolve o que encontrou em cada lado.',
+  v:S('Arvores.cs','arvores.cs')},
+
+{ id:'heap', ch:'Algoritmos: padrões', title:'Heaps: top K e fluxos',
+  say:'Heap é a resposta quando o enunciado fala em K maiores, K menores ou em juntar várias fontes ordenadas. Um heap de tamanho K dá O de n log K. No .NET, a PriorityQueue é um min-heap pela prioridade. Para a mediana de um fluxo, dois heaps equilibrados mantêm a metade menor e a metade maior.',
+  v:S('Heap.cs','heap.cs')},
+
+{ id:'grafos', ch:'Algoritmos: padrões', title:'Grafos: DFS, BFS e ordenação topológica',
+  say:'Muitos problemas são grafos disfarçados: grades, dependências, redes. DFS conta componentes, como ilhas. BFS dá o menor caminho quando não há peso. E a ordenação topológica de Kahn ordena tarefas com dependências e, de quebra, detecta ciclo quando sobram nós.',
+  v:S('Grafos.cs','grafos.cs')},
+
+{ id:'dijkstra', ch:'Algoritmos: padrões', title:'Dijkstra e Union-Find',
+  say:'Com pesos não negativos, Dijkstra com heap dá o menor caminho em O de V mais E vezes log V; ignore entradas antigas do heap. Union-Find, com compressão de caminho e união por tamanho, responde se dois nós estão conectados em tempo quase constante, e serve para componentes, ciclos e árvore geradora mínima.',
+  v:S('Grafos2.cs','dijkstra.cs')},
+
+{ id:'dp', ch:'Algoritmos: padrões', title:'Programação dinâmica',
+  say:'Programação dinâmica é recursão que lembra resultados. Defina o estado, a transição, o caso base, a ordem de cálculo e onde está a resposta. Troco mínimo é DP de uma dimensão; maior subsequência comum, de duas. Comece top-down com memo, que é mais natural de explicar, e converta para bottom-up se pedirem.',
+  v:S('Dp.cs','dp.cs')},
+
+{ id:'backtracking', ch:'Algoritmos: padrões', title:'Backtracking',
+  say:'Backtracking explora todas as escolhas com um molde fixo: escolher, explorar e desfazer. Serve para subconjuntos, permutações, combinações e quebra-cabeças. É exponencial por natureza, então a poda é o que faz a diferença: ordene a entrada e pare cedo quando a escolha já não pode dar certo.',
+  v:S('Backtracking.cs','backtracking.cs')},
+
+{ id:'trie', ch:'Algoritmos: padrões', title:'Trie e intervalos',
+  say:'A trie guarda palavras letra a letra e responde buscas por prefixo em tempo proporcional ao tamanho da palavra: autocompletar e dicionários. Problemas de intervalos quase sempre começam ordenando pelo início; depois é juntar sobreposições ou, para salas de reunião, usar um heap com os horários de término.',
+  v:S('TrieIntervalos.cs','trie.cs')},
+
+{ id:'sinais', ch:'Algoritmos: padrões', title:'Do enunciado ao padrão',
+  say:'O enunciado costuma entregar o padrão. Array ordenado ou resposta monotônica: busca binária. Subarray contíguo: janela. K maiores: heap. Dependências: ordenação topológica. Menor caminho sem peso: BFS. Todas as combinações: backtracking. Contar maneiras ou ótimo com subproblemas repetidos: programação dinâmica. A tabela completa está abaixo do vídeo.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:64, cls:'blue', html:B('"ordenado" · "mínimo que satisfaz"','busca binária')},
+    {at:2.5, x:494,y:92,w:430,h:64, cls:'blue', html:B('"subarray/substring contíguo"','janela deslizante')},
+    {at:4, x:36,y:170,w:430,h:64, cls:'green', html:B('"K maiores" · "juntar K listas"','heap')},
+    {at:5.5, x:494,y:170,w:430,h:64, cls:'green', html:B('"pré-requisitos" · "ordem de tarefas"','ordenação topológica')},
+    {at:7, x:36,y:248,w:430,h:64, cls:'amber', html:B('"menor número de passos"','BFS')},
+    {at:8.5, x:494,y:248,w:430,h:64, cls:'amber', html:B('"todas as combinações"','backtracking')},
+    {at:10, x:36,y:326,w:430,h:64, html:B('"quantas maneiras" · "máximo/mínimo"','programação dinâmica')},
+    {at:11.5, x:494,y:326,w:430,h:64, html:B('"próximo maior/menor"','pilha monotônica')},
+    {at:13, x:36,y:404,w:430,h:64, html:B('"conectados?" · "grupos"','union-find ou DFS')},
+    {at:14.5, x:494,y:404,w:430,h:64, html:B('"prefixo" · "autocompletar"','trie')},
+  ]}},
+
+/* ---------- DESIGN DE SISTEMAS ---------- */
+{ id:'ds-metodo', ch:'Design de sistemas', title:'O método em 45 minutos',
+  say:'Design de sistemas é uma conversa conduzida por você. Gaste uns cinco minutos em requisitos funcionais e não funcionais. Cinco em estimativas. Cinco na API e no modelo de dados. Dez no desenho de alto nível, que precisa funcionar de ponta a ponta. E o resto aprofundando os pontos difíceis: gargalos, falhas, consistência e escala.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:96,w:160,h:150, cls:'blue', html:B('Requisitos','~5 min')+UL('funcionais','não funcionais','fora do escopo')},
+    {at:3, x:212,y:96,w:160,h:150, cls:'blue', html:B('Estimativas','~5 min')+UL('usuários, QPS','armazenamento','leitura × escrita')},
+    {at:5, x:388,y:96,w:160,h:150, cls:'green', html:B('API e dados','~5 min')+UL('endpoints','entidades','chaves de acesso')},
+    {at:7, x:564,y:96,w:160,h:150, cls:'green', html:B('Alto nível','~10 min')+UL('caminho de ponta a ponta','componentes')},
+    {at:9, x:740,y:96,w:184,h:150, cls:'amber', html:B('Aprofundar','~15–20 min')+UL('gargalos e hot spots','falhas','consistência')},
+    {at:12, x:36,y:280,w:888,h:220, cls:'ext', html:B('Atitudes que pontuam','')+UL('pergunte antes de desenhar e escreva os números','diga a alternativa e por que não escolheu','comece simples e evolua quando os números pedirem','mencione monitoração, falhas e custo sem que perguntem','sênior: proponha onde aprofundar em vez de esperar a pergunta')},
+  ], lines:[
+    {at:3, d:'M196 171 L 212 171', cls:'flow'}, {at:5, d:'M372 171 L 388 171', cls:'flow'},
+    {at:7, d:'M548 171 L 564 171', cls:'flow'}, {at:9, d:'M724 171 L 740 171', cls:'flow'},
+  ]}},
+
+{ id:'estimativas', ch:'Design de sistemas', title:'Estimativas de guardanapo',
+  say:'Estimativas mostram se a solução cabe no problema. Um dia tem cerca de cem mil segundos, então um milhão de requisições por dia são só uns doze por segundo. Cem milhões de usuários ativos com dez ações por dia dão perto de doze mil por segundo, com picos de duas a três vezes. Some os latências que importam e arredonde sem medo.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:200, cls:'blue', html:B('Latências aproximadas','')+UL('memória: ~100 ns','SSD leitura aleatória: ~100 µs','mesma região, ida e volta: ~0,5 ms','Redis / SQL indexado: ~1–5 ms','entre continentes: ~100–150 ms')},
+    {at:5, x:494,y:92,w:430,h:200, cls:'green', html:B('Potências e atalhos','')+UL('1 dia ≈ 86.400 s ≈ 10⁵ s','1 milhão/dia ≈ 12 por segundo','2¹⁰ ≈ mil · 2²⁰ ≈ milhão · 2³⁰ ≈ bilhão','1 KB × 1 bilhão = 1 TB','pico ≈ 2–3× a média')},
+    {at:10, x:36,y:312,w:888,h:190, cls:'amber', html:B('Exemplo: encurtador de URL','')+UL('100 M URLs novas por mês → ~40 escritas/s','leitura 100:1 → ~4 mil leituras/s, pico ~10 mil/s','500 bytes por registro × 100 M × 12 meses × 5 anos ≈ 3 TB','conclusão: cache para leitura resolve; escrita é pequena')},
+  ]}},
+
+{ id:'blocos', ch:'Design de sistemas', title:'Os blocos de construção',
+  say:'Quase todo design usa os mesmos blocos. Balanceador e serviços sem estado para escalar horizontalmente. CDN e cache para leitura. Banco relacional ou NoSQL conforme o acesso, com réplicas para leitura e particionamento para escrita. Filas e logs de eventos para desacoplar. Armazenamento de objetos para arquivos. E índice de busca para texto.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:205,h:130, cls:'blue', html:B('Balanceador','L4/L7, health check')},
+    {at:2, x:257,y:92,w:205,h:130, cls:'blue', html:B('Serviço sem estado','escala horizontal')},
+    {at:3.2, x:478,y:92,w:205,h:130, cls:'green', html:B('CDN','conteúdo estático, borda')},
+    {at:4.4, x:699,y:92,w:225,h:130, cls:'green', html:B('Cache','Redis, cache-aside, TTL')},
+    {at:6, x:36,y:240,w:205,h:130, cls:'amber', html:B('Relacional','transações, joins')},
+    {at:7.2, x:257,y:240,w:205,h:130, cls:'amber', html:B('NoSQL','chave-valor, documento, colunar')},
+    {at:8.4, x:478,y:240,w:205,h:130, html:B('Fila / log','RabbitMQ, Kafka')},
+    {at:9.6, x:699,y:240,w:225,h:130, html:B('Objetos','blob, S3: arquivos e mídia')},
+    {at:11, x:36,y:388,w:430,h:114, cls:'ext', html:B('Escalar leitura','réplicas, cache, CDN, desnormalizar')},
+    {at:13, x:494,y:388,w:430,h:114, cls:'ext', html:B('Escalar escrita','particionar (sharding), fila, escrita em lote')},
+  ]}},
+
+{ id:'consistencia', ch:'Design de sistemas', title:'Consistência, replicação e CAP',
+  say:'Com rede, partições acontecem; o teorema CAP diz que, durante uma, você escolhe entre consistência e disponibilidade. O PACELC completa: sem partição, a troca é entre latência e consistência. Quóruns com R mais W maior que N dão leitura forte. E entrega exatamente uma vez não existe na rede: o que existe é pelo menos uma vez com idempotência.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:150, cls:'blue', html:B('CAP / PACELC','')+UL('partição: consistência ou disponibilidade','sem partição: latência ou consistência','saldo bancário: CP · feed: AP')},
+    {at:4.5, x:494,y:92,w:430,h:150, cls:'green', html:B('Replicação','')+UL('líder-seguidor: simples, atraso de réplica','multi-líder: conflitos a resolver','sem líder: quóruns R + W > N')},
+    {at:8.5, x:36,y:260,w:430,h:150, cls:'amber', html:B('Níveis de consistência','')+UL('forte (linearizável)','ler as próprias escritas','eventual, com prazo')},
+    {at:12, x:494,y:260,w:430,h:150, cls:'amber', html:B('Entrega','')+UL('pelo menos uma vez + idempotência','outbox para estado + evento','saga para transações longas')},
+    {at:15.5, x:36,y:428,w:888,h:76, cls:'ext', html:B('Leitura recomendada','Designing Data-Intensive Applications, de Martin Kleppmann: a referência para estes temas')},
+  ]}},
+
+{ id:'sharding', ch:'Design de sistemas', title:'Particionamento e hashing consistente',
+  say:'Quando um banco não aguenta as escritas, os dados são divididos por uma chave de partição. Com hash simples módulo N, mudar o número de nós move quase tudo. Com hashing consistente, nós e chaves ficam num anel, e adicionar um nó move só as chaves vizinhas; nós virtuais equilibram a carga. Escolha a chave para evitar partições quentes.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:400,h:410, cls:'region', html:'<span class="rl">anel de hash (0 … 2³²)</span><svg viewBox="0 0 360 360" width="360" height="360" style="margin-top:6px"><circle cx="180" cy="180" r="140" fill="none" stroke="#25385A" stroke-width="3"/><g font-family="IBM Plex Mono, monospace" font-size="12"><circle cx="180" cy="40" r="12" fill="#5B95FF"/><text x="198" y="36" fill="#E8EEF8">nó A</text><circle cx="320" cy="180" r="12" fill="#3CCB8E"/><text x="300" y="214" fill="#E8EEF8">nó B</text><circle cx="180" cy="320" r="12" fill="#F2B544"/><text x="198" y="336" fill="#E8EEF8">nó C</text><circle cx="40" cy="180" r="12" fill="#FF6B5E"/><text x="10" y="214" fill="#E8EEF8">nó D (novo)</text><circle cx="279" cy="81" r="6" fill="#8798B4"/><text x="290" y="78" fill="#8798B4">k1→B</text><circle cx="81" cy="279" r="6" fill="#8798B4"/><text x="30" y="300" fill="#8798B4">k2→D</text><circle cx="81" cy="81" r="6" fill="#8798B4"/><text x="30" y="70" fill="#8798B4">k3→A</text></g></svg>'},
+    {at:4, x:470,y:92,w:454,h:120, cls:'amber', html:B('hash(chave) % N','trocar N de 3 para 4 move ~75% das chaves')},
+    {at:7, x:470,y:228,w:454,h:120, cls:'green', html:B('Hashing consistente','cada chave vai ao próximo nó no sentido horário · novo nó move só a fatia vizinha · nós virtuais equilibram')},
+    {at:11, x:470,y:364,w:454,h:138, cls:'blue', html:B('Escolher a chave','')+UL('alta cardinalidade, acesso distribuído','evitar hot key (celebridade, dia atual)','consultas por outra chave: índice global')},
+  ]}},
+
+{ id:'url', ch:'Design de sistemas', title:'Exemplo: encurtador de URL',
+  say:'Um encurtador clássico. A escrita gera um código curto e grava o mapeamento; a leitura redireciona. O código sai de um contador distribuído convertido para base 62, ou de um hash com tratamento de colisão. Leitura é cem vezes maior que escrita, então cache e CDN fazem quase todo o trabalho, e o banco pode ser chave-valor particionado pelo código.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:92,w:300,h:170, cls:'blue', html:B('API','')+UL('POST /urls {url} → {codigo}','GET /{codigo} → 301/302','expiração e dono opcionais')},
+    {at:4, x:340,y:92,w:280,h:170, cls:'green', html:B('Gerar o código','')+UL('contador por faixas → base 62','7 caracteres ≈ 3,5 trilhões','sem colisão, sem consulta extra')},
+    {at:7.5, x:636,y:92,w:300,h:170, cls:'amber', html:B('Dados','')+UL('codigo → url, dono, expira_em','chave-valor particionado por código','~3 TB em 5 anos')},
+    {at:11, x:24,y:290,w:140,h:64, html:B('Cliente','')},
+    {at:11.5, x:190,y:290,w:140,h:64, cls:'blue', html:B('CDN / LB','')},
+    {at:12, x:356,y:290,w:160,h:64, cls:'blue', html:B('Serviço','sem estado')},
+    {at:12.5, x:542,y:270,w:170,h:50, cls:'green', html:B('Redis','códigos quentes')},
+    {at:13, x:542,y:330,w:170,h:50, cls:'amber', html:B('KV particionado','fonte da verdade')},
+    {at:13.5, x:738,y:290,w:198,h:64, html:B('Analytics','evento por clique, assíncrono')},
+    {at:16, x:24,y:410,w:912,h:92, cls:'ext', html:B('Aprofundar','301 é cacheado pelo navegador (menos carga, perde contagem) × 302 · abuso: rate limit e lista de bloqueio · código customizado: verificar unicidade')},
+  ], lines:[
+    {at:11.5, d:'M164 322 L 190 322', cls:'flow'}, {at:12, d:'M330 322 L 356 322', cls:'flow'},
+    {at:12.5, d:'M516 315 L 542 295', cls:'flow'}, {at:13, d:'M516 330 L 542 355', cls:'amber'},
+    {at:13.5, d:'M712 322 L 738 322', cls:'dim'},
+  ]}},
+
+{ id:'ratelimit', ch:'Design de sistemas', title:'Exemplo: rate limiter distribuído',
+  say:'O rate limiter é pergunta frequente e cobra algoritmo e sistema juntos. O token bucket permite rajadas até a capacidade e repõe fichas a uma taxa fixa. Em várias réplicas, o estado fica no Redis e o cálculo roda num script Lua, que é atômico. Decida por qual chave limitar e o que fazer se o Redis cair: falhar aberto ou fechado.',
+  v:S('TokenBucket.cs','ratelimiter.cs')},
+
+{ id:'feed', ch:'Design de sistemas', title:'Exemplo: feed de notícias',
+  say:'No feed, a decisão central é quando montar a timeline. Fan-out na escrita copia cada post para a caixa de cada seguidor: leitura rápida, escrita cara. Fan-out na leitura busca os posts de quem a pessoa segue na hora: escrita barata, leitura cara. A solução usual é híbrida: escrita para a maioria e leitura para contas com milhões de seguidores.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:170, cls:'blue', html:B('Fan-out na escrita','push')+UL('post vai para a timeline de cada seguidor','leitura: uma consulta na timeline pronta','celebridade com 50 M seguidores: inviável')},
+    {at:5, x:494,y:92,w:430,h:170, cls:'green', html:B('Fan-out na leitura','pull')+UL('timeline montada na hora','escrita barata','leitura cara: junta N fontes e ordena')},
+    {at:9.5, x:36,y:280,w:888,h:110, cls:'amber', html:B('Híbrido','push para contas comuns · pull para celebridades, misturado na leitura · timeline em cache (Redis, lista com os últimos ~800 ids)')},
+    {at:14, x:36,y:408,w:888,h:96, cls:'ext', html:B('Aprofundar','ranking (ordem cronológica × relevância) · paginação por cursor · mídia em armazenamento de objetos + CDN · contadores aproximados')},
+  ]}},
+
+{ id:'pagamentos', ch:'Design de sistemas', title:'Exemplo: pagamentos e razão contábil',
+  say:'Para sistemas financeiros, como os da Crefaz, o design cobra correção acima de tudo. Toda operação tem chave de idempotência. O saldo não é um número atualizado no lugar: é a soma de lançamentos de partida dobrada, imutáveis. Integrações externas passam por máquina de estados e outbox. E uma conciliação periódica compara o seu razão com o do parceiro.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, cls:'blue', html:B('Idempotência','')+UL('Idempotency-Key no POST','restrição única no banco','repetir devolve o mesmo resultado')},
+    {at:4.5, x:340,y:92,w:280,h:200, cls:'green', html:B('Razão de partida dobrada','')+UL('lançamentos imutáveis','débito = crédito em cada transação','saldo = soma; correção = estorno')},
+    {at:8.5, x:644,y:92,w:280,h:200, cls:'amber', html:B('Estados e integrações','')+UL('criado → autorizado → liquidado','timeout com status desconhecido','consultar antes de repetir')},
+    {at:12.5, x:36,y:312,w:430,h:190, html:B('Consistência','')+UL('SQL com transação para o razão','outbox para eventos','sem cache na escrita de saldo')},
+    {at:15.5, x:494,y:312,w:430,h:190, cls:'ext', html:B('Operação','')+UL('conciliação diária com o parceiro','auditoria de cada mudança','alertas de divergência')},
+  ]}},
+
+{ id:'confiabilidade', ch:'Design de sistemas', title:'Confiabilidade e operação',
+  say:'Em big tech, o design só está completo quando diz como o sistema é operado. Defina SLIs, como latência e taxa de erro, e SLOs, que são as metas; a diferença vira orçamento de erro para equilibrar velocidade e estabilidade. Deploys graduais com rollback automático, limites e timeouts em toda dependência, e observabilidade para responder rápido.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, cls:'blue', html:B('SLI, SLO, SLA','')+UL('SLI: o que medir (p99, erros)','SLO: a meta interna (99,9%)','SLA: o contrato, com multa','orçamento de erro: 43 min/mês')},
+    {at:5, x:340,y:92,w:280,h:200, cls:'green', html:B('Mudanças seguras','')+UL('canário e rollout gradual','feature flags','rollback automático por métrica')},
+    {at:9, x:644,y:92,w:280,h:200, cls:'amber', html:B('Falhas','')+UL('timeout, retry com jitter','circuit breaker, bulkhead','degradar em vez de cair')},
+    {at:13, x:36,y:312,w:888,h:190, cls:'ext', html:B('Observabilidade e incidentes','')+UL('logs estruturados, métricas e traces com correlação','alertas por sintoma (SLO), não por causa','postmortem sem culpados, com ações acompanhadas')},
+  ]}},
+
+/* ---------- COMPORTAMENTAL ---------- */
+{ id:'star', ch:'Comportamental', title:'Histórias no formato STAR',
+  say:'Entrevista comportamental é avaliada com a mesma seriedade das técnicas. Prepare oito a dez histórias reais no formato STAR: situação e tarefa em poucas frases, ações com eu, não nós, e resultado com números. Cada história deve servir para várias perguntas. Termine dizendo o que aprendeu e o que faria diferente.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:205,h:180, cls:'blue', html:B('S · Situação','~15%')+UL('contexto mínimo','o que estava em jogo')},
+    {at:2.5, x:257,y:92,w:205,h:180, cls:'blue', html:B('T · Tarefa','~10%')+UL('o seu papel','a meta')},
+    {at:4, x:478,y:92,w:205,h:180, cls:'green', html:B('A · Ação','~55%')+UL('"eu decidi", "eu propus"','por que escolheu','como lidou com oposição')},
+    {at:5.5, x:699,y:92,w:225,h:180, cls:'amber', html:B('R · Resultado','~20%')+UL('números: tempo, custo, erros','o que aprendeu')},
+    {at:9, x:36,y:292,w:888,h:210, cls:'ext', html:B('Banco de histórias','')+UL('um projeto de maior impacto · uma falha sua e o que mudou','um conflito com colega ou gestor · uma decisão com dados incompletos','quando discordou e se comprometeu · quando ajudou alguém a crescer','um prazo apertado e o que cortou · quando simplificou algo complexo')},
+  ]}},
+
+{ id:'valores', ch:'Comportamental', title:'Temas que as empresas buscam',
+  say:'Cada empresa tem sua lista, mas os temas se repetem. Na Amazon, os princípios de liderança aparecem em todas as entrevistas, como obsessão pelo cliente, ser dono e mergulhar fundo. Google procura colaboração e lidar bem com ambiguidade. Meta valoriza impacto e velocidade. Leia os valores públicos da empresa e ligue cada história a dois ou três deles.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:250, cls:'amber', html:B('Amazon','16 princípios de liderança')+UL('Customer Obsession','Ownership','Dive Deep','Disagree and Commit','Deliver Results')},
+    {at:5, x:340,y:92,w:280,h:250, cls:'blue', html:B('Google','"googleyness" e liderança')+UL('ambiguidade','colaboração','fazer o certo para o usuário','aprender com erros')},
+    {at:9, x:644,y:92,w:280,h:250, cls:'green', html:B('Meta e outras','')+UL('impacto e velocidade','feedback direto','Netflix: liberdade com responsabilidade','Microsoft: growth mindset')},
+    {at:13, x:36,y:362,w:888,h:140, cls:'ext', html:B('Como usar','leia os valores no site oficial de cada empresa · marque em cada história quais temas ela demonstra · cubra todos com pelo menos duas histórias diferentes')},
+  ]}},
+
+{ id:'dia', ch:'Comportamental', title:'No dia, e em inglês',
+  say:'Muitos processos para essas empresas são em inglês, mesmo com vagas no Brasil. Treine em inglês desde o começo: explicar código em voz alta é uma habilidade separada. Tenha frases prontas para ganhar tempo e pedir esclarecimento. No dia, teste o ambiente antes, tenha papel por perto, faça perguntas ao final e anote tudo depois para a próxima rodada.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'blue', html:B('Frases úteis','')+UL('"Let me make sure I understand the problem…"','"Can I assume the input fits in memory?"','"The brute force would be… in O(n²)."','"Let me walk through an example."','"One trade-off here is…"')},
+    {at:6, x:494,y:92,w:430,h:250, cls:'green', html:B('Antes e durante','')+UL('teste câmera, áudio e editor','água e papel por perto','pense em voz alta, mesmo devagar','peça um minuto para pensar se precisar','2–3 perguntas para o entrevistador')},
+    {at:12, x:36,y:362,w:888,h:140, cls:'ext', html:B('Depois','anote os problemas e onde travou · peça feedback ao recrutador · reprovação não fecha a porta: a maioria permite tentar de novo em 6 a 12 meses')},
+  ]}},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de prontidão',
+  say:'Você está pronto quando resolve problemas médios em vinte e cinco minutos falando, desenha três sistemas clássicos sem consulta, tem histórias para cada tema e fez simulações com outra pessoa. O checklist completo, com atalho para cada cena, está abaixo do vídeo.',
+  v:{type:'check', items:[
+    'Médio em 25 min, falando o tempo todo',
+    'Reconhece o padrão pelo enunciado',
+    'Testa e diz a complexidade sem pedirem',
+    'Grafos, heaps e DP sem consultar',
+    'Estimativas rápidas com números certos',
+    'Método de design em 45 minutos',
+    '3 designs clássicos ensaiados',
+    'Trade-offs de consistência e escala',
+    'Confiabilidade e operação no design',
+    '8–10 histórias STAR com números',
+    'Mocks em inglês com outra pessoa',
+    'Caderno de erros revisado',
+  ]}},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a tabela de padrões com os sinais no enunciado, a trilha de estudo com problemas, livros e guias de design, o checklist de prontidão, as perguntas mais frequentes sobre o processo e uma cola de complexidade para revisar antes da entrevista. Bons estudos.',
+  v:{type:'outro'} },
+];
+// ===================== PADRÕES, TRILHA, CHECKLIST, FAQ, COLA =====================
+const MATRIZ = [
+  ['Hash (dicionário/conjunto)','"já vimos?", contagem, pares, duplicados','Two Sum, Group Anagrams, Longest Consecutive Sequence','Ordem importa e o espaço é muito restrito.','O(n) tempo · O(n) espaço'],
+  ['Dois ponteiros','array ordenado, pares/triplas, palíndromo','3Sum, Container With Most Water, Valid Palindrome','Dados sem ordem que não podem ser ordenados.','O(n) · O(1)'],
+  ['Janela deslizante','subarray/substring contíguo com restrição','Longest Substring Without Repeating, Minimum Window Substring','Elementos não contíguos ou negativos em somas.','O(n)'],
+  ['Busca binária','ordenado, "mínimo que satisfaz", resposta monotônica','Koko Eating Bananas, Search in Rotated Array, Median of Two Arrays','A condição não é monotônica.','O(log n) por busca'],
+  ['Pilha / pilha monotônica','aninhamento, "próximo maior/menor"','Valid Parentheses, Daily Temperatures, Largest Rectangle in Histogram','Precisa de acesso aleatório.','O(n)'],
+  ['Lista ligada','ponteiros, ciclo, meio, inverter','Reverse Linked List, Linked List Cycle, LRU Cache','O problema é de índice: use array.','O(n) · O(1)'],
+  ['Árvore DFS/BFS','hierarquia, caminhos, por nível','Validate BST, Level Order, Lowest Common Ancestor','Grafo com ciclos (use visitados).','O(n)'],
+  ['Heap','K maiores/menores, juntar K fontes, mediana','Top K Frequent, Merge K Lists, Find Median from Data Stream','Precisa do elemento do meio por índice.','O(n log k)'],
+  ['Grafo BFS/DFS','grade, conexões, menor caminho sem peso','Number of Islands, Rotting Oranges, Word Ladder','Pesos diferentes: Dijkstra.','O(V + E)'],
+  ['Ordenação topológica','dependências, pré-requisitos, ordem de build','Course Schedule I e II, Alien Dictionary','Grafo não direcionado.','O(V + E)'],
+  ['Dijkstra','menor custo com pesos não negativos','Network Delay Time, Cheapest Flights (variação)','Pesos negativos: Bellman-Ford.','O((V + E) log V)'],
+  ['Union-Find','"conectados?", grupos, ciclo não direcionado','Number of Provinces, Redundant Connection, Accounts Merge','Precisa do caminho, não só da conexão.','≈ O(1) amortizado'],
+  ['Programação dinâmica','"quantas maneiras", máximo/mínimo, subproblemas repetidos','Coin Change, LCS, House Robber, Edit Distance','Escolha gulosa provadamente correta.','estado × transição'],
+  ['Backtracking','"todas as combinações/permutações", tabuleiro','Subsets, Permutations, Combination Sum, N-Queens','n grande: procure DP ou fórmula.','O(2ⁿ) ou O(n!)'],
+  ['Trie','prefixo, autocompletar, várias palavras','Implement Trie, Word Search II, Design Search Autocomplete','Poucas palavras e só igualdade: hash.','O(tamanho da palavra)'],
+  ['Intervalos','sobreposição, agenda, salas','Merge Intervals, Insert Interval, Meeting Rooms II','—','O(n log n)'],
+];
+
+const STUDY = [
+  ['NeetCode Roadmap','Problemas organizados por padrão, com vídeos','https://neetcode.io/roadmap','sinais'],
+  ['LeetCode Top Interview 150','Plano de estudos de problemas clássicos','https://leetcode.com/studyplan/top-interview-150/','metodo'],
+  ['Tech Interview Handbook','Guia completo: algoritmos, currículo, comportamental','https://www.techinterviewhandbook.org/','processo'],
+  ['Big-O Cheat Sheet','Complexidade de estruturas e ordenações','https://www.bigocheatsheet.com/','bigo'],
+  ["Competitive Programmer's Handbook",'Livro gratuito de algoritmos (Antti Laaksonen)','https://cses.fi/book/book.pdf','dp'],
+  ['PriorityQueue no .NET','Heap da biblioteca padrão','https://learn.microsoft.com/pt-br/dotnet/api/system.collections.generic.priorityqueue-2','heap'],
+  ['System Design Primer','Repositório de referência de design de sistemas','https://github.com/donnemartin/system-design-primer','ds-metodo'],
+  ['System Design 101 (ByteByteGo)','Diagramas curtos dos conceitos principais','https://github.com/ByteByteGoHq/system-design-101','blocos'],
+  ['Designing Data-Intensive Applications','Livro de Martin Kleppmann: dados, replicação, consistência','https://dataintensive.net/','consistencia'],
+  ['Latency numbers every programmer should know','Números de latência para estimativas','https://gist.github.com/jboner/2841832','estimativas'],
+  ['Amazon Builders’ Library','Como a Amazon constrói e opera sistemas','https://aws.amazon.com/builders-library/','confiabilidade'],
+  ['Google SRE Book','SLOs, orçamento de erro, incidentes','https://sre.google/sre-book/table-of-contents/','confiabilidade'],
+  ['Princípios de liderança da Amazon','Os 16 princípios oficiais','https://www.amazon.jobs/content/en/our-workplace/leadership-principles','valores'],
+  ['Entrevista comportamental (Tech Interview Handbook)','Perguntas comuns e formato STAR','https://www.techinterviewhandbook.org/behavioral-interview/','star'],
+];
+
+const CHECK = [
+  ['Algoritmos','Explicar e aplicar Big-O de tempo e espaço','bigo'],
+  ['Algoritmos','Seguir o método de seis passos em todo problema','metodo'],
+  ['Algoritmos','Hash, dois ponteiros e janela deslizante sem consulta','janela'],
+  ['Algoritmos','Busca binária na resposta','binaria'],
+  ['Algoritmos','Pilha monotônica','pilha'],
+  ['Algoritmos','Listas ligadas: inverter, ciclo, sentinela','lista'],
+  ['Algoritmos','Árvores: DFS, BFS, validar BST, LCA','arvores'],
+  ['Algoritmos','Heaps: top K, juntar K, mediana','heap'],
+  ['Algoritmos','Grafos: ilhas, BFS, ordenação topológica','grafos'],
+  ['Algoritmos','Dijkstra e union-find','dijkstra'],
+  ['Algoritmos','Programação dinâmica 1D e 2D','dp'],
+  ['Algoritmos','Backtracking com poda','backtracking'],
+  ['Algoritmos','Trie e intervalos','trie'],
+  ['Algoritmos','Reconhecer o padrão pelo enunciado','sinais'],
+  ['Design','Conduzir o método de 45 minutos','ds-metodo'],
+  ['Design','Estimar QPS, armazenamento e banda de cabeça','estimativas'],
+  ['Design','Escolher blocos e justificar cada um','blocos'],
+  ['Design','Explicar CAP, replicação e níveis de consistência','consistencia'],
+  ['Design','Particionamento e hashing consistente','sharding'],
+  ['Design','Encurtador de URL completo','url'],
+  ['Design','Rate limiter distribuído','ratelimit'],
+  ['Design','Feed com fan-out híbrido','feed'],
+  ['Design','Pagamentos com idempotência e razão','pagamentos'],
+  ['Design','SLO, deploy seguro e observabilidade','confiabilidade'],
+  ['Comportamental','8–10 histórias STAR com números','star'],
+  ['Comportamental','Histórias ligadas aos valores de cada empresa','valores'],
+  ['Comportamental','Simulações em inglês com outra pessoa','dia'],
+];
+
+const FAQ = [
+ ['Processo','Qual linguagem usar na entrevista?',`<p>A que você escreve mais rápido e com menos erros. C#, Java, Python, TypeScript e C++ são aceitas nas grandes empresas. Python é popular por ser curto, mas trocar de linguagem às vésperas costuma piorar o desempenho. Domine a biblioteca padrão: dicionário, conjunto, fila, heap e ordenação.</p>`],
+ ['Processo','Quantos problemas preciso resolver antes?',`<p>Algo entre 150 e 250 bem entendidos, cobrindo todos os padrões, costuma bastar. Mais importante que o número é conseguir explicar por que a solução funciona e refazer sem consulta uma semana depois.</p>`],
+ ['Processo','E se eu travar no meio?',`<p>Fale o que está tentando e onde está a dificuldade, volte ao exemplo, tente um caso menor ou uma versão mais simples do problema. Entrevistadores dão dicas, e aceitar bem uma dica conta a favor. Silêncio é o pior cenário.</p>`],
+ ['Processo','Preciso de código perfeito e compilando?',`<p>Normalmente o editor não roda o código, e pequenos erros de sintaxe são tolerados. Lógica errada, casos de borda esquecidos e não testar não são. Rode o exemplo linha a linha no final, como se fosse o computador.</p>`],
+ ['Processo','Como funcionam os níveis?',`<p>Cada empresa tem sua escala (por exemplo L3 a L7 no Google e na Amazon, E3 a E7 na Meta). O nível é decidido pelo conjunto das entrevistas, principalmente design e comportamental. Diga ao recrutador o nível que busca e prepare histórias com escopo compatível.</p>`],
+ ['Processo','Vagas no Brasil ou remoto para fora?',`<p>Algumas empresas têm escritórios no Brasil (Google, Amazon, Microsoft, Meta em alguns períodos) e outras contratam por plataformas ou realocam. O processo é quase sempre em inglês. Verifique no site de carreiras de cada empresa as vagas atuais e o país de contratação.</p>`],
+ ['Algoritmos','Preciso decorar algoritmos?',`<p>Precisa saber escrever de cabeça os blocos básicos: busca binária, BFS, DFS, ordenação topológica, Dijkstra, union-find e o molde de backtracking. O resto é reconhecer o padrão e adaptar. Decorar soluções específicas não funciona, porque o enunciado muda.</p>`],
+ ['Algoritmos','Recursão ou iteração?',`<p>A que for mais clara. Mencione o limite da pilha de chamadas para entradas grandes, como uma lista ligada de um milhão de nós, e ofereça a versão iterativa quando fizer sentido.</p>`],
+ ['Algoritmos','Como estudar programação dinâmica?',`<p>Comece pela recursão de força bruta, acrescente memo e só depois converta para tabela. Escreva sempre o significado do estado em uma frase, como "dp[v] é o menor número de moedas para v". Faça os clássicos de cada família antes de partir para os difíceis.</p>`],
+ ['Algoritmos','Problemas difíceis (hard) caem?',`<p>Caem com menos frequência que os médios. A maioria das entrevistas usa médios, às vezes com uma continuação mais difícil. Priorize resolver médios com fluência; os difíceis entram nas últimas semanas.</p>`],
+ ['Design','Design de sistemas cai para quem tem pouca experiência?',`<p>Para vagas de entrada, geralmente não, ou é uma versão mais leve. Para pleno e acima, quase sempre. Mesmo sem ter operado sistemas enormes, estudar os blocos e treinar o método mostra maturidade.</p>`],
+ ['Design','Preciso citar tecnologias específicas?',`<p>Ajuda citar exemplos, como Redis, Kafka ou PostgreSQL, mas o que pontua é saber por que cada um serve. Diga o tipo do componente, a propriedade que você precisa e uma tecnologia que oferece isso. Evite listar ferramentas sem justificar.</p>`],
+ ['Design','Quanto detalhe nas estimativas?',`<p>Ordem de grandeza. Arredonde agressivamente, escreva os números no quadro e tire uma conclusão de cada um: "são 10 mil leituras por segundo, então precisamos de cache". Estimativa que não muda decisão é tempo perdido.</p>`],
+ ['Design','Como lidar com uma pergunta de design que não conheço?',`<p>Use o método: requisitos, números, API, dados, alto nível, aprofundamento. A maioria dos sistemas é uma combinação dos mesmos blocos. Diga suas premissas em voz alta e ajuste quando o entrevistador mudar o rumo.</p>`],
+ ['Comportamental','Posso usar histórias de projetos pequenos?',`<p>Pode, se mostrarem decisão, responsabilidade e resultado. O escopo deve combinar com o nível da vaga. Use o "eu" e números concretos: tempo economizado, erros reduzidos, clientes atendidos.</p>`],
+ ['Comportamental','Como falar de uma falha?',`<p>Escolha uma falha real com consequência, assuma a sua parte sem culpar outros, explique o que fez para corrigir e o que mudou no seu jeito de trabalhar depois. Falhas sem aprendizado ou "meu defeito é ser perfeccionista" pesam contra.</p>`],
+ ['Preparação','Como fazer simulações (mocks)?',`<p>Com outra pessoa, de preferência que já entrevista ou passou pelo processo. Plataformas de mock entre pares ajudam. Grave e assista: você vai notar silêncios e explicações confusas. Duas a três por semana nas últimas semanas.</p>`],
+ ['Preparação','E o inglês?',`<p>Treine falando em inglês desde o primeiro problema. Prepare frases para entender o problema, explicar a abordagem e falar de trade-offs. Fluência perfeita não é exigida; clareza é.</p>`],
+];
+
+const CMDS = [
+  ['Dictionary / HashSet: busca, inserção','O(1) média · O(n) pior caso'],
+  ['Array ordenado: busca binária','O(log n) · inserção O(n)'],
+  ['Ordenação (Array.Sort, List.Sort)','O(n log n) · instável no .NET (use OrderBy para estável)'],
+  ['PriorityQueue: Enqueue, Dequeue / Peek','O(log n) · O(1) para Peek'],
+  ['Stack / Queue: push, pop, enqueue, dequeue','O(1)'],
+  ['SortedDictionary / SortedSet','O(log n) · árvore balanceada, ordem garantida'],
+  ['BFS / DFS em grafo','O(V + E) tempo · O(V) espaço'],
+  ['Dijkstra com heap','O((V + E) log V)'],
+  ['Union-Find (compressão + tamanho)','≈ O(1) amortizado por operação'],
+  ['Subconjuntos · permutações','O(2ⁿ) · O(n!)'],
+  ['1 dia ≈ 10⁵ s · 1 M/dia ≈ 12/s','Estimativa rápida de QPS'],
+  ['memória 100 ns · SSD 100 µs · rede local 0,5 ms · continente 150 ms','Latências para estimar'],
+];
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG resource terraform provider backend variable output data features'.split(' '));
+function findComment(line, lang){
+  let q = null;
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === q) q = null; continue; }
+    if (ch === '"') { q = ch; continue; }
+    if (lang !== 'cs' && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if (lang === 'cs' && ch === '/' && line[i+1] === '/') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (lang === 'cs' && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>bash · ~/preparatorio</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>
+      <button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button></div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+renderList('studyList', 'progStudy', 'bt-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', 'bt-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+
+$('matrizBody').innerHTML = MATRIZ.map(r => `<tr><td>${esc(r[0])}</td><td><span class="ent">${esc(r[1])}</span></td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td><code>${esc(r[4])}</code></td></tr>`).join('');
+
+/* início: primeira cena visível e parada */
+load(0); syncPlayBtn(); requestAnimationFrame(frame);
+</script>
+
+</body></html>

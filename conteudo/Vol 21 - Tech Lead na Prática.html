@@ -1,0 +1,1289 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha de Tech Lead na Prática</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"fluxo.mjs": "// fluxo.mjs: por que times trabalham muito e entregam pouco (Node 22, sem dependências)\n\n// 1. Multitarefa: uma pessoa com 5 tarefas de 10 dias cada\nexport function sequencial(tarefas, dias) {\n  return Array.from({ length: tarefas }, (_, i) => (i + 1) * dias); // dia em que termina\n}\n// alternando um pouco de cada por dia, perdendo uma fração do dia em troca de contexto\nexport function alternando(tarefas, dias, perdaPorTroca = 0.1) {\n  const restante = new Array(tarefas).fill(dias);\n  const fim = new Array(tarefas).fill(null);\n  let dia = 0;\n  while (fim.some((f) => f === null)) {\n    dia++;\n    const ativas = restante.map((r, i) => (r > 0 ? i : -1)).filter((i) => i >= 0);\n    const util = ativas.length > 1 ? 1 - perdaPorTroca : 1; // trocar de tarefa custa\n    for (const i of ativas) {\n      restante[i] -= util / ativas.length;\n      if (restante[i] <= 1e-9 && fim[i] === null) fim[i] = dia;\n    }\n  }\n  return fim;\n}\nconst media = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;\n\n// 2. Gargalo: desenvolvimento -> revisão -> deploy, com capacidades diárias diferentes\nexport function simularEsteira({ dias, capacidade, limiteWip = Infinity }) {\n  const filas = { dev: [], revisao: [], deploy: [] };\n  const entregues = [];\n  let proximo = 1;\n  for (let d = 1; d <= dias; d++) {\n    const saem = filas.deploy.splice(0, capacidade.deploy);\n    for (const item of saem) entregues.push({ ...item, fim: d });\n    filas.deploy.push(...filas.revisao.splice(0, capacidade.revisao)); // o gargalo\n    filas.revisao.push(...filas.dev.splice(0, capacidade.dev));\n    // começa trabalho novo, respeitando o limite de itens em andamento no sistema\n    const emAndamento = filas.dev.length + filas.revisao.length + filas.deploy.length;\n    const vagas = Math.min(capacidade.dev, limiteWip - emAndamento);\n    for (let i = 0; i < vagas; i++) filas.dev.push({ id: proximo++, inicio: d });\n  }\n  const leadTimes = entregues.map((e) => e.fim - e.inicio);\n  return {\n    entregues: entregues.length,\n    filaNaRevisao: filas.revisao.length,\n    leadTimeMedioUltimos10: media(leadTimes.slice(-10)),\n  };\n}\n\nif (import.meta.filename === process.argv[1]) {\n  const s = sequencial(5, 10), a = alternando(5, 10);\n  console.log('uma tarefa por vez :', s.join(', '), '| média', media(s));\n  console.log('tudo ao mesmo tempo:', a.join(', '), '| média', media(a));\n  const cap = { dev: 5, revisao: 3, deploy: 4 };\n  console.log('sem limite de WIP:', simularEsteira({ dias: 40, capacidade: cap }));\n  const limitado = simularEsteira({ dias: 40, capacidade: cap, limiteWip: 9 });\n  console.log('WIP limitado a 9 :', limitado);\n}", "one-on-one.md": "# 1:1 — [nome] e [seu nome]\n\n## Combinados em aberto\n- [ ] (o que cada um prometeu no último 1:1, com dono)\n\n## [data]\n### Da pessoa (primeiro)\n- \n\n### Do líder\n- Feedback da semana (um ponto, com exemplo concreto):\n- Contexto da empresa que ela deveria saber:\n\n### Carreira (uma vez por mês)\n- Objetivo de 12 meses:\n- O que avançou desde o mês passado:\n\n### Combinado de hoje\n- [ ] \n\n<!-- 30 min a cada 1 ou 2 semanas · ela fala ~70% · remarque, nunca cancele -->\n<!-- entrada mais recente no topo · status de tarefa vai para o quadro, não aqui -->", "plano-90-dias.md": "# Plano de 90 dias — [seu nome], tech lead do time [nome]\n\n## Dias 1 a 30: ouvir\n- 1:1 com cada pessoa do time e com 5 stakeholders (lista abaixo)\n- Mapear: arquitetura atual, dívidas técnicas, incidentes dos últimos 3 meses\n- Medir: lead time, vazão, itens em andamento por pessoa\n- Entregável: documento \"o que eu vi\" (fatos, sem julgamento), revisado com o gestor\n\n## Dias 31 a 60: primeira melhoria\n- Escolher UM problema do diagnóstico, combinado com o time\n- Entregável: a melhoria rodando e a métrica antes e depois\n\n## Dias 61 a 90: ritmo\n- Rituais ajustados, limites de WIP, rotina de 1:1 estável\n- Primeiro ADR ou RFC conduzido por você\n- Entregável: retro do trimestre com o time e com o gestor\n\n## Como saberemos que deu certo\n- Lead time: de __ para __\n- Ninguém do time saiu sem eu saber o motivo antes\n- Stakeholders sabem o que vem nas próximas 6 semanas"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Vol 21 · Tech Lead na Prática =====================
+const CONF = {
+  title: 'Trilha de Tech Lead na Prática', file: 'Vol 21 - Tech Lead na Prática', key: 'v21',
+  eyebrow: 'Guia Técnico · Volume 21', h1: 'Liderar um time sem deixar de ser engenheiro',
+  lead: 'Roteiro em vídeo para começar a liderar agora, em pequena escala: as armadilhas da transição e o plano de 90 dias, as fases de Tuckman e a segurança psicológica, feedback que muda comportamento e 1:1 que funciona, liderança no contexto brasileiro, Lean Inception, WIP e gargalos provados com um simulador em Node, mudança de arquitetura sem parar o time e stakeholders com mapa, perfis de decisão e opções de prazo.',
+  pills: ['Plano de 90 dias', 'Tuckman', 'Segurança psicológica', 'Candura radical', '1:1', 'Lean Inception', 'WIP e gargalo', 'Stakeholders'],
+  term: 'bash · ~/tl-lab',
+  faqPlaceholder: 'Buscar: 90 dias, Tuckman, feedback, WIP, prazo, stakeholder…',
+  matriz: {title: 'Perfis de decisão', desc: 'Uma heurística para preparar a conversa, nunca para rotular alguém. A mesma proposta, apresentada do mesmo jeito para todos, convence alguns e irrita outros.', cols: ['Perfil', 'O que pergunta', 'Como apresentar']},
+};
+const TITLE = {k: 'Guia Técnico · Volume 21', h: 'Tech Lead na prática',
+  p: 'Antes você era medido pelo seu código; agora, pelo que o time entrega e por como ele cresce. Comece a praticar liderança técnica já, em pequena escala, enquanto consolida o nível sênior.',
+  chips: ['ouvir antes de mudar', 'Tuckman', 'segurança + exigência', 'feedback semanal', 'WIP', 'gargalo', 'opções de prazo']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Pare de começar, comece a terminar',
+  p: 'Abaixo do vídeo estão os perfis de decisão, os links para as trilhas de Tech Lead e de Gestão, a trilha de estudo, o checklist e as perguntas de entrevista de tech lead.',
+  chips: ['plano de 90 dias', '1:1 da pessoa', 'WIP limitado', 'mapa de stakeholders', 'histórias STAR']};
+
+const SCENES = [
+/* ---------- TRANSIÇÃO ---------- */
+{ id:'intro', ch:'A transição', title:'Começar a liderar antes do cargo',
+  say:'Você está saindo de pleno para sênior, então a ordem aqui é outra: comece a praticar liderança técnica agora, em pequena escala. Liderar uma iniciativa de duas pessoas, conduzir uma retrospectiva ou ser dono de uma migração é exatamente a evidência que acelera a promoção. O papel, delegação e o básico de feedback ficaram no Volume dez. E a vantagem escondida: dez anos de chão de fábrica, de onde vieram Lean, kaizen e a teoria das restrições.',
+  v:{type:'title'} },
+
+{ id:'armadilhas', ch:'A transição', title:'As armadilhas de quem lidera cedo',
+  say:'A promoção muda como você é medido, e ninguém avisa: antes era o seu código, agora é o que o time entrega e como cresce. As armadilhas: continuar sendo o melhor programador e virar o gargalo; resolver tudo sozinho porque eu faço mais rápido; sumir das decisões para fugir de conflito; virar só reunião; liderar ex-colegas como antes; e a síndrome do impostor. Para cada uma há uma saída concreta.',
+  v:GRID(3, [
+    ['Melhor programador','vira o gargalo',['fora do caminho crítico','difíceis: parear e ensinar'],'ext'],
+    ['Resolver sozinho','"eu faço mais rápido"',['delegue com contexto','aceite demorar no começo'],'ext'],
+    ['Sumir das decisões','cada um faz de um jeito',['decida com prazo','registre no ADR'],'amber'],
+    ['Só reunião','zero código',['proteja 40% a 60%','código, revisão, desenho'],'amber'],
+    ['Ex-colegas','constrangimento no feedback',['conversa explícita','sobre o novo papel'],'blue'],
+    ['Impostor','medo de errar',['"não sei, vou descobrir"','segurança vem de clareza'],'blue'],
+  ], {step:2.4}) },
+
+{ id:'tempo', ch:'A transição', title:'Como dividir o tempo',
+  say:'Uma referência para se policiar, que varia com o tamanho do time. Cerca de metade em execução técnica: código fora do caminho crítico, revisão, protótipos e investigar problemas difíceis junto com alguém. Cerca de um quarto em direção técnica: desenho, ADRs e RFCs, dívida técnica, padrões, qualidade e operação. O restante em pessoas e coordenação: 1:1 técnicos, feedback, rituais e alinhamento com produto e outros times.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:440,h:250, cls:'blue', html:B('Execução técnica','cerca de 1/2')+UL('código fora do caminho crítico','revisão de código','protótipos','problema difícil, junto com alguém')},
+    {at:4.5, x:496,y:92,w:428,h:115, cls:'green', html:B('Direção técnica','cerca de 1/4')+UL('desenho, ADRs, RFCs, dívida','padrões, qualidade, operação')},
+    {at:8, x:496,y:227,w:428,h:115, cls:'amber', html:B('Pessoas e coordenação','o restante')+UL('1:1 técnicos, feedback, rituais','alinhamento com produto e times')},
+    {at:11, x:36,y:362,w:888,h:80, cls:'region', html:'<span class="rl">sinal de alerta</span>'+UL('agenda cheia e zero código: você perde contato com o sistema')},
+  ]}},
+
+{ id:'noventa', ch:'A transição', title:'O plano de 90 dias',
+  say:'Dias um a trinta: ouvir. Um a um com cada pessoa e com produto, ler incidentes, postmortems e ADRs, mapear stakeholders e acompanhar o plantão; funcionou se você descreve os três maiores problemas com as palavras do time. Dias trinta e um a sessenta: uma ou duas vitórias pequenas e visíveis, como o build lento ou o teste instável, acordos de trabalho e o primeiro ADR. Sessenta e um a noventa: visão técnica de uma página, métricas de fluxo e plano de dívida negociado. O erro clássico é chegar mudando tudo no primeiro mês.',
+  v:FLOW([
+    ['1–30 · Ouvir','pessoas, sistema, negócio','blue'],
+    ['31–60 · Vitórias','pequenas e visíveis','green'],
+    ['61–90 · Direção','para onde o time vai','amber'],
+  ], {y:96, h:90, step:2.6, ch:200, cards:[
+    ['Ações','',['1:1 com todos e com produto','incidentes, postmortems, ADRs','build lento, teste instável','visão técnica de 1 página'],'blue'],
+    ['Sinal de que funcionou','',['3 problemas nas palavras do time','o time sente a diferença','produto concorda com as prioridades'],'green'],
+  ]}) },
+
+/* ---------- TIMES ---------- */
+{ id:'tuckman', ch:'Times e confiança', title:'As fases de um time (Tuckman)',
+  say:'Bruce Tuckman descreveu em mil novecentos e sessenta e cinco que grupos passam por fases antes de render bem, e depois acrescentou a dissolução. Na formação, deixe claros objetivo, papéis e acordos de trabalho escritos. No conflito, não abafe: leve a discordância para critérios, como dados, protótipo e ADR. Na normatização, registre acordos e delegue. No desempenho, proteja de interrupções e traga desafios. Na dissolução, celebre e guarde o conhecimento. É mapa, não cronograma: mudança grande faz o time voltar casas.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:164,h:160, cls:'blue', html:B('Formação','')+UL('objetivo, papéis','acordos escritos')},
+    {at:3, x:217,y:92,w:164,h:160, cls:'ext', html:B('Conflito','normal e necessário')+UL('não abafe','critérios, ADR')},
+    {at:5.4, x:398,y:92,w:164,h:160, cls:'amber', html:B('Normatização','')+UL('registre acordos','delegue decisões')},
+    {at:7.6, x:579,y:92,w:164,h:160, cls:'green', html:B('Desempenho','')+UL('proteja o foco','desafios novos')},
+    {at:9.8, x:760,y:92,w:164,h:160, html:B('Dissolução','')+UL('celebre','guarde o saber')},
+    {at:12, x:36,y:272,w:888,h:150, cls:'region', html:'<span class="rl">como usar</span>'+UL('o time que pula o conflito tem conflito escondido, que volta pior','acordos de trabalho: horários, revisão de código, pedir ajuda, o que é pronto','times reais não andam em linha reta: use como mapa, não como cronograma')},
+  ], lines:[
+    {at:3, d:'M200 172 L 217 172', cls:'flow'}, {at:5.4, d:'M381 172 L 398 172', cls:'flow'},
+    {at:7.6, d:'M562 172 L 579 172', cls:'flow'}, {at:9.8, d:'M743 172 L 760 172', cls:'flow'},
+  ]}},
+
+{ id:'seguranca', ch:'Times e confiança', title:'Segurança psicológica',
+  say:'Segurança psicológica, de Amy Edmondson, é a crença de que o time é seguro para riscos interpessoais: perguntar o óbvio, admitir erro, discordar do líder. O Projeto Aristóteles do Google apontou esse fator como o mais ligado à eficácia dos times. Não é ser bonzinho: é o que faz problemas aparecerem cedo, quando são baratos. Na fábrica, quem parava a linha era repreendido e o defeito passava; a Toyota deu a corda que qualquer operador pode puxar.',
+  v:{type:'boxes', defs:[
+    ['Admita primeiro','"eu estimei mal; vamos replanejar"', .8],
+    ['Agradeça','quem traz má notícia cedo', 2.8],
+    ['Pergunte','"o que eu não estou vendo?"', 4.8],
+    ['Sem culpados','o sistema que permitiu o erro', 6.8],
+    ['Dê voz','opinião por escrito antes', 8.8],
+    ['Cumpra','confiança é consistência', 10.8],
+  ], items:[
+    {at:13, x:470,y:92,w:454,h:300, cls:'region', html:'<span class="rl">segurança × exigência</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;font:13px/1.45 var(--f-mono)"><div style="border:1px solid var(--st-line,#334);padding:10px;border-radius:8px">segurança alta<br>exigência baixa<br><b>zona de conforto</b></div><div style="border:1px solid var(--st-green,#3c6);padding:10px;border-radius:8px">segurança alta<br>exigência alta<br><b>o melhor ambiente</b></div><div style="border:1px solid var(--st-line,#334);padding:10px;border-radius:8px">segurança baixa<br>exigência baixa<br><b>apatia</b></div><div style="border:1px solid var(--st-red,#f87171);padding:10px;border-radius:8px">segurança baixa<br>exigência alta<br><b>medo, problema escondido</b></div></div><div style="margin-top:14px">'+NOTE('a corda da Toyota: "posso dizer que quebrei produção sem ser punido"','amber')+'</div>'},
+  ]}},
+
+/* ---------- FEEDBACK ---------- */
+{ id:'candura', ch:'Feedback e 1:1', title:'Frequência e candura radical',
+  say:'A regra mais importante do feedback é a frequência: pequeno e semanal vale mais que uma conversa grande por semestre. O inspetor que aponta o defeito na hora evita o lote refugado; feedback guardado para a avaliação anual é o lote refugado. Candura radical, de Kim Scott: importar-se pessoalmente e desafiar diretamente ao mesmo tempo. Os erros: empatia ruinosa, que deixa o problema se repetir por meses; agressividade nociva, com correção em público; e insinceridade manipuladora, falar de todo mundo menos com a pessoa.',
+  v:GRID(3, [
+    ['Empatia ruinosa','"ele é gente boa…"',['o problema se repete','fale cedo, em particular','com o fato concreto'],'amber'],
+    ['Agressividade nociva','ironia no code review',['correção em público','elogio em público','correção em particular'],'ext'],
+    ['Insinceridade manipuladora','fala com todos, menos com ele',['regra: só falo de alguém','o que já falei para ele'],'blue'],
+  ], {h:230, step:4, rodape:'Pequeno e semanal > grande e semestral · o feedback guardado para a avaliação anual é o lote refugado'}) },
+
+{ id:'feedforward', ch:'Feedback e 1:1', title:'Feedforward e pedir feedback',
+  say:'Feedforward, de Marshall Goldsmith: em vez de discutir o passado, pergunte o que a pessoa faria diferente na próxima entrega parecida; funciona com seniores e com quem fica na defensiva, porque não há o que defender. Para quem sabe mais que você, não finja domínio técnico: fale do impacto no time e no prazo, como o PR parado três dias que travou duas pessoas. E peça feedback antes de dar: na primeira vez ninguém responde, na quarta alguém responde.',
+  v:GRID(3, [
+    ['Feedforward','olhar para a próxima',['"na próxima parecida,','o que faria diferente?"','nada a defender'],'green'],
+    ['Para quem sabe mais','não finja domínio',['fale de impacto e prazo','"PR parado 3 dias','travou duas pessoas"'],'blue'],
+    ['Peça antes de dar','',['"o que eu faria melhor','como líder?"','agradeça e mude algo visível'],'amber'],
+  ], {h:230, step:4, rodape:'Quando você muda algo visível depois de ouvir, o time aprende que é seguro falar'}) },
+
+{ id:'one-on-one', ch:'Feedback e 1:1', title:'O 1:1 que funciona',
+  say:'O 1:1 é a reunião da pessoa, não sua, e não é status de tarefa. Trinta minutos a cada uma ou duas semanas; cancelar é o pior sinal, então remarque. Pauta num documento compartilhado, com os tópicos dela primeiro. Ela fala uns setenta por cento. Todo 1:1 termina com um combinado escrito. Perguntas que abrem conversa: o que mais te tirou energia, que decisão você discordou e não falou, o que você sabe que eu não sei. E se os 1:1 ficaram curtos e educados, investigue: silêncio não é satisfação.',
+  v:{type:'boxes', defs:[
+    ['Frequência','30 min, a cada 1 ou 2 semanas', .8],
+    ['Nunca cancele','remarque', 2.8],
+    ['Pauta','documento por pessoa; ela primeiro', 4.6],
+    ['Proporção','ela fala ~70%', 6.4],
+    ['Saída','um combinado escrito', 8],
+  ], items:[
+    {at:10, x:470,y:92,w:454,h:270, cls:'green', html:B('Perguntas que abrem conversa','')+UL('o que mais te tirou energia?','que decisão você discordou e não falou?','que trabalho quer fazer daqui a um ano?','o que você sabe que eu não sei?','de 1 a 10, recomendaria o time?')},
+    {at:14, x:470,y:382,w:454,h:120, cls:'ext', html:B('Sinal de alerta','1:1 curto, educado, sem assunto')+NOTE('silêncio não é satisfação: pode ser outra vaga','amber')},
+  ]}},
+
+{ id:'doc-1on1', ch:'Feedback e 1:1', title:'O documento do 1:1',
+  say:'Um documento por pessoa, compartilhado entre vocês dois, com a entrada mais recente no topo. Em cima, os combinados em aberto com dono, para nada se perder. Em cada data, primeiro os tópicos da pessoa; depois os seus: um feedback da semana com exemplo concreto e o contexto da empresa que ela deveria saber. Uma vez por mês, carreira: objetivo de doze meses e o que avançou. E sempre o combinado de hoje.',
+  v:S('1on1-ana.md','one-on-one.md','md')},
+
+/* ---------- BRASIL ---------- */
+{ id:'brasil', ch:'Liderar no Brasil', title:'Cinco diferenças do contexto brasileiro',
+  say:'Os livros de liderança são quase todos americanos. No Brasil, a hierarquia é mais forte: o júnior não discorda do líder em reunião, então pergunte a opinião dos mais novos primeiro. A comunicação é indireta: vou ver quer dizer não, e tá quase quer dizer longe; pergunte o que falta, em itens. A relação vem antes da tarefa. Os times misturam CLT, PJ e consultoria. E o prazo vem de cima antes de o time estimar: negocie escopo, não qualidade.',
+  v:{type:'boxes', defs:[
+    ['Hierarquia forte','pergunte aos mais novos primeiro', .8],
+    ['Comunicação indireta','"o que falta, em itens?"', 3.2],
+    ['Relação antes da tarefa','tempo para café, até remoto', 5.6],
+    ['CLT, PJ, consultoria','igual em reconhecimento e informação', 8],
+    ['Prazo vindo de cima','negocie escopo, não qualidade', 10.4],
+  ], items:[
+    {at:12.5, x:470,y:92,w:454,h:410, cls:'region', html:'<span class="rl">traduzindo</span>'+UL('"vou ver" → não','"tá quase" → longe','silêncio do júnior → discordância que não saiu','prazo antes da estimativa → desejo, não plano')+'<div style="margin-top:14px">'+NOTE('você já viu, do lado de baixo, o que é não ser ouvido: o líder que pergunta primeiro é lembrado','amber')+'</div>'},
+  ]}},
+
+{ id:'pj-remoto', ch:'Liderar no Brasil', title:'Time misto, internacional e remoto',
+  say:'Com PJ e consultoria: o alocado tem dois chefes, então combine com o gestor da consultoria como ficam feedback e férias. Quem é PJ costuma ter menos vínculo: conhecimento crítico não pode morar só nele. E contratação e jornada são assunto de RH e jurídico. Com times de outros países, a diferença se inverte: holandeses e alemães dizem não direto, e o bom de um americano pode ser crítica. No remoto, câmera nas cerimônias pequenas, decisões por escrito e encontro presencial por trimestre.',
+  v:GRID(3, [
+    ['CLT, PJ e consultoria','',['alocado tem dois chefes','PJ: documente e pareie','contrato e jornada: RH e jurídico'],'blue'],
+    ['Internacional','The Culture Map',['holandês e alemão: "não" direto','americano: "bom" pode ser crítica','inglês: pedido na 1ª linha'],'green'],
+    ['Remoto','confiança de propósito',['câmera nas cerimônias pequenas','decisões por escrito','presencial por trimestre'],'amber'],
+  ], {h:250, step:4}) },
+
+/* ---------- PROJETOS ---------- */
+{ id:'lean-inception', ch:'Projetos e fluxo', title:'Lean Inception: alinhar o MVP',
+  say:'A Lean Inception foi criada pelo brasileiro Paulo Caroli: um workshop de cerca de cinco dias que junta negócio, produto, design e engenharia para sair com um MVP definido. Visão em uma frase, é, não é, faz, não faz, objetivos, personas, jornadas, brainstorming de funcionalidades, revisão técnica, de negócio e de UX, sequenciador e canvas do MVP. O papel do tech lead é a revisão técnica: marcar o que é caro, arriscado ou depende do que não existe. Tech lead calado recebe depois um prazo impossível.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:300, cls:'blue', html:B('As atividades, em ordem','~5 dias, todas as áreas')+UL('1 · visão do produto numa frase','2 · é, não é, faz, não faz','3 · objetivos do produto','4 · personas','5 · jornadas de usuário','6 · brainstorming de funcionalidades','<b>7 · revisão técnica, negócio e UX</b>','8 · sequenciador por ondas','9 · canvas do MVP')},
+    {at:9, x:494,y:92,w:430,h:180, cls:'amber', html:B('O papel do TL: atividade 7','esforço, valor, dúvida')+UL('o que é caro','o que é arriscado','o que depende do que não existe')},
+    {at:13, x:494,y:292,w:430,h:100, cls:'ext', html:B('Tech lead calado','')+NOTE('recebe depois um prazo impossível','amber')},
+  ]}},
+
+{ id:'aceite', ch:'Projetos e fluxo', title:'Dado/Quando/Então e roadmap',
+  say:'Cada história sai do refinamento com critérios de aceite testáveis, no formato Dado, Quando, Então, e cada linha vira um teste antes do código. Exemplo: dado que a linha P duzentos teve OEE de sessenta por cento no último turno, quando o turno fecha, então o supervisor recebe um alerta com a perda principal. E o roadmap em três colunas: agora, com data; próximo, com ordem; depois, só intenção. Datas falsas para o semestre inteiro geram cobrança por promessas que ninguém fez.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:170, cls:'green', html:B('História','supervisor de linha avisado quando o OEE cai abaixo de 65%')+'<div style="margin-top:10px;font:14px/1.8 var(--f-mono)"><b>Dado</b> que a linha P-200 teve OEE de 60% no último turno<br><b>Quando</b> o turno fecha<br><b>Então</b> o supervisor recebe um alerta com a perda principal</div>'+NOTE('cada linha vira um teste antes do código','dim')},
+    {at:9, x:36,y:282,w:280,h:150, cls:'blue', html:B('Agora','com data')+UL('o que está sendo feito','compromisso real')},
+    {at:10.5, x:340,y:282,w:280,h:150, cls:'amber', html:B('Próximo','com ordem')+UL('o que vem a seguir','sem data ainda')},
+    {at:12, x:644,y:282,w:280,h:150, html:B('Depois','só intenção')+UL('sem datas falsas','sem promessas que ninguém fez')},
+  ]}},
+
+{ id:'little', ch:'Projetos e fluxo', title:'WIP, Lei de Little e multitarefa',
+  say:'Na linha de montagem, estoque entre estações esconde problema e aumenta o tempo de atravessamento. Em software é igual. A Lei de Little: lead time médio é igual ao trabalho em andamento dividido pela vazão. Com a mesma vazão, dobrar o WIP dobra o tempo de cada item. O simulador mostra: cinco tarefas de dez dias, uma por vez, a primeira sai no dia dez e a média no trinta; todas ao mesmo tempo, com dez por cento de perda na troca, todas saem no dia cinquenta e seis.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:110, cls:'region', html:'<span class="rl">Lei de Little</span><div style="margin-top:10px;font:18px var(--f-mono)">lead time médio = <b>WIP</b> ÷ vazão (itens entregues por dia)</div>'+NOTE('mesma vazão, o dobro de WIP → o dobro do tempo','amber')},
+    {at:7, x:36,y:222,w:430,h:180, cls:'green', html:B('Uma tarefa por vez','5 tarefas de 10 dias')+'<div style="margin-top:10px;font:14px/1.8 var(--f-mono)">10, 20, 30, 40, 50<br>1ª entrega: dia 10<br>média: dia 30</div>'},
+    {at:10, x:494,y:222,w:430,h:180, cls:'ext', html:B('Tudo ao mesmo tempo','10% de perda por troca')+'<div style="margin-top:10px;font:14px/1.8 var(--f-mono)">56, 56, 56, 56, 56<br>1ª entrega: dia 56<br>média: dia 56</div>'+NOTE('começar mais coisas não acelera nada','amber')},
+  ]}},
+
+{ id:'simulador', ch:'Projetos e fluxo', title:'O simulador de fluxo em Node',
+  say:'Tech lead que só diz vamos limitar o WIP convence pouca gente; quem mostra uma simulação com os números do próprio time convence a sala. Node vinte e dois, sem dependências. A função sequencial devolve o dia em que cada tarefa termina; alternando divide o dia entre as tarefas ativas e perde uma fração na troca. Simular esteira passa itens de desenvolvimento para revisão e deploy, cada etapa com sua capacidade diária, e só começa trabalho novo se houver vaga no limite de WIP.',
+  v:S('fluxo.mjs','fluxo.mjs','js')},
+
+{ id:'gargalo', ch:'Projetos e fluxo', title:'O gargalo decide a vazão',
+  say:'Rodando: sem limite de WIP, cento e onze entregas, oitenta e um itens parados na revisão e lead time de dezessete dias. Com WIP limitado a nove, as mesmas cento e onze entregas, três na revisão e lead time de três dias: quase seis vezes menor, sem ninguém trabalhar mais. A revisão faz três por dia e o sistema nunca entrega mais que o gargalo. É a Teoria das Restrições, de Goldratt, no livro A Meta. Aumente a revisão para cinco e as entregas sobem para cento e quarenta e oito; o deploy vira o novo gargalo.',
+  v:T('c|node fluxo.mjs',
+      'o|uma tarefa por vez : 10, 20, 30, 40, 50 | média 30',
+      'err|tudo ao mesmo tempo: 56, 56, 56, 56, 56 | média 56',
+      'err|sem limite de WIP: { entregues: 111, filaNaRevisao: 81, leadTimeMedioUltimos10: 17.1 }',
+      'ok|WIP limitado a 9 : { entregues: 111, filaNaRevisao: 3, leadTimeMedioUltimos10: 3 }',
+      'c|node --test',
+      'ok|# tests 2  # pass 2',
+      'c|# desafio: capacidade.revisao = 5',
+      'o|entregues: 148 → o deploy (4 por dia) vira o novo gargalo',
+      'c|# desafio: perdaPorTroca = 0',
+      'o|1ª entrega ainda no dia 50: multitarefa atrasa mesmo sem custo de troca')},
+
+{ id:'pratica-fluxo', ch:'Projetos e fluxo', title:'Fluxo no quadro do dia a dia',
+  say:'Na prática: limite de WIP por coluna no quadro, e respeite. Meça onde os cartões ficam parados mais tempo; ali está o gargalo. Quando o limite estoura, a regra é pare de começar e comece a terminar: quem está livre ajuda a revisar ou testar. Na daily, leia o quadro da direita para a esquerda. E sobre rituais, o acréscimo deste volume: a cada trimestre pergunte se o ritual ainda resolve o problema que o motivou. Ritual que ninguém sabe por que existe vira custo.',
+  v:GRID(2, [
+    ['No quadro','',['limite de WIP por coluna','meça onde o cartão para','ali está o gargalo'],'blue'],
+    ['Quando estoura','pare de começar, comece a terminar',['quem está livre revisa','ou testa'],'green'],
+    ['Na daily','',['direita para a esquerda','primeiro o quase pronto'],'amber'],
+    ['Rituais','revisão trimestral',['"ainda resolve o problema','que o motivou?"','sem motivo vira custo'],''],
+  ], {step:3.4}) },
+
+{ id:'arquitetura', ch:'Projetos e fluxo', title:'Mudar a arquitetura sem parar',
+  say:'Trocar banco, quebrar um módulo ou migrar fila falha mais por condução do que por técnica. A sequência: o problema antes da solução, com números de incidentes, tempo de deploy e lead time. Um ADR curto com opções e trade-offs, aberto por uma semana. Piloto pequeno e reversível numa parte de baixo risco. Migração incremental com o estrangulador, rota por rota. Capacidade reservada, por exemplo vinte por cento da sprint. E critério de fim: migração sem data para apagar o antigo vira duas arquiteturas para sempre.',
+  v:GRID(3, [
+    ['1 · Problema','antes da solução',['incidentes, deploy, lead time'],'blue'],
+    ['2 · ADR curto','opções e trade-offs',['aberto por uma semana'],'blue'],
+    ['3 · Piloto','pequeno e reversível',['parte de baixo risco'],'green'],
+    ['4 · Estrangulador','strangler fig',['o novo ao lado do velho','rota por rota'],'green'],
+    ['5 · Capacidade','combinada com produto',['ex.: 20% fixos da sprint','não "quando sobrar"'],'amber'],
+    ['6 · Critério de fim','quando o velho é apagado',['senão: duas arquiteturas','para sempre'],'ext'],
+  ], {step:2.4}) },
+
+/* ---------- STAKEHOLDERS ---------- */
+{ id:'mapa', ch:'Stakeholders', title:'Mapa de poder e interesse',
+  say:'Stakeholder é quem pode mudar o rumo do projeto ou será afetado por ele. Posicione cada um em dois eixos: poder sobre o resultado e interesse no dia a dia; o quadrante define o esforço de comunicação. Num MES de fábrica: o diretor industrial tem alto poder e baixo interesse no detalhe; o gerente de produção, alto e alto; o jurídico, poder pontual. O erro mais comum é esquecer os supervisores de turno, baixo poder e alto interesse: não aprovam nada, mas decidem se o sistema será usado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:190, cls:'amber', html:B('Alto poder · baixo interesse','mantenha satisfeito')+UL('diretor industrial','jurídico (pontual)')},
+    {at:4, x:494,y:92,w:430,h:190, cls:'ext', html:B('Alto poder · alto interesse','conversa direta')+UL('gerente de produção')},
+    {at:7, x:36,y:302,w:430,h:200, html:B('Baixo poder · baixo interesse','acompanhe')+UL('resumo semanal basta')},
+    {at:9.5, x:494,y:302,w:430,h:200, cls:'green', html:B('Baixo poder · alto interesse','o quadrante esquecido')+UL('supervisores de turno','não aprovam nada','decidem se o sistema será usado')},
+  ]}},
+
+{ id:'perfis', ch:'Stakeholders', title:'Perfis de decisão',
+  say:'Pessoas decidem de jeitos diferentes. O analítico pergunta onde estão os dados: números, opções e riscos, com material antes. O executor quer a decisão e o custo: recomendação na primeira frase, uma página. O relacional pergunta quem já está de acordo: converse antes, em particular. O visionário quer saber aonde isso leva: comece pelo futuro. O cauteloso pergunta o que pode dar errado: piloto e plano de volta. E decisão importante nunca é tomada pela primeira vez na reunião: a reunião só formaliza.',
+  v:GRID(3, [
+    ['Analítico','"onde estão os dados?"',['números, opções, riscos','material antes'],'blue'],
+    ['Executor','"qual a decisão e o custo?"',['recomendação na 1ª frase','uma página, prazo claro'],'ext'],
+    ['Relacional','"quem já está de acordo?"',['converse antes, em particular','impacto nas pessoas'],'green'],
+    ['Visionário','"aonde isso nos leva?"',['futuro e resultado primeiro','detalhes depois'],'amber'],
+    ['Cauteloso','"o que pode dar errado?"',['piloto pequeno','plano de volta atrás'],''],
+    ['Regra prática','',['conversada antes, um por vez','a reunião só formaliza','prepare, nunca rotule'],'region'],
+  ], {h:175, step:2.4}) },
+
+{ id:'expectativas', ch:'Stakeholders', title:'Escrever o combinado',
+  say:'A maioria dos conflitos com stakeholders vem de expectativa não escrita. No início de cada projeto, uma página: o que será entregue e o que não será, o não é, não faz da Lean Inception; quem decide o quê, quem aprova escopo, arquitetura e prioridade; como e quando o status chega, porque um resumo semanal curto vale mais que dez reuniões; e o que acontece quando surge um risco, em quanto tempo você avisa e para quem.',
+  v:{type:'boxes', defs:[
+    ['Entrega e fora','o "não é, não faz"', .8],
+    ['Quem decide','escopo, arquitetura, prioridade', 3.4],
+    ['Status','resumo semanal curto', 6],
+    ['Risco','em quanto tempo e para quem', 8.6],
+  ], items:[
+    {at:11, x:470,y:92,w:454,h:200, cls:'region', html:'<span class="rl">uma página, no início</span>'+UL('expectativa não escrita = conflito depois','1 resumo semanal > 10 reuniões','quem pode mudar prioridade, por nome','o combinado vira referência na hora da pressão')},
+  ]}},
+
+{ id:'prazo', ch:'Stakeholders', title:'O prazo não cabe: opções',
+  say:'Quando o prazo não cabe, nunca responda só não dá: dê opções com custo. Cortar escopo: o painel de OEE sem o alerta por e-mail, com valor menor na primeira entrega. Mover o prazo: a mesma entrega três semanas depois. Mudar a abordagem: um serviço pronto, com custo mensal e dependência. Adicionar pessoas só ajuda se já conhecem o sistema; é a Lei de Brooks. Qualidade e testes não entram na lista. E se dois stakeholders querem coisas incompatíveis, escreva as duas posições e leve a quem decide.',
+  v:GRID(4, [
+    ['Cortar escopo','OEE sem alerta por e-mail',['valor menor','na 1ª entrega'],'green'],
+    ['Mover o prazo','+3 semanas',['negócio espera mais'],'blue'],
+    ['Mudar abordagem','serviço pronto',['custo mensal','dependência'],'amber'],
+    ['Adicionar pessoas','só quem conhece',['Lei de Brooks:','gente nova atrasa'],'ext'],
+  ], {h:170, step:2.6, rodape:'Qualidade não entra na lista: cortar testes só adia o custo para produção, com juros · conflito: as duas posições a quem decide'}) },
+
+/* ---------- MODELOS E ENTREVISTA ---------- */
+{ id:'plano-doc', ch:'Modelos e entrevista', title:'Escreva o seu plano de 90 dias',
+  say:'Este é o formato para escrever o seu plano e mostrar ao gestor na primeira semana. Ouvir: 1:1 com o time e cinco stakeholders, mapear arquitetura, dívidas e incidentes, medir lead time e vazão, e entregar um documento do que eu vi, só fatos. Primeira melhoria: um problema, combinado com o time, com a métrica antes e depois. Ritmo: rituais, WIP, 1:1 estável e o primeiro ADR. E como saberemos que deu certo. Guarde no brag doc do Volume dezenove.',
+  v:S('plano-90-dias.md','plano-90-dias.md','md')},
+
+{ id:'entrevista', ch:'Modelos e entrevista', title:'Perguntas de entrevista de TL',
+  say:'Entrevistas de tech lead são comportamentais: responda em STAR, com um número no resultado. Discordou do gestor avalia coragem com respeito. Alguém que não entrega: fato, conversa, plano e acompanhamento. O prazo não cabe: a tabela de opções. Projeto que deu errado: responsabilidade, com o postmortem. Melhorou a entrega: WIP e gargalo, com lead time antes e depois. Mudança de arquitetura: ADR, piloto e estrangulador. E por que liderar: a sua história de fábrica, em até cinco frases, em português e inglês.',
+  v:GRID(4, [
+    ['Discordou do gestor','coragem com respeito',['dados, depois comprometa'],'blue'],
+    ['Não entrega','feedback cedo',['fato, conversa, plano'],'blue'],
+    ['Prazo não cabe','negociação',['tabela de opções'],'green'],
+    ['Deu errado','responsabilidade',['postmortem e mudança'],'green'],
+    ['Melhorou a entrega','sistema e métricas',['WIP, lead time antes/depois'],'amber'],
+    ['Desenvolve pessoas','1:1, delegação',['quem cresceu e onde está'],'amber'],
+    ['Mudou arquitetura','influência',['ADR, piloto, estrangulador'],''],
+    ['Por que liderar','motivação',['sua história de fábrica'],''],
+  ], {step:1.8}) },
+
+{ id:'exercicios', ch:'Modelos e entrevista', title:'Pratique no trabalho atual',
+  say:'Você não precisa do cargo para praticar, e cada exercício vira uma história para o brag doc. Desenhe o mapa de poder e interesse do seu projeto e ache o quadrante esquecido. Meça por duas semanas onde os cartões param e rode o simulador com esses números. Peça feedback a três colegas e mude uma coisa visível. Escreva critérios Dado, Quando, Então antes do refinamento. Facilite uma retrospectiva inteira. Escreva um ADR com três opções. E diga em que fase de Tuckman seu time está, com uma evidência.',
+  v:GRID(3, [
+    ['Projeto','',['mapa de poder e interesse','cartões parados por 2 semanas','simulador com os seus números'],'blue'],
+    ['Pessoas','',['feedback de 3 colegas','mudar algo visível','fase de Tuckman + evidência'],'green'],
+    ['Prática de TL','',['Dado/Quando/Então → testes','facilitar uma retro inteira','ADR com 3 opções e custos'],'amber'],
+  ], {h:240, step:4, rodape:'Cada exercício é uma história STAR para o brag doc (Vol 19), com número antes e depois'}) },
+
+{ id:'check', ch:'Modelos e entrevista', title:'Checklist de tech lead',
+  say:'Antes de dizer que domina: você evita as armadilhas da transição, tem um plano de 90 dias escrito, reconhece a fase do time, cria segurança com exigência, dá feedback semanal e conduz 1:1 da pessoa, adapta a liderança ao Brasil, participa da Lean Inception, prova o efeito do WIP, muda arquitetura aos poucos e trata stakeholders com mapa, perfis e opções de prazo.',
+  v:CK('Fora do caminho crítico; 40–60% técnico', 'Plano de 90 dias: ouvir primeiro', 'Fase de Tuckman com evidência', 'Segurança alta + exigência alta', 'Feedback semanal, sem empatia ruinosa', '1:1 da pessoa, com combinado', 'Perguntar fatos: "o que falta, em itens?"', 'Revisão técnica na Lean Inception', 'Lei de Little e o gargalo no simulador', 'Mudança: ADR, piloto, estrangulador, fim', 'Mapa de poder e interesse', 'Prazo: opções com custo, nunca qualidade')},
+
+{ id:'outro', ch:'Modelos e entrevista', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os perfis de decisão, os links para as cenas das trilhas de Tech Lead e de Gestão de Projetos, a trilha de estudo, o checklist e as perguntas de entrevista. O exercício que mais rende: rode o simulador com os números reais do seu quadro e leve o resultado para a próxima retro. O Volume vinte e dois continua daqui: quando a influência precisa ir além de um time, o papel é de staff engineer.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Papéis: tech lead, staff e manager', 'v10', 'papeis', 'A diferença entre os três caminhos'],
+  ['Delegar e o feedback SCI', 'v10', 'delegar', 'O básico que este volume aprofunda'],
+  ['1:1, conflitos e pressão', 'v10', 'one-on-one', 'A versão curta do 1:1'],
+  ['Lei de Little e caminho crítico', 'v10', 'little', 'Dependências e WIP'],
+  ['Más notícias e sim com condições', 'v10', 'mas-noticias', 'Comunicar atraso com opções'],
+  ['Os três chapéus do Tech Lead', 'tl', 'chapeus', 'Técnico, pessoas e produto'],
+  ['Os primeiros 90 dias', 'tl', 'primeiros90', 'O plano de entrada na trilha antiga'],
+  ['1:1: o encontro mais importante', 'tl', 'oneonone', 'Modelo de pauta e perguntas'],
+  ['Feedback que funciona', 'tl', 'feedback', 'Exemplos de feedback'],
+  ['Conversas difíceis', 'tl', 'dificil', 'Quando alguém não entrega'],
+  ['Gerenciar expectativas para cima', 'tl', 'expectativas', 'Comunicação com a liderança'],
+  ['Modelo de design doc e ADR', 'staff', 'designdoc', 'O documento da mudança de arquitetura'],
+  ['Histórias no formato STAR', 'bt', 'star', 'STAR para big tech'],
+];
+
+const MATRIZ = [
+  ['Analítico', '"Onde estão os dados?"', 'Números, comparação de opções, riscos; mande o material antes'],
+  ['Executor', '"Qual é a decisão e quanto custa?"', 'Recomendação na primeira frase, uma página, prazo claro'],
+  ['Relacional', '"Quem já está de acordo? Como o time fica?"', 'Converse antes em particular; mostre quem apoia e o impacto nas pessoas'],
+  ['Visionário', '"Aonde isso nos leva?"', 'Comece pelo futuro e pelo resultado de negócio; detalhes depois'],
+  ['Cauteloso', '"O que pode dar errado?"', 'Piloto pequeno, plano de volta atrás, quem já fez isso antes'],
+];
+
+const STUDY = [
+  ['Radical Candor (Kim Scott)', 'Importar-se e desafiar diretamente', 'https://www.radicalcandor.com/', 'candura'],
+  ['Projeto Aristóteles (Google re:Work)', 'Segurança psicológica e eficácia de times', 'https://rework.withgoogle.com/print/guides/5721312655835136/', 'seguranca'],
+  ['The Fearless Organization (Amy Edmondson)', 'Segurança psicológica no trabalho', 'https://amycedmondson.com/the-fearless-organization/', 'seguranca'],
+  ['Lean Inception (Paulo Caroli)', 'O workshop para alinhar o MVP', 'https://caroli.org/livro/lean-inception-como-alinhar-pessoas-e-construir-o-produto-certo/', 'lean-inception'],
+  ['The Culture Map (Erin Meyer)', 'Liderar times de culturas diferentes', 'https://erinmeyer.com/books/the-culture-map/', 'pj-remoto'],
+  ['The Manager\'s Path', 'Camille Fournier: do tech lead ao diretor', 'https://www.oreilly.com/library/view/the-managers-path/9781491973882/', 'armadilhas'],
+  ['Kanban Guide', 'Fluxo, WIP e métricas', 'https://kanban.university/kanban-guide/', 'pratica-fluxo'],
+  ['The Mythical Man-Month', 'Brooks: por que gente nova atrasa', 'https://en.wikipedia.org/wiki/The_Mythical_Man-Month', 'prazo'],
+  ['Teoria das Restrições', 'Goldratt e o livro A Meta', 'https://en.wikipedia.org/wiki/Theory_of_constraints', 'gargalo'],
+  ['Strangler Fig (Martin Fowler)', 'Migração incremental, rota por rota', 'https://martinfowler.com/bliki/StranglerFigApplication.html', 'arquitetura'],
+  ['node:test', 'O executor de testes nativo do Node', 'https://nodejs.org/api/test.html', 'simulador'],
+];
+
+const CHECK = [
+  ['Transição', 'Medir a sua divisão de tempo numa semana', 'tempo'],
+  ['Transição', 'Escrever o plano de 90 dias de uma iniciativa', 'plano-doc'],
+  ['Times', 'Identificar a fase de Tuckman com evidência', 'tuckman'],
+  ['Times', 'Um comportamento de segurança por semana', 'seguranca'],
+  ['Feedback', 'Feedback semanal pequeno, por um mês', 'candura'],
+  ['Feedback', 'Pedir feedback a três colegas e mudar algo', 'feedforward'],
+  ['1:1', 'Montar o documento de 1:1 de um mentorado', 'doc-1on1'],
+  ['Projetos', 'Critérios Dado/Quando/Então que viram testes', 'aceite'],
+  ['Fluxo', 'Rodar fluxo.mjs e os testes', 'simulador'],
+  ['Fluxo', 'Simular com os números reais do quadro', 'gargalo'],
+  ['Fluxo', 'Limite de WIP por coluna e daily da direita', 'pratica-fluxo'],
+  ['Arquitetura', 'ADR com três opções para uma mudança real', 'arquitetura'],
+  ['Stakeholders', 'Mapa de poder e interesse do projeto atual', 'mapa'],
+  ['Stakeholders', 'Responder um prazo impossível com opções', 'prazo'],
+  ['Entrevista', 'Resposta de "por que liderar" em 5 frases', 'entrevista'],
+];
+
+const FAQ = [
+ ['Transição','Qual o erro mais comum de quem vira tech lead cedo?',`<p>Continuar sendo o melhor programador do time: pegar as tarefas mais difíceis e virar o gargalo. Pegue tarefas fora do caminho crítico, use as difíceis para parear e ensinar e proteja cerca de 40% a 60% do tempo para trabalho técnico.</p>`],
+ ['Transição','O que você faz nos primeiros 90 dias como TL?',`<p>Trinta dias ouvindo (1:1 com todos, incidentes, ADRs, stakeholders), trinta dias com uma ou duas vitórias pequenas e visíveis e o primeiro ADR, e trinta dias definindo direção: visão técnica de uma página, métricas de fluxo e plano de dívida negociado. Com métricas antes e depois.</p>`],
+ ['Times','O que é segurança psicológica e por que importa?',`<p>A crença compartilhada de que o time é seguro para riscos interpessoais: perguntar, admitir erro, discordar. O Projeto Aristóteles do Google a apontou como o fator mais ligado à eficácia. Não é falta de exigência: o melhor ambiente combina segurança alta e exigência alta.</p>`],
+ ['Times','Seu time vive brigando por decisões técnicas. É ruim?',`<p>Pode ser a fase de conflito de Tuckman, que é normal. Não abafo: levo a discordância para critérios objetivos (dados, protótipo, ADR), separo a ideia da pessoa e registro os acordos que surgem.</p>`],
+ ['Pessoas','Como você lida com alguém que não entrega?',`<p>Feedback cedo e em particular, com o fato concreto; uma conversa para entender a causa; um plano combinado; e acompanhamento. Apoio antes de escalar. Nada de empatia ruinosa deixando o problema se repetir por meses.</p>`],
+ ['Pessoas','Como dar feedback para alguém mais experiente que você?',`<p>Sem fingir domínio técnico. Falo do impacto no time e no prazo, que é o que vejo melhor: "o PR ficou três dias esperando sua revisão e travou duas pessoas". Feedforward também ajuda: o que faria diferente na próxima?</p>`],
+ ['Pessoas','Como você conduz um 1:1?',`<p>É a reunião da pessoa: 30 minutos a cada uma ou duas semanas, pauta compartilhada com os tópicos dela primeiro, ela fala uns 70%, e sempre termina com um combinado escrito. Remarco, nunca cancelo, e investigo quando os 1:1 ficam curtos e sem assunto.</p>`],
+ ['Entrega','Como você melhorou a entrega do time?',`<p>Medi onde os cartões ficavam parados, achei o gargalo (revisão), limitei o WIP e adotei "pare de começar, comece a terminar". Com a mesma vazão, o lead time cai muito; no simulador, de 17 para 3 dias com as mesmas 111 entregas.</p>`],
+ ['Entrega','O prazo não cabe. O que você faz?',`<p>Nunca só "não dá": opções com custo. Cortar escopo, mover o prazo, mudar a abordagem (serviço pronto) ou adicionar pessoas que já conhecem o sistema. Qualidade e testes não entram na lista. A escolha fica com quem é dono da prioridade.</p>`],
+ ['Arquitetura','Como você conduziu uma mudança de arquitetura?',`<p>Problema com números, ADR curto com opções aberto por uma semana, piloto pequeno e reversível, migração incremental com estrangulador, capacidade reservada com produto (por exemplo 20%) e um critério de fim para apagar o código antigo.</p>`],
+ ['Stakeholders','Dois stakeholders querem coisas incompatíveis. E aí?',`<p>Não escolho por eles. Escrevo as duas posições com o custo de cada uma e levo para quem tem autoridade sobre as duas áreas. Meu papel é deixar a escolha clara, não carregá-la sozinho.</p>`],
+ ['Motivação','Por que você quer liderar?',`<p>Uma resposta curta e verdadeira: dez anos vendo do chão de fábrica, no Brasil e na Irlanda, o que bons e maus líderes fazem com uma equipe. Até cinco frases, em português e em inglês, treinadas em voz alta.</p>`],
+];
+
+const CMDS = [
+  ['lead time = WIP ÷ vazão', 'Lei de Little'],
+  ['node fluxo.mjs && node --test', 'Rodar o simulador e os testes'],
+  ['simularEsteira({ dias: 40, capacidade, limiteWip: 9 })', 'Esteira com WIP limitado'],
+  ['pare de começar, comece a terminar', 'Regra quando o WIP estoura'],
+  ['Dado / Quando / Então', 'Critério de aceite que vira teste'],
+  ['Agora (data) · Próximo (ordem) · Depois (intenção)', 'Roadmap sem datas falsas'],
+  ['ouvir → vitórias → direção', 'Plano de 90 dias'],
+  ['problema → ADR → piloto → estrangulador → fim', 'Mudança de arquitetura'],
+  ['escopo · prazo · abordagem · pessoas', 'Opções quando o prazo não cabe'],
+  ['poder × interesse', 'Mapa de stakeholders'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

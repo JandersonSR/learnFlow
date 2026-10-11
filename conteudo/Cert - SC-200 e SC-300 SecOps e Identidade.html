@@ -1,0 +1,1378 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha SC-200 e SC-300</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"acesso-condicional.ps1": "# acesso-condicional.ps1: políticas de acesso condicional com o Microsoft Graph PowerShell\nConnect-MgGraph -Scopes \"Policy.ReadWrite.ConditionalAccess\", \"Policy.Read.All\"\n\n$emergencia = (Get-MgGroup -Filter \"displayName eq 'CA-Excluir-Emergencia'\").Id\n$antiPhishing = \"00000000-0000-0000-0000-000000000004\"  # força embutida: resistente a phishing\n\n# CA01: admins só entram com MFA resistente a phishing (passkey, Windows Hello, certificado)\nNew-MgIdentityConditionalAccessPolicy -BodyParameter @{\n  displayName = \"CA01 - Admins: MFA resistente a phishing\"\n  state       = \"enabledForReportingButNotEnforced\"     # só relatório: mede antes de impor\n  conditions  = @{\n    users = @{\n      includeRoles  = @(\"62e90394-69f5-4237-9190-012177145e10\")   # Global Administrator\n      excludeGroups = @($emergencia)                              # contas break-glass\n    }\n    applications   = @{ includeApplications = @(\"All\") }\n    clientAppTypes = @(\"all\")\n  }\n  grantControls   = @{ operator = \"OR\"; authenticationStrength = @{ id = $antiPhishing } }\n  sessionControls = @{ signInFrequency = @{ isEnabled = $true; type = \"hours\"; value = 4 } }\n}\n\n# CA02: bloquear autenticação legada (não aceita MFA)\nNew-MgIdentityConditionalAccessPolicy -BodyParameter @{\n  displayName = \"CA02 - Bloquear autenticação legada\"\n  state       = \"enabled\"\n  conditions  = @{\n    users          = @{ includeUsers = @(\"All\"); excludeGroups = @($emergencia) }\n    applications   = @{ includeApplications = @(\"All\") }\n    clientAppTypes = @(\"exchangeActiveSync\", \"other\")\n  }\n  grantControls = @{ operator = \"OR\"; builtInControls = @(\"block\") }\n}\n\n# CA03: risco de entrada médio ou alto exige MFA (ID Protection, licença P2)\nNew-MgIdentityConditionalAccessPolicy -BodyParameter @{\n  displayName = \"CA03 - Risco de entrada: MFA\"\n  state       = \"enabled\"\n  conditions  = @{\n    users            = @{ includeUsers = @(\"All\"); excludeGroups = @($emergencia) }\n    applications     = @{ includeApplications = @(\"All\") }\n    signInRiskLevels = @(\"medium\", \"high\")\n  }\n  grantControls = @{ operator = \"OR\"; builtInControls = @(\"mfa\") }\n}\n\n# Antes de impor a CA01: o que o modo só relatório teria feito?\nGet-MgAuditLogSignIn -Filter \"createdDateTime ge 2026-10-01T00:00:00Z\" -Top 200 |\n  ForEach-Object { $_.AppliedConditionalAccessPolicies } |\n  Where-Object DisplayName -like \"CA01*\" |\n  Group-Object Result | Select-Object Name, Count   # reportOnlySuccess / reportOnlyFailure", "caca.kql": "// 1. Clicou no link do phishing e, em até 30 min, a mesma conta abriu um processo suspeito?\nlet janela = 30m;\nUrlClickEvents\n| where Timestamp > ago(7d) and ActionType == \"ClickAllowed\"\n| join kind=inner (EmailEvents | where ThreatTypes has \"Phish\") on NetworkMessageId\n| project Clique = Timestamp, AccountUpn, Url, Subject\n| join kind=inner (\n    DeviceProcessEvents\n    | where FileName in~ (\"powershell.exe\", \"mshta.exe\", \"rundll32.exe\")\n    | project Processo = Timestamp, DeviceId, DeviceName,\n              AccountUpn = InitiatingProcessAccountUpn, ProcessCommandLine\n  ) on AccountUpn\n| where Processo between (Clique .. (Clique + janela))\n\n// 2. Base de DETECÇÃO CUSTOMIZADA no XDR: projete Timestamp, ReportId e DeviceId\nDeviceProcessEvents\n| where ingestion_time() > ago(1h)    // na regra, filtre por ingestão, não por Timestamp\n| where FileName =~ \"powershell.exe\"\n| where ProcessCommandLine has_any (\"-enc\", \"-EncodedCommand\", \"FromBase64String\")\n| project Timestamp, ReportId, DeviceId, DeviceName, AccountName, ProcessCommandLine\n\n// 3. Movimento lateral: uma conta autenticando por rede em muitas máquinas\nDeviceLogonEvents\n| where Timestamp > ago(1d)\n| where LogonType == \"Network\" and ActionType == \"LogonSuccess\"\n| summarize maquinas = dcount(DeviceName), quais = make_set(DeviceName, 10) by AccountName\n| where maquinas > 10\n\n// 4. Password spray (Sentinel, SigninLogs): muitas contas, um IP, poucas tentativas cada\nSigninLogs\n| where TimeGenerated > ago(1d) and ResultType == \"50126\"   // usuário ou senha inválidos\n| summarize contas = dcount(UserPrincipalName), tentativas = count() by IPAddress\n| where contas > 20 and tentativas < contas * 3\n\n// 5. Conta criada e logo posta em grupo privilegiado (Windows Security Events via AMA)\nSecurityEvent\n| where TimeGenerated > ago(1d) and EventID in (4720, 4728, 4732, 4756)\n| summarize eventos = make_set(EventID) by TargetAccount, Computer, bin(TimeGenerated, 1h)\n| where set_has_element(eventos, 4720) and array_length(eventos) > 1", "entra.kql": "// Logs do Entra ID no Log Analytics (diagnostic settings: SigninLogs, AuditLogs, …)\n\n// 1. Entradas bloqueadas pelo acesso condicional, por política e aplicativo\nSigninLogs\n| where TimeGenerated > ago(1d) and ConditionalAccessStatus == \"failure\"\n| mv-expand pol = ConditionalAccessPolicies\n| where pol.result == \"failure\"\n| summarize bloqueios = count() by Politica = tostring(pol.displayName), AppDisplayName\n\n// 2. Entradas arriscadas que passaram (ID Protection grava o nível de risco)\nSigninLogs\n| where TimeGenerated > ago(7d) and ResultType == \"0\"\n| where RiskLevelDuringSignIn in (\"medium\", \"high\")\n| project TimeGenerated, UserPrincipalName, IPAddress, Location, RiskLevelDuringSignIn\n\n// 3. Quem ganhou papel privilegiado fora do PIM? (atribuição direta e permanente)\nAuditLogs\n| where TimeGenerated > ago(30d) and OperationName == \"Add member to role\"\n| where Identity != \"MS-PIM\"\n| extend Papel = tostring(TargetResources[0].modifiedProperties[1].newValue)\n| project TimeGenerated, Quem = tostring(InitiatedBy.user.userPrincipalName),\n          Alvo = tostring(TargetResources[0].userPrincipalName), Papel\n\n// 4. Consentimento a aplicativos (OAuth): quem concedeu o quê\nAuditLogs\n| where TimeGenerated > ago(30d) and OperationName == \"Consent to application\"\n| project TimeGenerated, Quem = tostring(InitiatedBy.user.userPrincipalName),\n          App = tostring(TargetResources[0].displayName), Result\n\n// 5. Identidades de workload: entradas de service principals com falha\nAADServicePrincipalSignInLogs\n| where TimeGenerated > ago(1d) and ResultType != \"0\"\n| summarize falhas = count() by ServicePrincipalName, IPAddress, ResultType", "regra-sentinel.bicep": "// regra-sentinel.bicep: regra agendada + regra de automação que chama um playbook\nparam wsName string\nparam playbookId string                      // Logic App com gatilho do Microsoft Sentinel\nresource ws 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = { name: wsName }\nresource spray 'Microsoft.SecurityInsights/alertRules@2024-09-01' = {\n  scope: ws\n  name: guid(ws.id, 'password-spray')\n  kind: 'Scheduled'                          // ou NRT, MicrosoftSecurityIncidentCreation…\n  properties: {\n    displayName: 'Password spray contra o Entra ID'\n    enabled: true\n    severity: 'Medium'\n    query: loadTextContent('spray.kql')      // a consulta 4 de caca.kql\n    queryFrequency: 'PT1H'                   // roda a cada hora…\n    queryPeriod: 'PT1H'                      // …olhando a última hora\n    triggerOperator: 'GreaterThan'           // dispara com 1 linha ou mais\n    triggerThreshold: 0\n    suppressionEnabled: false\n    suppressionDuration: 'PT5H'\n    tactics: [ 'CredentialAccess' ]          // cobertura no mapa MITRE ATT&CK\n    techniques: [ 'T1110' ]\n    entityMappings: [ {\n      entityType: 'IP'\n      fieldMappings: [ { identifier: 'Address', columnName: 'IPAddress' } ]\n    } ]\n    incidentConfiguration: {\n      createIncident: true                   // cada alerta vira (ou entra em) um incidente\n    }\n  }\n}\n\nresource auto 'Microsoft.SecurityInsights/automationRules@2024-09-01' = {\n  scope: ws\n  name: guid(ws.id, 'auto-spray')\n  properties: {\n    displayName: 'Spray: subir severidade e bloquear o IP'\n    order: 1\n    triggeringLogic: {\n      isEnabled: true\n      triggersOn: 'Incidents'\n      triggersWhen: 'Created'\n      conditions: [ {                        // só incidentes gerados por esta regra\n        conditionType: 'Property'\n        conditionProperties: {\n          propertyName: 'IncidentRelatedAnalyticRuleIds'\n          operator: 'Contains'\n          propertyValues: [ spray.id ]\n        }\n      } ]\n    }\n    actions: [\n      { order: 1, actionType: 'ModifyProperties', actionConfiguration: { severity: 'High' } }\n      {\n        order: 2\n        actionType: 'RunPlaybook'\n        actionConfiguration: { logicAppResourceId: playbookId, tenantId: tenant().tenantId }\n      }\n    ]\n  }\n}"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"], "csc500": ["Cert · SC-500 Cloud and AI Security", "https://claude.ai/artifact/PhJmPwwXH1A4zaQoywZmkU"], "csc100": ["Cert · SC-100 Cybersecurity Architect", "https://claude.ai/artifact/Fg63ZrBdBQC4mWJrPB3Jmh"], "csc2003": ["Cert · SC-200 e SC-300", "https://claude.ai/artifact/AiAtvk2jwqACoPN32mYu6S"], "c901": ["Cert · AI-901 AI Fundamentals", "https://claude.ai/artifact/E5sF2gdYzJkQhoTuPqnnJ1"], "cdp700": ["Cert · DP-700 Fabric Data Engineer", "https://claude.ai/artifact/StB9Z2V1nRRLeiHqLqzrKX"], "cpl300": ["Cert · PL-300 Power BI", "https://claude.ai/artifact/YNPpL7WWufh7Lub5aRKRqk"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Cert · SC-200 e SC-300 SecOps e Identidade =====================
+const CONF = {
+  title: 'Trilha SC-200 e SC-300', file: 'Cert - SC-200 e SC-300 SecOps e Identidade', key: 'csc2003',
+  eyebrow: 'Certificação · Microsoft', h1: 'SC-200 e SC-300: operar a segurança e governar a identidade na Microsoft',
+  lead: 'Roteiro em vídeo em duas partes. A SC-200 (Security Operations Analyst Associate) cobre o SOC: Defender XDR, Microsoft Sentinel, ingestão com AMA, detecções, playbooks, resposta a incidentes e caça com KQL. A SC-300 (Identity and Access Administrator Associate) cobre o Entra ID: tenant, híbrido, externos, autenticação, acesso condicional, ID Protection, Global Secure Access, identidades de workload, Defender for Cloud Apps, governança e PIM. Segue os domínios e pesos dos study guides oficiais conferidos em outubro de 2026 (SC-200: skills measured de 21/10/2026; SC-300: de 28/10/2026, ambos com mudanças menores). Com KQL, Bicep, az cli e Microsoft Graph PowerShell reais, pegadinhas, simulado e laboratório.',
+  pills: ['Defender XDR', 'Microsoft Sentinel', 'KQL de caça', 'Playbooks', 'Entra ID', 'Acesso condicional', 'PIM', 'Identidades de workload'],
+  term: 'pwsh · ~/secops',
+  faqPlaceholder: 'Buscar: Sentinel, NRT, AMA, playbook, live response, KQL, acesso condicional, PIM, access package, managed identity…',
+  matriz: {title: 'Domínios das duas provas e onde estudar', desc: 'Primeiro os três domínios da SC-200 (skills measured de 21/10/2026), depois os quatro da SC-300 (de 28/10/2026), com o peso, o que cai e onde o tema já aparece nas trilhas. Confira as páginas oficiais antes de agendar.', cols: ['Domínio', 'Peso', 'O que cai', 'Onde estudar']},
+};
+const TITLE = {k: 'Certificação · Microsoft', h: 'SC-200 e SC-300: SecOps e Identidade',
+  p: 'Duas provas que se completam: a SC-200 detecta, investiga e responde; a SC-300 decide quem entra, com que método, em que condição e por quanto tempo.',
+  chips: ['Defender XDR', 'Sentinel', 'AMA', 'KQL', 'playbooks', 'Entra ID', 'acesso condicional', 'ID Protection', 'PIM', 'access packages']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Detectar rápido, conceder pouco, revisar sempre',
+  p: 'Abaixo do vídeo estão os domínios das duas provas com onde estudar, o simulado com questões no estilo de cada uma, os links oficiais e o checklist de prontidão.',
+  chips: ['detecção com entidade', 'automação com escopo', 'só relatório antes de impor', 'elegível, não permanente']};
+
+const SCENES = [
+/* ---------- AS PROVAS ---------- */
+{ id:'intro', ch:'As provas', title:'O que a SC-200 e a SC-300 validam',
+  say:'Duas provas de nível associate, cada uma com seu título. A SC-200 forma o analista de operações de segurança: triagem, resposta, caça e engenharia de detecção com Defender XDR e Sentinel. A SC-300 forma o administrador de identidade e acesso no Entra ID. Cada uma tem cem minutos, nota mínima setecentos de mil, possíveis componentes interativos e oferta em português do Brasil. Sem pré-requisito formal, renovação anual gratuita e simulado oficial grátis. Referência: outubro de dois mil e vinte e seis. Número de questões e preço: confira a página.',
+  v:{type:'title'} },
+
+{ id:'mapa', ch:'As provas', title:'Os domínios e os pesos das duas',
+  say:'A SC-200 tem três domínios: gerenciar o ambiente de operações de segurança, de quarenta a quarenta e cinco por cento, com automação, Sentinel, ingestão e detecções; responder a incidentes, de trinta e cinco a quarenta; e caçar ameaças, de vinte a vinte e cinco. A SC-300 tem quatro: identidades de usuário, de vinte a vinte e cinco; autenticação e acesso, o maior, de vinte e cinco a trinta; identidades de workload, de vinte a vinte e cinco; e governança, de vinte a vinte e cinco. As duas novas versões, em inglês, trazem só ajustes menores.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:30, cls:'region', html:'<span class="rl">SC-200 · Security Operations Analyst · skills measured de 21/10/2026</span>'},
+    {at:1.5, x:36,y:130,w:288,h:140, cls:'blue', html:B('Ambiente de SecOps','40–45% · o maior')+UL('automação XDR e Sentinel','ingestão e retenção','detecções e MITRE')},
+    {at:3, x:336,y:130,w:288,h:140, cls:'blue', html:B('Responder a incidentes','35–40%')+UL('incidentes no XDR','dispositivo e live response','auditoria do M365')},
+    {at:4.5, x:636,y:130,w:288,h:140, cls:'blue', html:B('Caçar ameaças','20–25%')+UL('KQL e advanced hunting','data lake e notebooks','graph e blast radius')},
+    {at:7, x:36,y:288,w:888,h:30, cls:'region', html:'<span class="rl">SC-300 · Identity and Access Administrator · skills measured de 28/10/2026</span>'},
+    {at:7.8, x:36,y:326,w:210,h:140, cls:'green', html:B('Usuários','20–25%')+UL('tenant e papéis','externos','híbrido')},
+    {at:9, x:262,y:326,w:210,h:140, cls:'green', html:B('Autenticação e acesso','25–30% · o maior')+UL('métodos e MFA','acesso condicional','risco e GSA')},
+    {at:10.2, x:488,y:326,w:210,h:140, cls:'green', html:B('Workloads','20–25%')+UL('managed identity','apps e consentimento','Cloud Apps (MDCA)')},
+    {at:11.4, x:714,y:326,w:210,h:140, cls:'green', html:B('Governança','20–25%')+UL('access packages','access reviews','PIM e logs')},
+    {at:13, x:36,y:474,w:888,h:30, cls:'ext', html:NOTE('Inglês atualiza primeiro; versões localizadas cerca de 8 semanas depois · confira as páginas oficiais antes de agendar', 'amber')},
+  ]}},
+
+/* ---------- SC-200 · AMBIENTE ---------- */
+{ id:'xdr', ch:'SC-200 · 40–45%', title:'Defender XDR e Sentinel juntos',
+  say:'O mapa da SC-200. O Defender XDR junta Endpoint, Office trezentos e sessenta e cinco, Identity, Cloud Apps, a proteção de workloads do Defender for Cloud, os riscos do Entra ID e alertas do Purview, e correlaciona tudo em incidentes. O Sentinel é o SIEM e a plataforma de dados: traz logs de qualquer fonte, roda regras e automação. Hoje os dois vivem no mesmo portal do Defender, com uma fila única de incidentes e caça sobre as tabelas dos dois. A experiência do Sentinel no portal do Azure está sendo aposentada: confira a data.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:560,h:410, cls:'region', html:'<span class="rl">portal do Microsoft Defender · fila única de incidentes</span>'},
+    {at:1.6, x:60,y:132,w:250,h:170, cls:'blue', html:B('Defender XDR','correlação nativa')+UL('Endpoint (MDE)','Office 365 (MDO)','Identity (MDI)','Cloud Apps (MDCA)')},
+    {at:3.2, x:322,y:132,w:250,h:170, cls:'green', html:B('Microsoft Sentinel','SIEM + data lake')+UL('conectores e AMA','regras analíticas','automação e playbooks','workbooks')},
+    {at:5, x:60,y:318,w:512,h:160, cls:'amber', html:B('Também alimentam o XDR','')+UL('Defender for Cloud: workloads','Entra ID Protection: risco','Purview: DLP e insider risk','Security Copilot embutido')},
+    {at:8, x:620,y:92,w:304,h:200, cls:'blue', html:B('Quem faz o quê','')+UL('XDR: sinais Microsoft','Sentinel: qualquer fonte','os dois: KQL','incidente unificado')},
+    {at:12, x:620,y:312,w:304,h:190, cls:'ext', html:B('Na prova','')+UL('qual produto gerou o alerta','onde configurar','qual tabela consultar','Azure portal: em saída')},
+  ]}},
+
+{ id:'mde', ch:'SC-200 · 40–45%', title:'Endpoint: grupos, ASR e automação',
+  say:'No Defender for Endpoint, grupos de dispositivos definem quem vê o quê e o nível de automação: completo remedia sozinho; os semiautomáticos pedem aprovação para tudo ou para pastas sensíveis; ou nenhuma resposta automática. As regras de redução da superfície de ataque, as ASR, têm modo bloquear, auditar ou avisar: comece em auditoria. Em advanced features você liga live response, isolamento e indicadores customizados. E no XDR configure notificações por e-mail de incidentes e ações, regras de supressão e ajuste de alertas, a investigação automática e a interrupção automática de ataques.',
+  v:GRID(4, [
+    ['Grupos de dispositivos','RBAC + automação',['por tag, SO, nome','completo ou semi','sem resposta automática'],'blue'],
+    ['Regras ASR','Intune ou GPO',['block, audit, warn','comece em audit','exclusões com critério'],'amber'],
+    ['Advanced features','liga recursos',['live response','indicadores custom','isolamento e EDR em bloco'],'green'],
+    ['No XDR','',['e-mail de incidente','supressão e ajuste','AIR e attack disruption'],'ext'],
+  ], {h:250, step:3, rodape:'Attack disruption: contém usuário e dispositivo comprometidos sozinho, com alta confiança · revise e libere depois'}) },
+
+{ id:'sentinel', ch:'SC-200 · 40–45%', title:'Sentinel: papéis, retenção e custo',
+  say:'Papéis do Sentinel: Reader só lê; Responder também gerencia incidentes; Contributor cria regras e workbooks; e Automation Contributor é o papel que o próprio Sentinel recebe para rodar playbooks. Criar playbook pede Logic App Contributor. Retenção em camadas: a analítica, quente, para regras e caça interativa; o data lake, barato e longo, para guardar anos e consultar com jobs; e as tabelas do XDR, com trinta dias no próprio Defender. Workbooks são painéis em KQL, e a otimização de SOC aponta dados caros sem uso e lacunas de cobertura.',
+  v:GRID(3, [
+    ['Papéis','RBAC do Azure',['Reader e Responder','Contributor','Automation Contributor','Logic App Contributor'],'blue'],
+    ['Retenção','onde mora o dado',['analítica: regras, caça','data lake: anos, barato','XDR: 30 dias no Defender','espelhe no Sentinel'],'amber'],
+    ['Painéis e custo','',['workbooks em KQL','SOC optimization','dado sem uso = custo','cobertura de ameaça'],'green'],
+  ], {h:250, step:4, rodape:'Tabelas: tier Analytics para detecção · tier Data lake para volume e histórico · confira preços e limites atuais'}) },
+
+{ id:'ingestao', ch:'SC-200 · 40–45%', title:'Ingestão: AMA, DCR, WEF e CEF',
+  say:'O conector depende da fonte. Eventos de segurança do Windows: Windows Security Events via AMA, o Azure Monitor Agent, com uma regra de coleta, a DCR, que escolhe o conjunto: todos, comuns, mínimo ou XPath customizado. Muitos servidores locais: Windows Event Forwarding para um coletor, e o AMA no coletor. Firewalls e Linux: Syslog via AMA ou CEF via AMA num encaminhador Linux. Activity log do Azure: Azure Policy com diagnostic settings. Indicadores de ameaça entram por TAXII ou API. E dado próprio vai para tabela customizada terminada em underline CL.',
+  v:FLOW([['Fonte','Windows, Linux, firewall','blue'],['Agente','AMA ou encaminhador','blue'],['DCR','o que coletar','amber'],['Workspace','tabela certa','green']],
+    {y:100, h:100, step:1.8, cards:[
+      ['Qual conector?','',['Windows: Security Events via AMA','muitos servidores: WEF + coletor','firewall: CEF via AMA','Linux: Syslog via AMA','Azure: Policy + diagnóstico'],'blue'],
+      ['Onde cai','',['SecurityEvent','WindowsEvent (WEF)','CommonSecurityLog e Syslog','AzureActivity','Minha_CL (custom)'],'amber'],
+    ]}) },
+
+{ id:'ingestao-cli', ch:'SC-200 · 40–45%', title:'Coleta e tabelas no terminal',
+  say:'No terminal. A DCR sai de um arquivo JSON com o XPath dos eventos quatro seis dois quatro e quatro seis dois cinco, e a associação liga a regra a cada VM: sem associação, nada é coletado. O activity log da assinatura vai para o workspace com uma diagnostic setting de assinatura; em escala, use a política embutida que faz isso por você. A tabela customizada ganha colunas e retenção total longa. E repare no erro: tabela customizada precisa do sufixo underline CL.',
+  v:T('c|az monitor data-collection rule create -g rg-soc -n dcr-seg-windows --location brazilsouth \\',
+      'o|   --rule-file dcr-seg.json     # XPath: Security!*[System[(EventID=4624 or EventID=4625)]]',
+      'c|az monitor data-collection rule association create --name assoc-dc01 \\',
+      'o|   --rule-id $DCR_ID --resource $VM_DC01_ID',
+      'c|az monitor diagnostic-settings subscription create -n atividade-soc --location brazilsouth \\',
+      'o|   --workspace $WS_ID --logs \'[{"category":"Administrative","enabled":true}]\'',
+      'c|az monitor log-analytics workspace table create -g rg-soc --workspace-name law-soc \\',
+      'o|   -n Firewall_CL --columns TimeGenerated=datetime SrcIp=string Acao=string \\',
+      'o|   --retention-time 90 --total-retention-time 730',
+      'ok|"provisioningState": "Succeeded"',
+      'c|az monitor log-analytics workspace table create -g rg-soc --workspace-name law-soc -n Firewall',
+      'err|Custom table name must end with _CL')},
+
+{ id:'deteccoes', ch:'SC-200 · 40–45%', title:'Detecções: regras e MITRE ATT&CK',
+  say:'No Sentinel, a regra agendada roda a cada intervalo olhando uma janela, com limiar, mapeamento de entidades e agrupamento de alertas em incidente. A NRT roda a cada minuto, para o que não pode esperar. Há regras de inteligência de ameaças, que cruzam indicadores com os logs, regras de machine learning e anomalias. No Defender XDR, a detecção customizada nasce de uma consulta de advanced hunting e pode agir sozinha, como isolar o dispositivo. A matriz MITRE ATT&CK mostra quais táticas suas regras cobrem e onde está o buraco.',
+  v:GRID(3, [
+    ['Sentinel','regras analíticas',['agendada: frequência + janela','NRT: a cada minuto','threat intelligence','ML e anomalias'],'blue'],
+    ['Defender XDR','detecção customizada',['nasce no advanced hunting','Timestamp + ReportId','DeviceId ou outra entidade','ação: isolar, bloquear'],'green'],
+    ['Cobertura','MITRE ATT&CK',['táticas e técnicas','regras ativas × lacunas','priorize pelo risco','teste antes de ligar'],'amber'],
+  ], {h:250, step:4, rodape:'Agrupamento de alertas e mapeamento de entidades decidem se o SOC recebe 1 incidente ou 300'}) },
+
+{ id:'regra', ch:'SC-200 · 40–45%', title:'Regra e automação como código',
+  say:'Detecção como código, em Bicep. A regra agendada roda a cada hora sobre a última hora, dispara com uma linha ou mais, mapeia o IP como entidade, marca a tática Credential Access e a técnica T mil cento e dez do MITRE, e cria incidente. Abaixo, a regra de automação: dispara na criação do incidente, só para incidentes dessa regra, sobe a severidade e chama o playbook. A ordem importa: regras de automação rodam em sequência. E para chamar o playbook, o Sentinel precisa do papel Automation Contributor no grupo do Logic App.',
+  v:S('regra-sentinel.bicep','regra-sentinel.bicep','bicep')},
+
+{ id:'automacao', ch:'SC-200 · 40–45%', title:'Regras de automação e playbooks',
+  say:'Duas peças. A regra de automação é leve e sem código: atribui dono, muda status, severidade e tags, fecha falsos positivos conhecidos e chama playbooks, com condições e prazo de validade. O playbook é um Logic App com gatilho do Sentinel, de incidente, alerta ou entidade, que faz o trabalho pesado: enriquece o IP, avisa no Teams, desabilita o usuário, isola a máquina pela API do Defender. Use a identidade gerenciada do Logic App, não conta de serviço. E automação de incidente prefere gatilho de incidente, que chega via regra de automação.',
+  v:FLOW([['Alerta','regra analítica','blue'],['Incidente','agrupado','blue'],['Regra de automação','triagem e ordem','amber'],['Playbook','Logic App age','green']],
+    {y:100, h:100, step:1.8, cards:[
+      ['Regra de automação','sem código',['dono, status, severidade','tags e tarefas','fechar falso positivo','chama playbook','validade e ordem'],'amber'],
+      ['Playbook','Logic App',['gatilho: incidente, alerta, entidade','identidade gerenciada','enriquecer e avisar','desabilitar usuário','isolar via API do MDE'],'green'],
+    ]}) },
+
+/* ---------- SC-200 · INCIDENTES ---------- */
+{ id:'incidente', ch:'SC-200 · 35–40%', title:'Investigar o incidente no XDR',
+  say:'O incidente junta alertas de produtos diferentes numa história só. Comece pelo resumo e pela história do ataque, veja ativos, evidências e a linha do tempo, e siga o movimento lateral entre máquinas e contas. Ataques multiestágio e multidomínio, como phishing que vira roubo de sessão e depois acesso à nuvem, aparecem correlacionados. O Security Copilot embutido resume o incidente, analisa scripts, sugere resposta guiada e escreve KQL. E a gestão de casos agrupa incidentes, tarefas e responsáveis numa investigação maior.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:110, cls:'region', html:'<span class="rl">um incidente · multiestágio e multidomínio</span>'},
+    {at:1.6, x:56,y:128,w:196,h:62, cls:'blue', html:B('E-mail','MDO: phishing')},
+    {at:2.6, x:270,y:128,w:196,h:62, cls:'blue', html:B('Dispositivo','MDE: processo')},
+    {at:3.6, x:484,y:128,w:196,h:62, cls:'amber', html:B('Identidade','MDI e Entra: conta')},
+    {at:4.6, x:698,y:128,w:206,h:62, cls:'ext', html:B('Nuvem','MDCA: app OAuth')},
+    {at:7, x:36,y:240,w:280,h:240, cls:'blue', html:B('Investigar','')+UL('resumo e attack story','ativos e evidências','linha do tempo','movimento lateral','classificar e fechar')},
+    {at:10, x:340,y:240,w:280,h:240, cls:'green', html:B('Security Copilot','embutido no Defender')+UL('resumo do incidente','análise de script','resposta guiada','gerar KQL','agentes de triagem')},
+    {at:13, x:644,y:240,w:280,h:240, cls:'amber', html:B('Gestão de casos','')+UL('vários incidentes','tarefas e donos','prazos e status','visão do investigador')},
+  ], lines:[
+    {at:2.6, d:'M252 159 L 270 159', cls:'flow'}, {at:3.6, d:'M466 159 L 484 159', cls:'flow'}, {at:4.6, d:'M680 159 L 698 159', cls:'flow'},
+  ]}},
+
+{ id:'fontes', ch:'SC-200 · 35–40%', title:'Remediar por produto de origem',
+  say:'Cada produto tem a sua resposta. Office trezentos e sessenta e cinco: Threat Explorer, remoção de e-mails já entregues e a remoção automática, ZAP. Identity: contas sensíveis, caminhos de movimento lateral e desabilitar a conta no AD. Cloud Apps: suspender o usuário e revogar o app OAuth. Defender for Cloud: alertas de VM, storage e banco, com recomendação. Entra ID: usuário arriscado, confirmar comprometimento, exigir troca de senha e revogar sessões. Purview: alertas de DLP e de risco interno, investigados com cuidado de privacidade.',
+  v:GRID(3, [
+    ['Office 365','MDO',['Threat Explorer','remover e-mail entregue','ZAP e AIR'],'blue'],
+    ['Identity','MDI',['contas sensíveis','movimento lateral','desabilitar no AD'],'blue'],
+    ['Cloud Apps','MDCA',['suspender usuário','revogar app OAuth','sessão arriscada'],'amber'],
+    ['Defender for Cloud','workloads',['VM, storage, SQL','recomendação ligada','Key Vault e DNS'],'amber'],
+    ['Entra ID','ID Protection',['confirmar comprometido','redefinir senha','revogar sessões'],'green'],
+    ['Purview','dados',['alerta de DLP','risco interno','privacidade primeiro'],'green'],
+  ], {h:160, step:2.2}) },
+
+{ id:'endpoint', ch:'SC-200 · 35–40%', title:'Responder no dispositivo',
+  say:'No dispositivo, a linha do tempo mostra processos, rede, arquivos e registro em ordem. As ações: isolar a máquina, deixando só a conexão com o Defender; restringir a execução de apps; rodar antivírus; e coletar o pacote de investigação. O live response abre um terminal remoto: lista processos e conexões, baixa arquivos, roda scripts da biblioteca e remedia. Scripts não assinados exigem a configuração avançada ligada. A mesma isolação sai pela API, como faz um playbook. E incidentes da interrupção automática chegam com usuário e máquina já contidos.',
+  v:T('o|# live response no dispositivo pc-financeiro-07',
+      'c|processes',
+      'o|PID 6120  powershell.exe  -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBi…',
+      'c|connections',
+      'o|6120  10.1.4.27:51544 -> 203.0.113.50:443  ESTABLISHED',
+      'c|getfile "C:\\Users\\ana\\AppData\\Local\\Temp\\upd.ps1"',
+      'ok|Arquivo coletado (2 KB) · disponível para download',
+      'c|run limpar-persistencia.ps1     # script da biblioteca; não assinado exige config avançada',
+      'c|remediate file "C:\\Users\\ana\\AppData\\Local\\Temp\\upd.ps1"',
+      'o|# fora do portal, a mesma contenção que um playbook faria:',
+      'c|az rest --method post --resource https://api.securitycenter.microsoft.com \\',
+      'o|   --url https://api.securitycenter.microsoft.com/api/machines/$ID/isolate \\',
+      'o|   --body \'{"Comment":"Incidente 4471","IsolationType":"Full"}\'',
+      'ok|"type": "Isolate", "status": "Pending"')},
+
+{ id:'m365', ch:'SC-200 · 35–40%', title:'Investigar atividade no Microsoft 365',
+  say:'Para saber o que a conta comprometida fez no Microsoft trezentos e sessenta e cinco, três fontes. A auditoria do Purview: aqui, regras de caixa de entrada criadas na última semana, clássico de quem esconde respostas de fraude. A busca de conteúdo do eDiscovery: acha o e-mail de phishing em todas as caixas e, com a ação de purge, apaga em lote. E os logs de atividade do Microsoft Graph, enviados ao workspace, mostram as chamadas de API que apps e usuários fizeram, ótimos para apps OAuth maliciosos.',
+  v:T('c|Search-UnifiedAuditLog -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) `',
+      'o|   -UserIds ana@contoso.com -Operations New-InboxRule, Set-InboxRule -ResultSize 100',
+      'o|CreationDate  Operations     AuditData',
+      'o|10/08 02:14   New-InboxRule  {"Name":"..","MoveToFolder":"RSS","SubjectContainsWords":"fatura"}',
+      'c|New-ComplianceSearch -Name phish-4471 -ExchangeLocation All `',
+      'o|   -ContentMatchQuery \'subject:"Fatura vencida" AND from:cobranca@contoso-pagto.com\'',
+      'c|Start-ComplianceSearch -Identity phish-4471',
+      'ok|Items: 214 · Mailboxes: 198',
+      'c|New-ComplianceSearchAction -SearchName phish-4471 -Purge -PurgeType SoftDelete',
+      'o|# Graph activity logs (diagnostic setting do Entra) → tabela MicrosoftGraphActivityLogs',
+      'c|MicrosoftGraphActivityLogs | where AppId == $appSuspeito | summarize count() by RequestUri')},
+
+/* ---------- SC-200 · CAÇA ---------- */
+{ id:'caca', ch:'SC-200 · 20–25%', title:'KQL de caça no advanced hunting',
+  say:'Escolher a tabela certa é item explícito. A primeira consulta junta clique em link, e-mail de phishing e processo suspeito na mesma conta em trinta minutos. A segunda é a base de uma detecção customizada: projeta Timestamp, ReportId e DeviceId, e filtra pelo tempo de ingestão. A terceira caça movimento lateral por logons de rede. A quarta, password spray nos logs de entrada do Sentinel. A quinta, conta criada e logo colocada em grupo privilegiado. Repare: tabelas do XDR usam Timestamp; as do Sentinel, TimeGenerated.',
+  v:S('caca.kql','caca.kql','kql')},
+
+{ id:'caca-plataforma', ch:'SC-200 · 20–25%', title:'Caça no Sentinel e no data lake',
+  say:'No Sentinel, consultas de caça são salvas, mapeadas no MITRE e acompanhadas: os resultados viram bookmarks e entram em incidentes. Para dado frio, jobs de KQL no data lake promovem o resultado para a camada analítica, e summary rules agregam dados volumosos numa tabela menor e barata de consultar. Notebooks em Jupyter caçam com Python e podem se conectar ao servidor MCP do Sentinel. No XDR, a análise de ameaças explica campanhas e sua exposição; os gráficos de caça mostram o raio de impacto, o blast radius, e o Sentinel graph liga entidades.',
+  v:GRID(2, [
+    ['Consultas de caça','Sentinel',['salvar e mapear no MITRE','bookmark → incidente','monitorar resultados','livestream'],'blue'],
+    ['Data lake','dado frio, barato',['jobs de KQL agendados','promove para analítica','summary rules agregam','retenção de anos'],'amber'],
+    ['Notebooks e MCP','',['Jupyter com Python','servidor MCP do Sentinel','agente consulta o lake','UEBA e grafos'],'green'],
+    ['Contexto no XDR','',['threat analytics','hunting graph','blast radius','Sentinel graph'],'ext'],
+  ], {h:186, step:3}) },
+
+/* ---------- SC-300 · USUÁRIOS ---------- */
+{ id:'tenant', ch:'SC-300 · 20–25%', title:'Tenant, papéis e unidades admin.',
+  say:'Começa a parte da SC-300. Papéis do Entra são do diretório: use o menor, como User Administrator ou Helpdesk Administrator, e crie papéis customizados, que exigem P1. Unidades administrativas restringem o escopo: o helpdesk de Sorocaba só redefine senha dos usuários de Sorocaba. Permissão efetiva soma papéis atribuídos direto, por grupo e por unidade. No tenant você valida domínios com registro TXT, ajusta branding, configurações de usuário, grupo e dispositivo. Grupos dinâmicos, atributos de segurança customizados e licença por grupo também caem.',
+  v:GRID(3, [
+    ['Papéis do Entra','diretório, não Azure',['menor papel que serve','custom: P1','efetivo = soma'],'blue'],
+    ['Unidades admin.','escopo do papel',['por filial ou área','helpdesk local','restricted AU'],'green'],
+    ['Tenant','',['domínio: TXT','branding da entrada','user, group, device'],'amber'],
+    ['Identidades','',['grupos dinâmicos','atributos de segurança','em massa: CSV ou PS'],'blue'],
+    ['Dispositivos','',['registered: BYOD','joined: da empresa','hybrid joined: AD + Entra'],'green'],
+    ['Licenças','',['por grupo: P1','usage location','relatório de erros'],'amber'],
+  ], {h:160, step:2.2}) },
+
+{ id:'externos', ch:'SC-300 · 20–25%', title:'Externos e identidade híbrida',
+  say:'Externos: configurações de colaboração externa dizem quem convida e de quais domínios. As configurações de acesso entre tenants controlam entrada e saída por organização e podem confiar no MFA e no dispositivo do outro tenant. A sincronização entre tenants cria usuários de uma empresa do grupo na outra. Provedores externos, por SAML ou WS-Fed, também valem. No híbrido: Connect Sync, o servidor completo, ou Cloud Sync, o agente leve. Autenticação por hash de senha, a recomendada, pass-through ou federação, com SSO contínuo. E o caminho é sair do AD FS.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:200, cls:'blue', html:B('Externos','B2B')+UL('colaboração: quem convida','cross-tenant: entrada e saída','confiar no MFA do parceiro','cross-tenant sync','IdP SAML ou WS-Fed')},
+    {at:5, x:494,y:92,w:430,h:200, cls:'green', html:B('Sincronização','AD → Entra')+UL('Connect Sync: servidor','Cloud Sync: agente leve','vários AD desconectados','Connect Health: P1')},
+    {at:9, x:36,y:312,w:280,h:190, cls:'amber', html:B('Hash de senha','PHS · recomendado')+UL('entra sem o AD','vazamento detectado','backup da PTA')},
+    {at:12, x:340,y:312,w:280,h:190, cls:'amber', html:B('Pass-through','PTA')+UL('valida no AD local','agentes redundantes','política local vale')},
+    {at:15, x:644,y:312,w:280,h:190, cls:'ext', html:B('Federação','AD FS')+UL('mais infra','migre para PHS','staged rollout')},
+  ]}},
+
+{ id:'usuarios-ps', ch:'SC-300 · 20–25%', title:'Usuários e grupos no Graph PowerShell',
+  say:'Em massa e com script, o Microsoft Graph PowerShell. O grupo dinâmico por departamento e cidade. A unidade administrativa da filial. O convite B2B, que cria um convidado pendente de aceite. A licença falha porque falta o local de uso, e passa depois de preenchido. E o desligamento de quem saiu: desabilitar a conta e revogar as sessões, que invalida os refresh tokens. Com avaliação contínua de acesso, apps compatíveis cortam em minutos, sem esperar o token expirar.',
+  v:T('c|New-MgGroup -DisplayName "Vendas-SP" -MailEnabled:$false -MailNickname vendassp `',
+      'o|   -SecurityEnabled -GroupTypes DynamicMembership -MembershipRuleProcessingState On `',
+      'o|   -MembershipRule \'(user.department -eq "Vendas") and (user.city -eq "São Paulo")\'',
+      'c|New-MgDirectoryAdministrativeUnit -DisplayName "Filial Sorocaba"',
+      'c|New-MgInvitation -InvitedUserEmailAddress joao@parceiro.com -SendInvitationMessage `',
+      'o|   -InviteRedirectUrl "https://myapps.microsoft.com"',
+      'ok|Status: PendingAcceptance · UserType: Guest',
+      'c|Set-MgUserLicense -UserId ana@contoso.com -AddLicenses @{SkuId=$e5} -RemoveLicenses @()',
+      'err|License assignment cannot be done for user with invalid usage location.',
+      'c|Update-MgUser -UserId ana@contoso.com -UsageLocation BR',
+      'c|Update-MgUser -UserId ex@contoso.com -AccountEnabled:$false',
+      'c|Revoke-MgUserSignInSession -UserId ex@contoso.com',
+      'ok|True   ← refresh tokens invalidados')},
+
+/* ---------- SC-300 · ACESSO ---------- */
+{ id:'autenticacao', ch:'SC-300 · 25–30%', title:'Métodos de autenticação e MFA',
+  say:'Planejar autenticação é escolher métodos na política de métodos. Os resistentes a phishing: passkeys FIDO dois, inclusive no Authenticator, Windows Hello for Business e autenticação por certificado. O Temporary Access Pass dá uma senha temporária para registrar o primeiro método sem senha. Campanhas de registro empurram o Authenticator. O SSPR deixa o usuário redefinir a própria senha, e a proteção de senha bane senhas fracas, inclusive no AD local. Para recursos locais com identidade híbrida, existe o Kerberos do Entra.',
+  v:GRID(2, [
+    ['Resistentes a phishing','o alvo',['passkey FIDO2','Windows Hello','certificado (CBA)'],'green'],
+    ['Começar sem senha','',['Temporary Access Pass','campanha de registro','Authenticator'],'blue'],
+    ['Senha melhor','',['SSPR com 2 métodos','senhas banidas','proteção no AD local'],'amber'],
+    ['Força de autenticação','no acesso condicional',['MFA','sem senha','resistente a phishing'],'ext'],
+  ], {h:170, step:3, rodape:'SMS e voz: os mais fracos · MFA obrigatório nos portais de administração da Microsoft · confira o cronograma atual'}) },
+
+{ id:'ca', ch:'SC-300 · 25–30%', title:'Acesso condicional: a anatomia',
+  say:'Uma política de acesso condicional é se, então. Atribuições: quem, usuários, grupos, papéis, convidados e identidades de workload; o quê, aplicativos, ações do usuário e contextos de autenticação; e condições, como risco, plataforma, local e app cliente. Controles: conceder exigindo MFA, força de autenticação, dispositivo compatível ou termos de uso, ou bloquear; e sessão, como frequência de entrada e controle de app. Comece em modo só relatório e use a ferramenta What If. A avaliação contínua corta acesso quase em tempo real.',
+  v:FLOW([['Quem','usuário, papel, workload','blue'],['O quê','app, ação, contexto','blue'],['Condições','risco, local, device','amber'],['Controle','conceder, bloquear, sessão','green']],
+    {y:100, h:100, step:1.8, cards:[
+      ['Recursos que caem','',['modo só relatório','What If','template de política','contexto de autenticação','ações protegidas'],'blue'],
+      ['Sessão e dispositivo','',['frequência de entrada','CAE: corte rápido','app control (MDCA)','restrição imposta pelo app','dispositivo compatível'],'amber'],
+    ]}) },
+
+{ id:'ca-ps', ch:'SC-300 · 25–30%', title:'Acesso condicional como código',
+  say:'Três políticas no Graph PowerShell. A primeira exige MFA resistente a phishing dos administradores globais, com frequência de entrada de quatro horas, e nasce em modo só relatório. A segunda bloqueia autenticação legada, que não aceita MFA. A terceira exige MFA quando o risco de entrada é médio ou alto, o que pede ID Protection e P2. Todas excluem o grupo das contas de emergência. No fim, os logs de entrada mostram o que a política só relatório teria feito, antes de ligar de verdade.',
+  v:S('acesso-condicional.ps1','acesso-condicional.ps1','bash')},
+
+{ id:'risco', ch:'SC-300 · 25–30%', title:'ID Protection e Global Secure Access',
+  say:'O ID Protection calcula dois riscos. Risco de entrada: aquela tentativa parece suspeita, como IP anônimo ou viagem impossível; responde com MFA. Risco de usuário: a conta parece comprometida, como senha vazada; responde com troca segura de senha. Configure pelo acesso condicional, não pelas políticas legadas. Investigue e remedie usuários, entradas e identidades de workload arriscados. O Global Secure Access é o SSE da Microsoft: cliente no dispositivo, Private Access no lugar da VPN, Internet Access com filtro web e o perfil de tráfego do Microsoft trezentos e sessenta e cinco.',
+  v:GRID(2, [
+    ['Risco de entrada','esta tentativa',['IP anônimo, viagem impossível','resposta: MFA','política no acesso condicional','P2'],'amber'],
+    ['Risco de usuário','a conta',['credencial vazada','resposta: troca segura de senha','confirmar ou dispensar','workloads arriscados'],'ext'],
+    ['Private Access','sem VPN',['apps internos por app','conector na rede local','acesso condicional por app','substitui VPN ampla'],'blue'],
+    ['Internet e M365','',['cliente GSA no device','filtro web','perfil de tráfego M365','restrições de tenant'],'green'],
+  ], {h:186, step:3}) },
+
+/* ---------- SC-300 · WORKLOADS ---------- */
+{ id:'workload', ch:'SC-300 · 20–25%', title:'Identidades de workload e apps',
+  say:'Qual identidade usar? Recurso do Azure acessando outro: identidade gerenciada, de sistema, que morre com o recurso, ou de usuário, reutilizável. Fora do Azure, como um pipeline: service principal com credencial federada, sem segredo. Nunca conta de usuário para máquina. App registration é a definição global do app; enterprise application é o service principal no seu tenant, onde você atribui usuários, papéis de app e SSO SAML de SaaS. Permissão delegada age em nome do usuário; de aplicativo age sozinha e exige consentimento de admin. Apps locais saem pelo Application Proxy.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:210, cls:'blue', html:B('Identidade gerenciada','recurso do Azure')+UL('sistema: vida do recurso','usuário: reutilizável','sem segredo','RBAC no destino')},
+    {at:4, x:340,y:92,w:280,h:210, cls:'green', html:B('Service principal','fora do Azure')+UL('credencial federada','GitHub, AKS, outro IdP','segredo: último caso','Workload ID Premium')},
+    {at:8, x:644,y:92,w:280,h:210, cls:'amber', html:B('Registro × enterprise app','')+UL('registro: o app global','enterprise: SP no tenant','papéis de app','SSO SAML do SaaS')},
+    {at:11, x:36,y:322,w:430,h:180, cls:'blue', html:B('Permissões e consentimento','')+UL('delegada: em nome do usuário','aplicativo: sem usuário','admin consent workflow','só editor verificado')},
+    {at:15, x:494,y:322,w:430,h:180, cls:'ext', html:B('Apps locais','')+UL('Application Proxy','conector só de saída','acesso condicional na frente','coleções no My Apps')},
+  ]}},
+
+{ id:'workload-cli', ch:'SC-300 · 20–25%', title:'Managed identity e federação no az',
+  say:'A identidade gerenciada de usuário nasce com az identity create e recebe só o papel de ler segredos no Key Vault. O app registration da API, depois o service principal, que é a enterprise app no tenant. A credencial federada deixa o GitHub Actions do branch main trocar o token dele por um do Entra, sem segredo guardado. Por fim, a permissão de aplicativo User ponto Read ponto All do Graph, que só vale depois do consentimento de administrador.',
+  v:T('c|az identity create -g rg-app -n id-api',
+      'c|az role assignment create --assignee-object-id $PRINCIPAL_ID \\',
+      'o|   --assignee-principal-type ServicePrincipal --role "Key Vault Secrets User" --scope $KV_ID',
+      'c|az ad app create --display-name api-pedidos --sign-in-audience AzureADMyOrg',
+      'c|az ad sp create --id $APP_ID       # a enterprise application no tenant',
+      'c|az ad app federated-credential create --id $APP_ID --parameters \'{"name":"gh-main",',
+      'o|   "issuer":"https://token.actions.githubusercontent.com",',
+      'o|   "subject":"repo:contoso/pedidos:ref:refs/heads/main",',
+      'o|   "audiences":["api://AzureADTokenExchange"]}\'',
+      'c|az ad app permission add --id $APP_ID --api 00000003-0000-0000-c000-000000000000 \\',
+      'o|   --api-permissions df021288-bdef-4463-88db-98f22de89214=Role    # User.Read.All',
+      'c|az ad app permission admin-consent --id $APP_ID',
+      'ok|consentimento de administrador concedido')},
+
+{ id:'mdca', ch:'SC-300 · 20–25%', title:'Defender for Cloud Apps',
+  say:'O Defender for Cloud Apps entra na SC-300 para controlar acesso a apps. A descoberta de nuvem lê logs do firewall ou do Defender for Endpoint e revela a TI invisível, avaliada pelo catálogo de apps com nota de risco; marque como sancionado ou não. Apps conectados por API dão visibilidade e governança. O controle de apps do acesso condicional passa a sessão por um proxy, onde políticas de sessão bloqueiam download em dispositivo não gerenciado. E políticas de apps OAuth pegam permissões excessivas e apps raros.',
+  v:GRID(3, [
+    ['Descoberta','TI invisível',['logs do firewall','ou via MDE','catálogo com risco'],'blue'],
+    ['Apps conectados','API',['atividades e arquivos','governança','alertas de anomalia'],'green'],
+    ['App control','sessão no proxy',['nasce no acesso condicional','política de acesso','política de sessão'],'amber'],
+    ['OAuth','',['permissão excessiva','app raro ou novo','revogar consentimento'],'ext'],
+    ['Restrição pelo app','',['SharePoint e Exchange','device não gerenciado','só navegador, sem baixar'],'blue'],
+    ['Catálogo','',['sancionar ou não','nota de risco','bloqueio pelo MDE'],'green'],
+  ], {h:160, step:2.2}) },
+
+/* ---------- SC-300 · GOVERNANÇA ---------- */
+{ id:'governanca', ch:'SC-300 · 20–25%', title:'Access packages e access reviews',
+  say:'Gestão de direitos: um catálogo reúne recursos, como grupos, apps, sites e papéis, e o access package empacota o acesso de um trabalho, com política de quem pode pedir, aprovação, termos de uso e validade. Organizações conectadas permitem pedidos de parceiros, e o ciclo de vida do externo bloqueia e remove o convidado quando perde o último pacote. Access reviews revisam periodicamente membros de grupos, apps e papéis: o revisor aprova ou nega, e a revisão pode aplicar o resultado sozinha. Os dois exigem Entra ID Governance ou P2.',
+  v:FLOW([['Catálogo','grupos, apps, sites','blue'],['Access package','acesso de um trabalho','blue'],['Política','quem pede, aprova, até quando','amber'],['Revisão','mantém ou remove','green']],
+    {y:100, h:100, step:1.8, cards:[
+      ['Gestão de direitos','',['pedido no My Access','aprovação em estágios','termos de uso','organização conectada','externo: bloquear e remover'],'blue'],
+      ['Access reviews','',['grupos, apps, papéis, pacotes','revisor: dono, gestor, próprio','recorrência e duração','aplicar resultado sozinho','recomendação por inatividade'],'amber'],
+    ]}) },
+
+{ id:'pim', ch:'SC-300 · 20–25%', title:'PIM: elegível, ativar, auditar',
+  say:'O PIM troca acesso permanente por elegível: a pessoa ativa o papel quando precisa, por tempo limitado, com MFA, justificativa e, se configurado, aprovação. Vale para papéis do Entra, papéis de recursos do Azure e para grupos, com PIM for Groups. Aqui, a Ana fica elegível ao User Administrator por cento e oitenta dias e depois pede ativação por quatro horas, que espera aprovação. O histórico de auditoria mostra quem ativou o quê. E mantenha duas contas de emergência só na nuvem, com credencial forte, fora das políticas comuns e monitoradas.',
+  v:T('c|Connect-MgGraph -Scopes RoleManagement.ReadWrite.Directory',
+      'c|New-MgRoleManagementDirectoryRoleEligibilityScheduleRequest -BodyParameter @{',
+      'o|   action="adminAssign"; principalId=$ana; roleDefinitionId=$userAdmin',
+      'o|   directoryScopeId="/"; justification="Suporte N2"',
+      'o|   scheduleInfo=@{ startDateTime=(Get-Date)',
+      'o|     expiration=@{ type="afterDuration"; duration="P180D" } } }',
+      'ok|Status: Provisioned   ← elegível por 180 dias, ainda sem permissão',
+      'c|New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter @{',
+      'o|   action="selfActivate"; principalId=$ana; roleDefinitionId=$userAdmin',
+      'o|   directoryScopeId="/"; justification="Chamado 4471"',
+      'o|   scheduleInfo=@{ startDateTime=(Get-Date)',
+      'o|     expiration=@{ type="afterDuration"; duration="PT4H" } } }',
+      'ok|Status: PendingApproval   ← a configuração do papel exige aprovação',
+      'o|# break-glass: 2 contas só na nuvem, passkey FIDO2, alerta a cada entrada')},
+
+{ id:'monitorar-id', ch:'SC-300 · 20–25%', title:'Logs do Entra, KQL e Secure Score',
+  say:'Monitorar identidade: logs de entrada, interativos, não interativos, de service principals e de identidades gerenciadas, mais auditoria e provisionamento. A diagnostic setting do Entra envia para Log Analytics, storage ou Event Hubs. Em KQL: bloqueios do acesso condicional por política, entradas arriscadas que passaram, papéis atribuídos fora do PIM, consentimentos a apps e falhas de service principals. Workbooks prontos ajudam, e o Identity Secure Score lista ações de melhoria. Sem diagnostic setting, a retenção é curta e depende da licença.',
+  v:S('entra.kql','entra.kql','kql')},
+
+/* ---------- NA HORA DA PROVA ---------- */
+{ id:'pegadinhas', ch:'Na hora da prova', title:'As pegadinhas das duas provas',
+  say:'Na SC-200: Timestamp é do XDR, TimeGenerated do Sentinel. Detecção customizada sem ReportId não salva. Sem associação, a DCR não coleta nada. CEF via AMA precisa do encaminhador Linux. Playbook só roda se o Sentinel tiver Automation Contributor. NRT é a cada minuto, agendada não. Na SC-300: papel do Entra não é papel do Azure. Grupo dinâmico, licença por grupo e acesso condicional pedem P1; risco, PIM e revisões, P2 ou Governance. Exclua o break-glass. Permissão de aplicativo exige consentimento de admin.',
+  v:GRID(2, [
+    ['SC-200 · dados e regras','',['Timestamp × TimeGenerated','custom detection: ReportId','DCR sem associação = nada','CEF: encaminhador Linux','NRT: 1 min · agendada: não'],'ext'],
+    ['SC-200 · resposta','',['playbook: Automation Contributor','isolar ≠ restringir apps','live response: ligar antes','purge: SoftDelete ou HardDelete','XDR: 30 dias de caça'],'amber'],
+    ['SC-300 · licenças','',['dinâmico e CA: P1','risco e PIM: P2','revisões: Governance/P2','Connect Health: P1','Workload ID: premium'],'amber'],
+    ['SC-300 · acesso','',['Entra ≠ Azure RBAC','break-glass excluído','legado não faz MFA','aplicativo: admin consent','revogar ≠ desabilitar'],'ext'],
+  ], {h:186, step:3}) },
+
+{ id:'estrategia', ch:'Na hora da prova', title:'Estratégia para as duas provas',
+  say:'Faça uma prova por vez: a SC-300 primeiro, se você vem de administração, ou a SC-200 primeiro, se vem de SOC; as duas se ajudam, porque identidade é metade dos incidentes. Antes, o simulado oficial e o exam sandbox. Na prova, ache o requisito-chave: menor privilégio, menor esforço administrativo, sem custo extra de licença. Em séries com a mesma situação não dá para voltar. Em KQL, leia de cima para baixo e confira a tabela. E você pode consultar o Microsoft Learn durante a prova: use pouco. Confira se continua disponível.',
+  v:GRID(3, [
+    ['Antes','',['simulado oficial gratuito','exam sandbox','laboratório no tenant'],'blue'],
+    ['Durante','',['requisito-chave','menor licença que atende','marque para revisar'],'green'],
+    ['Formatos','',['série sem voltar','estudo de caso','KQL para interpretar'],'amber'],
+  ], {h:230, step:4, rodape:'30 minutos extras só se a prova não estiver no seu idioma · as duas são oferecidas em pt-BR'}) },
+
+/* ---------- LABORATÓRIO ---------- */
+{ id:'lab', ch:'Laboratório', title:'Lab: um tenant de estudo, ponta a ponta',
+  say:'O laboratório usa um tenant de estudo com avaliações gratuitas de Entra ID P2 e Defender, e uma assinatura do Azure com o teste do Sentinel; confira as condições atuais. Na identidade: crie usuários e um grupo dinâmico, uma conta de emergência, a política de acesso condicional em modo só relatório e o PIM elegível. No SOC: ligue o Sentinel ao workspace, conecte o Entra ID e o activity log, crie a regra de password spray com automação, gere entradas com senha errada e acompanhe o incidente. No fim, apague o grupo de recursos.',
+  v:FLOW([['Tenant','trials P2 e Defender','blue'],['Identidade','CA e PIM','blue'],['Sentinel','conectores e regra','amber'],['Simular','senha errada → incidente','green']],
+    {y:100, h:100, step:1.8, cards:[
+      ['Roteiro','',['grupo dinâmico e AU','CA01 em só relatório','PIM elegível + ativação','Sentinel: Entra ID e Activity','regra + automação (Bicep)','caçar com caca.kql'],'blue'],
+      ['Para não pagar caro','',['trials com data no calendário','tabelas no tier certo','sem VM ligada à toa','retenção curta no lab','alerta de orçamento','az group delete no fim'],'amber'],
+    ]}) },
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de prontidão',
+  say:'Pronto para a SC-200 quando você: configura automação e ASR no Defender, escolhe o conector e a DCR certos, cria regra agendada e NRT com entidades, liga automação a playbook, investiga incidente e responde no dispositivo, investiga no Purview e caça com KQL na tabela certa. Pronto para a SC-300 quando: escolhe papel e unidade administrativa, monta acesso condicional em só relatório, configura métodos resistentes a phishing, escolhe a identidade de workload, cria access package, revisão e PIM, e lê logs em KQL. E passa de oitenta por cento nos dois simulados.',
+  v:CK('ASR e automação no MDE', 'Conector e DCR certos', 'Regra agendada e NRT', 'Automação + playbook', 'Live response e isolar', 'KQL na tabela certa', 'Papel e unidade admin.', 'CA em só relatório', 'Passkey e TAP', 'Managed identity e OAuth', 'Access package e PIM', 'Simulados acima de 80%')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os domínios das duas provas com onde estudar, o simulado com questões de cada uma, os links oficiais e o checklist. O caminho que mais rende: faça os módulos gratuitos do Microsoft Learn, refaça o laboratório desta trilha só com código, em Bicep, KQL e Graph PowerShell, e passe com folga nos simulados oficiais. Depois das duas, o passo natural é a SC-100, de arquiteto de cibersegurança, que pressupõe tudo isto e pergunta por que, e não só como.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['KQL que a prova espera ler', 'c104', 'kql', 'Tabela, where, summarize: a base da caça'],
+  ['RBAC: papel, escopo e herança', 'c104', 'rbac', 'Papéis do Azure, que não são papéis do Entra'],
+  ['Usuários, grupos e licenças', 'c104', 'entra', 'Grupos dinâmicos, licença por grupo e SSPR'],
+  ['Autenticação no AZ-305', 'c305', 'autenticacao', 'Identidade como decisão de arquitetura'],
+  ['Autorização no AZ-305', 'c305', 'autorizacao', 'PIM, RBAC e governança no desenho'],
+  ['Logs e monitoramento', 'c305', 'logs', 'Workspace, retenção e custo de log'],
+  ['Identidade gerenciada', 'c200', 'identidade', 'Managed identity no código do app'],
+  ['MFA e passkeys', 'v14', 'mfa', 'Por que FIDO2 resiste a phishing'],
+  ['JWT e tokens', 'v14', 'jwt', 'O que a revogação de sessão invalida'],
+  ['Modelos de autorização', 'v14', 'modelos-authz', 'RBAC, ABAC e menor privilégio'],
+  ['Resposta a incidentes', 'v14', 'incidente', 'O processo por trás da fila do SOC'],
+  ['OIDC sem segredo', 'naws', 'oidc', 'A mesma federação de workload, na AWS'],
+  ['SSO multi-tenant', 'nsaas', 'sso', 'SAML e OIDC do lado de quem vende SaaS'],
+];
+
+const MATRIZ = [
+  ['SC-200 · Gerenciar o ambiente de operações de segurança', '40–45%', 'Notificações, supressão e ajuste no XDR; MDE (advanced features, regras, coleta custom, ASR, grupos, automação, AIR, attack disruption); regras de automação e playbooks; papéis, retenção (Analytics, Data lake, XDR), workbooks e SOC optimization; conectores, AMA e DCR, WEF, Syslog/CEF, activity log, TI e tabelas custom; detecções no XDR e no Sentinel (agendada, NRT, TI, ML), MITRE e anomalias', 'esta trilha · xdr, mde, sentinel, ingestao, deteccoes, regra, automacao · Cert AZ-104 · kql'],
+  ['SC-200 · Responder a incidentes de segurança', '35–40%', 'Incidentes de MDO, Purview, Defender for Cloud, MDCA, Entra ID, MDI e Sentinel; Security Copilot; ataques multiestágio e movimento lateral; gestão de casos; MDE: linha do tempo, live response, pacote de investigação, entidades, attack disruption; Purview Audit, Content search e Graph activity logs', 'esta trilha · incidente, fontes, endpoint, m365 · Vol 14 · incidente'],
+  ['SC-200 · Caçar ameaças', '20–25%', 'Escolher a tabela e escrever KQL no advanced hunting; threat analytics; hunting graph e blast radius; Sentinel graph; consultas de caça; jobs de KQL no data lake; summary rules; notebooks com o servidor MCP do Sentinel', 'esta trilha · caca, caca-plataforma · Cert AZ-104 · kql · Vol 13 · investigacao'],
+  ['SC-300 · Implementar e gerenciar identidades de usuário', '20–25%', 'Papéis embutidos e custom, unidades administrativas, permissão efetiva, domínios, branding, configurações do tenant; usuários, grupos, atributos de segurança, em massa, dispositivos, licenças; colaboração externa, cross-tenant access e sync, IdP SAML/WS-Fed; Connect Sync, Cloud Sync, PHS, PTA, SSO contínuo, sair do AD FS, Connect Health', 'esta trilha · tenant, externos, usuarios-ps · Cert AZ-104 · entra'],
+  ['SC-300 · Implementar autenticação e gestão de acesso', '25–30%', 'Métodos (CBA, TAP, Authenticator, passkeys), MFA, SSPR, Windows Hello, revogar sessões, proteção de senha, Kerberos; acesso condicional (atribuições, controles, teste, sessão, CAE, contexto de autenticação, ações protegidas, templates); ID Protection (risco de usuário, de entrada, de workload, campanhas); Global Secure Access', 'esta trilha · autenticacao, ca, ca-ps, risco · Vol 14 · mfa, jwt'],
+  ['SC-300 · Planejar e implementar identidades de workload', '20–25%', 'Managed identity, service principal, conta de usuário, MSA; enterprise apps, papéis, Application Proxy, SaaS, app roles, consentimento, coleções; app registrations, autenticação e permissões de API; Defender for Cloud Apps (descoberta, apps conectados, app control, políticas, OAuth, catálogo)', 'esta trilha · workload, workload-cli, mdca · Cert AI-200 · identidade · Nova AWS · oidc'],
+  ['SC-300 · Planejar e automatizar a governança de identidade', '20–25%', 'Gestão de direitos (catálogos, access packages, pedidos, termos de uso, externos, organizações conectadas); access reviews; PIM para papéis do Entra, recursos do Azure e grupos, aprovação, auditoria, contas de emergência; logs, diagnostic settings, KQL, workbooks e Identity Secure Score', 'esta trilha · governanca, pim, monitorar-id · Cert AZ-305 · autorizacao'],
+];
+
+const STUDY = [
+  ['Certificação SC-200', 'Detalhes da prova, idiomas, agendamento e renovação', 'https://learn.microsoft.com/en-us/credentials/certifications/security-operations-analyst/', 'intro'],
+  ['Study guide da SC-200', 'Skills measured oficial e o log de mudanças', 'https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/sc-200', 'mapa'],
+  ['Certificação SC-300', 'Detalhes da prova, idiomas, agendamento e renovação', 'https://learn.microsoft.com/en-us/credentials/certifications/identity-and-access-administrator/', 'intro'],
+  ['Study guide da SC-300', 'Skills measured oficial e o log de mudanças', 'https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/sc-300', 'mapa'],
+  ['Simulados oficiais (practice assessments)', 'Gratuitos, no estilo e dificuldade da prova', 'https://learn.microsoft.com/en-us/credentials/certifications/practice-assessments-for-microsoft-certifications', 'estrategia'],
+  ['Exam sandbox', 'A interface e os tipos de questão', 'https://aka.ms/examdemo', 'estrategia'],
+  ['Advanced hunting no Defender XDR', 'Tabelas, esquema e boas práticas de KQL', 'https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview', 'caca'],
+  ['Microsoft Sentinel', 'Conectores, regras, automação e data lake', 'https://learn.microsoft.com/en-us/azure/sentinel/overview', 'sentinel'],
+  ['Regras de automação do Sentinel', 'Gatilhos, condições, ordem e playbooks', 'https://learn.microsoft.com/en-us/azure/sentinel/automate-incident-handling-with-automation-rules', 'automacao'],
+  ['Acesso condicional', 'Atribuições, controles, só relatório e What If', 'https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview', 'ca'],
+  ['Privileged Identity Management', 'Elegível, ativação, aprovação e auditoria', 'https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure', 'pim'],
+  ['Microsoft Graph PowerShell', 'Instalação, escopos e cmdlets', 'https://learn.microsoft.com/en-us/powershell/microsoftgraph/overview', 'usuarios-ps'],
+];
+
+const CHECK = [
+  ['SC-200 · Ambiente', 'Criar grupo de dispositivos com automação semi', 'mde'],
+  ['SC-200 · Ambiente', 'Ligar uma regra ASR em audit e ler os eventos', 'mde'],
+  ['SC-200 · Ambiente', 'Criar DCR com XPath e associar a uma VM', 'ingestao-cli'],
+  ['SC-200 · Ambiente', 'Implantar regra agendada com entidade em Bicep', 'regra'],
+  ['SC-200 · Ambiente', 'Regra de automação chamando um playbook', 'automacao'],
+  ['SC-200 · Incidentes', 'Isolar um dispositivo e coletar pacote', 'endpoint'],
+  ['SC-200 · Incidentes', 'Achar regra de caixa de entrada no Purview Audit', 'm365'],
+  ['SC-200 · Caça', 'Escrever detecção custom com ReportId', 'caca'],
+  ['SC-300 · Usuários', 'Unidade administrativa com helpdesk local', 'tenant'],
+  ['SC-300 · Acesso', 'Política de CA em só relatório e What If', 'ca-ps'],
+  ['SC-300 · Acesso', 'Registrar passkey usando um TAP', 'autenticacao'],
+  ['SC-300 · Workloads', 'Credencial federada para o GitHub Actions', 'workload-cli'],
+  ['SC-300 · Governança', 'Access package com aprovação e validade', 'governanca'],
+  ['SC-300 · Governança', 'PIM elegível com aprovação e ativação', 'pim'],
+  ['SC-300 · Governança', 'Achar atribuição de papel fora do PIM em KQL', 'monitorar-id'],
+  ['Prontidão', 'Passar de 80% nos dois simulados oficiais', 'estrategia'],
+];
+
+const FAQ = [
+ ['SC-200 · Ambiente','Servidores Windows locais precisam enviar eventos de segurança ao Sentinel, coletando só logons com falha e sucesso. Qual a abordagem recomendada?',`<p>A) Agente Log Analytics legado (MMA) com o conjunto Todos · B) Windows Security Events via AMA com uma DCR e XPath para 4624 e 4625 · C) CEF via AMA · D) Diagnostic settings da assinatura</p><p><b>Resposta: B.</b> O AMA com regra de coleta filtra por XPath e reduz custo. O MMA (A) foi aposentado; CEF (C) é para appliances via Linux; diagnostic settings (D) trazem logs do Azure, não eventos do Windows.</p>`],
+ ['SC-200 · Ambiente','Um ataque de força bruta contra contas privilegiadas precisa gerar alerta em cerca de um minuto. Que tipo de regra do Sentinel usar?',`<p>A) Agendada a cada 5 minutos · B) NRT (near-real-time) · C) Anomalia · D) Workbook com alerta</p><p><b>Resposta: B.</b> A NRT roda a cada minuto. A agendada tem intervalo maior (A); anomalias (C) aprendem padrões e não são imediatas; workbook (D) é painel, não detecção.</p>`],
+ ['SC-200 · Ambiente','Você criou uma regra de automação que chama um playbook, mas ele nunca executa. O que falta mais provavelmente?',`<p>A) Licença E5 para o analista · B) O papel Microsoft Sentinel Automation Contributor para o Sentinel no grupo de recursos do playbook · C) Ligar o modo NRT na regra · D) Um workbook associado</p><p><b>Resposta: B.</b> O Sentinel precisa de permissão no grupo do Logic App para dispará-lo. Licença do analista (A), NRT (C) e workbook (D) não têm relação com a execução.</p>`],
+ ['SC-200 · Ambiente','Os alertas de uma detecção customizada sobre DeviceProcessEvents saem sem escopo de grupo de dispositivos e sem árvore de processos. O que ajustar na consulta?',`<p>A) Trocar Timestamp por TimeGenerated · B) Projetar DeviceId e ReportId do mesmo evento, além de Timestamp · C) Remover o summarize · D) Aumentar a frequência para contínua</p><p><b>Resposta: B.</b> Nas tabelas do Defender for Endpoint, DeviceId e ReportId garantem o escopo do grupo e a visão de processos. A não resolve o vínculo com o evento; C e D não afetam o enriquecimento do alerta.</p>`],
+ ['SC-200 · Incidentes','O SOC precisa conter um notebook comprometido sem desligá-lo, mantendo a investigação remota. Qual ação?',`<p>A) Restringir a execução de apps · B) Isolar o dispositivo · C) Rodar uma verificação antivírus completa · D) Desabilitar a conta no Entra ID</p><p><b>Resposta: B.</b> O isolamento corta a rede e mantém a conexão com o Defender, permitindo live response. A limita apps mas não a rede; C não contém; D afeta a conta, não a máquina.</p>`],
+ ['SC-200 · Incidentes','Um phishing foi entregue a 200 caixas. Você precisa removê-lo de todas, mesmo das já abertas. O que usar?',`<p>A) Regra de transporte nova · B) Content search do eDiscovery com ação de purge (ou remoção no Threat Explorer) · C) Bloquear o remetente apenas · D) Política anti-spam mais rígida</p><p><b>Resposta: B.</b> Busca de conteúdo com purge, ou a remoção pelo Explorer, apaga o que já foi entregue. A, C e D só afetam mensagens futuras.</p>`],
+ ['SC-200 · Incidentes','Você suspeita que uma conta comprometida criou regras para esconder respostas no Outlook. Onde confirmar?',`<p>A) Logs de entrada do Entra ID · B) Microsoft Purview Audit, operações New-InboxRule e Set-InboxRule · C) Device timeline do MDE · D) Workbook de custo</p><p><b>Resposta: B.</b> A auditoria unificada registra a criação de regras de caixa. A mostra entradas, não ações no Exchange; C cobre o dispositivo; D não tem relação.</p>`],
+ ['SC-200 · Caça','Você quer saber quais processos o PowerShell iniciou nos dispositivos na última hora. Qual tabela consultar?',`<p>A) DeviceNetworkEvents · B) DeviceProcessEvents · C) EmailEvents · D) IdentityLogonEvents</p><p><b>Resposta: B.</b> Criação de processos fica em DeviceProcessEvents. A guarda conexões de rede; C, e-mails; D, logons vistos pelo Defender for Identity.</p>`],
+ ['SC-200 · Caça','Um ano de logs de firewall fica no data lake. Você precisa rodar toda noite uma consulta e levar o resultado para a camada analítica, onde regras o usam. O que usar?',`<p>A) Regra NRT · B) Job de KQL no data lake · C) Livestream · D) Bookmark</p><p><b>Resposta: B.</b> Jobs de KQL agendados consultam o lake e gravam o resultado numa tabela analítica. NRT (A) roda sobre dados analíticos; livestream (C) é caça ao vivo; bookmark (D) guarda achados.</p>`],
+ ['SC-300 · Usuários','O helpdesk da filial de Sorocaba deve redefinir senhas só dos usuários dessa filial. O que configurar?',`<p>A) Helpdesk Administrator no tenant · B) Unidade administrativa Sorocaba com Helpdesk Administrator no escopo dela · C) Grupo dinâmico com papel Owner · D) Papel custom do Azure na assinatura</p><p><b>Resposta: B.</b> Unidades administrativas limitam o escopo do papel. A dá alcance ao tenant todo; C mistura conceitos; D é RBAC do Azure, não do diretório.</p>`],
+ ['SC-300 · Usuários','A empresa usa AD local e quer que usuários entrem na nuvem mesmo se o AD ficar indisponível, com o mínimo de infraestrutura. Qual método?',`<p>A) Federação com AD FS · B) Pass-through authentication · C) Password hash synchronization · D) Contas só na nuvem duplicadas</p><p><b>Resposta: C.</b> Com PHS, a validação acontece no Entra ID, sem depender do AD na hora da entrada. A e B dependem da infraestrutura local; D duplica identidades.</p>`],
+ ['SC-300 · Acesso','Você vai exigir MFA resistente a phishing de todos os admins, mas quer medir o impacto antes. Como criar a política?',`<p>A) Ligada, com controle de bloqueio · B) Em modo só relatório, com força de autenticação resistente a phishing e o grupo de emergência excluído · C) Desligada, e testar com usuários reais · D) Pela política legada de MFA por usuário</p><p><b>Resposta: B.</b> Só relatório mede sem impor, e a força de autenticação define o método. A bloqueia de cara; C não mede nada; D é o mecanismo legado e não exige método resistente a phishing.</p>`],
+ ['SC-300 · Acesso','Um usuário teve credencial vazada detectada. A resposta automática deve exigir troca segura de senha. Onde configurar?',`<p>A) Política de acesso condicional com condição de risco de usuário alto e controle de alteração de senha · B) Política de risco de entrada com bloqueio · C) SSPR desligado · D) Proteção de senha</p><p><b>Resposta: A.</b> Credencial vazada é risco de usuário, respondido com troca de senha, configurado no acesso condicional. B trata risco da tentativa; C e D não reagem a risco.</p>`],
+ ['SC-300 · Workloads','Uma Function do Azure precisa ler segredos do Key Vault sem guardar credencial, e a identidade deve ser apagada junto com a Function. Qual escolher?',`<p>A) Service principal com segredo · B) Identidade gerenciada atribuída pelo sistema · C) Identidade gerenciada atribuída pelo usuário · D) Conta de usuário de serviço</p><p><b>Resposta: B.</b> A de sistema não tem segredo e vive com o recurso. C sobrevive ao recurso; A tem segredo para rotacionar; D é conta humana para máquina.</p>`],
+ ['SC-300 · Workloads','Um app pede a permissão User.Read.All do tipo aplicativo no Microsoft Graph. O que é necessário para funcionar?',`<p>A) Cada usuário consentir no primeiro acesso · B) Consentimento de administrador · C) Licença P2 para todos · D) Adicionar o app a uma unidade administrativa</p><p><b>Resposta: B.</b> Permissões de aplicativo agem sem usuário e só valem com consentimento de admin. A vale para delegadas de baixo risco; C e D não concedem permissão.</p>`],
+ ['SC-300 · Governança','Admins devem ter o papel Exchange Administrator só quando precisarem, por até 4 horas, com aprovação. O que usar?',`<p>A) Atribuição permanente ativa · B) PIM com atribuição elegível, duração máxima de 4 horas e aprovação · C) Access review trimestral · D) Unidade administrativa</p><p><b>Resposta: B.</b> O PIM dá acesso just-in-time com limite e aprovação. A é permanente; C revisa depois do fato; D limita escopo, não tempo.</p>`],
+];
+
+const CMDS = [
+  ['az monitor data-collection rule create -g RG -n DCR --rule-file dcr.json', 'Regra de coleta do AMA'],
+  ['az monitor data-collection rule association create --rule-id DCR --resource VM', 'Ligar a DCR à máquina'],
+  ['az monitor log-analytics workspace table create … -n Tabela_CL --columns …', 'Tabela customizada'],
+  ['DeviceProcessEvents | where … | project Timestamp, ReportId, DeviceId', 'Base de detecção customizada no XDR'],
+  ['SigninLogs | where ConditionalAccessStatus == "failure"', 'Entradas barradas pelo acesso condicional'],
+  ['Search-UnifiedAuditLog -Operations New-InboxRule …', 'Auditoria do Microsoft 365'],
+  ['New-ComplianceSearchAction -SearchName X -Purge -PurgeType SoftDelete', 'Apagar e-mail em lote'],
+  ['New-MgIdentityConditionalAccessPolicy -BodyParameter @{…}', 'Criar política de acesso condicional'],
+  ['Revoke-MgUserSignInSession -UserId UPN', 'Revogar sessões (refresh tokens)'],
+  ['New-MgRoleManagementDirectoryRoleEligibilityScheduleRequest', 'Atribuição elegível no PIM'],
+  ['az ad app federated-credential create --id APP --parameters …', 'Federação de workload sem segredo'],
+  ['az ad app permission admin-consent --id APP', 'Consentimento de administrador'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha CKA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"agenda.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: relatorio\nspec:\n  # 1) nodeSelector: o mais simples (rótulo exato)\n  nodeSelector:\n    disco: ssd\n  # 2) afinidade: regras ricas; required = obrigatório, preferred = peso\n  affinity:\n    nodeAffinity:\n      requiredDuringSchedulingIgnoredDuringExecution:\n        nodeSelectorTerms:\n        - matchExpressions:\n          - key: topology.kubernetes.io/zone\n            operator: In\n            values: [zona-a, zona-b]\n    podAntiAffinity:                 # espalhar réplicas por nó\n      preferredDuringSchedulingIgnoredDuringExecution:\n      - weight: 100\n        podAffinityTerm:\n          topologyKey: kubernetes.io/hostname\n          labelSelector:\n            matchLabels: {app: relatorio}\n  # 3) toleration: permite (não obriga) ir para nó com taint\n  tolerations:\n  - key: dedicado\n    operator: Equal\n    value: batch\n    effect: NoSchedule\n  containers:\n  - name: job\n    image: busybox:1.36\n    command: ['sh', '-c', 'sleep 3600']\n    resources:\n      requests: {cpu: 250m, memory: 128Mi}   # o scheduler usa requests\n      limits:   {cpu: 500m, memory: 256Mi}   # passou da memória: OOMKilled\n# kubectl taint nodes node01 dedicado=batch:NoSchedule\n# kubectl taint nodes node01 dedicado=batch:NoSchedule-     (remove)\n# kubectl label nodes node01 disco=ssd", "config.yaml": "# kubectl create configmap app-cfg --from-literal=MODO=prod --dry-run=client -o yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: app-cfg\ndata:\n  MODO: prod\n  app.properties: |\n    log.level=info\n---\n# kubectl create secret generic db --from-literal=SENHA=s3cr3t\napiVersion: v1\nkind: Secret\nmetadata:\n  name: db\ntype: Opaque\nstringData:            # o API server grava em base64 (não é criptografia!)\n  SENHA: s3cr3t\n---\napiVersion: v1\nkind: Pod\nmetadata:\n  name: api\nspec:\n  containers:\n  - name: api\n    image: nginx:1.27\n    env:\n    - name: MODO                    # uma chave específica\n      valueFrom:\n        configMapKeyRef: {name: app-cfg, key: MODO}\n    - name: DB_SENHA\n      valueFrom:\n        secretKeyRef: {name: db, key: SENHA}\n    envFrom:                        # todas as chaves de uma vez\n    - configMapRef: {name: app-cfg}\n    volumeMounts:\n    - name: cfg\n      mountPath: /etc/app           # vira arquivo: /etc/app/app.properties\n      readOnly: true\n  volumes:\n  - name: cfg\n    configMap:\n      name: app-cfg\n# env NÃO atualiza com o pod rodando; volume atualiza (exceto subPath)", "gateway.yaml": "# O GatewayClass vem do controlador instalado (ex.: nginx, envoy, cilium)\napiVersion: gateway.networking.k8s.io/v1\nkind: Gateway\nmetadata:\n  name: web\n  namespace: loja\nspec:\n  gatewayClassName: nginx\n  listeners:\n  - name: https\n    protocol: HTTPS\n    port: 443\n    hostname: loja.exemplo.com\n    tls:\n      mode: Terminate\n      certificateRefs:\n      - name: loja-tls           # Secret do tipo kubernetes.io/tls\n---\napiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: api\n  namespace: loja\nspec:\n  parentRefs:\n  - name: web                    # liga a rota ao Gateway\n  hostnames: [loja.exemplo.com]\n  rules:\n  - matches:\n    - path: {type: PathPrefix, value: /api}\n    backendRefs:                 # canário: 90% v1, 10% v2\n    - {name: api-v1, port: 8080, weight: 90}\n    - {name: api-v2, port: 8080, weight: 10}\n  - backendRefs:\n    - {name: front, port: 80}\n---\n# O equivalente antigo, ainda no currículo: Ingress\napiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: loja\n  namespace: loja\nspec:\n  ingressClassName: nginx\n  rules:\n  - host: loja.exemplo.com\n    http:\n      paths:\n      - path: /api\n        pathType: Prefix\n        backend:\n          service: {name: api-v1, port: {number: 8080}}", "netpol.yaml": "# 1) Nega toda entrada no namespace (pods sem regra = abertos)\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny-ingress\n  namespace: loja\nspec:\n  podSelector: {}          # {} = todos os pods do namespace\n  policyTypes: [Ingress]\n---\n# 2) Libera a API só para o frontend, na porta 8080\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: api-do-front\n  namespace: loja\nspec:\n  podSelector:\n    matchLabels: {app: api}\n  policyTypes: [Ingress, Egress]\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels: {app: front}       # mesmo namespace\n    - namespaceSelector:                # E/OU? veja a indentação!\n        matchLabels:\n          kubernetes.io/metadata.name: monitoramento\n    ports:\n    - protocol: TCP\n      port: 8080\n  egress:\n  - to:\n    - podSelector:\n        matchLabels: {app: db}\n    ports:\n    - {protocol: TCP, port: 5432}\n  - ports:                              # sem isto o DNS quebra\n    - {protocol: UDP, port: 53}\n    - {protocol: TCP, port: 53}\n# Dois itens na lista \"from\" = OU. Um item com podSelector E\n# namespaceSelector juntos = E (pods com o rótulo naquele namespace).\n# Só funciona se o CNI aplicar políticas (Calico, Cilium...).", "pvc.yaml": "apiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\n  name: rapido\n  annotations:\n    storageclass.kubernetes.io/is-default-class: \"false\"\nprovisioner: rancher.io/local-path      # o driver CSI/provisionador do cluster\nreclaimPolicy: Retain                   # padrão das dinâmicas: Delete\nvolumeBindingMode: WaitForFirstConsumer # espera o pod para escolher o nó\nallowVolumeExpansion: true\n---\napiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: dados\n  namespace: loja\nspec:\n  storageClassName: rapido      # \"\" = só PV estático, sem classe\n  accessModes: [ReadWriteOnce]  # RWO, ROX, RWX, RWOP\n  resources:\n    requests:\n      storage: 2Gi\n---\napiVersion: v1\nkind: Pod\nmetadata:\n  name: db\n  namespace: loja\nspec:\n  containers:\n  - name: pg\n    image: postgres:17\n    env:\n    - {name: POSTGRES_PASSWORD, value: estudo}\n    volumeMounts:\n    - name: vol\n      mountPath: /var/lib/postgresql/data\n  volumes:\n  - name: vol\n    persistentVolumeClaim:\n      claimName: dados\n---\n# PV estático (provisionamento manual), casa com PVC por classe/modo/tamanho\napiVersion: v1\nkind: PersistentVolume\nmetadata:\n  name: pv-log\nspec:\n  capacity: {storage: 1Gi}\n  accessModes: [ReadWriteMany]\n  persistentVolumeReclaimPolicy: Retain\n  storageClassName: manual\n  hostPath: {path: /mnt/log}"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Cert · CKA Certified Kubernetes Administrator =====================
+const CONF = {
+  title: 'Trilha CKA', file: 'Cert - CKA Kubernetes Administrator', key: 'ccka',
+  eyebrow: 'Certificação · CNCF / Linux Foundation', h1: 'CKA: administrar Kubernetes no terminal, contra o relógio',
+  lead: 'Roteiro em vídeo para a Certified Kubernetes Administrator, a prova prática da CNCF e da Linux Foundation: duas horas resolvendo tarefas num cluster real. Segue o currículo oficial v1.35 (referência: outubro de 2026), com os cinco domínios e seus pesos, kubectl imperativo com dry-run, kubeadm, upgrade, backup do etcd, RBAC, NetworkPolicy, Gateway API, storage, Helm e Kustomize, e muito troubleshooting. Preço, versão e regras mudam: confira a página oficial.',
+  pills: ['kubectl', 'kubeadm', 'etcd', 'RBAC', 'NetworkPolicy', 'Gateway API', 'Helm · Kustomize', 'Troubleshooting'],
+  term: 'bash · candidate@cka',
+  faqPlaceholder: 'Buscar: etcd, upgrade, taint, NetworkPolicy, PVC…',
+  cmdsTitle: 'Comandos de bolso para a prova',
+  matriz: {title: 'Domínios oficiais × onde estudar', desc: 'Currículo CNCF CKA v1.35 (outubro de 2026). Os pesos dizem onde está a nota: troubleshooting sozinho vale quase um terço. Confira o currículo vigente antes de agendar.', cols: ['Domínio', 'Peso', 'O que cai', 'Onde estudar']},
+};
+const TITLE = {k: 'Certificação · CNCF / Linux Foundation', h: 'Certified Kubernetes Administrator',
+  p: 'Uma prova sem alternativas: você recebe um terminal, alguns clusters e duas horas para consertar, criar e configurar. Passa quem conhece o kubectl de cor e sabe onde procurar na documentação.',
+  chips: ['prova prática · 2 h', 'currículo v1.35', 'troubleshooting 30%', 'cluster 25%', 'rede 20%', 'workloads 15%', 'storage 10%']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Imperativo primeiro, YAML depois',
+  p: 'Abaixo do vídeo estão os domínios com pesos, os links para as trilhas que já cobrem Kubernetes, a trilha de estudo, o checklist de prontidão e o simulado com questões originais.',
+  chips: ['troque o contexto', '--dry-run=client -o yaml', 'etcd antes de mexer', 'describe, events, logs']};
+
+const SCENES = [
+/* ---------- A PROVA ---------- */
+{ id:'intro', ch:'A prova', title:'Uma prova feita no terminal',
+  say:'A CKA valida que você administra um cluster Kubernetes de verdade: instala com kubeadm, atualiza, faz backup, controla acesso, configura rede e storage e, principalmente, conserta o que quebrou. Não há alternativas: são tarefas num terminal, em clusters reais, durante duas horas. É para quem opera Kubernetes ou quer o selo de que sabe operar. Este roteiro segue o currículo oficial da CNCF na versão um ponto trinta e cinco, com referência de outubro de dois mil e vinte e seis.',
+  v:{type:'title'} },
+
+{ id:'formato', ch:'A prova', title:'Formato, nota e regras',
+  say:'São duas horas, online, com fiscal pela webcam, num ambiente remoto com terminal e navegador. Você pode consultar a documentação oficial do Kubernetes e as poucas páginas que o regulamento libera; confira a lista atual. A nota mínima publicada no manual do candidato tem sido sessenta e seis por cento, mas confirme. A compra inclui uma nova tentativa e duas sessões do simulador killer.sh, mais difícil que a prova. Não há pré-requisito, e o certificado vale dois anos.',
+  v:GRID(3, [
+    ['Formato','prático, sem múltipla escolha',['2 horas, remoto, com fiscal','tarefas em clusters reais','Kubernetes v1.35','vários clusters e contextos'],'blue'],
+    ['Nota e tentativas','',['mínimo publicado: 66%','tarefas com pesos diferentes','1 nova tentativa inclusa','2 sessões killer.sh'],'green'],
+    ['Regras','',['docs oficiais liberadas','sem anotações pessoais','sem pré-requisito','válida por 2 anos'],'amber'],
+  ], {h:250, step:3, rodape:'Preço (US$ 445 em out/2026), versão do Kubernetes e lista de sites permitidos mudam: confira a página oficial antes de agendar'}) },
+
+{ id:'dominios', ch:'A prova', title:'Os cinco domínios e os pesos',
+  say:'O currículo tem cinco domínios. Troubleshooting vale trinta por cento: nós, componentes do cluster, logs, rede e uso de recursos. Arquitetura, instalação e configuração vale vinte e cinco: RBAC, kubeadm, ciclo de vida, alta disponibilidade, Helm, Kustomize, CRDs e operadores. Serviços e rede, vinte: NetworkPolicy, Services, Gateway API, Ingress e CoreDNS. Workloads e agendamento, quinze. Storage, dez. A trilha vai do cluster ao storage e deixa troubleshooting para o fim, porque ele junta tudo.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:70, cls:'ext', html:B('Troubleshooting · 30%','nós · componentes · recursos · logs · serviços e rede')},
+    {at:3, x:36,y:172,w:760,h:70, cls:'amber', html:B('Arquitetura, instalação e configuração · 25%','RBAC · kubeadm · upgrade · HA · Helm · Kustomize · CRDs')},
+    {at:5.5, x:36,y:252,w:640,h:70, cls:'blue', html:B('Serviços e rede · 20%','NetworkPolicy · Services · Gateway API · Ingress · CoreDNS')},
+    {at:8, x:36,y:332,w:520,h:70, cls:'green', html:B('Workloads e agendamento · 15%','rollout · ConfigMap · HPA · afinidade')},
+    {at:10, x:36,y:412,w:400,h:70, html:B('Storage · 10%','StorageClass · PV · PVC')},
+    {at:12, x:600,y:332,w:324,h:150, cls:'region', html:'<span class="rl">leitura</span>'+UL('55% da nota: quebrar e consertar','pratique até ser automático')},
+  ]}},
+
+{ id:'ambiente', ch:'A prova', title:'Ambiente, aliases e contexto',
+  say:'Os primeiros dois minutos economizam vinte. O alias k para kubectl e o autocompletar costumam já vir prontos; confira. Crie duas variáveis: do, para gerar YAML sem criar nada, e now, para apagar na hora. Ajuste o vim para dois espaços. E a regra que mais reprova: cada tarefa diz em qual cluster ou máquina trabalhar. Copie e rode o comando de contexto, ou o ssh indicado, antes de qualquer coisa. Resolver certo no cluster errado vale zero.',
+  v:T('c|alias k=kubectl; complete -o default -F __start_kubectl k   # se ainda não existir', 'c|export do="--dry-run=client -o yaml"', 'c|export now="--force --grace-period=0"', 'c|echo "set ts=2 sw=2 et ai" >> ~/.vimrc', 'c|k config use-context k8s-c2     # copie da tarefa, sempre', 'ok|Switched to context "k8s-c2".', 'c|k config current-context', 'o|k8s-c2', 'c|k run tmp --image=nginx $do > pod.yaml', 'c|k delete pod tmp $now', 'o|pod "tmp" force deleted', 'c|k explain pod.spec.containers.livenessProbe --recursive | less')},
+
+{ id:'imperativo', ch:'A prova', title:'Imperativo com dry-run: o atalho',
+  say:'Escrever YAML do zero gasta tempo e gera erro de indentação. O padrão da prova é gerar o esqueleto com o comando imperativo mais dry-run igual a client e saída em YAML, salvar num arquivo, editar só o que falta e aplicar. Funciona para pod, deployment, service, job, cronjob, configmap, secret, role e rolebinding. Para o que não tem gerador, como PersistentVolume ou NetworkPolicy, copie o exemplo da documentação. E use kubectl explain para lembrar o nome de um campo.',
+  v:T('c|k create deploy api --image=nginx:1.27 --replicas=3 --port=80 $do > api.yaml', 'c|vim api.yaml        # acrescente só o que a tarefa pede (resources, probes...)', 'c|k apply -f api.yaml', 'ok|deployment.apps/api created', 'c|k expose deploy api --port=80 --target-port=80 --type=NodePort $do > svc.yaml', 'c|k create job backup --image=busybox $do -- sh -c "date"', 'c|k create cronjob limpa --image=busybox --schedule="*/5 * * * *" $do -- echo ok', 'c|k create secret generic db --from-literal=SENHA=x $do', 'c|k create sa robo -n ci $do', 'c|k get deploy api -o yaml > api-atual.yaml   # para editar o que já existe', 'c|k replace --force -f api-atual.yaml     # recria campos imutáveis')},
+
+/* ---------- CLUSTER 25% ---------- */
+{ id:'arquitetura', ch:'Cluster · 25%', title:'Control plane, nós e static pods',
+  say:'No control plane rodam o API server, porta única de tudo; o etcd, banco chave-valor com o estado; o scheduler, que escolhe o nó; e o controller manager, que mantém o estado desejado. Em cada nó, o kubelet fala com o runtime pelo CRI, geralmente containerd, e o kube-proxy programa as regras de Service. No kubeadm, os componentes do control plane são static pods: o kubelet lê os manifestos em barra etc barra kubernetes barra manifests. Editou o arquivo, o pod é recriado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:520,h:250, cls:'region', html:'<span class="rl">control plane · static pods</span>'},
+    {at:1.5, x:56,y:130,w:230,h:90, cls:'amber', html:B('kube-apiserver','porta 6443 · tudo passa aqui')},
+    {at:2.5, x:306,y:130,w:230,h:90, cls:'amber', html:B('etcd','estado do cluster · 2379')},
+    {at:3.5, x:56,y:234,w:230,h:90, cls:'blue', html:B('kube-scheduler','escolhe o nó')},
+    {at:4.5, x:306,y:234,w:230,h:90, cls:'blue', html:B('controller-manager','estado desejado')},
+    {at:6, x:584,y:92,w:340,h:250, cls:'region', html:'<span class="rl">cada nó</span>'+UL('kubelet: serviço systemd','containerd via CRI','kube-proxy: regras de Service','CNI: rede dos pods')},
+    {at:9, x:36,y:362,w:888,h:140, cls:'green', html:B('/etc/kubernetes/manifests','o kubelet sobe o que estiver ali')+UL('kube-apiserver.yaml · etcd.yaml · kube-scheduler.yaml · kube-controller-manager.yaml','erro num desses arquivos = componente fora do ar (cai no troubleshooting)','certificados em /etc/kubernetes/pki · kubeconfig do admin em /etc/kubernetes/admin.conf')},
+  ]}},
+
+{ id:'kubeadm', ch:'Cluster · 25%', title:'Preparar nós e criar com kubeadm',
+  say:'Preparar a infraestrutura é instalar e ligar o containerd com o driver de cgroup systemd, desligar o swap ou configurar o kubelet para ele, carregar os módulos overlay e br netfilter e ligar o encaminhamento de IP. Depois, kubeadm, kubelet e kubectl na mesma versão, do repositório pkgs ponto k8s ponto io. O kubeadm init cria o control plane e imprime o join; instale um CNI, ou os nós ficam NotReady. Perdeu o comando de join? Gere outro com token create.',
+  v:T('c|sudo swapoff -a; sudo modprobe overlay br_netfilter', 'c|sudo sysctl -w net.ipv4.ip_forward=1', 'c|sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --kubernetes-version=v1.35.0', 'ok|Your Kubernetes control-plane has initialized successfully!', 'c|mkdir -p ~/.kube && sudo cp /etc/kubernetes/admin.conf ~/.kube/config', 'c|k apply -f <manifesto-do-cni>.yaml     # Calico, Cilium, Flannel...', 'c|kubeadm token create --print-join-command', 'o|kubeadm join 172.30.1.2:6443 --token abc123.xyz --discovery-token-ca-cert-hash …', 'c|ssh node01 sudo kubeadm join 172.30.1.2:6443 --token abc123.xyz --discovery-token-ca…', 'c|k get nodes', 'o|controlplane   Ready   control-plane   6m   v1.35.0', 'o|node01         Ready   <none>          1m   v1.35.0')},
+
+{ id:'upgrade', ch:'Cluster · 25%', title:'Upgrade com kubeadm, um nó por vez',
+  say:'Upgrade é tarefa clássica e tem ordem fixa: um minor por vez, control plane primeiro. Aponte o repositório do pacote para o novo minor, atualize o kubeadm, rode upgrade plan e upgrade apply com a versão exata. Depois, drain do nó, kubelet e kubectl novos, daemon-reload, restart do kubelet e uncordon. Nos workers, o mesmo, trocando apply por kubeadm upgrade node. Esqueceu o uncordon e o nó fica sem pods novos: erro bobo e comum.',
+  v:T('c|sudo sed -i "s/v1.34/v1.35/g" /etc/apt/sources.list.d/kubernetes.list   # repo por minor', 'c|sudo apt-get update && sudo apt-get install -y kubeadm=1.35.1-1.1   # após apt-mark unhold', 'c|sudo kubeadm upgrade plan', 'o|You can now apply the upgrade by executing: kubeadm upgrade apply v1.35.1', 'c|sudo kubeadm upgrade apply v1.35.1', 'ok|[upgrade/successful] SUCCESS! Your cluster was upgraded to "v1.35.1".', 'c|k drain controlplane --ignore-daemonsets', 'c|sudo apt-get install -y kubelet=1.35.1-1.1 kubectl=1.35.1-1.1', 'c|sudo systemctl daemon-reload && sudo systemctl restart kubelet', 'c|k uncordon controlplane', 'c|ssh node01   # worker: kubeadm novo → sudo kubeadm upgrade node → kubelet → restart', 'o|controlplane   Ready   control-plane   40d   v1.35.1')},
+
+{ id:'etcd', ch:'Cluster · 25%', title:'Backup e restauração do etcd',
+  say:'O etcd guarda todo o estado do cluster. O backup é um snapshot com etcdctl, passando endpoint e os três certificados, que você copia do manifesto do etcd. A restauração, hoje com etcdutl, grava um diretório de dados novo; então você troca o caminho do hostPath no etcd ponto yaml e espera o static pod voltar. O currículo atual fala em ciclo de vida do cluster sem citar o etcd pelo nome, mas este é o seguro antes de qualquer mudança arriscada: saiba de cor.',
+  v:T('c|grep -E "cert|key|trusted|listen-client" /etc/kubernetes/manifests/etcd.yaml', 'c|export ETCDCTL_API=3 ETCDCTL_CACERT=/etc/kubernetes/pki/etcd/ca.crt', 'c|export ETCDCTL_CERT=/etc/kubernetes/pki/etcd/server.crt', 'c|export ETCDCTL_KEY=/etc/kubernetes/pki/etcd/server.key', 'c|etcdctl --endpoints=https://127.0.0.1:2379 snapshot save /opt/etcd-snap.db', 'ok|Snapshot saved at /opt/etcd-snap.db', 'c|etcdutl snapshot status /opt/etcd-snap.db -w table', 'c|sudo etcdutl snapshot restore /opt/etcd-snap.db --data-dir /var/lib/etcd-restaurado', 'c|sudo vim /etc/kubernetes/manifests/etcd.yaml   # hostPath: /var/lib/etcd-restaurado', 'c|watch crictl ps    # o etcd e o API server sobem de novo em 1 a 2 minutos', 'c|k get deploy -A', 'ok|o estado volta ao momento do snapshot')},
+
+{ id:'ha', ch:'Cluster · 25%', title:'Control plane altamente disponível',
+  say:'Alta disponibilidade é ter três ou mais nós de control plane atrás de um balanceador, para que os kubelets e o kubectl falem com um endereço só. O etcd precisa de quórum: com três membros, tolera perder um; com cinco, dois. Número par não ajuda. Há duas topologias: etcd empilhado, no mesmo nó do control plane, mais simples; ou etcd externo, em máquinas próprias, mais resiliente e mais caro. No kubeadm, isso começa com control-plane-endpoint no init e join com a flag control-plane.',
+  v:{type:'boxes', defs:[
+    ['Balanceador','um endereço para o API server', .8],
+    ['Quórum etcd','3 tolera 1 · 5 tolera 2', 2.8],
+    ['Par não ajuda','4 também só tolera 1', 4.8],
+    ['init','--control-plane-endpoint=lb:6443', 6.8],
+    ['join','--control-plane --certificate-key', 8.8],
+  ], items:[
+    {at:11, x:470,y:92,w:454,h:190, cls:'blue', html:B('etcd empilhado','etcd no mesmo nó do control plane')+UL('padrão do kubeadm','menos máquinas','perdeu o nó, perdeu os dois')},
+    {at:14, x:470,y:302,w:454,h:200, cls:'green', html:B('etcd externo','cluster de etcd separado')+UL('falhas independentes','mais máquinas e certificados','escolha de ambientes críticos')},
+  ]}},
+
+{ id:'rbac', ch:'Cluster · 25%', title:'RBAC: quem pode fazer o quê',
+  say:'RBAC tem quatro objetos. Role dá permissões num namespace; ClusterRole, no cluster todo ou em recursos sem namespace, como nós. RoleBinding liga um papel a usuário, grupo ou ServiceAccount num namespace; ClusterRoleBinding, no cluster. Um truque: RoleBinding pode apontar para uma ClusterRole, reaproveitando a regra só naquele namespace. Tudo sai em comandos imperativos. E sempre confira com auth can-i, se passando pela conta com a flag as.',
+  v:T('c|k create sa deployer -n ci', 'c|k create role deploy-edit -n ci --verb=get,list,create,update --resource=deploy,pods', 'c|k create rolebinding deployer-rb -n ci --role=deploy-edit --serviceaccount=ci:deployer', 'c|k create clusterrole ler-nos --verb=get,list,watch --resource=nodes', 'c|k create clusterrolebinding ana-nos --clusterrole=ler-nos --user=ana', 'c|k auth can-i create deployments -n ci --as=system:serviceaccount:ci:deployer', 'ok|yes', 'c|k auth can-i delete deployments -n ci --as=system:serviceaccount:ci:deployer', 'err|no', 'c|k auth can-i list nodes --as=ana', 'ok|yes', 'c|k auth can-i --list -n ci --as=system:serviceaccount:ci:deployer | head -5')},
+
+{ id:'helm-kustomize', ch:'Cluster · 25%', title:'Helm e Kustomize para componentes',
+  say:'O currículo pede usar Helm e Kustomize para instalar componentes do cluster. No Helm: adicionar o repositório, procurar o chart, ver os valores, instalar num namespace com valores próprios, listar, atualizar e desfazer. No Kustomize, embutido no kubectl: um kustomization ponto yaml lista os recursos e aplica ajustes, como namespace, imagem e patches; kubectl kustomize mostra o resultado e apply menos k aplica. Leia a tarefa: ela costuma dar nome de release, namespace e versão exatos.',
+  v:T('c|helm repo add traefik https://traefik.github.io/charts && helm repo update', 'c|helm search repo traefik --versions | head -3', 'c|helm show values traefik/traefik > valores.yaml', 'c|helm install borda traefik/traefik -n borda --create-namespace', 'ok|STATUS: deployed   REVISION: 1', 'c|helm list -A', 'c|helm upgrade borda traefik/traefik -n borda -f valores.yaml', 'c|helm rollback borda 1 -n borda', 'c|cat overlays/prod/kustomization.yaml', 'o|resources: [../../base]   namespace: prod   images: [{name: api, newTag: "2.1"}]', 'c|k kustomize overlays/prod | less && k apply -k overlays/prod', 'ok|deployment.apps/api configured')},
+
+{ id:'extensoes', ch:'Cluster · 25%', title:'CNI, CSI, CRI, CRDs e operadores',
+  say:'O Kubernetes terceiriza três coisas por interfaces padrão. CRI é o runtime de contêiner, como containerd; o crictl conversa com ele. CNI dá rede aos pods e aplica NetworkPolicy, como Calico e Cilium. CSI liga o storage, de discos de nuvem a NFS. E o cluster se estende com CRDs, novos tipos de recurso, e operadores, controladores que cuidam desses recursos, como um operador de banco. Na prova: instalar um operador, listar CRDs e criar um recurso customizado.',
+  v:GRID(3, [
+    ['CRI','runtime',['containerd, CRI-O','crictl ps · crictl logs','kubelet → CRI','funciona sem API server'],'blue'],
+    ['CNI','rede dos pods',['Calico, Cilium, Flannel','aplica NetworkPolicy','sem CNI: nó NotReady','config em /etc/cni/net.d'],'green'],
+    ['CSI','storage',['discos de nuvem, NFS','provisiona PV dinâmico','driver por StorageClass','k get csidrivers'],'amber'],
+  ], {h:250, step:3, rodape:'CRD = novo tipo (k get crd · k explain TIPO) · operador = controlador que reconcilia esse tipo · instalado por Helm ou manifesto'}) },
+
+/* ---------- WORKLOADS 15% ---------- */
+{ id:'rollout', ch:'Workloads · 15%', title:'Deployment, rolling update e rollback',
+  say:'Um Deployment gerencia ReplicaSets, que gerenciam pods. Trocar a imagem cria um ReplicaSet novo e faz rolling update, controlado por maxSurge e maxUnavailable. Rollout status acompanha, history mostra as revisões, undo volta e to-revision escolhe uma específica. Para registrar o motivo, use a anotação change-cause. Escalar é scale, e pausar permite várias mudanças num rollout só. Recreate derruba tudo antes, útil quando duas versões não podem conviver.',
+  v:T('c|k set image deploy/api nginx=nginx:1.28', 'c|k annotate deploy/api kubernetes.io/change-cause="nginx 1.28"', 'c|k rollout status deploy/api', 'ok|deployment "api" successfully rolled out', 'c|k rollout history deploy/api', 'o|REVISION  CHANGE-CAUSE', 'o|1         <none>', 'o|2         nginx 1.28', 'c|k rollout undo deploy/api --to-revision=1', 'c|k scale deploy/api --replicas=5', 'c|k patch deploy api -p \'{"spec":{"strategy":{"rollingUpdate":{"maxUnavailable":0}}}}\'', 'c|k rollout restart deploy/api     # recria pods sem mudar a spec')},
+
+{ id:'config', ch:'Workloads · 15%', title:'ConfigMaps e Secrets',
+  say:'ConfigMap guarda configuração; Secret guarda dado sensível, em base64, que não é criptografia: proteja com RBAC e criptografia do etcd em repouso. Os dois entram no pod como variável, uma chave com valueFrom ou todas com envFrom, ou como arquivos num volume. A diferença cai na prova: variável não muda com o pod rodando; arquivo de volume atualiza sozinho, exceto com subPath. Gere os dois imperativamente, com from-literal ou from-file.',
+  v:S('config-e-secret.yaml','config.yaml','yaml')},
+
+{ id:'autoscaling', ch:'Workloads · 15%', title:'Autoscaling e autocura',
+  say:'O HPA aumenta e reduz réplicas por métrica, normalmente CPU, e depende do metrics-server e de requests definidos: sem request, não há porcentagem. O VPA ajusta requests, e é instalado à parte. A autocura vem dos primitivos: ReplicaSet recria pods, liveness reinicia o travado, readiness tira do Service, startup protege quem demora a subir, restartPolicy define o reinício. DaemonSet põe um pod por nó, StatefulSet dá identidade e disco estáveis, e PodDisruptionBudget limita o drain.',
+  v:T('c|k set resources deploy api --requests=cpu=100m,memory=128Mi --limits=cpu=300m', 'c|k autoscale deploy api --cpu-percent=70 --min=2 --max=8', 'ok|horizontalpodautoscaler.autoscaling/api autoscaled', 'c|k get hpa api', 'o|NAME  REFERENCE       TARGETS       MINPODS  MAXPODS  REPLICAS', 'o|api   Deployment/api  cpu: 12%/70%  2        8        2', 'c|k top pods -n default --sort-by=cpu       # precisa do metrics-server', 'c|k create pdb api-pdb --selector=app=api --min-available=1', 'c|k get ds -A          # um pod por nó: kube-proxy, CNI, coletores', 'c|k get sts db -o wide # nomes estáveis: db-0, db-1, cada um com seu PVC')},
+
+{ id:'agendamento', ch:'Workloads · 15%', title:'Agendamento: afinidade, taints e recursos',
+  say:'Quatro ferramentas decidem onde o pod roda. nodeSelector exige um rótulo exato. Afinidade de nó dá regras ricas, obrigatórias ou preferidas; antiafinidade de pod espalha réplicas. Taint no nó repele pods, e toleration permite, mas não obriga, que um pod vá para lá: para dedicar um nó, use taint e afinidade juntos. E requests, que o scheduler usa para caber no nó; limits estourado de memória dá OOMKilled. LimitRange e ResourceQuota impõem padrões e tetos por namespace.',
+  v:S('pod-agendado.yaml','agenda.yaml','yaml')},
+
+/* ---------- REDE 20% ---------- */
+{ id:'services', ch:'Rede · 20%', title:'Services: ClusterIP, NodePort, LoadBalancer',
+  say:'Todo pod fala com todo pod, sem NAT, por padrão: essa é a regra de conectividade. O Service dá um IP e um nome estáveis a um conjunto de pods escolhido pelo seletor. ClusterIP é interno; NodePort abre uma porta de trinta mil a trinta e dois mil setecentos e sessenta e sete em todos os nós; LoadBalancer pede um balanceador ao provedor. Headless, sem IP, devolve os pods direto no DNS. Se o Service não responde, olhe os endpoints: vazio quase sempre é seletor ou porta errados.',
+  v:T('c|k expose deploy api --name=api-svc --port=80 --target-port=8080', 'c|k create svc nodeport web --tcp=80:8080 --node-port=30080 $do', 'c|k get svc api-svc -o wide', 'o|NAME     TYPE       CLUSTER-IP     PORT(S)  SELECTOR', 'o|api-svc  ClusterIP  10.96.120.15   80/TCP   app=api', 'c|k get endpointslices -l kubernetes.io/service-name=api-svc', 'o|NAME           ADDRESSTYPE  PORTS  ENDPOINTS', 'o|api-svc-7x2kq  IPv4         8080   10.244.1.5,10.244.2.7', 'c|k run t --rm -it --image=busybox:1.36 --restart=Never -- wget -qO- api-svc', 'ok|{"status":"ok"}')},
+
+{ id:'netpol', ch:'Rede · 20%', title:'NetworkPolicy: negar e liberar',
+  say:'Sem NetworkPolicy, tudo é aberto. Uma política seleciona pods e, para eles, só passa o que ela libera; políticas somam, nunca bloqueiam umas às outras. O padrão seguro é negar tudo no namespace e liberar o necessário. A pegadinha número um é a indentação do from: dois itens na lista são OU; podSelector e namespaceSelector no mesmo item são E. A segunda: com política de saída, lembre de liberar o DNS na porta cinquenta e três, ou nada resolve nomes.',
+  v:S('netpol.yaml','netpol.yaml','yaml')},
+
+{ id:'gateway', ch:'Rede · 20%', title:'Gateway API e Ingress',
+  say:'O currículo atual pede a Gateway API, a sucessora do Ingress. Ela separa papéis: o GatewayClass vem do controlador instalado, o Gateway define portas, hosts e TLS, e as rotas, como HTTPRoute, ligam caminhos a Services, com pesos para canário. O Ingress continua no currículo: um recurso com regras de host e caminho, que só funciona com um controlador e a ingressClassName certa. Para validar, use curl com o cabeçalho Host apontando para o IP ou a porta do controlador.',
+  v:S('gateway-e-ingress.yaml','gateway.yaml','yaml')},
+
+{ id:'coredns', ch:'Rede · 20%', title:'CoreDNS e nomes de serviço',
+  say:'O CoreDNS roda como Deployment no kube-system e responde pelo Service kube-dns. O nome completo de um Service é nome, ponto namespace, ponto svc, ponto cluster ponto local; do mesmo namespace basta o nome. Pods de StatefulSet com Service headless ganham nome próprio. A configuração fica no ConfigMap coredns, no arquivo Corefile; depois de editar, reinicie o deployment. Para testar, um pod temporário com nslookup resolve a dúvida em segundos.',
+  v:T('c|k run dns --rm -it --image=busybox:1.36 --restart=Never -- nslookup api-svc.loja.svc', 'o|Server:    10.96.0.10', 'ok|Name: api-svc.loja.svc.cluster.local   Address: 10.96.120.15', 'c|k run dns --rm -it --image=busybox:1.36 --restart=Never -- nslookup db-0.db.loja', 'ok|Name: db-0.db.loja.svc.cluster.local   Address: 10.244.2.9', 'c|k -n kube-system get deploy coredns; k -n kube-system get svc kube-dns', 'c|k -n kube-system get cm coredns -o yaml | grep -A12 Corefile', 'o|    .:53 { errors  health  kubernetes cluster.local ...  forward . /etc/resolv.conf }', 'c|k -n kube-system rollout restart deploy coredns')},
+
+/* ---------- STORAGE 10% ---------- */
+{ id:'storage', ch:'Storage · 10%', title:'PV, PVC, classes e modos de acesso',
+  say:'O PersistentVolume é o disco; o PersistentVolumeClaim é o pedido do pod. Com StorageClass, o PVC dispara provisionamento dinâmico pelo driver CSI; sem classe, ele casa com um PV estático de classe, modo e tamanho compatíveis. Modos: ReadWriteOnce, um nó; ReadOnlyMany; ReadWriteMany, vários nós; e ReadWriteOncePod, um único pod. Reclaim: Delete apaga o disco junto com o PVC, Retain preserva. WaitForFirstConsumer só cria o disco quando o pod é agendado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:200,h:100, cls:'blue', html:B('Pod','volumes: claimName')},
+    {at:2.5, x:266,y:92,w:200,h:100, cls:'green', html:B('PVC','pedido: 2Gi RWO')},
+    {at:4.5, x:496,y:92,w:200,h:100, cls:'amber', html:B('StorageClass','provisioner CSI')},
+    {at:6, x:726,y:92,w:198,h:100, html:B('PV','o disco real')},
+    {at:8.5, x:36,y:222,w:430,h:150, cls:'region', html:'<span class="rl">modos de acesso</span>'+UL('RWO: um nó · ROX: leitura, vários','RWX: escrita em vários nós','RWOP: um único pod')},
+    {at:12, x:494,y:222,w:430,h:150, cls:'region', html:'<span class="rl">reclaim policy</span>'+UL('Delete: apaga com o PVC (dinâmico)','Retain: fica Released, limpe à mão','Recycle: obsoleto')},
+    {at:16, x:36,y:392,w:888,h:110, cls:'ext', html:B('PVC preso em Pending?','k describe pvc: classe inexistente, modo ou tamanho sem PV compatível, ou WaitForFirstConsumer esperando o pod')},
+  ], lines:[
+    {at:2.5, d:'M236 142 L 266 142', cls:'flow'}, {at:4.5, d:'M466 142 L 496 142', cls:'flow'}, {at:6, d:'M696 142 L 726 142', cls:'flow'},
+  ]}},
+
+{ id:'pvc', ch:'Storage · 10%', title:'StorageClass, PVC e montagem',
+  say:'Na prática: uma StorageClass com provisionador, política de retenção, modo de vinculação e expansão permitida; um PVC que pede dois gigas em ReadWriteOnce; e o pod que monta o PVC pelo claimName. No fim, um PV estático com hostPath, do tipo que a prova pede para criar à mão. Para expandir, edite o tamanho no PVC, se a classe permitir. E lembre: storageClassName vazio, entre aspas, significa sem classe; omitir o campo usa a classe padrão.',
+  v:S('storage.yaml','pvc.yaml','yaml')},
+
+/* ---------- TROUBLESHOOTING 30% ---------- */
+{ id:'metodo', ch:'Troubleshooting · 30%', title:'O método: de fora para dentro',
+  say:'Troubleshooting vale trinta por cento e premia método. Comece pelo panorama: get com wide em tudo e os eventos ordenados por tempo. Depois describe no objeto suspeito: o final mostra os eventos. Depois logs, com previous para o contêiner que já morreu. Se o problema é o cluster, desça para o nó: kubelet, runtime, static pods. Monitore recursos com kubectl top. E leia o status do pod: ele quase sempre diz a causa.',
+  v:FLOW([['get -o wide','panorama',''],['events','--sort-by tempo','blue'],['describe','eventos do objeto','blue'],['logs','--previous, -c','green'],['nó','kubelet, crictl','amber']],
+    {y:96, h:86, step:1.6, ch:220, cards:[
+      ['Status do pod → causa provável','',['Pending: recursos, taint, PVC, nodeSelector','ImagePullBackOff: nome, tag ou registro','CrashLoopBackOff: app, comando, config','OOMKilled: limite de memória baixo'],'amber'],
+      ['Comandos de panorama','',['k get events -A --sort-by=.lastTimestamp','k top nodes · k top pods -A','k logs pod -c app --previous','k get pod x -o jsonpath=\'{.status}\''],'green'],
+    ]}) },
+
+{ id:'trouble-pod', ch:'Troubleshooting · 30%', title:'Pod que não sobe',
+  say:'Três casos clássicos em sequência. O primeiro, Pending: o describe diz que nenhum nó tem CPU suficiente, ou que há um taint sem toleration. O segundo, ImagePullBackOff: a tag não existe; corrija a imagem. O terceiro, CrashLoopBackOff: os logs do contêiner anterior mostram o erro da aplicação, aqui uma variável faltando. Corrija o Deployment, não o pod: pod criado por controlador volta igual se você só apagar.',
+  v:T('c|k get pods -o wide', 'o|relatorio  0/1  Pending           0   2m', 'o|web        0/1  ImagePullBackOff  0   1m', 'o|api-7d9c   0/1  CrashLoopBackOff  4   3m', 'c|k describe pod relatorio | tail -3', 'err|0/3 nodes are available: 1 node(s) had untolerated taint, 2 Insufficient cpu.', 'c|k describe pod web | grep -i failed', 'err|Failed to pull image "nginx:1.99": not found', 'c|k set image deploy/web nginx=nginx:1.27', 'c|k logs api-7d9c --previous', 'err|Error: variável DATABASE_URL não definida', 'c|k set env deploy/api DATABASE_URL=postgres://db:5432/loja', 'ok|deployment.apps/api env updated')},
+
+{ id:'trouble-no', ch:'Troubleshooting · 30%', title:'Nó NotReady e o kubelet',
+  say:'Nó NotReady quase sempre é o kubelet ou o runtime. Entre no nó por ssh, veja o status do serviço e leia o journal: ele diz o motivo, como um caminho de certificado errado, o binário fora do lugar, ou o containerd parado. Corrija o arquivo de configuração ou a unidade systemd, faça daemon-reload, reinicie e habilite o serviço para sobreviver a reboot. O crictl mostra os contêineres do nó mesmo com o API server fora do ar.',
+  v:T('c|k get nodes', 'err|node01   NotReady   <none>   30d   v1.35.1', 'c|ssh node01', 'c|sudo systemctl status kubelet | head -4', 'err|Active: activating (auto-restart) (Result: exit-code)', 'c|sudo journalctl -u kubelet --no-pager | tail -2', 'err|failed to load Kubelet config file /var/lib/kubelet/confg.yaml: no such file', 'c|sudo vim /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf  # corrija o caminho', 'c|sudo systemctl daemon-reload && sudo systemctl enable --now kubelet', 'c|sudo systemctl status containerd | grep Active', 'ok|Active: active (running)', 'c|exit; k get nodes', 'ok|node01   Ready   <none>   30d   v1.35.1')},
+
+{ id:'trouble-cp', ch:'Troubleshooting · 30%', title:'Control plane quebrado',
+  say:'Quando o kubectl responde connection refused, o API server caiu. Como ele é static pod, não adianta kubectl: use crictl no control plane, ou leia os logs em barra var barra log barra pods. A causa típica é um manifesto editado com erro: flag com nome errado, porta ou certificado trocado. Corrija o arquivo em manifests e espere o kubelet recriar. Se o scheduler cai, pods novos ficam Pending sem evento de agendamento; se o controller manager cai, réplicas não são recriadas.',
+  v:T('c|k get pods', 'err|The connection to the server 172.30.1.2:6443 was refused', 'c|sudo crictl ps -a | grep kube-apiserver', 'o|3f2a1c  Exited  kube-apiserver  4  kube-apiserver-controlplane', 'c|sudo crictl logs 3f2a1c 2>&1 | tail -1', 'err|Error: unknown flag: --etcd-servrs', 'c|sudo vim /etc/kubernetes/manifests/kube-apiserver.yaml   # corrija: --etcd-servers', 'c|ls /var/log/pods/ | grep kube-   # logs de static pods, mesmo sem API', 'c|watch sudo crictl ps', 'c|k -n kube-system get pods', 'ok|kube-apiserver-controlplane   1/1   Running   0   40s', 'ok|kube-scheduler-controlplane   1/1   Running   2   40d')},
+
+{ id:'trouble-rede', ch:'Troubleshooting · 30%', title:'Service sem resposta e recursos',
+  say:'Service que não responde tem um roteiro curto. Primeiro, os endpoints: vazio significa seletor sem casar com os rótulos dos pods, ou pods sem readiness. Segundo, a targetPort deve ser a porta em que o contêiner escuta. Terceiro, DNS e NetworkPolicy. Quarto, kube-proxy e CNI no kube-system. Para recursos, kubectl top mostra quem consome mais; a tarefa costuma pedir para gravar o nome do pod num arquivo. Leia com atenção o caminho e o formato pedidos.',
+  v:T('c|k get endpointslices -l kubernetes.io/service-name=pagamento', 'err|pagamento-x9k   IPv4   <unset>   <unset>', 'c|k get svc pagamento -o jsonpath=\'{.spec.selector}\'; k get pods --show-labels | grep pag', 'o|{"app":"pagamentos"}   pagamento-6c8f   app=pagamento', 'c|k patch svc pagamento -p \'{"spec":{"selector":{"app":"pagamento"}}}\'', 'ok|service/pagamento patched', 'c|k -n kube-system get pods -l k8s-app=kube-proxy', 'c|k top pods -A --sort-by=memory --no-headers | head -1', 'o|financeiro   relatorio-7f9   12m   910Mi', 'c|echo relatorio-7f9 > /opt/resultado/maior-memoria.txt', 'c|cat /opt/resultado/maior-memoria.txt')},
+
+/* ---------- ESTRATÉGIA ---------- */
+{ id:'pegadinhas', ch:'Estratégia', title:'Pegadinhas e gestão do tempo',
+  say:'As que mais tiram pontos: contexto ou namespace errado; upgrade sem uncordon; etcd restaurado sem trocar o caminho no manifesto; editar o pod em vez do Deployment; NetworkPolicy de saída sem DNS; gravar o resultado no arquivo errado. No tempo: duas horas para quinze a vinte tarefas, confira na sua prova, dá seis a oito minutos cada. Faça primeiro as rápidas e de peso alto, marque a que travar e volte. Use a documentação como colinha de YAML e verifique cada resultado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:230, cls:'ext', html:B('Erros de execução','')+UL('contexto ou namespace errado','upgrade sem uncordon','etcd sem trocar o hostPath','editar pod, não o Deployment','resultado no arquivo errado')},
+    {at:6, x:494,y:92,w:430,h:230, cls:'amber', html:B('Erros de conceito','')+UL('Secret base64 ≠ criptografia','egress sem DNS','from: OU × E pela indentação','taint repele, toleration permite')},
+    {at:13, x:36,y:342,w:280,h:160, cls:'blue', html:B('1ª passada','rápidas e de peso alto')+UL('travou 3 min? marque','anote o nº e o peso','confira o resultado')},
+    {at:16, x:340,y:342,w:280,h:160, cls:'green', html:B('2ª passada','as marcadas, por peso')+UL('docs: copie o exemplo','k explain para campos','sobrou tempo? revise')},
+    {at:19, x:644,y:342,w:280,h:160, cls:'region', html:'<span class="rl">treino</span>'+UL('killer.sh: 2 sessões','Killercoda grátis','até sobrar 30 min')},
+  ]}},
+
+{ id:'lab', ch:'Laboratório', title:'Lab: um cluster de estudo grátis',
+  say:'Para treinar sem custo: o kind sobe um cluster com vários nós dentro do Docker, bom para kubectl, RBAC, rede e storage; para kubeadm, upgrade e etcd, use duas máquinas virtuais ou os cenários gratuitos do Killercoda, que já vêm com kubeadm. O roteiro: criar o cluster, gerar um deployment com dry-run, expor, aplicar uma NetworkPolicy, criar um PVC, quebrar o kubelet de propósito e consertar. Cronometre cada exercício.',
+  v:T('c|cat kind.yaml', 'o|kind: Cluster   apiVersion: kind.x-k8s.io/v1alpha4', 'o|nodes: [{role: control-plane}, {role: worker}, {role: worker}]', 'c|kind create cluster --name cka --config kind.yaml', 'ok| ✓ Starting control-plane   ✓ Joining worker nodes', 'c|k create deploy web --image=nginx:1.27 --replicas=2 $do | k apply -f -', 'c|k expose deploy web --port=80 && k apply -f netpol.yaml', 'c|k apply -f storage.yaml && k get pvc -n loja', 'o|dados   Bound   pvc-3b1e…   2Gi   RWO   rapido   12s', 'c|docker exec cka-worker systemctl stop kubelet   # quebre de propósito', 'c|k get nodes', 'err|cka-worker   NotReady   <none>   5m   v1.35.0', 'c|docker exec cka-worker systemctl start kubelet && k get nodes')},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Prontidão para a CKA',
+  say:'Você está pronto quando faz, sem consultar além da documentação: gerar qualquer recurso com dry-run; instalar e fazer upgrade com kubeadm; backup e restauração do etcd; RBAC com auth can-i; NetworkPolicy com DNS liberado; Gateway e Ingress; PVC com StorageClass; HPA; afinidade e taints; e consertar pod, nó e control plane. E termina o killer.sh com folga de tempo.',
+  v:CK('Contexto trocado em toda tarefa', 'Esqueleto com --dry-run=client -o yaml', 'kubeadm init, join e upgrade', 'etcd: snapshot e restore', 'RBAC conferido com auth can-i', 'NetworkPolicy com DNS liberado', 'Gateway API e Ingress', 'PVC dinâmico e PV estático', 'HPA, afinidade e taints', 'Pod, nó e control plane consertados', 'Helm e Kustomize', 'killer.sh com folga de tempo')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os domínios com pesos, os links para as trilhas que já cobrem Kubernetes no dia a dia, a trilha de estudo com as páginas oficiais, o checklist de prontidão e um simulado com questões originais no estilo da prova. Agende quando terminar o simulador com folga; a nova tentativa inclusa é rede de segurança, não plano.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Kubernetes: os conceitos essenciais', 'v05', 'kubernetes', 'Pod, Deployment, Service, probes e quando não usar'],
+  ['Contêiner não é máquina virtual', 'v05', 'docker', 'Namespaces, cgroups e imagens'],
+  ['Imagem mínima e pod restrito', 'v14', 'k8s', 'securityContext e endurecimento de pods'],
+  ['Paxos, etcd e ZooKeeper', 'ndist', 'paxos-etcd', 'Por que o etcd precisa de quórum'],
+  ['Raft: a eleição de líder', 'ndist', 'raft-eleicao', 'O algoritmo por trás do etcd'],
+  ['Deployment: réplicas, recursos e sondas', 'aks', 'deploy', 'Probes, requests e limits na prática'],
+  ['HPA e Cluster Autoscaler', 'aks', 'scale', 'Escalar pods e nós'],
+  ['Atualizar sem indisponibilidade', 'aks', 'rolling', 'Rolling update ao vivo'],
+  ['A arquitetura alvo no AKS', 'aks', 'arq', 'Uma API real num Kubernetes gerenciado'],
+  ['Segredos e identidade sem chave', 'aks', 'spc', 'Secrets Store CSI e Workload Identity'],
+  ['Logs no Container Insights', 'aks', 'logs', 'Observar pods em produção'],
+];
+
+const MATRIZ = [
+  ['Troubleshooting', '30%', 'Nós NotReady, kubelet e containerd, static pods do control plane, logs e eventos, kubectl top, Service sem endpoints, DNS', 'Cenas metodo, trouble-pod, trouble-no, trouble-cp, trouble-rede · killer.sh'],
+  ['Arquitetura, instalação e configuração', '25%', 'RBAC, preparo dos nós, kubeadm init/join, upgrade, ciclo de vida e etcd, HA, Helm, Kustomize, CNI/CSI/CRI, CRDs e operadores', 'Cenas arquitetura a extensoes · Vol 05 · kubernetes · ndist · paxos-etcd'],
+  ['Serviços e rede', '20%', 'Conectividade entre pods, NetworkPolicy, ClusterIP/NodePort/LoadBalancer e endpoints, Gateway API, Ingress, CoreDNS', 'Cenas services, netpol, gateway, coredns'],
+  ['Workloads e agendamento', '15%', 'Rolling update e rollback, ConfigMap e Secret, HPA, primitivos de autocura, requests/limits, afinidade, taints e tolerations', 'Cenas rollout a agendamento · trilha aks · deploy e scale'],
+  ['Storage', '10%', 'StorageClass e provisionamento dinâmico, tipos de volume, modos de acesso, reclaim policy, PV e PVC', 'Cenas storage e pvc'],
+];
+
+const STUDY = [
+  ['CKA: página oficial', 'Formato, preço, regras e versão atual', 'https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/', 'formato'],
+  ['Currículo oficial (CNCF)', 'Domínios e competências, PDF v1.35', 'https://github.com/cncf/curriculum', 'dominios'],
+  ['Documentação do Kubernetes', 'A única consulta liberada na prova: treine a busca', 'https://kubernetes.io/docs/home/', 'pegadinhas'],
+  ['kubectl Quick Reference', 'Comandos e atalhos oficiais', 'https://kubernetes.io/docs/reference/kubectl/quick-reference/', 'imperativo'],
+  ['Upgrade de clusters kubeadm', 'O passo a passo oficial', 'https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/', 'upgrade'],
+  ['Operar o etcd', 'Backup, restauração e certificados', 'https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/', 'etcd'],
+  ['RBAC', 'Role, ClusterRole e bindings', 'https://kubernetes.io/docs/reference/access-authn-authz/rbac/', 'rbac'],
+  ['Network Policies', 'Exemplos de negar e liberar', 'https://kubernetes.io/docs/concepts/services-networking/network-policies/', 'netpol'],
+  ['Gateway API', 'Gateway, HTTPRoute e guias', 'https://gateway-api.sigs.k8s.io/', 'gateway'],
+  ['Persistent Volumes', 'PV, PVC, modos e reclaim', 'https://kubernetes.io/docs/concepts/storage/persistent-volumes/', 'storage'],
+  ['Depurar clusters', 'Troubleshooting oficial', 'https://kubernetes.io/docs/tasks/debug/', 'metodo'],
+  ['Helm: documentação', 'install, upgrade, rollback', 'https://helm.sh/docs/', 'helm-kustomize'],
+  ['killer.sh', 'O simulador incluso na compra', 'https://killer.sh/', 'pegadinhas'],
+  ['Killercoda', 'Cenários gratuitos no navegador', 'https://killercoda.com/', 'lab'],
+];
+
+const CHECK = [
+  ['Ambiente', 'Configurar alias, $do e vim em menos de 2 minutos', 'ambiente'],
+  ['Ambiente', 'Gerar deploy, svc, job e role só com dry-run', 'imperativo'],
+  ['Cluster', 'Criar um cluster com kubeadm e adicionar um worker', 'kubeadm'],
+  ['Cluster', 'Fazer upgrade de um minor no control plane e no worker', 'upgrade'],
+  ['Cluster', 'Snapshot e restore do etcd trocando o data-dir', 'etcd'],
+  ['Cluster', 'SA com Role e conferir com auth can-i', 'rbac'],
+  ['Cluster', 'Instalar um chart com Helm e um overlay com Kustomize', 'helm-kustomize'],
+  ['Workloads', 'Rolling update, history e undo com change-cause', 'rollout'],
+  ['Workloads', 'HPA com metrics-server e requests', 'autoscaling'],
+  ['Workloads', 'Dedicar um nó com taint + afinidade', 'agendamento'],
+  ['Rede', 'Default deny + liberação com DNS', 'netpol'],
+  ['Rede', 'Gateway + HTTPRoute com pesos', 'gateway'],
+  ['Storage', 'PVC dinâmico montado num pod e PV estático', 'pvc'],
+  ['Troubleshooting', 'Consertar kubelet parado e API server com flag errada', 'trouble-cp'],
+  ['Troubleshooting', 'Service sem endpoints por seletor errado', 'trouble-rede'],
+  ['Prova', 'Terminar uma sessão do killer.sh com folga', 'pegadinhas'],
+];
+
+const FAQ = [
+ ['Troubleshooting','Um nó aparece como NotReady. Você entra por ssh e vê que o kubelet reinicia em loop. Qual o próximo passo mais útil?',`<p>A) Rodar kubeadm reset no nó. B) Ler journalctl -u kubelet para achar a causa. C) Apagar o nó com kubectl delete node. D) Reiniciar o API server.</p><p><b>Resposta: B.</b> O journal mostra o erro exato (arquivo de configuração, certificado, runtime). Reset e delete destroem o nó sem diagnóstico; o API server não é o problema se só um nó está NotReady.</p>`],
+ ['Troubleshooting','kubectl responde "connection refused" na porta 6443. Como investigar?',`<p>A) kubectl describe pod kube-apiserver. B) crictl ps -a e crictl logs no control plane. C) kubectl logs -n kube-system kube-apiserver. D) helm rollback.</p><p><b>Resposta: B.</b> Sem API server, nenhum comando kubectl funciona (A e C). O static pod é visto pelo runtime com crictl, ou em /var/log/pods. Helm não tem relação.</p>`],
+ ['Troubleshooting','Um Service não entrega tráfego e o EndpointSlice está vazio. Os pods estão Running e Ready. Causa mais provável?',`<p>A) CoreDNS parado. B) Seletor do Service não casa com os rótulos dos pods. C) NodePort fora da faixa. D) Falta de PVC.</p><p><b>Resposta: B.</b> Endpoints vazios com pods prontos indicam seletor errado. DNS parado não esvazia endpoints; NodePort inválido nem seria aceito; PVC não afeta Service.</p>`],
+ ['Cluster','Você vai atualizar o cluster de 1.34 para 1.35. Qual a ordem correta no control plane?',`<p>A) kubelet, kubeadm, kubeadm upgrade apply. B) kubeadm novo, kubeadm upgrade plan/apply, drain, kubelet e kubectl novos, restart, uncordon. C) kubeadm upgrade node, depois kubelet. D) Atualizar todos os nós ao mesmo tempo.</p><p><b>Resposta: B.</b> kubeadm primeiro, apply no primeiro control plane, depois kubelet com drain/uncordon. upgrade node é para os demais nós; tudo ao mesmo tempo derruba o cluster.</p>`],
+ ['Cluster','Após restaurar um snapshot do etcd para /var/lib/etcd-novo, o cluster continua com o estado antigo. O que faltou?',`<p>A) Rodar kubeadm init de novo. B) Trocar o hostPath do volume de dados no manifesto do etcd para o novo diretório. C) Apagar o namespace kube-system. D) Reiniciar o kube-proxy.</p><p><b>Resposta: B.</b> O restore cria um diretório novo; o static pod do etcd continua montando o antigo até o manifesto ser alterado. As outras opções não apontam o etcd para os dados restaurados.</p>`],
+ ['Cluster','A ServiceAccount ci:deployer precisa criar Deployments só no namespace ci. Qual combinação usar?',`<p>A) ClusterRole + ClusterRoleBinding. B) Role no ci + RoleBinding no ci. C) Role no default + ClusterRoleBinding. D) Adicionar a SA ao grupo system:masters.</p><p><b>Resposta: B.</b> Escopo de namespace pede Role e RoleBinding no mesmo namespace (ou ClusterRole referenciada por RoleBinding). A dá acesso ao cluster todo; C mistura escopos; D é acesso total.</p>`],
+ ['Cluster','Quantos membros de etcd são necessários para tolerar a falha de dois deles?',`<p>A) 2. B) 3. C) 4. D) 5.</p><p><b>Resposta: D.</b> O quórum é a maioria: com 5, a maioria é 3 e dois podem cair. Com 3 ou 4, só um pode cair; 2 não tolera nenhuma falha.</p>`],
+ ['Cluster','Você precisa instalar um controlador a partir de um chart, no namespace borda, com release chamada borda. Qual comando?',`<p>A) helm install borda repo/chart -n borda --create-namespace. B) kubectl apply -k borda. C) helm template borda | kubectl delete -f -. D) helm repo add borda.</p><p><b>Resposta: A.</b> install cria a release com o nome e o namespace pedidos. B é Kustomize; C apaga recursos; D só registra um repositório.</p>`],
+ ['Rede','Depois de aplicar uma NetworkPolicy de egress no pod api, ele não resolve mais nomes. Por quê?',`<p>A) O CoreDNS foi apagado. B) A política não libera saída para a porta 53 UDP/TCP. C) NetworkPolicy não suporta egress. D) Falta um Service headless.</p><p><b>Resposta: B.</b> Com egress declarado, só passa o que for liberado, inclusive DNS. A política não apaga o CoreDNS; egress é suportado; headless não tem relação.</p>`],
+ ['Rede','Num bloco ingress.from, um único item contém podSelector app=front e namespaceSelector name=web. O que ele permite?',`<p>A) Pods app=front de qualquer namespace OU qualquer pod do namespace web. B) Somente pods app=front do namespace web. C) Todo o cluster. D) Nada.</p><p><b>Resposta: B.</b> No mesmo item, os seletores se combinam com E. Em itens separados da lista seria OU (alternativa A).</p>`],
+ ['Rede','Qual recurso da Gateway API liga um caminho /api a um Service com divisão de tráfego por peso?',`<p>A) GatewayClass. B) Gateway. C) HTTPRoute. D) IngressClass.</p><p><b>Resposta: C.</b> HTTPRoute define matches e backendRefs com weight. GatewayClass identifica o controlador; Gateway define listeners (porta, host, TLS); IngressClass é do Ingress.</p>`],
+ ['Workloads','Um pod fica Pending com "1 node(s) had untolerated taint". O nó deve receber só esse pod. Qual a solução correta?',`<p>A) Remover o taint. B) Adicionar toleration ao pod e afinidade de nó para o rótulo do nó dedicado. C) Aumentar o limit de CPU. D) Usar hostNetwork.</p><p><b>Resposta: B.</b> Toleration permite ir ao nó com taint; a afinidade garante que vá. Remover o taint abre o nó para todos; limits e hostNetwork não resolvem agendamento.</p>`],
+ ['Workloads','O HPA mostra TARGETS &lt;unknown&gt;/70%. O que verificar primeiro?',`<p>A) Se o Deployment tem requests de CPU e o metrics-server está rodando. B) Se o Service é NodePort. C) Se há PVC. D) Se o pod tem liveness probe.</p><p><b>Resposta: A.</b> A porcentagem é calculada sobre o request, com métricas do metrics-server. Tipo de Service, PVC e probes não afetam a métrica.</p>`],
+ ['Workloads','Você alterou um valor num ConfigMap usado via env e via volume. O que muda sem reiniciar o pod?',`<p>A) Os dois. B) Só a variável de ambiente. C) Só o arquivo do volume (sem subPath). D) Nenhum.</p><p><b>Resposta: C.</b> Volumes de ConfigMap são atualizados pelo kubelet após alguns segundos; variáveis são lidas só na criação do contêiner; subPath não atualiza.</p>`],
+ ['Storage','Um PVC fica Pending. A StorageClass usa volumeBindingMode WaitForFirstConsumer. Ainda nenhum pod usa o PVC. Isso é erro?',`<p>A) Sim, o provisionador falhou. B) Não: o volume só é criado quando um pod que usa o PVC for agendado. C) Sim, falta um PV estático. D) Sim, o modo deve ser RWX.</p><p><b>Resposta: B.</b> WaitForFirstConsumer adia a vinculação para escolher o nó certo. As outras alternativas tratam um comportamento esperado como falha.</p>`],
+ ['Storage','Qual reclaim policy mantém o disco e os dados depois que o PVC é apagado?',`<p>A) Delete. B) Retain. C) Recycle. D) WaitForFirstConsumer.</p><p><b>Resposta: B.</b> Retain deixa o PV como Released, com os dados. Delete apaga o disco; Recycle é obsoleto; WaitForFirstConsumer é modo de vinculação, não reclaim.</p>`],
+];
+
+const CMDS = [
+  ['export do="--dry-run=client -o yaml"', 'Esqueleto de YAML sem criar nada'],
+  ['k config use-context <ctx>', 'Primeiro comando de toda tarefa'],
+  ['k explain pod.spec --recursive | less', 'Nome exato de um campo'],
+  ['etcdctl snapshot save /opt/snap.db (+ cacert, cert, key)', 'Backup do etcd'],
+  ['etcdutl snapshot restore snap.db --data-dir /var/lib/etcd-novo', 'Restore (depois troque o hostPath)'],
+  ['kubeadm upgrade plan · apply vX · upgrade node', 'Upgrade do control plane e dos workers'],
+  ['k drain N --ignore-daemonsets · k uncordon N', 'Tirar e devolver um nó'],
+  ['k auth can-i VERBO RECURSO --as=system:serviceaccount:ns:sa', 'Conferir RBAC'],
+  ['k get events -A --sort-by=.lastTimestamp', 'Panorama do que aconteceu'],
+  ['journalctl -u kubelet · crictl ps -a · crictl logs ID', 'Diagnóstico no nó'],
+  ['kubeadm token create --print-join-command', 'Novo comando de join'],
+  ['k top pods -A --sort-by=cpu', 'Quem consome mais'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

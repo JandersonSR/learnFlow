@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha de Algoritmos e Estruturas de Dados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"backtracking.ts": "// Backtracking: escolher, explorar, desfazer · O(n × 2ⁿ)\nfunction subconjuntos(nums: number[]): number[][] {\n  const resultado: number[][] = [];\n  const atual: number[] = [];\n  function explorar(inicio: number) {\n    resultado.push([...atual]); // cada estado é um subconjunto\n    for (let i = inicio; i < nums.length; i++) {\n      atual.push(nums[i]);   // escolhe\n      explorar(i + 1);       // explora\n      atual.pop();           // desfaz\n    }\n  }\n  explorar(0);\n  return resultado;\n}\n\n// DP de cima para baixo: memoização muda O(2ⁿ) para O(n)\nfunction fibMemo(n: number, memo = new Map<number, number>()): number {\n  if (n <= 1) return n;\n  if (memo.has(n)) return memo.get(n)!;\n  const r = fibMemo(n - 1, memo) + fibMemo(n - 2, memo);\n  memo.set(n, r);\n  return r;\n}", "binaria-pilha.ts": "// 4. Busca binária · intervalo [esq, dir) · O(log n)\n// primeiro índice com nums[i] >= alvo (nums ordenado)\nfunction limiteInferior(nums: number[], alvo: number): number {\n  let esq = 0;\n  let dir = nums.length; // intervalo [esq, dir)\n  while (esq < dir) {\n    const meio = esq + Math.floor((dir - esq) / 2);\n    if (nums[meio] < alvo) esq = meio + 1;\n    else dir = meio;\n  }\n  return esq;\n}\n\n// 5. Pilha monotônica · cada índice entra e sai uma vez: O(n)\nfunction diasAteEsquentar(temps: number[]): number[] {\n  const resposta = new Array(temps.length).fill(0);\n  const pilha: number[] = []; // índices com temperaturas decrescentes\n  for (let i = 0; i < temps.length; i++) {\n    while (pilha.length > 0 && temps[i] > temps[pilha[pilha.length - 1]]) {\n      const j = pilha.pop()!;\n      resposta[j] = i - j;\n    }\n    pilha.push(i);\n  }\n  return resposta;\n}", "dp.ts": "// DP 1D · estado: dp[v] = menor nº de moedas que somam v · base: dp[0] = 0\nfunction menorNumeroDeMoedas(moedas: number[], valor: number): number {\n  const dp = new Array(valor + 1).fill(Infinity);\n  dp[0] = 0; // zero moedas para formar 0\n  for (let v = 1; v <= valor; v++) {\n    for (const m of moedas) {\n      if (m <= v && dp[v - m] + 1 < dp[v]) dp[v] = dp[v - m] + 1;\n    }\n  }\n  return dp[valor] === Infinity ? -1 : dp[valor];\n}\n// guloso falha em [1, 3, 4] para 6 (4+1+1); a DP acha 3+3\n\n// DP 2D · dp[i][j] = maior subsequência comum de a[0..i) e b[0..j)\nfunction maiorSubsequenciaComum(a: string, b: string): number {\n  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));\n  for (let i = 1; i <= a.length; i++) {\n    for (let j = 1; j <= b.length; j++) {\n      dp[i][j] = a[i - 1] === b[j - 1]\n        ? dp[i - 1][j - 1] + 1\n        : Math.max(dp[i - 1][j], dp[i][j - 1]);\n    }\n  }\n  return dp[a.length][b.length];\n}", "hash-ponteiros.ts": "// 1. Hash map: \"já vi o que preciso?\" · O(n) tempo, O(n) espaço\nfunction twoSum(nums: number[], alvo: number): [number, number] | null {\n  const vistos = new Map<number, number>(); // valor -> índice\n  for (let i = 0; i < nums.length; i++) {\n    const complemento = alvo - nums[i];\n    if (vistos.has(complemento)) return [vistos.get(complemento)!, i];\n    vistos.set(nums[i], i);\n  }\n  return null;\n}\n\n// 2. Dois ponteiros (array ordenado) · O(n) tempo, O(1) espaço\nfunction parComSomaOrdenado(nums: number[], alvo: number): [number, number] | null {\n  let esq = 0;\n  let dir = nums.length - 1;\n  while (esq < dir) {\n    const soma = nums[esq] + nums[dir];\n    if (soma === alvo) return [esq, dir];\n    if (soma < alvo) esq++; // precisa de soma maior\n    else dir--;             // precisa de soma menor\n  }\n  return null;\n}", "heap.ts": "// Min-heap num array · inserir e remover O(log n)\nclass MinHeap {\n  private dados: number[] = [];\n  get tamanho() { return this.dados.length; }\n  topo() { return this.dados[0]; }\n  inserir(v: number) {\n    this.dados.push(v);\n    let i = this.dados.length - 1;\n    while (i > 0) {\n      const p = Math.floor((i - 1) / 2);\n      if (this.dados[p] <= this.dados[i]) break;\n      [this.dados[p], this.dados[i]] = [this.dados[i], this.dados[p]];\n      i = p;\n    }\n  }\n  remover(): number | undefined {\n    if (this.dados.length === 0) return undefined;\n    const topo = this.dados[0];\n    const ultimo = this.dados.pop()!;\n    if (this.dados.length > 0) {\n      this.dados[0] = ultimo;\n      let i = 0;\n      while (true) {\n        const e = 2 * i + 1;\n        const d = 2 * i + 2;\n        let menor = i;\n        if (e < this.dados.length && this.dados[e] < this.dados[menor]) menor = e;\n        if (d < this.dados.length && this.dados[d] < this.dados[menor]) menor = d;\n        if (menor === i) break;\n        [this.dados[menor], this.dados[i]] = [this.dados[i], this.dados[menor]];\n        i = menor;\n      }\n    }\n    return topo;\n  }\n}\n\n// k maiores elementos com min-heap de tamanho k: O(n log k)\nfunction kMaiores(nums: number[], k: number): number[] {\n  const heap = new MinHeap();\n  for (const n of nums) {\n    heap.inserir(n);\n    if (heap.tamanho > k) heap.remover(); // descarta o menor\n  }\n  const resultado: number[] = [];\n  while (heap.tamanho > 0) resultado.push(heap.remover()!);\n  return resultado.reverse();\n}", "ilhas.ts": "// BFS numa grade · marque visitado AO ENFILEIRAR · O(linhas × colunas)\nfunction contarIlhas(grade: string[][]): number {\n  const linhas = grade.length;\n  const colunas = grade[0].length;\n  let ilhas = 0;\n  const direcoes = [[1, 0], [-1, 0], [0, 1], [0, -1]];\n  for (let r = 0; r < linhas; r++) {\n    for (let c = 0; c < colunas; c++) {\n      if (grade[r][c] !== '1') continue;\n      ilhas++;\n      const fila: [number, number][] = [[r, c]];\n      grade[r][c] = '0'; // marca como visitado ao enfileirar\n      while (fila.length > 0) {\n        const [lr, lc] = fila.shift()!;\n        for (const [dr, dc] of direcoes) {\n          const nr = lr + dr;\n          const nc = lc + dc;\n          if (nr >= 0 && nr < linhas && nc >= 0 && nc < colunas && grade[nr][nc] === '1') {\n            grade[nr][nc] = '0';\n            fila.push([nr, nc]);\n          }\n        }\n      }\n    }\n  }\n  return ilhas;\n}", "janela.ts": "// 3. Janela deslizante · cada caractere entra e sai uma vez: O(n)\nfunction maiorSubstringSemRepeticao(s: string): number {\n  const ultimaPosicao = new Map<string, number>();\n  let inicio = 0;\n  let melhor = 0;\n  for (let fim = 0; fim < s.length; fim++) {\n    const c = s[fim];\n    if (ultimaPosicao.has(c) && ultimaPosicao.get(c)! >= inicio) {\n      inicio = ultimaPosicao.get(c)! + 1; // encolhe a janela\n    }\n    ultimaPosicao.set(c, fim);\n    melhor = Math.max(melhor, fim - inicio + 1);\n  }\n  return melhor;\n}\n// teste com \"abba\": a checagem >= inicio evita usar repetição fora da janela", "lru.ts": "// Cache LRU com get e put em O(1)\n// Versão curta: o Map do JavaScript mantém a ordem de inserção\nclass LRU<K, V> {\n  private mapa = new Map<K, V>();\n  constructor(private capacidade: number) {}\n\n  get(chave: K): V | undefined {\n    if (!this.mapa.has(chave)) return undefined;\n    const valor = this.mapa.get(chave)!;\n    this.mapa.delete(chave);          // reinsere: vira o mais recente\n    this.mapa.set(chave, valor);\n    return valor;\n  }\n\n  put(chave: K, valor: V) {\n    this.mapa.delete(chave);\n    this.mapa.set(chave, valor);\n    if (this.mapa.size > this.capacidade) {\n      const maisAntiga = this.mapa.keys().next().value!;   // a primeira inserida\n      this.mapa.delete(maisAntiga);\n    }\n  }\n}\n// Versão clássica (saiba explicar): hash map chave → nó\n// + lista duplamente ligada em ordem de uso; move para a frente e remove do fim em O(1)", "topologica.ts": "// Ordenação topológica (Kahn) · O(V + E) · sobrou alguém = ciclo\nfunction ordemDeCursos(total: number, prereqs: [number, number][]): number[] | null {\n  const grafo: number[][] = Array.from({ length: total }, () => []);\n  const grauEntrada = new Array(total).fill(0);\n  for (const [curso, pre] of prereqs) {\n    grafo[pre].push(curso);\n    grauEntrada[curso]++;\n  }\n  const fila: number[] = [];\n  for (let i = 0; i < total; i++) if (grauEntrada[i] === 0) fila.push(i);\n  const ordem: number[] = [];\n  while (fila.length > 0) {\n    const atual = fila.shift()!;\n    ordem.push(atual);\n    for (const prox of grafo[atual]) {\n      grauEntrada[prox]--;\n      if (grauEntrada[prox] === 0) fila.push(prox);\n    }\n  }\n  return ordem.length === total ? ordem : null; // null = existe ciclo\n}\n\n// Union-find com compressão de caminho e união por tamanho: ~O(1)\nclass UnionFind {\n  private pai: number[];\n  private tamanho: number[];\n  constructor(n: number) {\n    this.pai = Array.from({ length: n }, (_, i) => i);\n    this.tamanho = new Array(n).fill(1);\n  }\n  encontrar(x: number): number {\n    // compressão de caminho: aponta direto para o representante\n    if (this.pai[x] !== x) this.pai[x] = this.encontrar(this.pai[x]);\n    return this.pai[x];\n  }\n  unir(a: number, b: number): boolean {\n    let ra = this.encontrar(a);\n    let rb = this.encontrar(b);\n    if (ra === rb) return false; // já estavam no mesmo grupo\n    if (this.tamanho[ra] < this.tamanho[rb]) [ra, rb] = [rb, ra];\n    this.pai[rb] = ra; // a árvore menor entra na maior\n    this.tamanho[ra] += this.tamanho[rb];\n    return true;\n  }\n}"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Vol 7 · Algoritmos e Estruturas de Dados =====================
+const CONF = {
+  title: 'Trilha de Algoritmos e Estruturas de Dados', file: 'Vol 07 - Algoritmos e Estruturas de Dados', key: 'v07',
+  eyebrow: 'Guia Técnico · Volume 7', h1: 'Algoritmos: quinze padrões, não respostas decoradas',
+  lead: 'Roteiro em vídeo com Big O e os limites práticos, as estruturas e o custo de cada operação, os padrões de arrays e strings, árvores e grafos, heap e union-find, backtracking e programação dinâmica com o roteiro de quatro passos, o método de entrevista e um plano de 12 semanas. Todo o código em TypeScript.',
+  pills: ['Big O', 'Hash map', 'Dois ponteiros', 'Janela', 'Busca binária', 'BFS · DFS', 'Heap', 'DP'],
+  term: 'bash · ~/algoritmos',
+  faqPlaceholder: 'Buscar: hash, BFS, K-ésimo, guloso, ciclo…',
+  matriz: {title: 'Do sinal no enunciado ao padrão', desc: 'O objetivo é reconhecer o padrão em menos de cinco minutos. Use esta tabela no passo de otimizar.', cols: ['Sinal no enunciado', 'Padrão', 'Complexidade típica', 'Estrutura', 'Problema clássico']},
+};
+const TITLE = {k: 'Guia Técnico · Volume 7', h: 'Algoritmos e estruturas de dados',
+  p: 'As big techs filtram com algoritmos, e o sênior precisa saber o custo do código que escreve. A maioria dos problemas cai em cerca de quinze padrões.',
+  chips: ['Big O', 'hash · ponteiros · janela', 'busca binária', 'grafos', 'heap', 'backtracking', 'DP']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Reconheça o padrão em cinco minutos',
+  p: 'Abaixo do vídeo estão a tabela de sinais e padrões, os links para o Preparatório Big Tech, a trilha de estudo, o checklist com os problemas clássicos e as perguntas conceituais.',
+  chips: ['força bruta primeiro', 'fale enquanto pensa', 'teste à mão', 'repetição espaçada']};
+
+const SCENES = [
+/* ---------- BIG O ---------- */
+{ id:'intro', ch:'Complexidade Big O', title:'Padrões, não respostas decoradas',
+  say:'As big techs filtram candidatos com problemas de algoritmos, e o dia a dia de um sênior exige saber o custo do código que escreve. A boa notícia: a maioria dos problemas cai em cerca de quinze padrões. Este roteiro ensina os padrões, com o sinal no enunciado que denuncia cada um, a ideia e o código em TypeScript, e termina com o método de entrevista e um plano de doze semanas.',
+  v:{type:'title'} },
+
+{ id:'classes', ch:'Complexidade Big O', title:'Como o custo cresce',
+  say:'Big O descreve como o custo cresce quando a entrada cresce. Se a entrada dobra, o tempo não muda, aumenta um passo, dobra, pouco mais que dobra, quadruplica ou explode? Constantes e termos menores somem: três n ao quadrado mais cinco n vira n ao quadrado. Constante é acessar um índice ou um hash map. Logarítmica, a busca binária. Linear, percorrer uma vez. N log n, ordenar. Quadrática, dois laços aninhados. Exponencial, todos os subconjuntos.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:120, cls:'green', html:B('O(1) · O(log n)','não muda · um passo a mais')+NOTE('índice, hash map · busca binária', 'dim')},
+    {at:3, x:340,y:92,w:280,h:120, cls:'blue', html:B('O(n) · O(n log n)','dobra · pouco mais que dobra')+NOTE('percorrer · ordenar', 'dim')},
+    {at:5.5, x:644,y:92,w:280,h:120, cls:'amber', html:B('O(n²) · O(2ⁿ) · O(n!)','quadruplica · explode')+NOTE('laços aninhados · subconjuntos · permutações', 'dim')},
+    {at:9, x:36,y:232,w:888,h:270, cls:'region', html:'<span class="rl">como calcular</span>'+UL('laços em sequência somam: O(n) + O(n) = O(n) · aninhados multiplicam: O(n²)','dividir pela metade a cada passo: O(log n) · recursão: chamadas × trabalho por chamada','custo escondido: includes, indexOf, slice, shift e concatenar string no laço são O(n) cada','espaço também conta: um hash map de O(n) transforma uma busca O(n²) em O(n)','hash map é O(1) médio e O(n) no pior caso · push é O(1) amortizado · diga qual caso analisa')},
+  ]}},
+
+{ id:'limites', ch:'Complexidade Big O', title:'O atalho das entrevistas: o tamanho de n',
+  say:'Um computador faz na ordem de cem milhões de operações simples por segundo. Pelo tamanho da entrada, você já sabe o que buscar. Até dez, permutações. Até vinte, subconjuntos e backtracking. Até quinhentos, cúbico. Até cinco mil, quadrático, com dois laços ou DP em duas dimensões. Até um milhão, n log n ou linear: ordenação, hash map, dois ponteiros, janela. Acima de cem milhões, logarítmico ou constante: busca binária ou matemática.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:96,w:140,h:300, cls:'ext', html:B('n ≤ 10','O(n!)')+NOTE('permutações', 'dim')},
+    {at:2, x:186,y:96,w:140,h:300, cls:'ext', html:B('n ≤ 20','O(2ⁿ)')+NOTE('subconjuntos, backtracking', 'dim')},
+    {at:3.2, x:336,y:96,w:140,h:300, cls:'amber', html:B('n ≤ 500','O(n³)')+NOTE('DP 3D', 'dim')},
+    {at:4.4, x:486,y:96,w:140,h:300, cls:'amber', html:B('n ≤ 5.000','O(n²)')+NOTE('dois laços, DP 2D', 'dim')},
+    {at:5.6, x:636,y:96,w:140,h:300, cls:'blue', html:B('n ≤ 10⁶','O(n log n) ou O(n)')+NOTE('ordenar, hash, ponteiros, janela', 'dim')},
+    {at:6.8, x:786,y:96,w:138,h:300, cls:'green', html:B('n > 10⁸','O(log n) · O(1)')+NOTE('busca binária, matemática', 'dim')},
+    {at:9, x:36,y:416,w:888,h:86, cls:'region', html:'<span class="rl">regra</span>'+UL('~10⁸ operações simples por segundo · leia o n do enunciado antes de escolher a abordagem')},
+  ]}},
+
+/* ---------- ESTRUTURAS ---------- */
+{ id:'estruturas', ch:'Estruturas de dados', title:'Qual operação vou fazer mais vezes?',
+  say:'Escolher a estrutura certa resolve metade do problema. Array dá acesso por índice em O um e inserção no meio em O n. Hash map e set buscam e inserem em O um médio: contar, deduplicar, já vi isso. Pilha é o último a entrar, primeiro a sair; fila, o primeiro. Lista ligada insere no meio em O um quando você já tem o nó. Árvore balanceada busca em log n. Heap entrega sempre o menor ou o maior. Trie, prefixos. Grafo, relações.',
+  v:GRID(4, [
+    ['Array','',['índice O(1)','meio O(n)'],'blue'],
+    ['Hash map / set','',['busca e inserção O(1) médio','contar, deduplicar'],'green'],
+    ['Pilha · fila','',['topo / pontas O(1)','DFS · BFS'],'blue'],
+    ['Lista ligada','',['O(1) com o nó','base do LRU'],''],
+    ['Árvore balanceada','',['O(log n)','ordenados, intervalos'],'amber'],
+    ['Heap','',['topo O(1), inserir O(log n)','top K, agendamento'],'amber'],
+    ['Trie','',['O(tamanho da palavra)','autocomplete'],'green'],
+    ['Grafo','',['adjacência','redes, dependências, rotas'],''],
+  ], {step:1.8}) },
+
+{ id:'detalhes', ch:'Estruturas de dados', title:'Detalhes que caem em entrevista',
+  say:'Hash map acha a posição pelo hash da chave; com colisões, degrada. Em JavaScript, use Map e Set para chaves dinâmicas. array shift é O n, porque desloca todos: em problemas grandes, use um índice de início. Heap é uma árvore binária guardada num array; JavaScript não tem, Python tem heapq e Java e C# têm PriorityQueue. Uma árvore balanceada com um milhão de nós tem vinte níveis; desbalanceada, vira uma lista. E uma grade também é um grafo.',
+  v:GRID(2, [
+    ['Hash map','',['posição pelo hash da chave','colisões: O(n) no pior caso','JS: Map e Set, não objeto'],'green'],
+    ['Filas em JavaScript','',['shift() é O(n): desloca tudo','use índice de início ou deque'],'amber'],
+    ['Heap','árvore num array',['pai menor que os filhos (min-heap)','JS: implemente · Python: heapq · Java/C#: PriorityQueue'],'blue'],
+    ['Árvores e grafos','',['balanceada com 10⁶ nós: ~20 níveis','lista de adjacência (esparso) · matriz (denso)','grade 2D é um grafo'],''],
+  ], {step:3.6}) },
+
+{ id:'lru', ch:'Estruturas de dados', title:'Cache LRU: duas estruturas juntas',
+  say:'A pergunta clássica: um cache de capacidade fixa que remove o item usado há mais tempo, com get e put em O um. A solução combina um hash map, que acha o item, com uma lista duplamente ligada, que move para a frente e remove do fim. Em JavaScript, o Map mantém a ordem de inserção: no get, apague e reinsira; no put, se passar da capacidade, remova a primeira chave. Saiba explicar as duas versões.',
+  v:S('lru.ts','lru.ts','ts')},
+
+/* ---------- ARRAYS E STRINGS ---------- */
+{ id:'hash-ponteiros', ch:'Arrays e strings', title:'Hash map e dois ponteiros',
+  say:'Primeiro padrão, hash map. O sinal: pares, frequências, duplicatas, agrupar. A ideia: trocar a busca O n por uma consulta O um, guardando o que já passou. No two sum, para cada número, pergunte se o complemento já apareceu. Segundo padrão, dois ponteiros. O sinal: array ordenado, pares com soma, palíndromos. Um ponteiro em cada ponta, movendo o que aproxima da resposta. Também O n, mas com O um de espaço.',
+  v:S('padroes/hash-ponteiros.ts','hash-ponteiros.ts','ts')},
+
+{ id:'janela', ch:'Arrays e strings', title:'Janela deslizante',
+  say:'Terceiro padrão. O sinal: o maior ou menor trecho contínuo que satisfaz uma condição. A ideia: uma janela de início a fim que cresce pela direita e encolhe pela esquerda quando a condição quebra. Na maior substring sem repetição, guarde a última posição de cada caractere e pule o início para depois da repetição. Cada caractere entra e sai uma vez: O n. Teste com a b b a: a checagem de maior ou igual ao início é o que evita o bug.',
+  v:S('padroes/janela.ts','janela.ts','ts')},
+
+{ id:'binaria-pilha', ch:'Arrays e strings', title:'Busca binária e pilha monotônica',
+  say:'Quarto padrão, busca binária. O sinal: ordenado, o primeiro que, ou o menor valor que funciona, quando a resposta é monotônica. Corte pela metade a cada passo. Fixe uma convenção de intervalo e use sempre: a maioria dos bugs é um a mais ou um a menos. Quinto, pilha monotônica. O sinal: o próximo maior ou menor. Mantenha a pilha em ordem; quem quebra a ordem é a resposta de quem sai. Dois laços aninhados, mas cada índice entra e sai uma vez: O n.',
+  v:S('padroes/binaria-pilha.ts','binaria-pilha.ts','ts')},
+
+{ id:'prefixo', ch:'Arrays e strings', title:'Soma de prefixos e busca na resposta',
+  say:'Bônus: soma de prefixos. Para muitas perguntas de soma entre i e j, pré-calcule prefixo de k, a soma dos k primeiros. Cada pergunta vira uma subtração em O um. Com hash map, resolve quantos subarrays somam K em O n. E a variação mais poderosa da busca binária é buscar na resposta: a menor capacidade de caminhão para entregar tudo em D dias vira testar capacidades, porque se uma funciona, todas as maiores também funcionam.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:30, html:NOTE('nums     =  [ 3,  1,  4,  1,  5,  9 ]', 'blue')},
+    {at:2, x:36,y:126,w:888,h:30, html:NOTE('prefixo  =  [ 0,  3,  4,  8,  9, 14, 23 ]   ← prefixo[k] = soma dos k primeiros', 'green')},
+    {at:4, x:36,y:170,w:430,h:150, cls:'green', html:B('soma(i..j) = prefixo[j+1] − prefixo[i]','O(1) por pergunta')+UL('soma(2..4) = 14 − 4 = 10','+ hash map: subarrays que somam K em O(n)')},
+    {at:8, x:494,y:170,w:430,h:150, cls:'amber', html:B('Busca binária na resposta','a resposta é monotônica')+UL('"menor capacidade que entrega em D dias"','funciona(c) ⇒ funciona(c + 1)','busque c entre o mínimo e o máximo')},
+    {at:12, x:36,y:340,w:888,h:162, cls:'region', html:'<span class="rl">os cinco padrões de arrays e strings</span>'+UL('já vi o que preciso? → hash map · ordenado ou pares de pontas? → dois ponteiros','melhor trecho contínuo? → janela deslizante · ordenado ou monotônico? → busca binária','próximo maior ou menor? → pilha monotônica · muitas somas de intervalo? → prefixos')},
+  ]}},
+
+/* ---------- ÁRVORES E GRAFOS ---------- */
+{ id:'bfs-dfs', ch:'Árvores e grafos', title:'DFS e BFS: as duas formas de percorrer',
+  say:'DFS vai fundo num caminho antes de voltar, com recursão ou pilha: explorar tudo, caminhos, ciclos e árvores. BFS visita todos os vizinhos, depois os vizinhos dos vizinhos, com uma fila: menor caminho sem pesos e níveis. A regra que evita loop infinito: marque como visitado ao colocar na fila, não ao retirar. Em árvores binárias, quase tudo é uma recursão de três linhas: resolva o esquerdo, o direito e combine. Pergunte: o que cada nó precisa dos filhos?',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:220, cls:'blue', html:B('DFS · profundidade','recursão ou pilha')+UL('vai fundo antes de voltar','explorar tudo, caminhos, ciclos','pré, em e pós-ordem em árvores','profundo demais: pilha explícita')},
+    {at:4.5, x:494,y:92,w:430,h:220, cls:'green', html:B('BFS · largura','fila')+UL('vizinhos, depois os vizinhos deles','menor caminho sem pesos','níveis de uma árvore','largo demais: muita memória')},
+    {at:9, x:36,y:332,w:430,h:170, cls:'amber', html:B('Regra dos visitados','')+UL('marque AO ENFILEIRAR, não ao retirar','sem isso: loop infinito ou trabalho repetido')},
+    {at:12, x:494,y:332,w:430,h:170, cls:'region', html:'<span class="rl">árvores binárias</span>'+UL('altura = 1 + max(altura(esq), altura(dir))','"o que cada nó precisa receber dos filhos?"')},
+  ]}},
+
+{ id:'ilhas', ch:'Árvores e grafos', title:'BFS numa grade: contar ilhas',
+  say:'Uma grade é um grafo em que cada célula liga às vizinhas. Para contar ilhas, percorra as células; ao achar terra, conte uma ilha e faça um BFS que marca toda a ilha como água, ao enfileirar. Cada célula é visitada uma vez: linhas vezes colunas. Atenção: a função altera a grade recebida. Diga isso ao entrevistador, ou copie a grade antes.',
+  v:S('grafos/ilhas.ts','ilhas.ts','ts')},
+
+{ id:'topologica', ch:'Árvores e grafos', title:'Ordenação topológica e union-find',
+  say:'Ordenação topológica responde o que vem antes do quê: dependências, pré-requisitos, ordem de compilação. No algoritmo de Kahn, comece pelos nós sem dependências; ao processar um, decremente quem depende dele; quem zerar entra na fila. Se sobrar alguém, há ciclo, e é assim que gerenciadores de pacotes detectam dependência circular. Union-find responde se dois estão no mesmo grupo: cada grupo tem um representante, e unir é apontar um para o outro.',
+  v:S('grafos/topologica.ts','topologica.ts','ts')},
+
+{ id:'heap', ch:'Árvores e grafos', title:'Heap: sempre o menor ou o maior',
+  say:'O sinal do heap: top K, K-ésimo maior, mesclar K listas, mediana em fluxo, prioridade e Dijkstra. A implementação cabe numa tela: inserir sobe o elemento trocando com o pai; remover põe o último no topo e desce trocando com o menor filho. O truque do top K: para os maiores, use um heap de mínimo de tamanho K; o topo é o menor dos melhores e sai quando chega alguém maior. N log K, melhor que ordenar tudo.',
+  v:S('grafos/heap.ts','heap.ts','ts')},
+
+/* ---------- BACKTRACKING E DP ---------- */
+{ id:'backtracking', ch:'Backtracking e DP', title:'Backtracking: escolher, explorar, desfazer',
+  say:'O sinal: todas as combinações, permutações ou caminhos, quebra-cabeças, e n até vinte. A ideia: construir a solução passo a passo; em cada passo, tentar cada escolha, explorar e desfazer antes da próxima. São dois elevado a n subconjuntos, então não dá para fazer melhor. O detalhe que derruba muita gente: copiar o array atual; sem a cópia, todos os resultados apontam para o mesmo array, que termina vazio. A poda é o que torna viável. E a memoização transforma o Fibonacci exponencial em linear.',
+  v:S('backtracking.ts','backtracking.ts','ts')},
+
+{ id:'dp-roteiro', ch:'Backtracking e DP', title:'O roteiro de quatro passos para qualquer DP',
+  say:'Programação dinâmica serve quando há subestrutura ótima e subproblemas que se repetem. O roteiro: primeiro, defina o estado, o que dp de i significa em português; é o passo mais importante. Segundo, a transição: como dp de i sai de estados menores. Terceiro, os casos base. Quarto, a ordem: de cima para baixo com memoização, mais natural de pensar, ou de baixo para cima com tabela, sem risco de estourar a pilha. As famílias: linear, mochila, duas sequências, grade e intervalos.',
+  v:{type:'boxes', defs:[
+    ['1 · Estado','o que dp[i] significa, em português', .8],
+    ['2 · Transição','dp[i] a partir de estados menores', 3],
+    ['3 · Base','os menores estados, conhecidos', 5],
+    ['4 · Ordem','memoização ou tabela', 7],
+  ], items:[
+    {at:9.5, x:470,y:92,w:454,h:410, cls:'region', html:'<span class="rl">as famílias que mais aparecem</span>'+UL('linear: escadas, ladrão de casas, maior subarray','mochila: moedas, partição, soma alvo','duas sequências: subsequência comum, edição','grade: caminhos únicos, menor custo','intervalos: palíndromos, estourar balões','subsequência crescente: O(n log n) com busca binária')},
+    {at:12, x:36,y:316,w:412,h:186, cls:'amber', html:B('Quando é DP','')+UL('subestrutura ótima','subproblemas sobrepostos','guloso tem contraexemplo')},
+  ]}},
+
+{ id:'dp-codigo', ch:'Backtracking e DP', title:'Moedas e subsequência comum',
+  say:'Menor número de moedas: o estado é dp de v, o menor número de moedas que somam v; a transição testa cada moeda, dp de v menos m mais um; a base é dp de zero igual a zero. A estratégia gulosa falha com moedas um, três e quatro para formar seis; a DP acerta com três mais três. Maior subsequência comum, a base das ferramentas de diff: se os caracteres são iguais, diagonal mais um; senão, o maior entre ignorar um ou outro. A linha só usa a anterior: dá para guardar só duas.',
+  v:S('dp.ts','dp.ts','ts')},
+
+/* ---------- MÉTODO ---------- */
+{ id:'metodo', ch:'Na entrevista', title:'Os seis passos em 45 minutos',
+  say:'Entrevistadores avaliam o caminho tanto quanto a resposta. Entender: repita o problema, pergunte sobre tamanho, negativos, duplicatas e entrada vazia, e escreva exemplos. Força bruta: diga a solução simples e a complexidade. Otimizar: procure o padrão. Combinar: explique a abordagem e pergunte se pode implementar. Codar: nomes claros, narrando. Testar: percorra um exemplo linha a linha e os casos de borda. Achar o próprio bug conta pontos.',
+  v:FLOW([['Entender','3–5 min','blue'],['Força bruta','2 min','blue'],['Otimizar','5–10 min','amber'],['Combinar','antes de codar','amber'],['Codar','15 min','green'],['Testar','5 min','green']],
+    {y:96, h:80, step:1.5, cards:[
+      ['Perguntas para otimizar','',['o n sugere qual complexidade?','ordenar ajudaria? já vi algo? é contínuo?','relações? todas as combinações? o melhor valor?'],'amber'],
+      ['Frases que ajudam','',['"Começo pela força bruta para ter uma base."','"O gargalo é a busca no laço; um Map resolve."','"Deixa eu rodar um exemplo à mão."'],'green'],
+    ]}) },
+
+{ id:'travou', ch:'Na entrevista', title:'Se travar, e a linguagem da entrevista',
+  say:'Se travar, volte aos exemplos e resolva um à mão, prestando atenção em como você resolveu: a intuição costuma revelar o algoritmo. Simplifique: e se fosse ordenado? E se fossem só dois elementos? E peça uma dica sem vergonha: usar bem uma dica é melhor que ficar parado. Use a linguagem em que é mais fluente. TypeScript serve; Python é popular por ser curto. Domine a biblioteca padrão: ordenação com comparador, mapas, conjuntos, filas e heaps.',
+  v:GRID(3, [
+    ['Travou?','',['resolva um exemplo à mão','observe como você resolveu','simplifique o problema','peça uma dica'],'blue'],
+    ['A linguagem','a mais fluente',['TypeScript serve','Python: heapq, Counter, deque','domine a biblioteca padrão'],'green'],
+    ['Armadilhas de JS','',['[10, 9, 1].sort() → [1, 10, 9]','sort((a, b) => a - b)','fill([]) compartilha o array'],'amber'],
+  ], {step:4}) },
+
+/* ---------- PLANO ---------- */
+{ id:'plano', ch:'Plano de 12 semanas', title:'Cerca de 150 problemas em 12 semanas',
+  say:'Três noites por semana, quatro a cinco problemas por noite. Semanas um a três: Big O, hash, dois ponteiros, prefixos e janela. Quatro a seis: pilha, busca binária e listas ligadas, com revisão. Sete a nove: árvores, grafos, heap, union-find e intervalos. Dez a doze: backtracking, programação dinâmica e simulações cronometradas. O objetivo não é decorar, e sim reconhecer o padrão em menos de cinco minutos.',
+  v:GRID(4, [
+    ['Semanas 1–3','',['Big O, hash map','dois ponteiros, prefixos','janela, strings'],'blue'],
+    ['Semanas 4–6','',['pilha, fila','busca binária','listas ligadas + revisão'],'blue'],
+    ['Semanas 7–9','',['árvores','grafos, topológica','heap, union-find'],'green'],
+    ['Semanas 10–12','',['backtracking','DP 1D e mochila','DP 2D + simulações'],'amber'],
+  ], {step:2.5, rodape:'Ritmo: 3 noites por semana, 4 a 5 problemas · alterne com semanas de system design e projetos'}) },
+
+{ id:'pratica', ch:'Plano de 12 semanas', title:'Como praticar cada problema',
+  say:'Tente sozinho por vinte a trinta minutos. Travou? Leia só a dica ou o nome do padrão e tente de novo. Ainda travado? Estude a solução, entenda cada linha, feche tudo e reescreva do zero. Anote numa planilha o problema, o padrão, a ideia numa frase e seus erros. E repetição espaçada: refaça os difíceis depois de três dias, uma semana e um mês. A partir da semana seis, uma simulação por semana, cronometrada, em voz alta e gravando.',
+  v:FLOW([['20–30 min sozinho','','blue'],['Só a dica','nome do padrão','amber'],['Estude e reescreva','do zero','amber'],['Planilha','padrão + ideia + erro','green'],['Repetição','3 dias · 1 semana · 1 mês','green']],
+    {y:96, h:86, step:1.8, cards:[
+      ['Onde praticar','',['LeetCode, NeetCode, HackerRank','listas Blind 75 e NeetCode 150','foque em fáceis e médios'],'blue'],
+      ['Simulações','a partir da semana 6',['45 minutos, em voz alta, gravando','eu faço o entrevistador se quiser','avalie comunicação, solução e código'],'green'],
+    ]}) },
+
+{ id:'mundo-real', ch:'Plano de 12 semanas', title:'Armadilhas e a conexão com o dia a dia',
+  say:'As armadilhas que derrubam candidatos bons: codar sem entender, custos escondidos de includes e shift, erros de borda, referências compartilhadas, a ordenação padrão do JavaScript que ordena como texto, recursão profunda e silêncio. E algoritmos não são só para entrevista: trocar um find dentro de um laço por um Map derruba uma API de três segundos para trinta milissegundos; migrações com dependências são uma ordenação topológica; diff de textos é subsequência comum.',
+  v:GRID(2, [
+    ['Armadilhas','',['codar sem perguntar · custos escondidos','<= em vez de < · busca binária infinita','[...atual] e Array.from em vez de fill([])','recursão profunda · esquecer visitados · silêncio'],'ext'],
+    ['No dia a dia','',['find no laço → Map: 3 s para 30 ms','ordem de migrações: topológica','deduplicar eventos: hash set','diff de textos: subsequência comum'],'green'],
+  ], {h:260, step:5}) },
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de algoritmos',
+  say:'Antes de dizer que domina: você calcula a complexidade e lê o n do enunciado, escolhe a estrutura pela operação mais frequente, implementa LRU e heap, reconhece os cinco padrões de arrays, percorre grafos com BFS e DFS marcando visitados, usa topológica e union-find, faz backtracking com cópia e poda, aplica os quatro passos da DP e segue o método de seis passos em voz alta.',
+  v:CK('Big O e custos escondidos', 'Ler o n do enunciado', 'Estrutura pela operação frequente', 'LRU em O(1)', 'Hash map e dois ponteiros', 'Janela deslizante', 'Busca binária com convenção fixa', 'BFS marcando ao enfileirar', 'Topológica e union-find', 'Heap e top K', 'Backtracking com cópia e poda', 'DP em quatro passos')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a tabela de sinais e padrões, os links para as cenas do Preparatório Big Tech que treinam os mesmos padrões, a trilha de estudo, o checklist com os problemas clássicos por padrão e as perguntas conceituais. Quando terminar um bloco, me mande sua solução: eu reviso complexidade, legibilidade e casos de borda, como faria um entrevistador.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Os seis passos em 45 minutos', 'bt', 'metodo', 'O método no Preparatório Big Tech'],
+  ['Big-O e o tamanho da entrada', 'bt', 'bigo', 'A tabela de limites práticos'],
+  ['Hash: trocar tempo por memória', 'bt', 'hash', 'Mais problemas de hash map'],
+  ['Dois ponteiros e janela deslizante', 'bt', 'janela', 'Variações dos padrões'],
+  ['Busca binária, inclusive na resposta', 'bt', 'binaria', 'O padrão mais poderoso'],
+  ['Pilha e pilha monotônica', 'bt', 'pilha', 'Próximo maior e expressões'],
+  ['Árvores: DFS e BFS', 'bt', 'arvores', 'Recursão em árvores'],
+  ['Grafos e ordenação topológica', 'bt', 'grafos', 'BFS, DFS e dependências'],
+  ['Dijkstra e Union-Find', 'bt', 'dijkstra', 'Menor caminho com pesos'],
+  ['Programação dinâmica', 'bt', 'dp', 'Outra explicação dos quatro passos'],
+  ['Do enunciado ao padrão', 'bt', 'sinais', 'Os sinais que denunciam cada padrão'],
+];
+
+const MATRIZ = [
+  ['Pares, frequências, duplicatas', 'Hash map', 'O(n)', 'Map, Set', 'Two Sum, Group Anagrams'],
+  ['Array ordenado, pares nas pontas', 'Dois ponteiros', 'O(n)', 'índices', '3Sum, Container With Most Water'],
+  ['Melhor trecho contínuo', 'Janela deslizante', 'O(n)', 'Map + índices', 'Longest Substring Without Repeating'],
+  ['Ordenado ou resposta monotônica', 'Busca binária', 'O(log n)', 'intervalo [esq, dir)', 'Koko Eating Bananas'],
+  ['Próximo maior ou menor', 'Pilha monotônica', 'O(n)', 'pilha de índices', 'Daily Temperatures'],
+  ['Muitas somas de intervalo', 'Soma de prefixos', 'O(1) por consulta', 'array + Map', 'Subarray Sum Equals K'],
+  ['Menor caminho sem pesos, níveis', 'BFS', 'O(V + E)', 'fila', 'Rotting Oranges'],
+  ['Explorar tudo, ciclos, árvores', 'DFS', 'O(V + E)', 'recursão ou pilha', 'Number of Islands'],
+  ['Dependências, pré-requisitos', 'Ordenação topológica', 'O(V + E)', 'grau de entrada + fila', 'Course Schedule'],
+  ['Mesmo grupo? componentes', 'Union-find', '~O(1) por operação', 'pai + tamanho', 'Connected Components'],
+  ['Top K, K-ésimo, mesclar K', 'Heap', 'O(n log k)', 'min-heap de tamanho k', 'Kth Largest Element'],
+  ['Todas as combinações (n ≤ 20)', 'Backtracking', 'O(n × 2ⁿ)', 'recursão + cópia', 'Subsets, Permutations'],
+  ['Melhor valor com escolhas que se repetem', 'Programação dinâmica', 'estados × transição', 'tabela ou memo', 'Coin Change, LCS'],
+];
+
+const STUDY = [
+  ['NeetCode', 'Roadmap por padrão com vídeos', 'https://neetcode.io/roadmap', 'plano'],
+  ['NeetCode 150', 'A lista curada por padrão', 'https://neetcode.io/practice', 'pratica'],
+  ['LeetCode', 'Plataforma de prática', 'https://leetcode.com/problemset/', 'pratica'],
+  ['Big-O Cheat Sheet', 'Complexidade de estruturas e algoritmos', 'https://www.bigocheatsheet.com/', 'classes'],
+  ['VisuAlgo', 'Animações de estruturas e algoritmos', 'https://visualgo.net/pt', 'estruturas'],
+  ['Introduction to Algorithms (MIT 6.006)', 'Curso gratuito do MIT OpenCourseWare', 'https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/', 'classes'],
+  ['Algorithms (Princeton, Coursera)', 'Sedgewick: estruturas e grafos', 'https://www.coursera.org/learn/algorithms-part1', 'bfs-dfs'],
+  ['CP-Algorithms', 'Referência de algoritmos clássicos', 'https://cp-algorithms.com/', 'topologica'],
+  ['Dynamic Programming Patterns', 'Famílias de DP com problemas', 'https://leetcode.com/discuss/study-guide/458695/Dynamic-Programming-Patterns', 'dp-roteiro'],
+  ['Tech Interview Handbook', 'Método, cheat sheets e listas', 'https://www.techinterviewhandbook.org/algorithms/study-cheatsheet/', 'metodo'],
+];
+
+const CHECK = [
+  ['Big O', 'Calcular a complexidade de tempo e espaço', 'classes'],
+  ['Big O', 'Escolher a abordagem pelo tamanho de n', 'limites'],
+  ['Estruturas', 'Implementar um cache LRU', 'lru'],
+  ['Hash', 'Two Sum · Contains Duplicate · Group Anagrams · Top K Frequent', 'hash-ponteiros'],
+  ['Ponteiros e janela', 'Valid Palindrome · 3Sum · Longest Substring · Minimum Window', 'janela'],
+  ['Pilha e binária', 'Valid Parentheses · Daily Temperatures · Rotated Array · Koko', 'binaria-pilha'],
+  ['Listas', 'Reverse List · Merge Two Lists · Linked List Cycle · LRU Cache', 'lru'],
+  ['Árvores', 'Max Depth · Invert · Level Order · Validate BST · Trie', 'bfs-dfs'],
+  ['Grafos', 'Number of Islands · Clone Graph · Course Schedule · Rotting Oranges', 'ilhas'],
+  ['Heap e union-find', 'Kth Largest · Merge K Lists · Network Delay · Components', 'heap'],
+  ['Backtracking', 'Subsets · Permutations · Combination Sum · Word Search', 'backtracking'],
+  ['DP', 'Climbing Stairs · House Robber · Coin Change · LIS', 'dp-codigo'],
+  ['DP', 'Unique Paths · LCS · Word Break · Edit Distance', 'dp-codigo'],
+  ['Entrevista', 'Uma simulação cronometrada e gravada por semana', 'metodo'],
+  ['Mundo real', 'Topológica para ordem de migrações', 'topologica'],
+  ['Mundo real', 'Autocomplete com trie e 100 mil nomes', 'estruturas'],
+];
+
+const FAQ = [
+ ['Estruturas','Por que um hash map é O(1) e quando deixa de ser?',`<p>Calcula a posição pela função de hash da chave, acessando direto. Com muitas colisões (função ruim ou ataque com chaves maliciosas), várias chaves caem na mesma posição e a busca degrada até O(n).</p>`],
+ ['Grafos','Qual a diferença entre BFS e DFS e quando usar cada um?',`<p>BFS visita por níveis com uma fila e encontra o menor caminho em grafos sem pesos. DFS vai fundo com recursão ou pilha; serve para explorar tudo, detectar ciclos e problemas de árvore. Em grafos muito largos, BFS usa mais memória; em muito profundos, DFS recursivo pode estourar a pilha.</p>`],
+ ['Heap','Como achar o K-ésimo maior elemento de um array grande?',`<p>Heap de mínimo com tamanho K, em O(n log k). Alternativa: quickselect, O(n) em média e O(n²) no pior caso. Ordenar tudo em O(n log n) funciona, mas faz trabalho desnecessário.</p>`],
+ ['DP','Quando usar programação dinâmica em vez de um algoritmo guloso?',`<p>O guloso escolhe o melhor localmente e só é correto quando essa escolha comprovadamente leva ao ótimo global (como intervalos que terminam mais cedo). Quando um contraexemplo derruba o guloso e os subproblemas se repetem, use DP.</p>`],
+ ['Grafos','Como detectar um ciclo num grafo dirigido?',`<p>Ordenação topológica: se nem todos os nós entram na ordem, há ciclo. Ou DFS com três estados (não visitado, visitando, concluído): encontrar um nó "visitando" indica ciclo.</p>`],
+ ['Listas','Como detectar ciclo numa lista ligada sem memória extra?',`<p>Ponteiros rápido e lento (Floyd): um anda de um em um, o outro de dois em dois. Se houver ciclo, eles se encontram.</p>`],
+ ['Ordenação','Por que não dá para ordenar melhor que O(n log n)?',`<p>Ordenações por comparação precisam distinguir n! ordens possíveis, o que exige pelo menos log(n!) comparações, da ordem de n log n. Ordenações sem comparação (counting, radix) fazem O(n) quando os valores têm faixa limitada.</p>`],
+ ['Estruturas','Como funciona um cache LRU com operações O(1)?',`<p>Hash map da chave para o nó, mais lista duplamente ligada em ordem de uso. No acesso, move o nó para a frente; ao estourar a capacidade, remove o do fim.</p>`],
+ ['Big O','Dois laços aninhados podem ser O(n)?',`<p>Sim, quando cada elemento entra e sai da estrutura interna no máximo uma vez, como na pilha monotônica e na janela deslizante. Conte o trabalho total, não o formato do código.</p>`],
+ ['JavaScript','Por que [10, 9, 1].sort() dá [1, 10, 9]?',`<p>O sort padrão converte para texto e ordena lexicograficamente. Para números, sempre <code>sort((a, b) => a - b)</code>.</p>`],
+];
+
+const CMDS = [
+  ['~10⁸ operações simples por segundo', 'Limite prático para escolher a abordagem'],
+  ['n ≤ 20 → 2ⁿ · n ≤ 5.000 → n² · n ≤ 10⁶ → n log n', 'Tamanho da entrada × complexidade'],
+  ['esq + Math.floor((dir - esq) / 2)', 'Meio sem overflow'],
+  ['nums.sort((a, b) => a - b)', 'Ordenar números em JS'],
+  ['Array.from({ length: n }, () => [])', 'Arrays independentes (nunca fill([]))'],
+  ['resultado.push([...atual])', 'Copiar no backtracking'],
+  ['prefixo[j + 1] - prefixo[i]', 'Soma de intervalo em O(1)'],
+  ['pai(i) = ⌊(i − 1)/2⌋ · filhos 2i+1, 2i+2', 'Heap num array'],
+  ['heapq.heappush(h, x) · heapq.heappop(h)', 'Heap pronto em Python'],
+  ['estado → transição → base → ordem', 'Roteiro da DP'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

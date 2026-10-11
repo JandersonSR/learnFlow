@@ -1,0 +1,1188 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Terraform AKS e Event Hubs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:392px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.files{display:flex;flex-direction:column;gap:8px}
+.files details{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0}
+.files summary{cursor:pointer;list-style:none;padding:11px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;font:500 14px var(--f-mono)}
+.files summary::-webkit-details-marker{display:none}
+.files summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.files summary .lc{font:12px var(--f-mono);color:var(--muted)}
+.files .fbody{border-top:1px solid var(--line);position:relative}
+.files pre{margin:0;padding:14px 16px;overflow-x:auto;font:13px/1.55 var(--f-mono);color:var(--ink);max-height:520px}
+.files .cp{position:absolute;right:10px;top:10px;font:500 12px var(--f-body);background:var(--accent-soft);color:var(--accent);border:0;border-radius:6px;padding:5px 10px;cursor:pointer}
+.files .cp:focus-visible{outline:2px solid var(--accent)}
+.tree{font:13px/1.6 var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0;overflow-x:auto;color:var(--ink)}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Squad .NET · infraestrutura como código</span>
+    <h1>Terraform completo: AKS e Event Hubs na assinatura da AGX</h1>
+    <p class="lead">Roteiro em vídeo de todos os arquivos Terraform dos dois protótipos: o storage do estado, o cluster AKS com registro, Key Vault e banco, o namespace do Event Hubs com os tópicos e o pipeline com aprovação. Abaixo do vídeo estão os arquivos completos para copiar, a trilha de estudo, o checklist e as perguntas mais comuns.</p>
+    <div class="meta">
+      <span class="pill">Terraform ≥ 1.6</span><span class="pill">azurerm ~> 4.0</span><span class="pill">Estado no Azure Storage</span><span class="pill">AKS Free</span><span class="pill">Event Hubs Standard</span>
+    </div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="arquivos">
+    <div class="blk-head">
+      <div><span class="eyebrow">Código</span><h2>Arquivos completos</h2></div>
+      <span class="progress" id="filesCount"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Estrutura para colocar na raiz do repositório. Cada arquivo abre com um clique e tem botão para copiar.</p>
+    <pre class="tree" id="tree"></pre>
+    <div class="files" id="files"></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Documentação oficial da HashiCorp e da Microsoft, na ordem sugerida. A marcação fica salva só neste navegador.</p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Itens das duas tarefas</span><h2>Checklist do Terraform</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Itens de Terraform das tarefas de AKS e de mensageria, mais as boas práticas. O botão ao lado leva à cena do vídeo.</p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Dúvidas comuns</span><h2>Perguntas sobre Terraform</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" placeholder="Buscar: estado, lock, drift, segredo…" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2>Comandos de bolso</h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer>Material de estudo da AGX. Os arquivos foram escritos para o provider azurerm ~> 4.0 e não passaram por terraform validate neste material: rode-o na primeira execução. Nomes, IDs e saídas de terminal são exemplos.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const FILES = {
+"README.md": "# Infraestrutura dos protótipos AKS e mensageria (AGX)\n\nTrês stacks Terraform independentes, cada uma com seu estado:\n\n| Pasta | O que cria | Estado | Destruir? |\n|---|---|---|---|\n| `infra/bootstrap` | Resource group e Storage do estado | local (`terraform.tfstate`) | Não, fica |\n| `infra/aks` | ACR, AKS, Key Vault, Azure SQL, Log Analytics, identidade da API | `aks-cep.tfstate` | Sim, ao fim do uso |\n| `infra/mensageria` | Namespace do Event Hubs, tópicos, papéis | `mensageria.tfstate` | Sim, ao fim do uso |\n\n## Pré-requisitos\n\n- Terraform 1.6 ou mais novo e Azure CLI.\n- Na assinatura da AGX: **Owner**, ou **Contributor + User Access Administrator** (as stacks criam atribuições de papel).\n- Cota de vCPU da série B em `brazilsouth` para os nós do AKS.\n\n## 1. Entrar no Azure\n\n```bash\naz login\naz account set --subscription \"<id-da-assinatura-agx>\"\nexport ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)\n```\n\n## 2. Bootstrap (uma única vez)\n\n```bash\ncd infra/bootstrap\nterraform init\nterraform apply -var=\"storage_account_name=stagxtfstate\"   # nome único no Azure\n```\n\nSe o nome `stagxtfstate` estiver ocupado, use outro e troque também em `infra/aks/versions.tf` e `infra/mensageria/versions.tf`.\nSe a criação do container falhar por permissão, aguarde 1 ou 2 minutos e rode o `apply` de novo (propagação do RBAC).\nGuarde o `terraform.tfstate` do bootstrap em local seguro ou recrie-o com `terraform import` se precisar.\n\n## 3. Stack AKS\n\n```bash\ncd infra/aks\n# edite terraform.tfvars: subscription_id, sufixo, dominio_api\nterraform init\nterraform fmt -check && terraform validate\nterraform plan -out tfplan\nterraform apply tfplan\nterraform output                       # valores para o Helm\n$(terraform output -raw comando_credenciais)\n```\n\nOutputs usados no `values-dev.yaml` do chart:\n`acr_login_server`, `key_vault_name`, `tenant_id`, `workload_identity_client_id`, `certificado_ingress_uri`.\n\nO certificado do ingress é **autoassinado** (chame com `curl -k`). Para um certificado real, importe-o no Key Vault com o mesmo nome.\n\n## 4. Stack mensageria\n\n```bash\ncd infra/mensageria\n# terraform.tfvars: principais_dev = [\"<seu object id>\"]   →  az ad signed-in-user show --query id -o tsv\n# depois do AKS: aks_oidc_issuer_url = \"<terraform -chdir=../aks output -raw aks_oidc_issuer_url>\"\nterraform init\nterraform apply\nterraform output\n```\n\n## 5. Destruir ao fim do uso\n\n```bash\ncd infra/mensageria && terraform destroy\ncd ../aks && terraform destroy\n```\n\nO bootstrap continua: ele guarda o estado das outras stacks.\n\n## Pipeline\n\n`pipelines/infra-aks.yml` roda `plan` a cada commit em `infra/aks` e `apply` após aprovação no Environment `infra-agx`.\nA identidade da service connection precisa de **Storage Blob Data Contributor** no storage do estado e de **Owner** (ou Contributor + User Access Administrator) na assinatura ou no resource group.\n\n## Antes de usar\n\nOs arquivos foram escritos para o provider `azurerm ~> 4.0`. Rode `terraform validate` na primeira vez e ajuste nomes de atributos se a versão instalada tiver renomeado algum (por exemplo `enable_rbac_authorization` → `rbac_authorization_enabled` no Key Vault).",
+"infra/.gitignore": "# Terraform\n**/.terraform/*\n*.tfstate\n*.tfstate.*\n*.tfplan\ntfplan\ncrash.log\noverride.tf\noverride.tf.json\n*_override.tf\n\n# Versione o .terraform.lock.hcl: ele fixa as versões dos providers",
+"infra/bootstrap/main.tf": "# Cria UMA VEZ o storage que guarda o estado dos outros ambientes.\n# Este diretório usa estado local (terraform.tfstate fica na máquina) e não é destruído com os ambientes.\n\nterraform {\n  required_version = \">= 1.6\"\n  required_providers {\n    azurerm = { source = \"hashicorp/azurerm\", version = \"~> 4.0\" }\n  }\n}\n\nprovider \"azurerm\" {\n  subscription_id     = var.subscription_id # null = usa ARM_SUBSCRIPTION_ID\n  storage_use_azuread = true                # o storage não aceita chave de acesso\n  features {}\n}\n\nvariable \"subscription_id\" {\n  type    = string\n  default = null\n}\n\nvariable \"location\" {\n  type    = string\n  default = \"brazilsouth\"\n}\n\nvariable \"storage_account_name\" {\n  type        = string\n  default     = \"stagxtfstate\"\n  description = \"Nome único em todo o Azure: 3 a 24 letras minúsculas e números.\"\n}\n\ndata \"azurerm_client_config\" \"atual\" {}\n\nresource \"azurerm_resource_group\" \"tfstate\" {\n  name     = \"rg-agx-tfstate\"\n  location = var.location\n  tags     = { gerenciado_por = \"terraform\", finalidade = \"estado-terraform\" }\n}\n\nresource \"azurerm_storage_account\" \"tfstate\" {\n  name                            = var.storage_account_name\n  resource_group_name             = azurerm_resource_group.tfstate.name\n  location                        = azurerm_resource_group.tfstate.location\n  account_tier                    = \"Standard\"\n  account_replication_type        = \"LRS\" # produção: GRS\n  min_tls_version                 = \"TLS1_2\"\n  allow_nested_items_to_be_public = false\n  shared_access_key_enabled       = false # acesso só pelo Entra ID\n\n  blob_properties {\n    versioning_enabled = true # permite recuperar um estado anterior\n    delete_retention_policy {\n      days = 30\n    }\n  }\n}\n\n# Quem roda o Terraform precisa ler e gravar blobs para usar o backend\nresource \"azurerm_role_assignment\" \"estado_quem_roda\" {\n  scope                = azurerm_storage_account.tfstate.id\n  role_definition_name = \"Storage Blob Data Contributor\"\n  principal_id         = data.azurerm_client_config.atual.object_id\n}\n\nresource \"azurerm_storage_container\" \"tfstate\" {\n  name                  = \"tfstate\"\n  storage_account_id    = azurerm_storage_account.tfstate.id\n  container_access_type = \"private\"\n\n  # a permissão pode levar alguns minutos para valer; se falhar, rode o apply de novo\n  depends_on = [azurerm_role_assignment.estado_quem_roda]\n}\n\noutput \"backend\" {\n  value = {\n    resource_group_name  = azurerm_resource_group.tfstate.name\n    storage_account_name = azurerm_storage_account.tfstate.name\n    container_name       = azurerm_storage_container.tfstate.name\n  }\n}",
+"infra/aks/versions.tf": "terraform {\n  required_version = \">= 1.6\"\n\n  required_providers {\n    azurerm = { source = \"hashicorp/azurerm\", version = \"~> 4.0\" }\n    random  = { source = \"hashicorp/random\", version = \"~> 3.6\" }\n    time    = { source = \"hashicorp/time\", version = \"~> 0.12\" }\n  }\n\n  # Estado remoto criado pelo infra/bootstrap\n  backend \"azurerm\" {\n    resource_group_name  = \"rg-agx-tfstate\"\n    storage_account_name = \"stagxtfstate\"\n    container_name       = \"tfstate\"\n    key                  = \"aks-cep.tfstate\"\n    use_azuread_auth     = true\n  }\n}\n\nprovider \"azurerm\" {\n  subscription_id     = var.subscription_id # null = usa ARM_SUBSCRIPTION_ID (pipeline)\n  storage_use_azuread = true\n\n  features {\n    key_vault {\n      purge_soft_delete_on_destroy    = true # permite destruir e recriar com o mesmo nome\n      recover_soft_deleted_key_vaults = true\n    }\n    resource_group {\n      prevent_deletion_if_contains_resources = false # destroy limpo no protótipo\n    }\n  }\n}",
+"infra/aks/variables.tf": "variable \"subscription_id\" {\n  type        = string\n  default     = null\n  description = \"Assinatura da AGX. Em branco, usa ARM_SUBSCRIPTION_ID.\"\n}\n\nvariable \"location\" {\n  type    = string\n  default = \"brazilsouth\"\n}\n\nvariable \"sufixo\" {\n  type        = string\n  description = \"Diferencia nomes que precisam ser únicos no Azure (ACR, Key Vault, SQL).\"\n\n  validation {\n    condition     = can(regex(\"^[a-z0-9]{2,6}$\", var.sufixo))\n    error_message = \"Use de 2 a 6 letras minúsculas ou números.\"\n  }\n}\n\nvariable \"node_vm_size\" {\n  type    = string\n  default = \"Standard_B2s\" # menor tamanho que atende ao protótipo\n}\n\nvariable \"node_min_count\" {\n  type    = number\n  default = 2\n}\n\nvariable \"node_max_count\" {\n  type    = number\n  default = 4\n}\n\nvariable \"kubernetes_version\" {\n  type        = string\n  default     = null\n  description = \"Null usa a versão padrão do AKS na região.\"\n}\n\nvariable \"app_namespace\" {\n  type    = string\n  default = \"cep\"\n}\n\nvariable \"app_service_account\" {\n  type    = string\n  default = \"cep-api\"\n}\n\nvariable \"dominio_api\" {\n  type        = string\n  description = \"Host do ingress HTTPS, por exemplo cep-aks.agxsoftware.com.\"\n}\n\nvariable \"sql_admin_login\" {\n  type    = string\n  default = \"cepadmin\"\n}\n\nvariable \"ips_liberados_sql\" {\n  type        = list(string)\n  default     = []\n  description = \"IPs públicos dos desenvolvedores que acessam o banco direto.\"\n}\n\nvariable \"tags\" {\n  type    = map(string)\n  default = {}\n}",
+"infra/aks/terraform.tfvars": "# Valores do ambiente de estudo. Não coloque segredos aqui: este arquivo vai para o Git.\nsubscription_id   = \"00000000-0000-0000-0000-000000000000\" # troque pela assinatura da AGX\nsufixo            = \"01\"\ndominio_api       = \"cep-aks.agxsoftware.com\"\nnode_vm_size      = \"Standard_B2s\"\nips_liberados_sql = []\n\ntags = {\n  squad   = \"dotnet\"\n  projeto = \"prototipo-aks\"\n}",
+"infra/aks/main.tf": "locals {\n  nome = \"agx-cep\"\n  tags = merge(var.tags, { gerenciado_por = \"terraform\" })\n}\n\ndata \"azurerm_client_config\" \"atual\" {}\n\nresource \"azurerm_resource_group\" \"rg\" {\n  name     = \"rg-${local.nome}\"\n  location = var.location\n  tags     = local.tags\n}\n\nresource \"azurerm_log_analytics_workspace\" \"law\" {\n  name                = \"law-${local.nome}\"\n  resource_group_name = azurerm_resource_group.rg.name\n  location            = azurerm_resource_group.rg.location\n  sku                 = \"PerGB2018\"\n  retention_in_days   = 30\n  daily_quota_gb      = 1 # teto de ingestão diária no protótipo\n  tags                = local.tags\n}\n\nresource \"azurerm_container_registry\" \"acr\" {\n  name                = \"acragxcep${var.sufixo}\" # só letras e números\n  resource_group_name = azurerm_resource_group.rg.name\n  location            = azurerm_resource_group.rg.location\n  sku                 = \"Basic\"\n  admin_enabled       = false # sem usuário e senha\n  tags                = local.tags\n}",
+"infra/aks/aks.tf": "resource \"azurerm_kubernetes_cluster\" \"aks\" {\n  name                = \"aks-${local.nome}\"\n  resource_group_name = azurerm_resource_group.rg.name\n  location            = azurerm_resource_group.rg.location\n  dns_prefix          = \"agxcep${var.sufixo}\"\n  kubernetes_version  = var.kubernetes_version\n  sku_tier            = \"Free\" # produção: Standard\n\n  oidc_issuer_enabled       = true # necessário para a identidade de carga de trabalho\n  workload_identity_enabled = true\n\n  automatic_upgrade_channel = \"patch\"\n  node_os_upgrade_channel   = \"NodeImage\"\n\n  default_node_pool {\n    name                        = \"system\"\n    vm_size                     = var.node_vm_size\n    auto_scaling_enabled        = true\n    min_count                   = var.node_min_count\n    max_count                   = var.node_max_count\n    temporary_name_for_rotation = \"systemtmp\" # permite trocar o vm_size sem recriar o cluster\n  }\n\n  identity {\n    type = \"SystemAssigned\"\n  }\n\n  network_profile {\n    network_plugin      = \"azure\"\n    network_plugin_mode = \"overlay\"\n  }\n\n  key_vault_secrets_provider {\n    secret_rotation_enabled  = true\n    secret_rotation_interval = \"2m\"\n  }\n\n  web_app_routing {\n    dns_zone_ids = [] # DNS do domínio gerenciado fora do Terraform no protótipo\n  }\n\n  oms_agent {\n    log_analytics_workspace_id      = azurerm_log_analytics_workspace.law.id\n    msi_auth_for_monitoring_enabled = true\n  }\n\n  tags = local.tags\n\n  lifecycle {\n    ignore_changes = [default_node_pool[0].node_count] # quem muda é o autoscaler\n  }\n}\n\n# Cluster lê imagens do ACR sem usuário e senha\nresource \"azurerm_role_assignment\" \"aks_acr_pull\" {\n  scope                            = azurerm_container_registry.acr.id\n  role_definition_name             = \"AcrPull\"\n  principal_id                     = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id\n  skip_service_principal_aad_check = true\n}",
+"infra/aks/keyvault.tf": "resource \"azurerm_key_vault\" \"kv\" {\n  name                       = \"kv-${local.nome}-${var.sufixo}\" # 3 a 24 caracteres\n  resource_group_name        = azurerm_resource_group.rg.name\n  location                   = azurerm_resource_group.rg.location\n  tenant_id                  = data.azurerm_client_config.atual.tenant_id\n  sku_name                   = \"standard\"\n  enable_rbac_authorization  = true  # versões recentes do 4.x: rbac_authorization_enabled\n  purge_protection_enabled   = false # protótipo: permite destruir e recriar\n  soft_delete_retention_days = 7\n  tags                       = local.tags\n}\n\n# Quem roda o Terraform grava segredos e certificados\nresource \"azurerm_role_assignment\" \"kv_quem_roda\" {\n  scope                = azurerm_key_vault.kv.id\n  role_definition_name = \"Key Vault Administrator\"\n  principal_id         = data.azurerm_client_config.atual.object_id\n}\n\n# O RBAC do Azure leva um tempo para propagar antes da primeira gravação\nresource \"time_sleep\" \"rbac_kv\" {\n  create_duration = \"60s\"\n  depends_on      = [azurerm_role_assignment.kv_quem_roda]\n}\n\n# Certificado autoassinado para o HTTPS do ingress (produção: certificado de uma CA)\nresource \"azurerm_key_vault_certificate\" \"ingress\" {\n  name         = \"cep-api\"\n  key_vault_id = azurerm_key_vault.kv.id\n\n  certificate_policy {\n    issuer_parameters {\n      name = \"Self\"\n    }\n    key_properties {\n      exportable = true\n      key_size   = 2048\n      key_type   = \"RSA\"\n      reuse_key  = true\n    }\n    secret_properties {\n      content_type = \"application/x-pkcs12\"\n    }\n    x509_certificate_properties {\n      subject            = \"CN=${var.dominio_api}\"\n      validity_in_months = 12\n      key_usage          = [\"digitalSignature\", \"keyEncipherment\"]\n      extended_key_usage = [\"1.3.6.1.5.5.7.3.1\"] # autenticação de servidor\n      subject_alternative_names {\n        dns_names = [var.dominio_api]\n      }\n    }\n  }\n\n  depends_on = [time_sleep.rbac_kv]\n}\n\n# O add-on de roteamento lê o certificado do Key Vault\nresource \"azurerm_role_assignment\" \"routing_kv_cert\" {\n  scope                = azurerm_key_vault.kv.id\n  role_definition_name = \"Key Vault Certificate User\"\n  principal_id         = azurerm_kubernetes_cluster.aks.web_app_routing[0].web_app_routing_identity[0].object_id\n}",
+"infra/aks/sql.tf": "resource \"random_password\" \"sql\" {\n  length           = 32\n  special          = true\n  override_special = \"!#%*-_=+\" # evita caracteres que quebram a connection string\n}\n\nresource \"azurerm_mssql_server\" \"sql\" {\n  name                         = \"sql-${local.nome}-${var.sufixo}\"\n  resource_group_name          = azurerm_resource_group.rg.name\n  location                     = azurerm_resource_group.rg.location\n  version                      = \"12.0\"\n  administrator_login          = var.sql_admin_login\n  administrator_login_password = random_password.sql.result\n  minimum_tls_version          = \"1.2\"\n  tags                         = local.tags\n}\n\nresource \"azurerm_mssql_database\" \"cep\" {\n  name        = \"cep\"\n  server_id   = azurerm_mssql_server.sql.id\n  sku_name    = \"Basic\" # menor custo para o protótipo\n  max_size_gb = 2\n  tags        = local.tags\n}\n\n# 0.0.0.0 libera os serviços do Azure, incluindo a saída do AKS (produção: Private Endpoint)\nresource \"azurerm_mssql_firewall_rule\" \"servicos_azure\" {\n  name             = \"servicos-azure\"\n  server_id        = azurerm_mssql_server.sql.id\n  start_ip_address = \"0.0.0.0\"\n  end_ip_address   = \"0.0.0.0\"\n}\n\nresource \"azurerm_mssql_firewall_rule\" \"devs\" {\n  for_each         = toset(var.ips_liberados_sql)\n  name             = \"dev-${replace(each.value, \".\", \"-\")}\"\n  server_id        = azurerm_mssql_server.sql.id\n  start_ip_address = each.value\n  end_ip_address   = each.value\n}\n\n# A API recebe a conexão pelo Key Vault; o valor nunca passa pelo repositório\nresource \"azurerm_key_vault_secret\" \"cep_db\" {\n  name         = \"ConnectionStrings--Cep\"\n  key_vault_id = azurerm_key_vault.kv.id\n  content_type = \"connection-string\"\n  value = join(\";\", [\n    \"Server=tcp:${azurerm_mssql_server.sql.fully_qualified_domain_name},1433\",\n    \"Database=${azurerm_mssql_database.cep.name}\",\n    \"User ID=${var.sql_admin_login}\",\n    \"Password=${random_password.sql.result}\",\n    \"Encrypt=True\",\n    \"TrustServerCertificate=False\",\n  ])\n\n  depends_on = [time_sleep.rbac_kv]\n}",
+"infra/aks/identity.tf": "# Identidade da API no Entra ID, usada pelo pod via identidade de carga de trabalho\nresource \"azurerm_user_assigned_identity\" \"api\" {\n  name                = \"id-cep-api\"\n  resource_group_name = azurerm_resource_group.rg.name\n  location            = azurerm_resource_group.rg.location\n  tags                = local.tags\n}\n\n# Confia nos tokens que o cluster emite para a ServiceAccount cep:cep-api\nresource \"azurerm_federated_identity_credential\" \"api\" {\n  name                = \"aks-${var.app_namespace}-${var.app_service_account}\"\n  resource_group_name = azurerm_resource_group.rg.name\n  parent_id           = azurerm_user_assigned_identity.api.id\n  issuer              = azurerm_kubernetes_cluster.aks.oidc_issuer_url\n  subject             = \"system:serviceaccount:${var.app_namespace}:${var.app_service_account}\"\n  audience            = [\"api://AzureADTokenExchange\"]\n}\n\n# Apenas leitura de segredos: o suficiente para o driver CSI\nresource \"azurerm_role_assignment\" \"api_kv_secrets\" {\n  scope                = azurerm_key_vault.kv.id\n  role_definition_name = \"Key Vault Secrets User\"\n  principal_id         = azurerm_user_assigned_identity.api.principal_id\n}",
+"infra/aks/outputs.tf": "# Valores usados pelo Helm (values-dev.yaml), pelo pipeline e pela tarefa de mensageria\n\noutput \"resource_group\" {\n  value = azurerm_resource_group.rg.name\n}\n\noutput \"aks_name\" {\n  value = azurerm_kubernetes_cluster.aks.name\n}\n\noutput \"aks_oidc_issuer_url\" {\n  value = azurerm_kubernetes_cluster.aks.oidc_issuer_url\n}\n\noutput \"acr_login_server\" {\n  value = azurerm_container_registry.acr.login_server\n}\n\noutput \"key_vault_name\" {\n  value = azurerm_key_vault.kv.name\n}\n\noutput \"tenant_id\" {\n  value = data.azurerm_client_config.atual.tenant_id\n}\n\noutput \"workload_identity_client_id\" {\n  value = azurerm_user_assigned_identity.api.client_id\n}\n\noutput \"certificado_ingress_uri\" {\n  value = azurerm_key_vault_certificate.ingress.versionless_id\n}\n\noutput \"sql_server_fqdn\" {\n  value = azurerm_mssql_server.sql.fully_qualified_domain_name\n}\n\noutput \"comando_credenciais\" {\n  value = \"az aks get-credentials -g ${azurerm_resource_group.rg.name} -n ${azurerm_kubernetes_cluster.aks.name}\"\n}",
+"infra/mensageria/versions.tf": "terraform {\n  required_version = \">= 1.6\"\n\n  required_providers {\n    azurerm = { source = \"hashicorp/azurerm\", version = \"~> 4.0\" }\n  }\n\n  # Mesmo storage do bootstrap, outra chave: estados independentes\n  backend \"azurerm\" {\n    resource_group_name  = \"rg-agx-tfstate\"\n    storage_account_name = \"stagxtfstate\"\n    container_name       = \"tfstate\"\n    key                  = \"mensageria.tfstate\"\n    use_azuread_auth     = true\n  }\n}\n\nprovider \"azurerm\" {\n  subscription_id     = var.subscription_id\n  storage_use_azuread = true\n  features {}\n}",
+"infra/mensageria/variables.tf": "variable \"subscription_id\" {\n  type    = string\n  default = null\n}\n\nvariable \"location\" {\n  type    = string\n  default = \"brazilsouth\"\n}\n\nvariable \"sufixo\" {\n  type        = string\n  description = \"Diferencia o nome do namespace, que precisa ser único no Azure.\"\n}\n\nvariable \"capacidade_tu\" {\n  type        = number\n  default     = 1\n  description = \"Unidades de throughput do namespace Standard (1 TU ≈ 1 MB/s de entrada).\"\n}\n\nvariable \"particoes_pre_analise\" {\n  type        = number\n  default     = 6\n  description = \"Ver docs/adr/001-particoes.md. No Standard não pode ser alterado depois.\"\n}\n\nvariable \"retencao_dias\" {\n  type        = number\n  default     = 7\n  description = \"Máximo de 7 dias no plano Standard.\"\n\n  validation {\n    condition     = var.retencao_dias >= 1 && var.retencao_dias <= 7\n    error_message = \"No plano Standard a retenção vai de 1 a 7 dias.\"\n  }\n}\n\nvariable \"principais_dev\" {\n  type        = list(string)\n  default     = []\n  description = \"Object IDs de pessoas ou grupos do Entra ID que rodam os serviços localmente contra o Azure.\"\n}\n\nvariable \"aks_oidc_issuer_url\" {\n  type        = string\n  default     = null\n  description = \"Output aks_oidc_issuer_url da stack infra/aks. Em branco, não cria a identidade dos serviços no AKS.\"\n}\n\nvariable \"k8s_namespace\" {\n  type    = string\n  default = \"pre-analise\"\n}\n\nvariable \"k8s_service_account\" {\n  type    = string\n  default = \"pre-analise\"\n}\n\nvariable \"tags\" {\n  type    = map(string)\n  default = {}\n}",
+"infra/mensageria/terraform.tfvars": "subscription_id       = \"00000000-0000-0000-0000-000000000000\" # troque pela assinatura da AGX\nsufixo                = \"01\"\ncapacidade_tu         = 1\nparticoes_pre_analise = 6\nretencao_dias         = 7\n\n# az ad signed-in-user show --query id -o tsv  (ou o object ID do grupo da dupla)\nprincipais_dev = []\n\n# Preencha depois do apply de infra/aks:  terraform -chdir=../aks output -raw aks_oidc_issuer_url\naks_oidc_issuer_url = null\n\ntags = {\n  squad   = \"dotnet\"\n  projeto = \"prototipo-mensageria\"\n}",
+"infra/mensageria/main.tf": "locals {\n  nome = \"agx-mensageria\"\n  tags = merge(var.tags, { gerenciado_por = \"terraform\" })\n\n  # Cada event hub é um tópico para o cliente Kafka\n  topicos = {\n    \"pre-analise.recebida\"     = var.particoes_pre_analise\n    \"pre-analise.recebida.dlq\" = 1\n  }\n}\n\nresource \"azurerm_resource_group\" \"rg\" {\n  name     = \"rg-${local.nome}\"\n  location = var.location\n  tags     = local.tags\n}\n\nresource \"azurerm_eventhub_namespace\" \"ns\" {\n  name                          = \"evhns-agx-prop-${var.sufixo}\"\n  resource_group_name           = azurerm_resource_group.rg.name\n  location                      = azurerm_resource_group.rg.location\n  sku                           = \"Standard\" # menor plano com o endpoint Kafka\n  capacity                      = var.capacidade_tu\n  auto_inflate_enabled          = false\n  local_authentication_enabled  = false # sem chaves SAS: só Entra ID\n  public_network_access_enabled = true  # produção: Private Endpoint (Premium)\n  minimum_tls_version           = \"1.2\"\n  tags                          = local.tags\n}\n\nresource \"azurerm_eventhub\" \"topico\" {\n  for_each          = local.topicos\n  name              = each.key\n  namespace_id      = azurerm_eventhub_namespace.ns.id\n  partition_count   = each.value\n  message_retention = var.retencao_dias\n}",
+"infra/mensageria/rbac.tf": "# Desenvolvedores: publicar e ler a partir da máquina local (OAuth com az login)\nresource \"azurerm_role_assignment\" \"dev_envio\" {\n  for_each             = toset(var.principais_dev)\n  scope                = azurerm_eventhub_namespace.ns.id\n  role_definition_name = \"Azure Event Hubs Data Sender\"\n  principal_id         = each.value\n}\n\nresource \"azurerm_role_assignment\" \"dev_leitura\" {\n  for_each             = toset(var.principais_dev)\n  scope                = azurerm_eventhub_namespace.ns.id\n  role_definition_name = \"Azure Event Hubs Data Receiver\"\n  principal_id         = each.value\n}\n\n# Serviços no AKS: identidade própria, ligada à ServiceAccount por credencial federada\nresource \"azurerm_user_assigned_identity\" \"servicos\" {\n  count               = var.aks_oidc_issuer_url == null ? 0 : 1\n  name                = \"id-pre-analise\"\n  resource_group_name = azurerm_resource_group.rg.name\n  location            = azurerm_resource_group.rg.location\n  tags                = local.tags\n}\n\nresource \"azurerm_federated_identity_credential\" \"servicos\" {\n  count               = var.aks_oidc_issuer_url == null ? 0 : 1\n  name                = \"aks-${var.k8s_namespace}-${var.k8s_service_account}\"\n  resource_group_name = azurerm_resource_group.rg.name\n  parent_id           = azurerm_user_assigned_identity.servicos[0].id\n  issuer              = var.aks_oidc_issuer_url\n  subject             = \"system:serviceaccount:${var.k8s_namespace}:${var.k8s_service_account}\"\n  audience            = [\"api://AzureADTokenExchange\"]\n}\n\nresource \"azurerm_role_assignment\" \"servicos_envio\" {\n  count                = var.aks_oidc_issuer_url == null ? 0 : 1\n  scope                = azurerm_eventhub_namespace.ns.id\n  role_definition_name = \"Azure Event Hubs Data Sender\"\n  principal_id         = azurerm_user_assigned_identity.servicos[0].principal_id\n}\n\nresource \"azurerm_role_assignment\" \"servicos_leitura\" {\n  count                = var.aks_oidc_issuer_url == null ? 0 : 1\n  scope                = azurerm_eventhub_namespace.ns.id\n  role_definition_name = \"Azure Event Hubs Data Receiver\"\n  principal_id         = azurerm_user_assigned_identity.servicos[0].principal_id\n}",
+"infra/mensageria/outputs.tf": "output \"namespace\" {\n  value = azurerm_eventhub_namespace.ns.name\n}\n\noutput \"bootstrap_servers\" {\n  value       = \"${azurerm_eventhub_namespace.ns.name}.servicebus.windows.net:9093\"\n  description = \"Vai para Mensageria:Namespace no appsettings.Azure.json.\"\n}\n\noutput \"topicos\" {\n  value = { for nome, t in azurerm_eventhub.topico : nome => t.partition_count }\n}\n\noutput \"servicos_client_id\" {\n  value       = try(azurerm_user_assigned_identity.servicos[0].client_id, null)\n  description = \"Anotação azure.workload.identity/client-id da ServiceAccount no AKS.\"\n}",
+"pipelines/infra-aks.yml": "# Pipeline de infraestrutura: plan em todo commit, apply só com aprovação\ntrigger:\n  branches: { include: [ main ] }\n  paths: { include: [ infra/aks/* ] }\n\npool: { vmImage: ubuntu-latest }\n\nvariables:\n  TF_DIR: infra/aks\n\nstages:\n- stage: Plan\n  jobs:\n  - job: plan\n    steps:\n    - task: AzureCLI@2\n      displayName: terraform plan\n      inputs:\n        azureSubscription: sc-azure-agx          # service connection com federação de identidade\n        addSpnToEnvironment: true\n        scriptType: bash\n        scriptLocation: inlineScript\n        workingDirectory: $(TF_DIR)\n        inlineScript: |\n          export ARM_CLIENT_ID=$servicePrincipalId ARM_TENANT_ID=$tenantId\n          export ARM_OIDC_TOKEN=$idToken ARM_USE_OIDC=true\n          export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)\n          terraform init -input=false\n          terraform validate\n          terraform plan -input=false -out=tfplan\n    - publish: $(TF_DIR)/tfplan\n      artifact: tfplan\n\n- stage: Apply\n  dependsOn: Plan\n  jobs:\n  - deployment: apply\n    environment: infra-agx                       # aprovação configurada no Environment\n    strategy:\n      runOnce:\n        deploy:\n          steps:\n          - checkout: self\n          - download: current\n            artifact: tfplan\n          - task: AzureCLI@2\n            displayName: terraform apply\n            inputs:\n              azureSubscription: sc-azure-agx\n              addSpnToEnvironment: true\n              scriptType: bash\n              scriptLocation: inlineScript\n              workingDirectory: $(TF_DIR)\n              inlineScript: |\n                export ARM_CLIENT_ID=$servicePrincipalId ARM_TENANT_ID=$tenantId\n                export ARM_OIDC_TOKEN=$idToken ARM_USE_OIDC=true\n                export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)\n                terraform init -input=false\n                terraform apply -input=false $(Pipeline.Workspace)/tfplan/tfplan"
+};
+const FILE_ORDER = ["README.md", "infra/.gitignore", "infra/bootstrap/main.tf", "infra/aks/versions.tf", "infra/aks/variables.tf", "infra/aks/terraform.tfvars", "infra/aks/main.tf", "infra/aks/aks.tf", "infra/aks/keyvault.tf", "infra/aks/sql.tf", "infra/aks/identity.tf", "infra/aks/outputs.tf", "infra/mensageria/versions.tf", "infra/mensageria/variables.tf", "infra/mensageria/terraform.tfvars", "infra/mensageria/main.tf", "infra/mensageria/rbac.tf", "infra/mensageria/outputs.tf", "pipelines/infra-aks.yml"];
+// ===================== CENAS =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const TITLE = {k:'Squad .NET · AGX', h:'Terraform completo para AKS e Event Hubs',
+  p:'Do storage do estado ao terraform destroy: cada arquivo das stacks dos dois protótipos, na ordem em que a dupla vai criar.',
+  chips:['bootstrap','infra/aks','infra/mensageria','pipeline com aprovação','azurerm ~> 4.0']};
+const OUTRO = {k:'Fim do roteiro', h:'Agora, rode na assinatura da AGX',
+  p:'Todos os arquivos estão logo abaixo do vídeo, com botão de copiar, junto com a trilha de estudo, o checklist e as perguntas sobre Terraform.',
+  chips:['terraform init','terraform plan','terraform apply','terraform destroy']};
+const F = p => ({type:'code', file:p, lang: p.endsWith('.yml') ? 'yaml' : 'hcl', code: FILES[p]});
+
+const SCENES = [
+/* ---------- VISÃO GERAL ---------- */
+{ id:'intro', ch:'Visão geral', title:'Infraestrutura como código',
+  say:'Este vídeo mostra o Terraform completo dos dois protótipos da squad: o cluster AKS com registro, Key Vault e banco, e o namespace do Event Hubs com os tópicos. Tudo é criado e destruído por código, sem passos manuais no portal do Azure, e cada arquivo aparece inteiro.',
+  v:{type:'title'} },
+
+{ id:'estrutura', ch:'Visão geral', title:'Três stacks, três estados',
+  say:'O código fica em três pastas. O bootstrap roda uma única vez e cria o storage que guarda o estado das outras. A stack do AKS e a stack de mensageria têm estados separados no mesmo storage, então uma pode ser destruída sem afetar a outra. Um pipeline do Azure DevOps aplica as mudanças com aprovação.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:96,w:270,h:150, cls:'amber', html:B('infra/bootstrap','roda uma vez · estado local')+'<ul class="ul"><li>rg-agx-tfstate</li><li>stagxtfstate / tfstate</li></ul>'},
+    {at:3, x:344,y:96,w:280,h:150, cls:'blue', html:B('infra/aks','estado: aks-cep.tfstate')+'<ul class="ul"><li>ACR, AKS, Key Vault</li><li>Azure SQL, Log Analytics</li><li>identidade da API</li></ul>'},
+    {at:5, x:654,y:96,w:270,h:150, cls:'green', html:B('infra/mensageria','estado: mensageria.tfstate')+'<ul class="ul"><li>namespace Event Hubs</li><li>tópicos e DLQ</li><li>papéis Data Sender/Receiver</li></ul>'},
+    {at:7.5, x:36,y:290,w:888,h:70, cls:'region', html:'<span class="rl">Storage Account stagxtfstate · container tfstate · versionamento ligado · acesso só por Entra ID</span><small style="font:12px var(--f-mono);color:var(--st-dim);margin-top:6px">aks-cep.tfstate &nbsp;·&nbsp; mensageria.tfstate &nbsp;·&nbsp; lock automático por lease do blob</small>'},
+    {at:11, x:36,y:396,w:888,h:110, cls:'ext', html:B('pipelines/infra-aks.yml','plan em todo commit em infra/aks · apply só depois da aprovação no Environment infra-agx · autenticação por federação de identidade, sem segredo')},
+  ], lines:[
+    {at:7.5, d:'M484 246 L 484 290', cls:'flow'},
+    {at:7.5, d:'M789 246 L 789 290', cls:'flow'},
+    {at:7.5, d:'M171 246 L 171 290', cls:'amber'},
+    {at:11, d:'M484 360 L 484 396', cls:'dim'},
+  ]}},
+
+{ id:'conceitos', ch:'Visão geral', title:'Os conceitos que aparecem em todo arquivo',
+  say:'O provider é o plugin que conversa com o Azure. Resource é o que o Terraform cria e gerencia; data source só lê algo que já existe. Variable é entrada, output é saída e locals são valores calculados. O estado registra o que foi criado, e o backend diz onde esse estado fica. O ciclo é sempre o mesmo: init, plan, apply e, no fim, destroy.',
+  v:{type:'boxes', defs:[
+    ['Provider','plugin que fala com a API do Azure (azurerm)',1],
+    ['Resource','algo que o Terraform cria e gerencia',3],
+    ['Data source','lê algo que já existe, sem gerenciar',5],
+    ['Variable','entrada da stack, com tipo e validação',7],
+    ['Output','saída usada por Helm, pipeline e outras stacks',9],
+    ['Locals','valores calculados dentro da stack',11],
+    ['Estado','registro do que foi criado e com quais IDs',13],
+    ['Backend','onde o estado fica e como é travado',15],
+  ], items:[
+    {at:17, x:470,y:110,w:440,h:62, cls:'blue', html:B('terraform init','baixa providers, configura o backend')},
+    {at:18.5, x:470,y:192,w:440,h:62, cls:'blue', html:B('terraform plan','compara código × estado × Azure e mostra a diferença')},
+    {at:20, x:470,y:274,w:440,h:62, cls:'green', html:B('terraform apply','executa o plano e atualiza o estado')},
+    {at:21.5, x:470,y:356,w:440,h:62, cls:'amber', html:B('terraform destroy','remove tudo o que o estado conhece')},
+    {at:23, x:470,y:438,w:440,h:62, cls:'ext', html:B('terraform fmt · validate','formata e checa o código antes do plan')},
+  ], lines:[
+    {at:18.5, d:'M690 172 L 690 192', cls:'flow'},
+    {at:20, d:'M690 254 L 690 274', cls:'flow'},
+    {at:21.5, d:'M690 336 L 690 356', cls:'dim'},
+  ]}},
+
+/* ---------- PREPARO ---------- */
+{ id:'prereq', ch:'Preparo e bootstrap', title:'Ferramentas e acesso',
+  say:'Antes de tudo: Terraform 1.6 ou mais novo e o Azure CLI. Entre na assinatura da AGX e exporte o ID dela, que o provider lê do ambiente. Confira seus papéis: as stacks criam atribuições de papel, e isso exige Owner, ou Contributor junto com User Access Administrator.',
+  v:{type:'term', lines:[
+    'c|terraform -version',
+    'o|Terraform v1.x.x on linux_amd64',
+    'c|az login',
+    'c|az account set --subscription "<id-da-assinatura-agx>"',
+    'c|export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)',
+    'c|az role assignment list --assignee $(az ad signed-in-user show --query id -o tsv) \\',
+    'k|    --scope /subscriptions/$ARM_SUBSCRIPTION_ID --query "[].roleDefinitionName" -o tsv',
+    'ok|Owner',
+  ]}},
+
+{ id:'bootstrap', ch:'Preparo e bootstrap', title:'bootstrap/main.tf',
+  say:'O bootstrap cria o resource group e o storage do estado, com versionamento para recuperar um estado anterior e sem chave de acesso: só o Entra ID entra. Quem roda o Terraform recebe permissão de gravar blobs. Este é o único diretório com estado local, porque ele cria o lugar onde os outros guardam o seu.',
+  v:F('infra/bootstrap/main.tf')},
+
+{ id:'bootstrap-run', ch:'Preparo e bootstrap', title:'Rodar o bootstrap',
+  say:'Rode init e apply uma única vez. O nome do storage precisa ser único em todo o Azure; se estiver ocupado, troque aqui e nos arquivos versions.tf das outras stacks. Se a criação do container falhar por permissão, espere um ou dois minutos e rode de novo: o papel recém-criado ainda está propagando.',
+  v:{type:'term', lines:[
+    'c|cd infra/bootstrap',
+    'c|terraform init',
+    'ok|Terraform has been successfully initialized!',
+    'c|terraform apply -var="storage_account_name=stagxtfstate"',
+    'o|Plan: 4 to add, 0 to change, 0 to destroy.',
+    'o|  Enter a value: yes',
+    'ok|Apply complete! Resources: 4 added, 0 changed, 0 destroyed.',
+    'o|backend = { container_name = "tfstate", resource_group_name = "rg-agx-tfstate", storage_account_name = "stagxtfstate" }',
+  ]}},
+
+/* ---------- STACK AKS ---------- */
+{ id:'aks-versions', ch:'Stack AKS', title:'versions.tf: providers e backend',
+  say:'Cada stack começa fixando a versão do Terraform e dos providers: azurerm na série 4, random para a senha do banco e time para esperar a propagação de permissões. O backend aponta para o storage do bootstrap, com uma chave própria. No provider, o Key Vault é purgado ao destruir, para poder recriar com o mesmo nome.',
+  v:F('infra/aks/versions.tf')},
+
+{ id:'aks-vars', ch:'Stack AKS', title:'variables.tf',
+  say:'As variáveis são a interface da stack. Cada uma tem tipo, valor padrão quando faz sentido e descrição. O sufixo tem validação, porque entra no nome de recursos que precisam ser únicos no Azure. O tamanho e a quantidade de nós ficam aqui, prontos para mudar sem mexer no resto.',
+  v:F('infra/aks/variables.tf')},
+
+{ id:'aks-tfvars', ch:'Stack AKS', title:'terraform.tfvars',
+  say:'O terraform.tfvars traz os valores do ambiente de estudo e é carregado automaticamente. Ele vai para o Git, então nunca recebe segredo: a senha do banco é gerada pelo próprio Terraform e vai direto para o Key Vault.',
+  v:F('infra/aks/terraform.tfvars')},
+
+{ id:'aks-main', ch:'Stack AKS', title:'main.tf: grupo, logs e registro',
+  say:'O main cria o resource group, o workspace do Log Analytics com um teto diário de ingestão para conter custo, e o Container Registry no plano Basic, sem usuário administrador. O bloco locals junta as tags padrão, aplicadas em todos os recursos.',
+  v:F('infra/aks/main.tf')},
+
+{ id:'aks-cluster', ch:'Stack AKS', title:'aks.tf: o cluster',
+  say:'O cluster usa o plano Free, OIDC e identidade de carga de trabalho, upgrades automáticos de patch e imagem de nó. O pool tem autoscaler e um nome temporário, que permite trocar o tamanho da VM sem recriar o cluster. O driver de segredos, o roteamento de aplicativos e o Container Insights já vêm ligados. O node_count é ignorado porque quem muda é o autoscaler.',
+  v:F('infra/aks/aks.tf')},
+
+{ id:'aks-kv', ch:'Stack AKS', title:'keyvault.tf: cofre e certificado',
+  say:'O Key Vault usa RBAC do Azure em vez de access policies. Quem roda o Terraform vira administrador do cofre, e um time_sleep espera a permissão propagar antes da primeira gravação. O certificado do ingress é autoassinado, bom para o protótipo. O add-on de roteamento recebe permissão para ler esse certificado.',
+  v:F('infra/aks/keyvault.tf')},
+
+{ id:'aks-sql', ch:'Stack AKS', title:'sql.tf: banco e string de conexão',
+  say:'A senha do SQL é gerada pelo provider random, sem caracteres que quebram a string de conexão. O banco usa o plano Basic. A regra 0.0.0.0 libera os serviços do Azure, incluindo a saída do AKS; IPs de desenvolvedores entram por variável. A string de conexão é montada e gravada como segredo no Key Vault.',
+  v:F('infra/aks/sql.tf')},
+
+{ id:'aks-id', ch:'Stack AKS', title:'identity.tf: identidade da API',
+  say:'A identidade gerenciada da API recebe uma credencial federada que confia nos tokens que o cluster emite para a ServiceAccount cep-api, no namespace cep. Ela tem só leitura de segredos no Key Vault, o mínimo que o driver de segredos precisa.',
+  v:F('infra/aks/identity.tf')},
+
+{ id:'aks-out', ch:'Stack AKS', title:'outputs.tf',
+  say:'Os outputs ligam o Terraform ao resto do projeto: o servidor do ACR, o nome do Key Vault, o tenant e o client ID da identidade vão para o values do Helm. O issuer OIDC vai para a stack de mensageria. E um output já traz pronto o comando para baixar as credenciais do cluster.',
+  v:F('infra/aks/outputs.tf')},
+
+{ id:'aks-run', ch:'Stack AKS', title:'fmt, validate, plan, apply',
+  say:'Com os arquivos prontos: init configura o backend remoto, fmt e validate checam o código, plan mostra o que vai acontecer e salva o plano, e apply executa exatamente esse plano. No fim, terraform output mostra os valores que vão para o Helm.',
+  v:{type:'term', lines:[
+    'c|cd infra/aks',
+    'c|terraform init',
+    'ok|Successfully configured the backend "azurerm"!',
+    'c|terraform fmt -check && terraform validate',
+    'ok|Success! The configuration is valid.',
+    'c|terraform plan -out tfplan',
+    'o|Plan: 18 to add, 0 to change, 0 to destroy.',
+    'c|terraform apply tfplan',
+    'o|azurerm_kubernetes_cluster.aks: Still creating... [7m20s elapsed]',
+    'ok|Apply complete! Resources: 18 added, 0 changed, 0 destroyed.',
+    'c|terraform output -raw workload_identity_client_id',
+    'o|5d1c8f2a-…',
+    'c|$(terraform output -raw comando_credenciais) && kubectl get nodes',
+  ]}},
+
+{ id:'grafo', ch:'Stack AKS', title:'Como o Terraform decide a ordem',
+  say:'Você não escreve a ordem de criação. Cada referência entre recursos vira uma dependência, e o Terraform monta um grafo: o resource group vem primeiro, o cluster depende do Log Analytics, o papel AcrPull depende do cluster e do registro. Quando não há referência, como a propagação de permissões, o depends_on deixa a dependência explícita.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:240,w:150,h:58, cls:'amber', html:B('resource group','rg-agx-cep')},
+    {at:2.5, x:236,y:100,w:170,h:58, html:B('log analytics','law-agx-cep')},
+    {at:3, x:236,y:200,w:170,h:58, html:B('container registry','acragxcep01')},
+    {at:3.5, x:236,y:300,w:170,h:58, html:B('key vault','kv-agx-cep-01')},
+    {at:4, x:236,y:400,w:170,h:58, html:B('random_password','senha do SQL')},
+    {at:5.5, x:456,y:100,w:170,h:58, cls:'blue', html:B('aks cluster','~7 min')},
+    {at:6.5, x:456,y:300,w:170,h:58, cls:'amber', html:B('time_sleep 60s','depends_on')},
+    {at:7, x:456,y:400,w:170,h:58, html:B('sql server + db','sql-agx-cep-01')},
+    {at:9, x:690,y:100,w:234,h:58, cls:'green', html:B('AcrPull · identidade','depois do cluster')},
+    {at:9.5, x:690,y:200,w:234,h:58, cls:'green', html:B('Certificate User','routing → KV')},
+    {at:10, x:690,y:300,w:234,h:58, cls:'green', html:B('certificado do ingress','depois do sleep')},
+    {at:10.5, x:690,y:400,w:234,h:58, cls:'green', html:B('segredo da conexão','sql + sleep')},
+  ], lines:[
+    {at:2.5, d:'M186 269 C 210 269, 210 129, 236 129', cls:'flow'},
+    {at:3, d:'M186 269 C 210 269, 210 229, 236 229', cls:'flow'},
+    {at:3.5, d:'M186 269 C 210 269, 210 329, 236 329', cls:'flow'},
+    {at:5.5, d:'M406 129 L 456 129', cls:'flow'},
+    {at:6.5, d:'M406 329 L 456 329', cls:'amber'},
+    {at:7, d:'M406 429 L 456 429', cls:'flow'},
+    {at:9, d:'M626 129 L 690 129', cls:'green'},
+    {at:9, d:'M406 229 C 560 229, 600 140, 690 135', cls:'dim'},
+    {at:9.5, d:'M626 129 C 660 129, 660 229, 690 229', cls:'green'},
+    {at:10, d:'M626 329 L 690 329', cls:'green'},
+    {at:10.5, d:'M626 429 L 690 429', cls:'green'},
+    {at:10.5, d:'M626 340 C 660 340, 660 420, 690 420', cls:'dim'},
+  ]}},
+
+/* ---------- STACK MENSAGERIA ---------- */
+{ id:'msg-main', ch:'Stack mensageria', title:'main.tf: namespace e tópicos',
+  say:'A stack de mensageria cria o namespace do Event Hubs no plano Standard, o menor com o endpoint Kafka, com uma unidade de throughput e sem chaves SAS. Os tópicos saem de um mapa no locals com for_each: o principal com o número de partições da variável, e a dead letter com uma partição. A retenção tem validação para não passar dos sete dias do Standard.',
+  v:F('infra/mensageria/main.tf')},
+
+{ id:'msg-rbac', ch:'Stack mensageria', title:'rbac.tf: quem publica e quem lê',
+  say:'Os desenvolvedores listados recebem os papéis de envio e leitura, para rodar os serviços na máquina contra o Azure. Quando o issuer OIDC do AKS é informado, o count cria também a identidade dos serviços no cluster, a credencial federada e os mesmos papéis. Sem o AKS pronto, essa parte simplesmente não é criada.',
+  v:F('infra/mensageria/rbac.tf')},
+
+{ id:'msg-run', ch:'Stack mensageria', title:'Aplicar e ligar ao AKS',
+  say:'Na primeira vez, aplique só com o seu object ID nos desenvolvedores. Quando o cluster existir, leia o issuer do output da stack do AKS, coloque no tfvars e aplique de novo: o Terraform acrescenta só a identidade dos serviços. O output bootstrap_servers vai direto para o appsettings do Azure.',
+  v:{type:'term', lines:[
+    'c|cd infra/mensageria',
+    'c|az ad signed-in-user show --query id -o tsv',
+    'o|8b0e1c4d-…            # vai para principais_dev no tfvars',
+    'c|terraform init && terraform apply',
+    'ok|Apply complete! Resources: 6 added, 0 changed, 0 destroyed.',
+    'c|terraform -chdir=../aks output -raw aks_oidc_issuer_url',
+    'o|https://brazilsouth.oic.prod-aks.azure.com/…/',
+    'c|terraform apply      # com aks_oidc_issuer_url preenchido',
+    'o|Plan: 4 to add, 0 to change, 0 to destroy.',
+    'c|terraform output',
+    'ok|bootstrap_servers = "evhns-agx-prop-01.servicebus.windows.net:9093"',
+    'ok|topicos = { "pre-analise.recebida" = 6, "pre-analise.recebida.dlq" = 1 }',
+  ]}},
+
+/* ---------- PIPELINE E OPERAÇÃO ---------- */
+{ id:'pipeline', ch:'Pipeline e operação', title:'Terraform no Azure DevOps',
+  say:'No pipeline, a tarefa do Azure CLI expõe a identidade federada da service connection. As variáveis ARM com OIDC fazem o Terraform autenticar sem segredo. O estágio de plan salva o plano como artefato; o de apply espera a aprovação no Environment e aplica exatamente aquele plano.',
+  v:F('pipelines/infra-aks.yml')},
+
+{ id:'erros', ch:'Pipeline e operação', title:'Erros comuns e como resolver',
+  say:'Os erros que mais aparecem: nome já usado no Azure, que se resolve trocando o sufixo; permissão negada logo depois de criar um papel, que é propagação e passa em minutos; Key Vault com mesmo nome em exclusão temporária; estado travado por uma execução interrompida; e falta de cota de vCPU na região.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:84, cls:'amber', html:B('Name already taken / AlreadyExists','ACR, Key Vault, SQL, storage e namespace são únicos no Azure: troque o sufixo')},
+    {at:3, x:494,y:92,w:430,h:84, cls:'amber', html:B('403 AuthorizationFailed logo após criar papel','propagação do RBAC: espere 1–2 min e rode o apply de novo')},
+    {at:5, x:36,y:196,w:430,h:84, cls:'amber', html:B('Vault already exists in soft-deleted state','purge_soft_delete_on_destroy / recover no provider, ou az keyvault purge')},
+    {at:7, x:494,y:196,w:430,h:84, cls:'amber', html:B('Error acquiring the state lock','execução interrompida: confirme que nada roda e use terraform force-unlock <id>')},
+    {at:9, x:36,y:300,w:430,h:84, cls:'amber', html:B('QuotaExceeded / vCPU','peça aumento de cota da série B na região ou mude o vm_size')},
+    {at:11, x:494,y:300,w:430,h:84, cls:'amber', html:B('Unsupported argument','atributo renomeado na versão do azurerm: confira o guia de upgrade')},
+    {at:13, x:36,y:404,w:888,h:96, cls:'green', html:B('Regra de ouro','mudou algo no portal? O próximo plan mostra a diferença (drift). Corrija no código, nunca só no portal.')},
+  ]}},
+
+{ id:'destroy', ch:'Pipeline e operação', title:'Destruir na ordem certa',
+  say:'Para destruir, comece pela mensageria, que pode depender da identidade do cluster, e depois o AKS. O Key Vault é purgado e o grupo de recursos é removido mesmo com sobras. O bootstrap fica: ele guarda o estado e permite recriar tudo com um apply.',
+  v:{type:'term', lines:[
+    'c|cd infra/mensageria && terraform destroy',
+    'ok|Destroy complete! Resources: 10 destroyed.',
+    'c|cd ../aks && terraform destroy',
+    'o|azurerm_kubernetes_cluster.aks: Still destroying... [4m30s elapsed]',
+    'ok|Destroy complete! Resources: 18 destroyed.',
+    "c|az group list --query \"[?starts_with(name,'rg-agx')].name\" -o tsv",
+    'o|rg-agx-tfstate',
+  ]}},
+
+{ id:'check', ch:'Pipeline e operação', title:'Checklist do Terraform',
+  say:'Antes de dar como pronto, confira esta lista. Ela junta os itens de Terraform das duas tarefas com as boas práticas que evitam problema quando mais gente da squad começar a usar o mesmo código.',
+  v:{type:'check', items:[
+    'Estado no Storage, com versionamento',
+    'Bootstrap separado dos ambientes',
+    'Versões de Terraform e providers fixadas',
+    '.terraform.lock.hcl versionado no Git',
+    'Nenhum segredo no tfvars ou no código',
+    'fmt e validate antes de todo plan',
+    'apply sempre a partir de um plan salvo',
+    'Ambiente criado e destruído só pelo código',
+    'Outputs alimentando Helm e appsettings',
+    'Pipeline com plan e aprovação antes do apply',
+    'Menor plano e menor capacidade que atendem',
+    'README com criar, usar e destruir',
+  ]}},
+
+{ id:'outro', ch:'Pipeline e operação', title:'Próximo passo',
+  say:'Abaixo do vídeo estão todos os arquivos com botão de copiar, o README com a ordem dos comandos, a trilha de estudo de Terraform, o checklist e as perguntas mais comuns sobre estado, segredos e mudanças.',
+  v:{type:'outro'} },
+];
+// ===================== TRILHA, CHECKLIST, FAQ, COMANDOS =====================
+const STUDY = [
+  ['O que é o Terraform','Infraestrutura como código, fluxo de trabalho e estado','https://developer.hashicorp.com/terraform/intro','conceitos'],
+  ['Tutorial Terraform no Azure','Primeira configuração, mudanças, variáveis, outputs e estado remoto','https://developer.hashicorp.com/terraform/tutorials/azure-get-started','conceitos'],
+  ['Armazenar o estado no Azure Storage','Guia da Microsoft para o backend remoto','https://learn.microsoft.com/pt-br/azure/developer/terraform/store-state-in-azure-storage','bootstrap'],
+  ['Backend azurerm','Opções do backend, autenticação e lock','https://developer.hashicorp.com/terraform/language/backend/azurerm','aks-versions'],
+  ['Variáveis de entrada','Tipos, padrões, validação e arquivos .tfvars','https://developer.hashicorp.com/terraform/language/values/variables','aks-vars'],
+  ['Outputs','Expor valores para outras ferramentas e stacks','https://developer.hashicorp.com/terraform/language/values/outputs','aks-out'],
+  ['for_each','Criar vários recursos a partir de um mapa ou conjunto','https://developer.hashicorp.com/terraform/language/meta-arguments/for_each','msg-main'],
+  ['Arquivo de lock de dependências','.terraform.lock.hcl e versões de providers','https://developer.hashicorp.com/terraform/language/files/dependency-lock','aks-versions'],
+  ['Documentação do provider azurerm','Referência de todos os recursos','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs','aks-main'],
+  ['Guia de upgrade do azurerm 4.0','Atributos renomeados e mudanças de comportamento','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/4.0-upgrade-guide','erros'],
+  ['Autenticação OIDC do provider','Federação de identidade no pipeline, sem segredo','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc','pipeline'],
+  ['Criar o cluster AKS com Terraform','Início rápido da Microsoft','https://learn.microsoft.com/pt-br/azure/aks/learn/quick-kubernetes-deploy-terraform','aks-cluster'],
+  ['azurerm_kubernetes_cluster','Referência do recurso do AKS','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster','aks-cluster'],
+  ['azurerm_key_vault','Referência do recurso do Key Vault','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault','aks-kv'],
+  ['azurerm_federated_identity_credential','Credencial federada para a identidade de carga de trabalho','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/federated_identity_credential','aks-id'],
+  ['azurerm_eventhub_namespace','Namespace do Event Hubs','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub_namespace','msg-main'],
+  ['azurerm_eventhub','Event hub (tópico), partições e retenção','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub','msg-main'],
+];
+
+const CHECK = [
+  ['Ambos','Estado do Terraform em um storage do Azure, não na máquina de quem rodou','bootstrap'],
+  ['Ambos','Ambiente criado e destruído inteiro pelo Terraform, sem passos no portal','destroy'],
+  ['AKS','ACR criado e cluster com AcrPull, sem usuário e senha','aks-cluster'],
+  ['AKS','String de conexão gerada e gravada no Key Vault, sem segredo no repositório','aks-sql'],
+  ['AKS','Identidade de carga de trabalho criada pelo Terraform','aks-id'],
+  ['AKS','Plano Free do AKS e menor tamanho de nó que atende','aks-cluster'],
+  ['Mensageria','Namespace do Event Hubs Standard e tópicos criados pelo Terraform','msg-main'],
+  ['Mensageria','Retenção configurada e limite do plano conferido','msg-main'],
+  ['Mensageria','Acesso por Entra ID (papéis), sem chaves SAS','msg-rbac'],
+  ['Mensageria','Menor capacidade que atende e ambiente destruído quando parado','destroy'],
+  ['Prática','Versões fixadas e .terraform.lock.hcl versionado','aks-versions'],
+  ['Prática','fmt e validate antes do plan; apply a partir de plan salvo','aks-run'],
+  ['Prática','Pipeline com plan e aprovação antes do apply','pipeline'],
+  ['Prática','README com a ordem para criar, usar e destruir','outro'],
+];
+
+const FAQ = [
+ ['Estado','O que é o estado e por que ele importa tanto?',`<p>É o arquivo em que o Terraform registra o que criou e com quais IDs. Sem ele, o Terraform não sabe que os recursos existem e tenta criar tudo de novo. Por isso fica num storage do Azure, com versionamento, e não na máquina de alguém.</p>`],
+ ['Estado','O estado guarda segredos?',`<p>Sim. A senha gerada pelo <code>random_password</code> e o valor do segredo do Key Vault ficam no estado em texto. Por isso o storage aceita só Entra ID, sem chave de acesso, e só quem precisa tem o papel <code>Storage Blob Data Contributor</code>. Em produção, prefira autenticação do SQL pelo Entra ID e elimine a senha.</p>`],
+ ['Estado','Duas pessoas podem rodar apply ao mesmo tempo?',`<p>Não. O backend azurerm trava o estado com um lease no blob; a segunda execução recebe "Error acquiring the state lock" e para. Se uma execução foi interrompida e o lock ficou preso, confirme que ninguém está rodando e use <code>terraform force-unlock &lt;id&gt;</code>.</p>`],
+ ['Estado','Por que estados separados para AKS e mensageria?',`<p>Para destruir, mudar ou dar permissão em um sem arriscar o outro, e para os planos ficarem menores e mais rápidos. A ligação entre eles é por output: o issuer OIDC do AKS entra como variável da mensageria.</p>`],
+ ['Estado','Perdi o estado do bootstrap. E agora?',`<p>Os recursos continuam no Azure. Recrie o estado com <code>terraform import</code> de cada recurso, ou apenas não rode mais o bootstrap: as outras stacks só precisam que o storage exista.</p>`],
+ ['Mudanças','Alguém mudou algo pelo portal. O que acontece?',`<p>O próximo <code>plan</code> mostra a diferença (drift) e o <code>apply</code> desfaz a mudança. Se a mudança era necessária, leve-a para o código. A regra é que o código é a fonte da verdade.</p>`],
+ ['Mudanças','Como saber se uma mudança vai recriar um recurso?',`<p>Leia o plan: <code>~</code> altera no lugar, <code>-/+</code> destrói e recria e aparece com "forces replacement". Recriar o cluster ou o banco perde dados e tempo, então todo plan com <code>-/+</code> nesses recursos merece revisão antes do apply.</p>`],
+ ['Mudanças','Posso trocar o tamanho da VM dos nós?',`<p>Sim. O <code>temporary_name_for_rotation</code> faz o AKS criar um pool temporário, mover os pods e trocar o original, sem recriar o cluster.</p>`],
+ ['Mudanças','Já existe um recurso criado à mão. Como trazer para o Terraform?',`<p>Escreva o bloco do recurso e use um bloco <code>import</code> (Terraform 1.5+) ou <code>terraform import</code>. Rode o plan até ele não mostrar diferenças.</p>`],
+ ['Mudanças','Como atualizar o provider azurerm?',`<p>Mude a restrição de versão, rode <code>terraform init -upgrade</code>, leia o guia de upgrade e rode o plan. O <code>.terraform.lock.hcl</code> registra a versão exata; versione esse arquivo para todos usarem a mesma.</p>`],
+ ['Segredos','Onde entram os valores sensíveis?',`<p>Em lugar nenhum do repositório. Senhas são geradas pelo Terraform e vão para o Key Vault. Credenciais de quem roda vêm do <code>az login</code> ou da federação de identidade do pipeline. Se precisar passar um segredo como variável, use <code>sensitive = true</code> e a variável de ambiente <code>TF_VAR_nome</code>.</p>`],
+ ['Segredos','Por que o pipeline não tem client secret?',`<p>A service connection usa federação de identidade: o Azure DevOps emite um token OIDC por execução, e o Terraform o troca por um token do Entra ID com <code>ARM_USE_OIDC=true</code>. Não existe segredo para vazar nem para expirar.</p>`],
+ ['Organização','Devo usar módulos?',`<p>Para dois protótipos, arquivos por assunto já bastam. Quando a squad tiver vários ambientes iguais (dev, homologação, produção), extraia módulos para AKS e mensageria e mantenha uma pasta por ambiente chamando esses módulos.</p>`],
+ ['Organização','Workspaces ou pastas por ambiente?',`<p>Para ambientes com configurações diferentes e permissões diferentes, pastas (ou repositórios) por ambiente são mais claras e seguras. Workspaces servem melhor para cópias idênticas e temporárias.</p>`],
+ ['Organização','Quem deve rodar o apply: a pessoa ou o pipeline?',`<p>No estudo, a dupla roda localmente. Quando o pipeline existir, ele passa a ser o único a aplicar. Atenção: os papéis dados a "quem roda" usam o principal atual, então trocar de pessoa para o pipeline faz o plan recriar essas atribuições.</p>`],
+ ['Custos','Como garantir que nada ficou ligado?',`<p>Rode <code>terraform destroy</code> nas duas stacks e liste os grupos que começam com <code>rg-agx</code>: só o <code>rg-agx-tfstate</code> deve sobrar. O resource group <code>MC_…</code> do AKS é removido junto com o cluster.</p>`],
+ ['Custos','O que mais custa nessas stacks?',`<p>Os nós do AKS, o banco e as unidades de throughput do Event Hubs, todos cobrados por hora enquanto existem. Log Analytics cobra por GB ingerido; o <code>daily_quota_gb</code> limita isso no protótipo.</p>`],
+ ['Erros','O apply falhou no meio. E agora?',`<p>O que foi criado está no estado. Corrija a causa e rode o apply de novo: o Terraform continua de onde parou. Não apague recursos à mão nesse momento, ou o estado fica diferente do Azure.</p>`],
+ ['Erros','"Unsupported argument" num atributo que estava na documentação',`<p>A documentação aberta é de outra versão do provider. Abra a página na versão do seu <code>.terraform.lock.hcl</code> ou siga o guia de upgrade. No azurerm 4.x alguns nomes foram trocados, como no Key Vault e no AKS.</p>`],
+];
+
+const CMDS = [
+  ['terraform init\nterraform init -upgrade','Configurar backend e baixar providers (ou atualizá-los)'],
+  ['terraform fmt -recursive\nterraform validate','Formatar e validar antes do plan'],
+  ['terraform plan -out tfplan\nterraform apply tfplan','Planejar e aplicar exatamente o plano revisado'],
+  ['terraform output\nterraform output -raw key_vault_name','Ver os valores para Helm e appsettings'],
+  ['terraform state list\nterraform state show azurerm_kubernetes_cluster.aks','O que está no estado'],
+  ['terraform plan -refresh-only','Ver drift sem propor mudanças'],
+  ['terraform apply -replace=azurerm_key_vault_certificate.ingress','Forçar a recriação de um recurso'],
+  ['terraform force-unlock <lock-id>','Liberar um lock preso (só se nada estiver rodando)'],
+  ['terraform destroy','Remover tudo o que a stack criou'],
+  ['terraform -chdir=../aks output -raw aks_oidc_issuer_url','Ler o output de outra stack'],
+];
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG resource terraform provider backend variable output data features'.split(' '));
+function findComment(line, lang){
+  let q = null;
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === q) q = null; continue; }
+    if (ch === '"') { q = ch; continue; }
+    if (lang !== 'cs' && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if (lang === 'cs' && ch === '/' && line[i+1] === '/') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (lang === 'cs' && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 110;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>bash · ~/agx-infra</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>
+      <button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button></div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+renderList('studyList', 'progStudy', 'tf-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', 'tf-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+
+/* arquivos completos */
+(function arquivos(){
+  const lines = [];
+  const tree = {};
+  FILE_ORDER.forEach(p => { const parts = p.split('/'); let n = tree; parts.forEach((x, i) => { n[x] = n[x] || (i === parts.length - 1 ? null : {}); n = n[x] || {}; }); });
+  (function walk(n, pre){ const ks = Object.keys(n); ks.forEach((k, i) => { const last = i === ks.length - 1; lines.push(pre + (last ? '└── ' : '├── ') + k + (n[k] ? '/' : '')); if (n[k]) walk(n[k], pre + (last ? '    ' : '│   ')); }); })(tree, '');
+  $('tree').textContent = 'terraform-agx/\n' + lines.join('\n');
+  $('files').innerHTML = FILE_ORDER.map((p, i) => `<details><summary><span>${esc(p)}</span><span class="lc">${FILES[p].split('\n').length} linhas</span></summary><div class="fbody"><button class="cp" data-i="${i}">Copiar</button><pre>${esc(FILES[p])}</pre></div></details>`).join('');
+  $('filesCount').textContent = `${FILE_ORDER.length} arquivos`;
+  $('files').addEventListener('click', e => {
+    const b = e.target.closest('.cp'); if (!b) return;
+    const txt = FILES[FILE_ORDER[+b.dataset.i]];
+    try { navigator.clipboard.writeText(txt).then(() => toast('Arquivo copiado'), () => fallbackCopy(txt)); } catch(err){ fallbackCopy(txt); }
+  });
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+</script>
+
+</body></html>

@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha Criar Sua Empresa de Tecnologia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"proposta.md": "# Proposta · Agente de voz para confirmação de consultas\n\n## 1. O problema (nas palavras do cliente)\n\"Perdemos de 15 a 20 horários por semana porque ninguém atende nos picos.\"\n\n## 2. Resultado esperado e como medir\n60% das confirmações resolvidas sem atendente em 6 semanas; satisfação ≥ 4/5.\n\n## 3. Incluído\nFluxo de confirmação e remarcação · integração com a agenda · painel semanal.\n\n## 4. Não incluído\nCobrança, novos agendamentos, outros fluxos (orçados à parte).\n\n## 5. Etapas, prazos e o que o cliente fornece\nSemana 1: acessos à central e à agenda · Semana 3: piloto · Semana 6: aceite.\n\n## 6. Investimento\nEssencial · Completo · Premium  (muda o escopo, nunca a qualidade)\nEntrada antes de começar; parcelas por marco; operação mensal à parte.\n\n## 7. Validade e próximo passo\nVálida por 15 dias · próxima conversa: quinta, 10h.", "prospeccao.txt": "Mensagem de prospecção · curta, específica, sobre o cliente\n\n  Olá, Marcos. Vi que a clínica de vocês recebe agendamentos por telefone.\n  Muitas clínicas perdem horários porque as ligações caem na espera nos\n  horários de pico. Montei um assistente de voz que confirma e remarca\n  consultas automaticamente, integrado à central que vocês já têm.\n  Posso te mostrar um exemplo de 2 minutos?\n\nPor que funciona\n  · fala do problema DELE, com um detalhe que mostra que você olhou\n  · uma frase sobre o resultado, nenhuma sobre o seu currículo\n  · pede pouco: 2 minutos, não uma reunião de 1 hora\n\nRitmo: uma mensagem dessas por dia, para as pessoas certas, por alguns meses.\n\nPosicionamento\n  Eu ajudo [quem] a [resultado] com [como], porque [prova de credibilidade].", "saas.txt": "Métricas de SaaS · exemplo ilustrativo (não é meta)\n\n  40 clientes × R$ 500/mês              → MRR  = R$ 20.000   (ARR = R$ 240 mil)\n  2 cancelaram no mês                   → churn = 5% ao mês  (alto para B2B)\n  margem bruta 75%                      → R$ 375 de margem por cliente/mês\n  vida média = 1 ÷ 0,05                 → ~20 meses\n  LTV = 375 × 20                        → ~R$ 7.500\n  CAC (marketing + vendas + tempo)      → R$ 2.000\n  LTV ÷ CAC                             → ~3,75\n  payback = 2.000 ÷ 375                 → ~5,3 meses\n\n  NRR > 100%: a base cresce sozinha, mesmo sem clientes novos\n  produtos com IA: vigie a margem bruta; custo por uso pesa\n\nNo começo, olhe outra coisa\n  · quantos usam toda semana · quantos renovariam\n  · tempo até o primeiro resultado · o que pedem e reclamam"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Vol 11 · Criar Sua Empresa de Tecnologia =====================
+const CONF = {
+  title: 'Trilha Criar Sua Empresa de Tecnologia', file: 'Vol 11 - Criar Sua Empresa de Tecnologia', key: 'v11',
+  eyebrow: 'Guia Técnico · Volume 11', h1: 'Criar sua empresa de tecnologia em degraus seguros',
+  lead: 'Roteiro em vídeo para transformar conhecimento técnico em negócio sem arriscar a renda da família: os quatro modelos de negócio, validar antes de construir, nicho a partir da sua trajetória, preço, primeiros clientes, propostas e contratos, o que perguntar ao contador, finanças e quando sair do emprego, time e investimento, métricas de SaaS, erros de fundador técnico e um plano em etapas.',
+  pills: ['Serviço produtizado', 'Validação', 'Nicho', 'Preço por valor', 'Primeiros clientes', 'Contratos', 'MRR · churn · LTV'],
+  term: 'bash · ~/minha-empresa',
+  faqPlaceholder: 'Buscar: nicho, preço, contrato, sair do emprego, MRR…',
+  matriz: {title: 'Os quatro modelos de negócio', desc: 'Comece onde o risco é baixo e o dinheiro entra rápido; suba quando o degrau atual estiver firme.', cols: ['Modelo', 'O que você vende', 'Vantagens', 'Desvantagens', 'Faz sentido quando']},
+};
+const TITLE = {k: 'Guia Técnico · Volume 11', h: 'Criar sua empresa de tecnologia',
+  p: 'Comece vendendo seu conhecimento em degraus seguros e só suba quando o degrau atual estiver firme, protegendo a renda da família em cada etapa.',
+  chips: ['freelance → produtizado → SaaS', 'validar antes', 'nicho', 'preço', 'contratos', 'caixa']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Até alguém pagar, todo código é hipótese',
+  p: 'Abaixo do vídeo estão os quatro modelos lado a lado, a trilha de estudo, o checklist da etapa zero e as perguntas que clientes, sócios e contadores vão fazer.',
+  chips: ['venda antes de construir', 'um público, um problema', 'entrada antes de começar', 'três caixas separadas']};
+
+const SCENES = [
+/* ---------- MODELOS ---------- */
+{ id:'intro', ch:'Modelos de negócio', title:'Tudo junto, a serviço de um negócio',
+  say:'Este volume junta tudo: conhecimento técnico, nicho, liderança e comunicação, agora a serviço de um negócio próprio. A ideia central é começar vendendo seu conhecimento em degraus seguros e só subir quando o degrau atual estiver firme, protegendo a renda da família em cada etapa. Este é um mapa do que fazer e do que perguntar; contador e advogado continuam sendo as pessoas certas para as decisões legais.',
+  v:{type:'title'} },
+
+{ id:'escada', ch:'Modelos de negócio', title:'A escada dos quatro modelos',
+  say:'Freelancer vende horas: começa amanhã, mas a renda é limitada pelo tempo e o cliente decide o escopo. Serviço produtizado vende um resultado padronizado com escopo e preço fixos, como um diagnóstico de oportunidades de IA em duas semanas: margem maior e venda mais fácil. Consultoria ou agência faz projetos maiores com equipe, com gestão e caixa irregular. Produto, o SaaS, tem receita recorrente e escala, mas leva meses ou anos até dar lucro.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:400,w:200,h:102, cls:'blue', html:B('Freelancer','horas ou tarefas')+NOTE('começa amanhã', 'dim')},
+    {at:2.5, x:262,y:310,w:200,h:192, cls:'green', html:B('Produtizado','resultado, escopo e preço fixos')+NOTE('o degrau que mais equilibra', 'green')},
+    {at:4.2, x:488,y:220,w:200,h:282, cls:'amber', html:B('Consultoria','projetos com equipe')+NOTE('gestão, caixa irregular', 'dim')},
+    {at:5.9, x:714,y:130,w:210,h:372, cls:'amber', html:B('Produto (SaaS)','assinatura')+NOTE('recorrente; anos até o lucro', 'dim')},
+    {at:9, x:36,y:92,w:640,h:110, cls:'region', html:'<span class="rl">o caminho mais seguro com emprego e família</span>'+UL('freelance no nicho → produtizar o que se repete → automatizar partes → produto','valida o problema com dinheiro real antes de investir meses construindo')},
+  ]}},
+
+/* ---------- VALIDAR ---------- */
+{ id:'problema', ch:'Validar antes de construir', title:'Um bom problema e como validar',
+  say:'O erro número um de fundadores técnicos é passar meses construindo um produto excelente para um problema que ninguém paga para resolver. Um bom problema dói de verdade, é frequente, tem alguém com orçamento e tem soluções atuais ruins. Converse com dez a vinte pessoas antes de qualquer código e pergunte sobre o passado: como resolveu da última vez, quanto custou, o que já tentou. Fuja do você usaria. Teste o compromisso e venda o resultado como serviço antes de construir.',
+  v:GRID(2, [
+    ['Um bom problema','',['dói: custa dinheiro, tempo ou risco','é frequente: toda semana','alguém tem orçamento','as soluções atuais são ruins'],'blue'],
+    ['Como validar','10 a 20 conversas',['pergunte sobre o passado','"quanto custou da última vez?"','nunca "você usaria…?"','procure as mesmas dores, com as mesmas palavras'],'green'],
+  ], {h:250, step:5, rodape:'Teste o compromisso (reunião com o chefe, dados para piloto, pré-pagamento) e venda como serviço antes de construir'}) },
+
+{ id:'sinais', ch:'Validar antes de construir', title:'Sinais e o produto mínimo',
+  say:'Sinal verde é a pessoa perguntar quando você consegue começar, trazer outros interessados, já gastar com soluções improvisadas e pedir preço e prazo. Sinal vermelho é me manda mais informações, só você falar na reunião, nunca pensamos nisso e pedir uma versão gratuita por meses. Validado com pagamento, construa a menor versão que entrega o resultado principal, mesmo com partes manuais por trás. É o esqueleto andante aplicado ao negócio.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'green', html:B('Sinais verdes','')+UL('"Quando você consegue começar?"','traz outros interessados','já gasta com improvisos','pede preço e prazo')},
+    {at:5, x:494,y:92,w:430,h:250, cls:'ext', html:B('Sinais vermelhos','')+UL('"Me manda mais informações"','só você fala na reunião','"Nunca pensamos nisso"','versão gratuita por meses')},
+    {at:10, x:36,y:362,w:888,h:140, cls:'region', html:'<span class="rl">o produto mínimo</span>'+UL('a menor versão que entrega o resultado principal, com partes manuais por trás','objetivo: aprender com uso real, não impressionar · o esqueleto andante do Volume 10')},
+  ]}},
+
+/* ---------- NICHO ---------- */
+{ id:'nicho', ch:'Nicho e posicionamento', title:'Três nichos a partir da sua trajetória',
+  say:'Generalistas competem por preço; especialistas num problema competem por confiança e cobram mais. A fórmula: eu ajudo quem a qual resultado, com qual método, porque qual prova. Três nichos naturais: IA para atendimento por telefone, com Asterisk, integração e IA, começando por um piloto de agente de voz; IA e dados para indústrias médias, com dez anos de chão de fábrica e backend; e automação com IA em empresas com sistemas legados, começando por um diagnóstico com ROI em duas semanas.',
+  v:GRID(3, [
+    ['IA no atendimento telefônico','',['agentes de voz sem trocar a central','vantagem: Asterisk + integração + IA','piloto de um fluxo em 4–6 semanas'],'blue'],
+    ['IA e dados na indústria','',['dados de produção → decisões','vantagem: 10 anos de fábrica + backend','diagnóstico e painel em 3 semanas'],'green'],
+    ['Automação sobre legados','',['IA integrada aos sistemas atuais','vantagem: integração e mensageria','diagnóstico com ROI em 2 semanas'],'amber'],
+  ], {h:220, step:4, rodape:'Eu ajudo [quem] a [resultado] com [como], porque [prova de credibilidade]'}) },
+
+{ id:'escolher-nicho', ch:'Nicho e posicionamento', title:'Como escolher e por que estreitar',
+  say:'Pergunte onde você já tem acesso a clientes, onde o problema dói mais e há orçamento, onde terá vantagem por anos e o que dá energia por anos, porque nicho é compromisso longo. Atendimento telefônico tem custo por minuto e por atendente fácil de medir, o que ajuda a vender. Teste dois nichos em paralelo por alguns meses e fique com o que responder melhor. Começar estreito acelera a confiança e o boca a boca; expandir para vizinhos depois é natural.',
+  v:{type:'boxes', defs:[
+    ['Acesso','onde você já conhece clientes?', .8],
+    ['Dor e orçamento','onde dói mais e há dinheiro?', 2.6],
+    ['Vantagem','a combinação mais rara', 4.4],
+    ['Energia','compromisso de anos', 6.2],
+  ], items:[
+    {at:8.5, x:470,y:92,w:454,h:200, cls:'green', html:B('Teste dois, fique com um','')+UL('conversas e propostas por alguns meses','depois, foco total')},
+    {at:11.5, x:470,y:312,w:454,h:190, cls:'blue', html:B('Nicho não é prisão','')+UL('estreito acelera confiança e produtização','expandir para vizinhos é natural','amplo tentando se diferenciar depois quase nunca dá certo')},
+  ]}},
+
+/* ---------- PREÇO ---------- */
+{ id:'preco', ch:'Precificação', title:'Três formas de cobrar e o piso e o teto',
+  say:'Fundadores técnicos quase sempre cobram pouco, e preço baixo atrai quem valoriza menos o trabalho. Por hora é simples, mas pune quem é rápido. Por projeto, com escopo fechado, o cliente sabe quanto paga e você ganha com eficiência. Por valor, o preço acompanha o resultado do cliente. Para um projeto: o piso é seu custo, com margem para imprevistos; o teto é quanto o problema custa ao cliente; o preço fica entre os dois, algo que se paga em poucos meses. Ofereça três pacotes.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:170, html:B('Por hora','')+UL('simples, sem risco de escopo','pune quem é rápido')},
+    {at:3, x:340,y:92,w:280,h:170, cls:'blue', html:B('Por projeto','escopo fechado')+UL('ganha com eficiência','escopo vago vira prejuízo')},
+    {at:5, x:644,y:92,w:280,h:170, cls:'green', html:B('Por valor','proporcional ao resultado')+UL('margens maiores','exige medir o valor')},
+    {at:8, x:36,y:300,w:200,h:200, cls:'amber', html:B('Piso','seu custo')+NOTE('horas + imprevistos × hora mínima', 'dim')},
+    {at:9.5, x:276,y:300,w:400,h:200, cls:'green', html:B('Preço','entre o piso e uma fração do valor')+UL('se paga em poucos meses','3 pacotes: essencial, completo, premium','muda o escopo, nunca a qualidade')},
+    {at:11, x:716,y:300,w:208,h:200, cls:'amber', html:B('Teto','valor para o cliente')+NOTE('quanto o problema custa por ano', 'dim')},
+  ], lines:[
+    {at:9.5, d:'M236 400 L 276 400', cls:'amber'}, {at:11, d:'M676 400 L 716 400', cls:'amber'},
+  ]}},
+
+{ id:'preco-saas', ch:'Precificação', title:'A hora da empresa e o preço de SaaS',
+  say:'A hora mínima da empresa cobre impostos, contador, ferramentas, tempo não faturado com vendas e estudo, reserva e férias: por isso é bem maior que a hora de funcionário. Em SaaS, cobre pela métrica de valor que cresce com o cliente, como minutos atendidos ou unidades. Planos em camadas, implantação paga para quem exige integração, e desconto anual para o caixa. Com IA por chamada, garanta que o preço por unidade cubra o custo, mesmo para quem mais usa. E reajuste quando a demanda superar a capacidade.',
+  v:GRID(2, [
+    ['A hora da empresa','bem maior que a de funcionário',['impostos, contador, ferramentas','tempo não faturado: vendas, propostas','reserva e férias'],'blue'],
+    ['Métrica de valor','',['minutos atendidos, usuários, unidades','a receita cresce com o cliente'],'green'],
+    ['Estrutura de SaaS','',['planos em camadas + empresarial','implantação paga filtra curiosos','desconto anual melhora o caixa'],'green'],
+    ['Custos de IA e coragem','',['preço por unidade > custo por unidade','até para quem mais usa','ninguém reclama do preço? está baixo'],'amber'],
+  ], {step:3.6}) },
+
+/* ---------- CLIENTES ---------- */
+{ id:'fontes', ch:'Primeiros clientes', title:'De onde vêm os primeiros clientes',
+  say:'Os primeiros clientes quase nunca vêm de anúncios. Vêm da sua rede: ex-colegas, ex-chefes, a indústria, a Fatec, dizendo de forma específica o que você faz. De parceiros que têm os clientes e não têm sua competência, como integradores e revendas de telefonia. De conteúdo com prova, como demonstrações funcionando. De palestras, onde sua oratória coloca você à frente. De prospecção direta personalizada. E de plataformas de freelance, só no início.',
+  v:FLOW([['Sua rede','específico: o que você faz','green'],['Parceiros','integradores, revendas','green'],['Conteúdo com prova','demos reais','blue'],['Palestras','sua oratória','blue'],['Prospecção','mensagem personalizada','amber']],
+    {y:96, h:86, step:1.6, cards:[
+      ['Os primeiros três clientes','',['preço menor em troca de depoimento e caso com números','nunca de graça: quem não paga não se compromete','superentregue no relacionamento, não no escopo','no fim, peça a indicação'],'green'],
+      ['O funil, mesmo pequeno','',['contato → conversa → proposta → negociação → fechado','planilha atualizada toda semana','em meses: quantas conversas viram uma venda'],'blue'],
+    ]}) },
+
+{ id:'prospeccao', ch:'Primeiros clientes', title:'A mensagem de prospecção que funciona',
+  say:'Curta, específica e sobre o cliente, não sobre você. Fale do problema dele, com um detalhe que mostra que você olhou; uma frase sobre o resultado; e um pedido pequeno, dois minutos, não uma reunião de uma hora. Uma mensagem assim por dia, para as pessoas certas, durante alguns meses, gera mais clientes que qualquer campanha. E a frase de posicionamento resume tudo: quem, resultado, como e prova.',
+  v:S('prospeccao.txt','prospeccao.txt','txt')},
+
+/* ---------- PROPOSTAS ---------- */
+{ id:'proposta', ch:'Propostas e contratos', title:'A proposta que vende',
+  say:'Projetos que dão prejuízo ao fornecedor raramente falham na técnica: falham num escopo vago que cresce sem pagamento. A proposta tem sete partes: o problema nas palavras e números do cliente, o resultado e como medir, o incluído em itens verificáveis, o não incluído explícito, etapas com o que o cliente fornece, o investimento com opções e a validade com o próximo passo. Duas a quatro páginas, enviadas em até dois dias e apresentadas numa chamada.',
+  v:S('proposta.md','proposta.md','md')},
+
+{ id:'contrato', ch:'Propostas e contratos', title:'O que todo contrato precisa cobrir',
+  say:'Escopo com critério de aceite. Prazos que se movem se o cliente atrasa acessos. Mudança de escopo sempre orçada à parte, por escrito. Entrada antes de começar e parcelas por marco. Propriedade intelectual: o que é do cliente e o que continua seu, como ferramentas reutilizáveis. Confidencialidade e LGPD. Garantia e suporte separados. Limitação de responsabilidade, encerramento e quem paga nuvem, telefonia e IA. Um modelo revisado por advogado uma vez protege todos os projetos seguintes.',
+  v:GRID(3, [
+    ['Escopo e prazo','',['entregáveis com aceite','atraso do cliente move o prazo','mudança: orçamento à parte'],'blue'],
+    ['Dinheiro','',['entrada antes de começar','parcelas por marco','atraso de pagamento','custos de terceiros: quem paga'],'green'],
+    ['Proteção','',['propriedade intelectual','confidencialidade e LGPD','garantia × suporte','limite de responsabilidade'],'amber'],
+  ], {step:4, rodape:'"Ótima ideia. Fica fora do escopo atual: posso orçar à parte ou trocar por um item que não começamos. O que prefere?"'}) },
+
+/* ---------- BRASIL ---------- */
+{ id:'brasil', ch:'Aspectos no Brasil', title:'O que perguntar ao contador',
+  say:'Esta parte é um mapa de perguntas, não orientação contábil: as regras mudam e a reforma tributária está em transição. Primeiro, seu contrato de trabalho: exclusividade, não concorrência e propriedade intelectual, e nunca use equipamento ou horário do empregador. O MEI em geral não permite atividades de TI; o formato comum é uma sociedade limitada unipessoal. No Simples, o fator R, que relaciona folha e pró-labore com o faturamento, pode reduzir bastante a alíquota. Peça simulações e conta PJ desde o primeiro dia.',
+  v:GRID(2, [
+    ['Antes de tudo','seu contrato de trabalho',['exclusividade, não concorrência, PI','nada do empregador no seu negócio','dúvida: advogado trabalhista'],'ext'],
+    ['Formato','',['MEI: em geral não permite TI','comum: limitada unipessoal','pergunte natureza e CNAEs'],'blue'],
+    ['Regime','',['Simples e o fator R','Presumido e Real em outros casos','simule o 1º e o 2º ano'],'green'],
+    ['Rotina','',['conta PJ separada','nota fiscal a cada recebimento','pró-labore × lucros','exterior: exportação de serviços'],'amber'],
+  ], {step:3.6}) },
+
+/* ---------- FINANÇAS ---------- */
+{ id:'caixas', ch:'Finanças e o emprego', title:'Três caixas e os números do mês',
+  say:'A maior causa de fechamento de pequenas empresas é falta de caixa, não de clientes. Separe três caixas: a da família, coberta por renda previsível; a reserva de emergência da família, intocável; e a da empresa, com reserva própria. Todo mês, olhe a receita recebida, não a vendida, os custos, a margem por projeto, o fôlego em meses, a concentração, porque um cliente com mais da metade da receita deixa a empresa frágil, e a receita recorrente.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:180, cls:'blue', html:B('Caixa da família','renda previsível')+UL('emprego, ou pró-labore','que a empresa comprovadamente sustenta')},
+    {at:3, x:340,y:92,w:280,h:180, cls:'green', html:B('Reserva da família','vários meses, intocável')},
+    {at:5, x:644,y:92,w:280,h:180, cls:'amber', html:B('Caixa da empresa','contas do negócio')+UL('reserva própria para meses fracos')},
+    {at:8, x:36,y:292,w:888,h:210, cls:'region', html:'<span class="rl">os números de todo mês</span>'+UL('receita recebida (a que entrou), custos fixos e variáveis, margem por projeto','fôlego: quantos meses sem receita nova · concentração: um cliente > metade = frágil','receita recorrente · erros: gastar a entrada antes de entregar, esquecer os impostos, contratar sobre venda futura')},
+  ]}},
+
+{ id:'sair', ch:'Finanças e o emprego', title:'Quando faz sentido sair do emprego',
+  say:'Sair do emprego é uma decisão financeira, não emocional. Critérios prudentes para discutir com a família: a empresa cobre as despesas da casa há vários meses seguidos, de forma recorrente ou com funil previsível; a reserva da família está intacta; a empresa tem a própria reserva; você está recusando trabalho; nenhum cliente concentra a maior parte da receita; a família concorda, inclusive sobre plano de saúde e benefícios; e há um plano B claro de volta ao mercado. Com a família crescendo, a régua sobe.',
+  v:CK('Receita cobre a casa há vários meses', 'Recorrente ou funil previsível', 'Reserva da família intacta', 'Empresa com reserva própria', 'Recusando trabalho por falta de tempo', 'Nenhum cliente concentra a receita', 'Família de acordo, com benefícios no papel', 'Plano B de volta ao mercado')},
+
+/* ---------- TIME E INVESTIMENTO ---------- */
+{ id:'time', ch:'Time e investimento', title:'Crescer o time e escolher o dinheiro',
+  say:'A ordem natural: você sozinho com ferramentas e IA; terceirizar o que não é diferencial, como contabilidade e design; freelancers de confiança para picos; a primeira contratação fixa só com receita recorrente que a pague por muitos meses; e sócio se houver alguém que complementa você. Contrate para o gargalo real, com projeto pago de teste. Sobre dinheiro: crescer com a receita dos clientes costuma ser o mais saudável para serviços e nicho. Investimento de risco não é prêmio: é combustível com contrato.',
+  v:GRID(2, [
+    ['Ordem do time','',['você + IA → terceirizar → freelancers','1ª contratação: com receita recorrente','sócio que complementa'],'blue'],
+    ['Sócios','as conversas antes',['papéis, dedicação, participação','vesting e saída','decisão e impasse, por escrito'],'amber'],
+    ['Crescer com receita','bootstrapping',['controle e sustentabilidade','o caminho para serviços e nicho'],'green'],
+    ['Investimento de risco','combustível com contrato',['diluição e pressão por crescer','só com tração, mercado grande e disposição'],'ext'],
+  ], {step:3.6}) },
+
+/* ---------- MÉTRICAS ---------- */
+{ id:'metricas', ch:'Métricas de SaaS', title:'A linguagem do negócio de software',
+  say:'MRR é a soma das assinaturas mensais; ARR, doze vezes isso. Churn é a porcentagem que cancela. NRR acima de cem por cento significa que a base cresce sozinha. CAC é o custo de conquistar um cliente; LTV, a margem que ele gera na relação; e o payback, em quantos meses a margem paga o CAC. Neste exemplo ilustrativo, LTV sobre CAC de três vírgula setenta e cinco e payback de cinco meses. Mas, antes de dezenas de clientes, olhe uso semanal, renovação e tempo até o primeiro resultado.',
+  v:S('metricas.txt','saas.txt','txt')},
+
+/* ---------- ERROS ---------- */
+{ id:'erros', ch:'Erros de fundador técnico', title:'Os erros típicos e os antídotos',
+  say:'Construir antes de vender: venda o resultado como serviço primeiro. Perfeccionismo técnico: simples, que funciona e se possa mudar. Fugir de vendas: tempo fixo toda semana com clientes. Nicho amplo: um público, um problema, um resultado. Cobrar pouco: preço pelo valor. Escopo sem limite: fora de escopo e aceite por marco. Ferramenta antes do problema. Depender de um cliente. Fazer tudo sozinho para sempre. E esquecer a saúde e a família: a empresa é maratona.',
+  v:GRID(4, [
+    ['Construir antes de vender','',['venda como serviço'],'ext'],
+    ['Perfeccionismo','',['simples e mutável'],'ext'],
+    ['Fugir de vendas','',['tempo fixo semanal'],'ext'],
+    ['Nicho amplo','',['1 público, 1 problema'],'amber'],
+    ['Cobrar pouco','',['preço por valor'],'amber'],
+    ['Escopo sem limite','',['aceite por marco'],'amber'],
+    ['Um cliente só','',['funil ativo sempre'],'blue'],
+    ['Tudo sozinho','',['terceirize e documente'],'blue'],
+  ], {step:1.8, rodape:'O mais caro é o primeiro: antes de cada funcionalidade, pergunte "quem já disse que pagaria por isso, e quanto?"'}) },
+
+{ id:'vantagens', ch:'Erros de fundador técnico', title:'O que você já tem a seu favor',
+  say:'Você já tem quatro vantagens. Oratória: o maior gargalo de fundadores técnicos é comunicar e vender, e você treinou isso por um ano. Visão de processo: anos melhorando processos numa fábrica treinam o olhar para operação, gargalos e qualidade. Amplitude técnica: você constrói sozinho o produto inteiro quando contratar ainda não é possível. E um nicho raro: telefonia, indústria, integração e IA juntos são uma combinação que poucos concorrentes têm.',
+  v:GRID(2, [
+    ['Oratória','',['o gargalo do fundador técnico é vender','você treinou por um ano'],'green'],
+    ['Visão de processo','',['fábrica: operação, gargalo, qualidade','exatamente o que uma empresa pequena precisa'],'green'],
+    ['Amplitude técnica','',['constrói o produto inteiro sozinho','na fase em que não dá para contratar'],'blue'],
+    ['Nicho raro','',['telefonia + indústria + integração + IA','difícil de copiar'],'amber'],
+  ], {step:3.6}) },
+
+/* ---------- PLANO ---------- */
+{ id:'plano', ch:'Plano em etapas', title:'Etapas com critério de saída',
+  say:'Cada etapa só começa quando a anterior cumpre o critério; o que manda são os critérios, não o calendário. Etapa zero, base, um mês: contrato, família, contador e nicho. Um, validação, dois a quatro meses: quinze a vinte conversas, demonstração e propostas, até dois clientes pagantes. Dois, primeiros clientes, três a seis meses: entregar muito bem, abrir a empresa, até três a cinco clientes e um contrato recorrente. Três, produtização. Quatro, a decisão pela checklist. Cinco, crescimento.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:400,w:140,h:102, cls:'blue', html:B('0 · Base','1 mês')+NOTE('contrato, família, contador', 'dim')},
+    {at:2, x:186,y:350,w:140,h:152, cls:'blue', html:B('1 · Validação','2–4 meses')+NOTE('→ 2 pagantes', 'green')},
+    {at:3.2, x:336,y:300,w:140,h:202, cls:'green', html:B('2 · Clientes','3–6 meses')+NOTE('→ 3–5 clientes, 1 recorrente', 'green')},
+    {at:4.4, x:486,y:250,w:140,h:252, cls:'green', html:B('3 · Produtizar','6 meses')+NOTE('→ pacote vendido de novo', 'green')},
+    {at:5.6, x:636,y:200,w:140,h:302, cls:'amber', html:B('4 · Decisão','pela checklist')},
+    {at:6.8, x:786,y:150,w:138,h:352, cls:'amber', html:B('5 · Crescer','anos')+NOTE('time, parceiros, SaaS', 'dim')},
+    {at:9, x:36,y:92,w:580,h:160, cls:'region', html:'<span class="rl">uma semana típica nas etapas 1 a 3</span>'+UL('3 noites de 2–3 h: entrega ou demonstração','1 noite para o negócio: conversas, propostas, conteúdo','uma manhã de fim de semana; o resto, família','30 min de revisão: funil, caixa, entregas')},
+  ]}},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'exercicios', ch:'Fechamento', title:'Da ideia a conversas marcadas',
+  say:'Estes exercícios são a etapa zero e o começo da um. Base: leia seu contrato, converse com a família, monte a planilha das três caixas e marque o contador. Nicho e oferta: a frase de posicionamento para dois nichos, um pacote com preço por piso e teto e trinta pessoas da rede. Validação: o roteiro de perguntas sobre o passado, cinco conversas em quatro semanas e uma demonstração de dois minutos. Vendas: a mensagem para dez pessoas, o funil e os modelos de proposta e contrato.',
+  v:GRID(4, [
+    ['Base','',['ler o contrato','conversa com a família','planilha das 3 caixas','marcar o contador'],'blue'],
+    ['Nicho e oferta','',['posicionamento × 2','pacote com piso e teto','30 pessoas da rede'],'green'],
+    ['Validação','',['roteiro sobre o passado','5 conversas em 4 semanas','demo de 2 minutos'],'amber'],
+    ['Vendas','',['mensagem para 10 pessoas','funil semanal','modelos de proposta e contrato'],''],
+  ], {h:240, step:2.5, rodape:'Traga o posicionamento, o pacote e o preço: reviso como um mentor de negócios e montamos a primeira proposta real'}) },
+
+{ id:'check', ch:'Fechamento', title:'Checklist do fundador',
+  say:'Antes de começar a subir a escada: você escolheu o degrau, validou o problema com perguntas sobre o passado, escreveu o posicionamento, calculou piso e teto, tem a mensagem de prospecção e o funil, os modelos de proposta e contrato, as perguntas para o contador, as três caixas separadas e os critérios para um dia sair do emprego.',
+  v:CK('Começar pelo degrau seguro', 'Validar com perguntas sobre o passado', 'Vender antes de construir', 'Frase de posicionamento', 'Preço entre piso e teto', 'Mensagem de prospecção diária', 'Funil de vendas semanal', 'Proposta com sete partes', 'Contrato revisado por advogado', 'Perguntas para o contador', 'Três caixas separadas', 'Critérios para sair do emprego')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os quatro modelos lado a lado, a trilha de estudo, o checklist e as perguntas que clientes, sócios e contadores vão fazer. O próximo passo não é ler mais: é escolher uma ação desta lista e fazê-la esta semana. Traga o posicionamento, o pacote e o preço, e montamos juntos a primeira proposta real.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Como vender agentes de voz como serviço', 'v08', 'vender', 'O nicho de telefonia com IA, no Volume 8'],
+  ['Esqueleto andante', 'v10', 'fatias', 'O produto mínimo aplicado ao projeto'],
+  ['Más notícias e escopo', 'v10', 'mas-noticias', 'Dizer sim com condições'],
+  ['Falar a língua do negócio', 'staff', 'negocio', 'Custo, receita e risco nas decisões técnicas'],
+  ['Privacidade e LGPD desde o desenho', 'sec', 'lgpd', 'Responsabilidades sobre dados nos contratos'],
+];
+
+const MATRIZ = [
+  ['Freelancer', 'Horas ou tarefas', 'Começa amanhã, sem investimento', 'Renda limitada pelas horas; cliente decide o escopo', 'Está começando e quer validar mercado e portfólio'],
+  ['Serviço produtizado', 'Resultado padronizado com escopo e preço fixos', 'Margem maior, venda mais fácil, repetível', 'Exige nicho claro e processo definido', 'Já entregou o mesmo tipo de trabalho algumas vezes'],
+  ['Consultoria ou agência', 'Projetos maiores, com equipe', 'Receita maior por projeto', 'Gestão de pessoas, caixa irregular, vendas constantes', 'Tem mais demanda do que atende sozinho'],
+  ['Produto (SaaS)', 'Software por assinatura', 'Receita recorrente, escala sem crescer o time igual', 'Meses ou anos até o lucro; risco alto', 'Conhece a fundo um problema repetido em muitos clientes'],
+];
+
+const STUDY = [
+  ['The Mom Test', 'Rob Fitzpatrick: perguntas que validam de verdade', 'https://www.momtestbook.com/', 'problema'],
+  ['Sebrae: abrir empresa', 'Formatos, regimes e passo a passo no Brasil', 'https://sebrae.com.br/sites/PortalSebrae/empreendedorismo', 'brasil'],
+  ['Simples Nacional (Receita Federal)', 'Portal oficial do regime', 'http://www8.receita.fazenda.gov.br/SimplesNacional/', 'brasil'],
+  ['Y Combinator: Startup School', 'Curso gratuito para fundadores', 'https://www.startupschool.org/', 'escada'],
+  ['Positioning (April Dunford)', 'Obviously Awesome: posicionamento', 'https://www.aprildunford.com/books', 'nicho'],
+  ['Value-based pricing (Jonathan Stark)', 'Cobrar por valor em serviços', 'https://jonathanstark.com/hbin', 'preco'],
+  ['SaaS Metrics 2.0 (David Skok)', 'MRR, churn, LTV, CAC explicados', 'https://www.forentrepreneurs.com/saas-metrics-2/', 'metricas'],
+  ['Stripe Atlas: guias', 'Precificação e negócios de software', 'https://stripe.com/guides/atlas', 'preco-saas'],
+  ['The E-Myth Revisited', 'Michael Gerber: processos antes de contratar', 'https://www.goodreads.com/book/show/81948.The_E_Myth_Revisited', 'time'],
+];
+
+const CHECK = [
+  ['Base', 'Ler o contrato de trabalho e anotar cláusulas', 'brasil'],
+  ['Base', 'Conversa com a família sobre o plano e o ritmo', 'plano'],
+  ['Base', 'Planilha das três caixas', 'caixas'],
+  ['Base', 'Reunião com contador com as perguntas', 'brasil'],
+  ['Nicho', 'Posicionamento para dois nichos', 'nicho'],
+  ['Oferta', 'Pacote com escopo, fora de escopo, prazo e preço', 'preco'],
+  ['Validação', 'Roteiro de entrevista sobre o passado', 'problema'],
+  ['Validação', 'Cinco conversas em quatro semanas', 'sinais'],
+  ['Validação', 'Demonstração de dois minutos', 'fontes'],
+  ['Vendas', 'Mensagem de prospecção para 10 pessoas', 'prospeccao'],
+  ['Vendas', 'Funil de vendas semanal', 'fontes'],
+  ['Contratos', 'Modelo de proposta com sete partes', 'proposta'],
+  ['Contratos', 'Modelo de contrato para o advogado revisar', 'contrato'],
+  ['Métricas', 'Calcular MRR, churn, LTV e payback de um exemplo', 'metricas'],
+];
+
+const FAQ = [
+ ['Modelo','Começo por SaaS ou por serviço?',`<p>Por serviço, de preferência produtizado. Ele valida o problema com dinheiro real, financia o aprendizado e gera as ferramentas internas que podem virar o produto. SaaS do zero leva meses ou anos até dar lucro, com risco alto.</p>`],
+ ['Validação','Como sei se um problema vale a pena?',`<p>Ele dói (custa dinheiro, tempo ou risco), é frequente, alguém tem orçamento e as soluções atuais são ruins. Valide com 10 a 20 conversas sobre o passado e com compromisso real: reunião com quem decide, dados para um piloto, pré-pagamento.</p>`],
+ ['Validação','Por que não perguntar "você usaria um produto que faz X?"',`<p>Porque todo mundo diz sim por educação e quase ninguém paga. Pergunte sobre o passado: como resolveu da última vez, quanto custou, o que já tentou.</p>`],
+ ['Preço','Como chego ao preço de um projeto?',`<p>O piso é seu custo: horas com margem para imprevistos vezes a sua hora mínima como empresa. O teto é quanto o problema custa ao cliente. O preço fica entre os dois, algo que se paga em poucos meses. Ofereça três pacotes que mudam o escopo, nunca a qualidade.</p>`],
+ ['Preço','Por que a hora da empresa é maior que a de funcionário?',`<p>Ela precisa cobrir impostos, contador, ferramentas, tempo não faturado (vendas, propostas, estudo), reserva e férias.</p>`],
+ ['Escopo','O cliente pediu algo novo no meio do projeto. E agora?',`<p>"Ótima ideia. Fica fora do escopo atual; posso orçar à parte ou trocar por um item que ainda não começamos. O que prefere?" Registre por escrito e entregue em marcos com aceite formal.</p>`],
+ ['Brasil','Posso abrir um MEI para desenvolvimento de software?',`<p>Em geral, atividades de desenvolvimento e consultoria em TI não são permitidas no MEI. O formato comum é uma sociedade limitada unipessoal no Simples Nacional. Confirme com um contador, que também simula o fator R e o pró-labore.</p>`],
+ ['Finanças','Quando sair do emprego?',`<p>Quando a empresa cobre as despesas da casa há vários meses, de forma recorrente ou com funil previsível; a reserva da família está intacta; a empresa tem reserva própria; você recusa trabalho; nenhum cliente concentra a receita; a família concorda; e há um plano B. É decisão financeira, não emocional.</p>`],
+ ['Investimento','Devo buscar investidor?',`<p>Para serviços e produtos de nicho, crescer com a receita dos clientes costuma ser o mais saudável. Investimento de risco é combustível com contrato: diluição e pressão por crescimento muito rápido. Faz sentido com tração, mercado grande e disposição pessoal e familiar.</p>`],
+ ['Métricas','O que é NRR e por que importa?',`<p>Retenção líquida de receita: a receita que fica, somando expansões e descontando cancelamentos e reduções. Acima de 100%, a base cresce sozinha mesmo sem clientes novos.</p>`],
+];
+
+const CMDS = [
+  ['Eu ajudo [quem] a [resultado] com [como], porque [prova]', 'Posicionamento'],
+  ['piso = horas × (1 + imprevistos) × hora mínima', 'Seu custo'],
+  ['teto = quanto o problema custa ao cliente por ano', 'Valor para o cliente'],
+  ['MRR = Σ assinaturas · ARR = MRR × 12', 'Tamanho do SaaS'],
+  ['vida média = 1 ÷ churn mensal', 'Meses que o cliente fica'],
+  ['LTV = margem mensal × vida média', 'Valor do cliente'],
+  ['payback = CAC ÷ margem mensal', 'Meses para pagar a aquisição'],
+  ['contato → conversa → proposta → negociação → fechado', 'Funil'],
+  ['família · reserva · empresa', 'Três caixas separadas'],
+  ['3 noites + 1 noite de negócio + 1 manhã + 30 min de revisão', 'Semana possível'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

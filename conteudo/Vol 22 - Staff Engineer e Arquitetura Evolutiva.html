@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha de Staff Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"ciclos.mjs": "// guardiao.mjs (continuação): ciclos e instabilidade\n\n// busca em profundidade; devolve cada ciclo uma vez, começando pelo menor nome\nexport function ciclos(grafo) {\n  const achados = new Map();\n  const visitar = (no, caminho) => {\n    for (const viz of grafo.get(no) ?? []) {\n      const i = caminho.indexOf(viz);\n      if (i >= 0) {\n        const c = caminho.slice(i);\n        const k = c.indexOf([...c].sort()[0]);\n        const normal = [...c.slice(k), ...c.slice(0, k)];\n        achados.set(normal.join(','), [...normal, normal[0]]);\n      } else visitar(viz, [...caminho, viz]);\n    }\n  };\n  for (const no of grafo.keys()) visitar(no, [no]);\n  return [...achados.values()];\n}\n\n// instabilidade de Robert Martin: I = Ce / (Ca + Ce)\n// 0 = estável (muitos dependem dele) · 1 = instável (só depende dos outros)\nexport function instabilidade(grafo) {\n  const resultado = {};\n  for (const m of grafo.keys()) {\n    const ce = grafo.get(m).size;                                  // quantos ele usa\n    const ca = [...grafo.values()].filter((s) => s.has(m)).length; // quantos usam ele\n    resultado[m] = ca + ce === 0 ? 0 : Number((ce / (ca + ce)).toFixed(2));\n  }\n  return resultado;\n}\n\n// no CI (GitHub Actions), um passo a mais no workflow do PR:\n//   - uses: actions/setup-node@v4\n//     with: { node-version: 22 }\n//   - name: Fitness functions de arquitetura\n//     run: node guardiao.mjs .", "guardiao.mjs": "// guardiao.mjs: fitness function que barra imports proibidos e ciclos (Node 22, sem deps)\nimport { readFileSync, readdirSync, statSync } from 'node:fs';\nimport { join, dirname, resolve, relative, sep } from 'node:path';\n\nconst IMPORT = new RegExp([\n  /(?:import|export)\\s[^'\"]*?from\\s*['\"]([^'\"]+)['\"]/.source, // import/export ... from\n  /import\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*\\)/.source,               // import() dinâmico\n  /import\\s*['\"]([^'\"]+)['\"]/.source,                         // import 'só efeito'\n].join('|'), 'g');\n\nconst arquivos = (dir) => readdirSync(dir).flatMap((nome) => {\n  const caminho = join(dir, nome);\n  if (statSync(caminho).isDirectory()) return arquivos(caminho);\n  return /\\.(mjs|js|ts)$/.test(nome) ? [caminho] : [];\n});\n// \"src/modulos/qualidade/interno/regras.mjs\" -> { modulo: 'qualidade', resto: 'interno/...' }\nfunction localizar(raizModulos, arquivo) {\n  const rel = relative(raizModulos, arquivo);\n  if (rel.startsWith('..')) return null; // fora de src/modulos (ex.: compartilhado)\n  const [modulo, ...resto] = rel.split(sep);\n  return { modulo, resto: resto.join('/') };\n}\nexport function analisar(raiz, regras) {\n  const raizModulos = resolve(raiz, regras.pastaModulos);\n  const violacoes = [], grafo = new Map(); // módulo -> Set de módulos que ele usa\n  for (const arquivo of arquivos(resolve(raiz, regras.pastaFonte))) {\n    const origem = localizar(raizModulos, arquivo);\n    if (origem) grafo.set(origem.modulo, grafo.get(origem.modulo) ?? new Set());\n    for (const m of readFileSync(arquivo, 'utf8').matchAll(IMPORT)) {\n      const alvo = m[1] ?? m[2] ?? m[3];\n      if (!alvo.startsWith('.')) continue; // pacote externo: outra regra cuidaria disso\n      const destino = localizar(raizModulos, resolve(dirname(arquivo), alvo));\n      if (!origem || !destino || destino.modulo === origem.modulo) continue;\n      const onde = relative(raiz, arquivo), de = origem.modulo, para = destino.modulo;\n      grafo.get(de).add(para);\n      if (destino.resto !== regras.apiPublica) { // regra 1: só pela porta da frente\n        const msg = `${de} importa o interno ${para}/${destino.resto}`;\n        violacoes.push({ regra: 'api-publica', onde, msg });\n      }\n      if (!(regras.dependencias[de] ?? []).includes(para)) { // regra 2: só o declarado\n        const msg = `${de} -> ${para} não está em arquitetura.json`;\n        violacoes.push({ regra: 'dependencia-nao-declarada', onde, msg });\n      }\n    }\n  }\n  // regra 3: nenhum ciclo entre módulos (ciclos() e instabilidade() a seguir)\n  const ciclo = (c) => ({ regra: 'ciclo', onde: '-', msg: c.join(' -> ') });\n  violacoes.push(...ciclos(grafo).map(ciclo));\n  return { violacoes, grafo, instabilidade: instabilidade(grafo) };\n}\nif (import.meta.filename === process.argv[1]) {\n  const raiz = process.argv[2] ?? '.';\n  const regras = JSON.parse(readFileSync(join(raiz, 'arquitetura.json'), 'utf8'));\n  const { violacoes, instabilidade: inst } = analisar(raiz, regras);\n  console.log('instabilidade por módulo:', inst);\n  for (const v of violacoes) console.log(`[${v.regra}] ${v.onde}: ${v.msg}`);\n  const n = violacoes.length;\n  console.log(n ? `${n} violação(ões): build bloqueado` : 'arquitetura ok');\n  process.exitCode = n === 0 ? 0 : 1; // 1 = o CI bloqueia o merge\n}", "mes-exemplo.mjs": "// arquitetura.json: a arquitetura declarada, revisada como código (o staff aprova o PR)\nconst arquitetura = {\n  \"pastaFonte\": \"src\",\n  \"pastaModulos\": \"src/modulos\",\n  \"apiPublica\": \"index.mjs\",\n  \"dependencias\": {\n    \"ordens\": [],\n    \"apontamento\": [\"ordens\"],\n    \"qualidade\": [\"ordens\", \"apontamento\"],\n    \"estoque\": [\"ordens\"]\n  }\n};\n\n// src/modulos/apontamento/interno/calculo.mjs\nexport const pecasBoas = (produzidas, refugadas) => produzidas - refugadas;\n\n// src/modulos/apontamento/index.mjs: a porta da frente\nimport { abrirOrdem } from '../ordens/index.mjs';\nimport { pecasBoas } from './interno/calculo.mjs';\nexport function apontar(ordem, produzidas, refugadas) {\n  return { ordem: ordem.id, boas: pecasBoas(produzidas, refugadas), refugadas };\n}\n\n// src/modulos/qualidade/interno/regras.mjs\n// VIOLAÇÃO 1: entra pela porta dos fundos do módulo apontamento\nimport { pecasBoas } from '../../apontamento/interno/calculo.mjs';\nexport const taxaDeRefugo = (produzidas, refugadas) =>\n  1 - pecasBoas(produzidas, refugadas) / produzidas;\n\n// src/modulos/estoque/index.mjs\nimport { abrirOrdem } from '../ordens/index.mjs';\n// VIOLAÇÃO 2: estoque -> qualidade não foi declarado\nimport { precisaInspecao } from '../qualidade/index.mjs';\nexport function darEntrada(ordem, produzidas, refugadas) {\n  return { ordem: ordem.id, bloqueado: precisaInspecao(produzidas, refugadas) };\n}", "rfc-012.md": "# RFC 012: Modularizar o MES antes de extrair serviços\nStatus: em revisão até 18/10 · Autor: Janderson · Decide: gerente de engenharia\n\n## Problema\nUma mudança no cálculo de refugo quebrou o estoque em produção duas vezes no trimestre.\nQualidade importa arquivos internos do apontamento; estoque faz JOIN em 3 módulos.\nLead time médio de uma mudança: 9 dias. Meta: 4.\n\n## Objetivos\n- Cada módulo só é usado pela sua API pública.\n- Uma regra de negócio muda abrindo um módulo só.\n\n## Não objetivos\n- Migrar para microsserviços agora.\n- Trocar o banco de dados.\n\n## Proposta\n1. Declarar as fronteiras em arquitetura.json e rodar o guardião no CI em modo catraca.\n2. Um schema de banco por módulo, sem chave estrangeira entre schemas.\n3. Trocar as chamadas de qualidade para estoque por um evento \"lote liberado\".\n\n## Alternativas consideradas\n| Alternativa                    | Por que não agora                                     |\n| ------------------------------ | ----------------------------------------------------- |\n| Extrair qualidade como serviço | Fronteiras instáveis; sem plantão nem rastreio        |\n| Reescrever o MES               | 12+ meses sem entregar valor, risco alto              |\n| Não fazer nada                 | Incidentes continuam; lead time continua 9 dias       |\n\n## Riscos e custos\n- 20% da capacidade de dois times por 2 trimestres.\n- O guardião pode barrar PRs urgentes: exceção com aprovação do staff, registrada.\n\n## Plano de migração\nMódulo a módulo, começando por qualidade (mais violações, menor risco).\n\n## Como saberemos que deu certo\nViolações do guardião: de 40 para 0. Lead time: de 9 para 4 dias.\nIncidentes entre módulos: zero por trimestre.\n\n## Perguntas abertas\n- O relatório de OEE lê dados de quatro módulos: visão publicada ou réplica de leitura?"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Vol 22 · Staff Engineer e Arquitetura Evolutiva =====================
+const CONF = {
+  title: 'Trilha de Staff Engineer', file: 'Vol 22 - Staff Engineer e Arquitetura Evolutiva', key: 'v22',
+  eyebrow: 'Guia Técnico · Volume 22', h1: 'Melhorar a engenharia de vários times sem mandar em ninguém',
+  lead: 'Roteiro em vídeo para o nível acima do tech lead: os arquétipos de staff, monólito modular contra microsserviços, modularização com porta da frente e dados por módulo, sagas com compensação, fitness functions e quality gates no CI, instabilidade de módulos, RFC por escrito, influência sem autoridade, planejamento trimestral e um guardião de arquitetura em Node 22 que barra imports proibidos e ciclos.',
+  pills: ['Arquétipos de staff', 'Monólito modular', 'Fronteiras', 'Saga', 'Fitness functions', 'Catraca', 'RFC', 'Influência'],
+  term: 'bash · ~/staff-lab',
+  faqPlaceholder: 'Buscar: monólito, saga, fitness function, catraca, RFC, influência…',
+  matriz: {title: 'Monólito modular × microsserviços', desc: 'Comece com um monólito modular e extraia um serviço só quando houver um motivo concreto. Microsserviço resolve problema de organização e escala, e cobra caro em operação.', cols: ['Critério', 'Monólito modular', 'Microsserviços'], tag: false},
+};
+const TITLE = {k: 'Guia Técnico · Volume 22', h: 'Staff Engineer e arquitetura evolutiva',
+  p: 'O tech lead responde pela entrega de um time; o staff, pela saúde técnica de vários times num horizonte de um a três anos. Arquitetura que evolui sem reescrita, regras que o CI verifica sozinho e influência por escrito.',
+  chips: ['monólito modular', 'porta da frente', 'saga', 'fitness functions', 'catraca', 'RFC', 'sem autoridade']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Regra importante vira teste no CI',
+  p: 'Abaixo do vídeo estão o monólito modular lado a lado com microsserviços, os links para as trilhas de Staff e de System Design, a trilha de estudo, o checklist e as perguntas de entrevista de staff.',
+  chips: ['problema com números', 'o mais simples', 'mudar aos poucos', 'escrever', 'patrocinar pessoas']};
+
+const SCENES = [
+/* ---------- TL → STAFF ---------- */
+{ id:'intro', ch:'Do TL ao staff', title:'O nível acima do tech lead',
+  say:'Staff engineer é quem melhora a engenharia de vários times ao mesmo tempo, sem mandar em ninguém. O Volume dezesseis ensinou DDD, hexagonal, ADR e C4 dentro de um serviço; o um, mensageria e outbox; o seis, system design. Aqui é o nível acima: como dividir um sistema em módulos, garantir que a divisão continue de pé e convencer vários times a seguir o mesmo caminho. Arquitetura evolutiva é a melhoria contínua da fábrica aplicada ao código: mudar aos poucos, medindo, sem parar a linha.',
+  v:{type:'title'} },
+
+{ id:'tl-staff', ch:'Do TL ao staff', title:'O que muda do TL para o staff',
+  say:'O tech lead cuida de um time e uma área; o staff, de vários times, do sistema inteiro ou de uma plataforma. O horizonte do tech lead é a sprint e o trimestre; o do staff, o trimestre e os próximos dois anos. A ferramenta do tech lead é conversa, quadro e rituais; a do staff é o documento escrito: RFC, ADR e estratégia técnica. O sucesso do staff: times entregando mais rápido e com menos incidentes por decisões que ele ajudou a tomar. E o erro típico de cada um: codar demais, ou virar arquiteto de PowerPoint.',
+  v:GRID(2, [
+    ['Tech lead','Vol 21',['um time, uma área','a sprint e o trimestre','conversa, quadro, rituais','o time entrega com qualidade','erro: codar demais, liderar de menos'],'blue'],
+    ['Staff engineer','este volume',['vários times, o sistema, a plataforma','o trimestre e os próximos 2 anos','documento: RFC, ADR, estratégia','os times entregam melhor por suas decisões','erro: "arquiteto de PowerPoint"'],'amber'],
+  ], {h:220, step:5, rodape:'Quase sempre sem ninguém reportando a você: a influência é por escrito e por confiança'}) },
+
+{ id:'arquetipos', ch:'Do TL ao staff', title:'Os quatro arquétipos de staff',
+  say:'Will Larson, no livro Staff Engineer, descreve quatro formas do papel. O tech lead de vários times guia a execução de uma área com mais de um time. O arquiteto responde pela direção técnica de um domínio crítico. O resolvedor vai fundo nos problemas mais difíceis, um de cada vez. O braço direito amplia o alcance de um executivo de engenharia. Tanya Reilly resume em três pilares: visão do todo, execução de projetos difíceis e elevar o nível das pessoas. O seu perfil combina com o arquiteto em indústria.',
+  v:GRID(4, [
+    ['Tech lead de times','',['execução de uma área','mais de um time'],'blue'],
+    ['Arquiteto','',['direção técnica','domínio crítico','← seu perfil: indústria'],'amber'],
+    ['Resolvedor','solver',['os problemas mais difíceis','um de cada vez'],'green'],
+    ['Braço direito','',['amplia um executivo','temas da organização'],''],
+  ], {h:220, step:2.6, rodape:'Tanya Reilly, The Staff Engineer\'s Path: visão do todo · execução de projetos difíceis · elevar o nível das pessoas'}) },
+
+/* ---------- MONÓLITO ---------- */
+{ id:'monolito', ch:'Monólito modular', title:'Comece por um monólito modular',
+  say:'A resposta padrão de um staff em dois mil e vinte e seis: comece com um monólito modular e extraia um serviço só com motivo concreto. Monólito modular é uma aplicação, um deploy, dividida em módulos com fronteiras rígidas: cada um tem API pública, esconde o resto e é dono dos seus dados. O oposto dele não é o microsserviço, é a grande bola de lama, em que tudo chama tudo. E as perguntas vêm em ordem: separar fronteiras instáveis ou sem plataforma de operação só espalha o problema pela rede.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:170, cls:'green', html:B('Monólito modular','um deploy, fronteiras rígidas')+UL('cada módulo tem API pública','esconde o resto','é dono dos seus dados')},
+    {at:6, x:494,y:92,w:430,h:170, cls:'ext', html:B('Grande bola de lama','o verdadeiro oposto')+UL('tudo chama tudo','mudar uma coluna quebra outro módulo','código bagunçado em qualquer forma')},
+    {at:11, x:36,y:282,w:888,h:140, cls:'region', html:'<span class="rl">antes de extrair, em ordem</span>'+UL('1 · há um motivo concreto?','2 · a fronteira já está estável?','3 · existe plataforma de operação (CI/CD, observabilidade, plantão)?')},
+  ]}},
+
+{ id:'comparacao', ch:'Monólito modular', title:'O preço de cada escolha',
+  say:'No monólito modular, o deploy é um só; chamar outra parte é chamada de função, em nanossegundos, que nunca falha por rede; transação entre partes pode usar o banco; e mudar uma fronteira errada é refatoração na IDE, em horas. Em microsserviços, um deploy por serviço com CI e CD maduros; chamada de rede, em milissegundos, com retry e timeout; saga, outbox e consistência eventual; e mudar fronteira é migração de dados e contrato entre times, em semanas. Em troca: escala só o que precisa e a falha fica contida.',
+  v:GRID(2, [
+    ['Monólito modular','custo de operação baixo',['um deploy, simples','chamada de função, não falha por rede','transação do banco quando preciso','fronteira errada: horas na IDE','escala tudo junto · falha derruba tudo'],'green'],
+    ['Microsserviços','custo de operação alto',['um deploy por serviço, CI/CD maduro','rede: ms, retry e timeout','saga, outbox, consistência eventual','fronteira errada: semanas entre times','escala só a parte · falha contida'],'amber'],
+  ], {h:230, step:5, rodape:'Times independentes: o monólito modular vai bem até algumas dezenas de pessoas, com regras de fronteira'}) },
+
+{ id:'motivos', ch:'Monólito modular', title:'Quando extrair um serviço',
+  say:'Motivos fortes: um time separado precisa publicar no seu ritmo e o monólito trava isso; um perfil de carga muito diferente; isolamento de falha ou de segurança, como pagamentos e dados pessoais; ou outra tecnologia, como visão computacional em Python ao lado de um backend Node. Motivos fracos: é mais moderno, a Netflix usa, o código está bagunçado. Código bagunçado distribuído pela rede é pior. Num MES, a ingestão de CLPs e sensores por MQTT é a candidata natural: carga muito maior e falha que não pode derrubar o apontamento.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:230, cls:'green', html:B('Motivos fortes','')+UL('time precisa publicar no seu ritmo','perfil de carga muito diferente','isolamento de falha ou segurança','outra tecnologia (visão em Python)')},
+    {at:7, x:494,y:92,w:430,h:230, cls:'ext', html:B('Motivos fracos','')+UL('"é mais moderno"','"a Netflix usa"','"o código está bagunçado"')+NOTE('bagunça distribuída pela rede é pior','amber')},
+    {at:12, x:36,y:342,w:888,h:160, cls:'region', html:'<span class="rl">exemplo: MES de uma fábrica média</span>'+UL('monólito modular: ordens, apontamento, qualidade, manutenção, estoque','serviço separado: ingestão de CLPs e sensores via MQTT, milhares de mensagens por segundo','ritmo próprio, e a falha não pode derrubar o apontamento dos operadores')},
+  ]}},
+
+/* ---------- MODULARIZAÇÃO ---------- */
+{ id:'cortar', ch:'Modularização', title:'Onde cortar as fronteiras',
+  say:'Um módulo só é módulo com três coisas: fronteira de negócio clara, porta de entrada única e dados que só ele altera. Sem as três, é uma pasta. Corte pelos contextos delimitados do DDD, nunca por camada técnica, e use três testes. Linguagem: ordem no PCP é ordem de produção, em vendas é pedido; fronteira certa. Mudança: quando uma regra muda, quantos módulos você abre? O ideal é um. Conversa: se um módulo chama o outro várias vezes para uma operação simples, a fronteira cortou um conceito ao meio.',
+  v:GRID(3, [
+    ['Linguagem','a palavra muda de sentido?',['"ordem" no PCP: de produção','"ordem" em vendas: pedido','→ fronteira certa'],'blue'],
+    ['Mudança','quantos módulos abro?',['uma regra de negócio muda','o ideal é abrir um só'],'green'],
+    ['Conversa','chamadas demais?',['várias chamadas para algo simples','= conceito cortado ao meio'],'amber'],
+  ], {h:220, step:4, rodape:'Módulo = fronteira de negócio + porta de entrada única + dados que só ele altera · corte por contexto do DDD, nunca por camada'}) },
+
+{ id:'porta', ch:'Modularização', title:'A porta da frente e a conversa',
+  say:'Cada módulo expõe um único arquivo público, o index; todo o resto fica em interno e não pode ser importado de fora. O campo exports do package json ajuda, mas a garantia vem de uma checagem no CI. Para conversar: chamada direta à API pública quando preciso de resposta agora, declarando a dependência e sem ciclos. Evento interno para avisar que algo aconteceu; com outbox se o efeito importa. E uma visão publicada, só leitura, para relatórios. O evento interno é o melhor preparo: quando o módulo sair, ele vira mensagem no broker.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:330, cls:'region', html:'<span class="rl">a estrutura</span><div style="margin-top:10px;font:13px/1.75 var(--f-mono);white-space:pre">src/\n  compartilhado/   sem regra de negócio\n  modulos/\n    ordens/index.mjs\n    apontamento/\n      index.mjs    API pública\n      interno/     ninguém de fora\n    qualidade/\n    estoque/\narquitetura.json   quem depende de quem</div>'},
+    {at:8, x:494,y:92,w:430,h:100, cls:'blue', html:B('Chamada à API pública','preciso da resposta agora')+NOTE('declare a dependência; evite ciclos','dim')},
+    {at:11, x:494,y:207,w:430,h:100, cls:'green', html:B('Evento interno','"apontamento registrado"')+NOTE('quem ouve não desfaz quem publicou; outbox se importa','dim')},
+    {at:14, x:494,y:322,w:430,h:100, cls:'amber', html:B('Visão publicada','relatórios entre módulos')+NOTE('só leitura e com dono','dim')},
+  ]}},
+
+{ id:'dados', ch:'Modularização', title:'Dados e infra por módulo',
+  say:'O erro que mata a modularização: estoque fazendo JOIN direto na tabela de apontamento. Daí em diante, mudar uma coluna quebra outro módulo em produção. As regras: um schema por módulo no mesmo banco, com um usuário de banco que só tem permissão no próprio schema. Nenhuma chave estrangeira atravessa schemas: guarde o id da ordem como valor. Quem precisa do dado do outro pede pela API pública ou guarda uma cópia atualizada por evento. E a infra segue as mesmas fronteiras, no Terraform, para a extração futura já nascer separada.',
+  v:{type:'boxes', defs:[
+    ['Schema por módulo','CREATE SCHEMA apontamento', .8],
+    ['Usuário por módulo','permissão só no próprio schema', 3.4],
+    ['Sem FK cruzada','o id da ordem como valor', 6],
+    ['Dado do outro','API pública ou cópia por evento', 8.6],
+  ], items:[
+    {at:.8, x:470,y:92,w:454,h:180, cls:'ext', html:B('O erro que mata','')+UL('estoque faz JOIN em apontamento','mudar uma coluna quebra outro módulo','em produção')},
+    {at:11.5, x:470,y:292,w:454,h:210, cls:'region', html:'<span class="rl">infra modular (Terraform)</span>'+UL('um módulo por componente: banco, fila, serviço','uma pasta por ambiente que só compõe','cada módulo declara do que precisa','na extração, a infra já está separada')},
+  ]}},
+
+/* ---------- CONSISTÊNCIA ---------- */
+{ id:'opcoes', ch:'Consistência', title:'Transações entre módulos',
+  say:'A regra que evita a maioria dos problemas: uma transação de banco altera dados de um módulo só; o que atravessa vira passos com transação local, ligados por eventos. Parece exagero num monólito, mas é o que permite extrair depois sem reescrever. Da mais simples para a mais complexa: transação local única; evento com outbox; saga coreografada, para dois ou três passos; saga orquestrada, para muitos passos e compensações; e commit em duas fases, quase nunca, porque trava recursos e o coordenador vira ponto único de falha.',
+  v:{type:'boxes', items:[
+    {at:1.5, x:36,y:92,w:888,h:62, cls:'green', html:B('1 · Transação local única','um módulo, um banco, um COMMIT · quase nunca cabe? redesenhe a fronteira')},
+    {at:4.5, x:36,y:164,w:888,h:62, cls:'green', html:B('2 · Evento com outbox','dado e evento na mesma transação · os outros só precisam saber')},
+    {at:7.5, x:36,y:236,w:888,h:62, cls:'blue', html:B('3 · Saga coreografada','cada módulo reage ao evento anterior · 2 ou 3 passos')},
+    {at:10.5, x:36,y:308,w:888,h:62, cls:'amber', html:B('4 · Saga orquestrada','orquestrador guarda o estado · muitos passos, compensações, ver onde parou')},
+    {at:13.5, x:36,y:380,w:888,h:62, cls:'ext', html:B('5 · Commit em duas fases (2PC)','quase nunca: trava recursos, coordenador = ponto único de falha')},
+    {at:16, x:36,y:452,w:888,h:50, cls:'region', html:NOTE('uma transação de banco = dados de um módulo só · o resto vira passos ligados por eventos','amber')},
+  ]}},
+
+{ id:'saga', ch:'Consistência', title:'Saga: compensar, não desfazer',
+  say:'Numa saga não existe rollback: cada passo já confirmou. Se um posterior falha, os anteriores executam uma compensação, uma nova operação de negócio que anula o efeito. No encerramento de uma ordem: o apontamento fecha com mil peças boas, e compensa reabrindo. O estoque dá entrada como aguardando qualidade, e compensa estornando. A qualidade inspeciona e libera; se reprovar, dispara as compensações em ordem inversa e abre uma não conformidade. O truque: o estado intermediário visível, com nome de negócio, como o lote em quarentena.',
+  v:FLOW([
+    ['Apontamento','fecha a OP: 1.000 boas','blue'],
+    ['Estoque','entrada "aguardando qualidade"','amber'],
+    ['Qualidade','inspeciona a amostra','green'],
+    ['Lote liberado','ou compensações','ext'],
+  ], {y:100, h:96, step:2.2, ch:180, cards:[
+    ['Compensações (ordem inversa)','',['qualidade reprova → não conformidade','estoque: estornar a entrada','apontamento: reabrir a ordem'],'ext'],
+    ['O truque das sagas','',['estado intermediário visível','com nome de negócio','= o lote em quarentena da fábrica'],'green'],
+  ]}) },
+
+{ id:'regras-saga', ch:'Consistência', title:'Três regras para confiar na saga',
+  say:'Idempotência: toda mensagem pode chegar duas vezes, então cada passo guarda o id do evento já processado e ignora a repetição. Compensação também falha: precisa de retry e de um alerta para uma pessoa quando esgota as tentativas. E reconciliação: um job diário compara os módulos, ordens fechadas contra entradas no estoque, e aponta divergências. É o inventário cíclico do software; você fez inventário na Irlanda e sabe que todo sistema diverge da realidade em algum momento.',
+  v:GRID(3, [
+    ['Idempotência','a mensagem chega 2 vezes',['guarde o id do evento','ignore a repetição'],'blue'],
+    ['Compensação falha','também',['retry','alerta para uma pessoa','quando esgotar'],'amber'],
+    ['Reconciliação','job diário',['ordens fechadas × estoque','aponta divergências','= inventário cíclico'],'green'],
+  ], {h:220, step:4}) },
+
+/* ---------- FITNESS ---------- */
+{ id:'fitness', ch:'Fitness functions', title:'Regras de arquitetura viram teste',
+  say:'Arquitetura que depende de alguém lembrar das regras na revisão se degrada em meses. A solução: cada regra importante vira um teste no CI que bloqueia o merge. Ford, Parsons e Kua chamam isso de fitness function, uma medida objetiva de que a arquitetura ainda tem a característica desejada. É o poka-yoke: em vez de confiar na atenção do operador, o gabarito impede a peça errada. Imports pela API pública e sem ciclos com o guardião ou dependency-cruiser; complexidade com ESLint; contratos com Pact; p95 com k6; e npm audit.',
+  v:{type:'boxes', defs:[
+    ['Só pela API pública','guardião · dependency-cruiser', .8],
+    ['Sem ciclos','guardião · madge', 2.8],
+    ['Legível','ESLint complexity', 4.8],
+    ['Contratos','Pact', 6.8],
+    ['Performance','p95 com k6 ou autocannon', 8.8],
+    ['Segurança','npm audit · Dependabot', 10.8],
+    ['Migração segura','código antigo × schema novo', 12.8],
+  ], items:[
+    {at:15, x:470,y:92,w:454,h:160, cls:'region', html:'<span class="rl">poka-yoke</span>'+UL('não confie na atenção de quem revisa','o gabarito barra a peça errada','regra importante = teste que bloqueia o merge')+'<div style="margin-top:10px">'+NOTE('Building Evolutionary Architectures (Ford, Parsons, Kua)','amber')+'</div>'},
+  ]}},
+
+{ id:'gate', ch:'Fitness functions', title:'Quality gate que ajuda',
+  say:'Quality gate é o conjunto de fitness functions que precisa passar para o código entrar na branch principal. Três cuidados para ele ajudar em vez de irritar. Meça o código novo, não o legado: exigir oitenta por cento de cobertura no projeto inteiro trava todos no primeiro dia; nas linhas alteradas do PR, melhora aos poucos, como o SonarQube faz. A catraca: com quarenta violações, grave as quarenta como exceções e bloqueie só as novas; o número só desce. E rápido: estático em segundos no PR, carga na esteira noturna.',
+  v:GRID(3, [
+    ['Código novo','não o legado',['80% nas linhas do PR','não no projeto inteiro','padrão do SonarQube'],'blue'],
+    ['Catraca','ratchet',['40 violações → exceções','bloqueia só as novas','corrigiu, não volta: só desce'],'green'],
+    ['Rápido','ou será contornado',['estático em segundos no PR','carga na esteira noturna','30 min = contorno'],'amber'],
+  ], {h:220, step:4}) },
+
+{ id:'instabilidade', ch:'Fitness functions', title:'Instabilidade de um módulo',
+  say:'Robert Martin propôs uma medida simples. C e é quantos módulos ele usa; C a é quantos usam ele. A instabilidade é C e dividido por C a mais C e. Perto de zero é estável: muita gente depende dele, mudá-lo é caro, e ele deve ser simples e abstrato, como ordens. Perto de um é instável: depende de muitos e ninguém depende dele, pode mudar à vontade, como uma tela ou relatório. O alerta é um módulo estável dependendo de um instável: cada mudança no instável quebra a base.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:110, cls:'region', html:'<span class="rl">I = Ce ÷ (Ca + Ce)</span><div style="margin-top:10px;font:15px var(--f-mono)">Ce = quantos ele usa · Ca = quantos usam ele</div>'},
+    {at:6, x:36,y:222,w:280,h:190, cls:'green', html:B('I ≈ 0 · estável','ordens: 0')+UL('todos dependem dele','mudar é caro','simples e abstrato')},
+    {at:9, x:340,y:222,w:280,h:190, cls:'blue', html:B('I ≈ 0,5','apontamento, qualidade')+UL('usa e é usado','camada do meio')},
+    {at:11, x:644,y:222,w:280,h:190, cls:'amber', html:B('I ≈ 1 · instável','estoque: 1')+UL('ninguém depende dele','muda à vontade','telas, relatórios')},
+    {at:14, x:36,y:432,w:888,h:70, cls:'ext', html:B('Sinal de alerta','estável dependendo de instável: cada mudança na ponta quebra a base')},
+  ]}},
+
+/* ---------- RFC ---------- */
+{ id:'rfc-ciclo', ch:'RFC', title:'RFC: o ciclo de vida',
+  say:'RFC é uma proposta escrita, aberta a comentários de quem será afetado, antes da decisão. É como uma pessoa influencia dez times sem estar em dez reuniões. RFC não é ADR: a RFC é a discussão antes, longa, com alternativas; o ADR é o registro curto da decisão, e uma RFC aprovada costuma gerar um ou mais. O ciclo: conversa com dois ou três afetados antes do documento; rascunho com problema e alternativas; revisão com prazo de uma ou duas semanas; decisão por quem foi nomeado; e registro do status.',
+  v:FLOW([
+    ['Conversa','2 ou 3 afetados','blue'],
+    ['Rascunho','problema e alternativas','blue'],
+    ['Revisão','prazo: 1–2 semanas','green'],
+    ['Decisão','quem foi nomeado','amber'],
+    ['Registro','status + ADRs','green'],
+  ], {y:100, h:96, step:2, ch:180, cards:[
+    ['RFC × ADR','',['RFC: discussão antes, longa','ADR: registro curto da decisão','uma RFC aprovada gera ADRs'],'blue'],
+    ['Os três erros','',['começar pela solução','alternativas fracas para a sua ganhar','não nomear quem decide'],'ext'],
+  ]}) },
+
+{ id:'rfc-doc', ch:'RFC', title:'Uma RFC preenchida: o MES',
+  say:'A estrutura que empresas conhecidas usam, com o caso do MES. Status com prazo, autor e quem decide. O problema com números: duas quebras em produção e lead time de nove dias, com meta de quatro. Objetivos e não objetivos. A proposta em três passos: guardião no CI em modo catraca, schema por módulo e um evento lote liberado. Alternativas honestas, com o porquê de não agora. Riscos e custos, plano de migração, como saberemos que deu certo, medido, e as perguntas abertas.',
+  v:S('rfc-012-mes.md','rfc-012.md','md')},
+
+/* ---------- INFLUÊNCIA ---------- */
+{ id:'propor', ch:'Influência', title:'Propor sem arrogância',
+  say:'Staff não manda em ninguém: tudo muda porque pessoas de outros times escolheram seguir. Em vez de isso está errado, diga eu vi dois incidentes ligados a isso, posso mostrar? Fato antes de opinião. Em vez de o certo é X, vejo três opções, prefiro X por estes motivos, o que eu não estou vendo? Em vez de na empresa tal fazíamos assim, explique o contexto diferente. E em vez da solução pronta, construa com quem vai manter. O melhor sinal: a solução é lembrada como do time, não sua.',
+  v:GRID(2, [
+    ['"Isso está errado"','→ fato antes de opinião',['"vi dois incidentes ligados a isso;','posso mostrar?"'],'blue'],
+    ['"O certo é usar X"','→ espaço para contribuir',['"vejo três opções; prefiro X por…','o que eu não estou vendo?"'],'green'],
+    ['"Na empresa tal…"','→ contexto > história',['"funcionou em outro contexto;','aqui difere em tal ponto"'],'amber'],
+    ['Solução pronta','→ quem constrói defende',['apresente o problema','construa com quem vai manter'],''],
+  ], {step:3.4, rodape:'Melhor sinal de influência: a solução é lembrada como sendo do time · prepare cada conversa com os perfis de decisão do Vol 21'}) },
+
+{ id:'disfuncional', ch:'Influência', title:'Ambientes disfuncionais',
+  say:'Você vai trabalhar em lugares com problemas que não são técnicos. Decisões que mudam conforme quem falou por último com o diretor: registre toda decisão em ADR, e mudar exige um novo. Times competindo: ache uma métrica compartilhada, como o lead time de ponta a ponta. Tudo urgente: peça à liderança a ordem por escrito. Heróis de madrugada: corrija a causa e celebre quem evita o incêndio. Culpa depois de incidente: postmortem sem culpados. E se depois de um ano nada muda e afeta sua saúde, sair também é decisão de engenharia.',
+  v:GRID(3, [
+    ['Decisão muda','quem falou por último',['ADR com data e responsável','mudar exige novo ADR'],'blue'],
+    ['Times competem','',['métrica compartilhada','lead time de ponta a ponta'],'blue'],
+    ['Tudo é urgente','',['liderança ordena por escrito','você executa a ordem'],'amber'],
+    ['Heróis','de madrugada',['corrija a causa','celebre quem evita'],'amber'],
+    ['Culpa','depois do incidente',['postmortem sem culpados','"o que no sistema permitiu?"'],'green'],
+    ['Limite honesto','',['um ano sem mudar','e afetando sua saúde:','sair também é válido'],'ext'],
+  ], {step:2.4}) },
+
+{ id:'reverter', ch:'Influência', title:'Reverter uma decisão ruim',
+  say:'Toda carreira longa tem decisões de arquitetura que deram errado, inclusive suas, e reverter bem é senioridade. Separe a decisão do resultado: foi ruim com a informação da época, ou o contexto mudou? Meça o custo de continuar contra o de voltar, em horas, incidentes e lead time. Escreva um novo ADR que substitui o antigo, sem apagá-lo. Assuma sua parte em público: eu recomendei X, os dados mostram que errei, proponho Y. E reverta aos poucos, como uma migração. O custo afundado é o pior argumento.',
+  v:{type:'boxes', items:[
+    {at:1.5, x:36,y:92,w:888,h:62, cls:'blue', html:B('1 · Separe decisão de resultado','ruim com a informação da época, ou o contexto mudou?')},
+    {at:4.5, x:36,y:164,w:888,h:62, cls:'blue', html:B('2 · Meça continuar × voltar','horas por mês, incidentes, lead time')},
+    {at:7.5, x:36,y:236,w:888,h:62, cls:'green', html:B('3 · Novo ADR que substitui o antigo','cite-o; não apague: o histórico ensina')},
+    {at:10.5, x:36,y:308,w:888,h:62, cls:'amber', html:B('4 · Assuma em público','"eu recomendei X, os dados mostram que errei, proponho Y"')},
+    {at:13.5, x:36,y:380,w:888,h:62, cls:'green', html:B('5 · Reverta aos poucos','estrangulador, piloto, critério de fim')},
+    {at:16, x:36,y:452,w:888,h:50, cls:'ext', html:NOTE('"já gastamos seis meses nisso": o custo afundado é o argumento mais comum, e o pior','amber')},
+  ]}},
+
+{ id:'principios', ch:'Influência', title:'Doze princípios de trabalho',
+  say:'A trilha original cita doze princípios sem dizer quais; esta é uma lista própria, montada a partir de Larson, Reilly e Ford, para revisar a cada trimestre. Problema antes de solução, com números. Escreva. Decisões reversíveis rápidas, irreversíveis devagar. A arquitetura mais simples para os próximos dois anos. Regra importante vira teste no CI. Fique perto do código. Seu sucesso é medido pelos times. Discorde e se comprometa. Patrocine pessoas. Mude aos poucos. Diga não sei e eu errei. Proteja o tempo de foco.',
+  v:GRID(2, [
+    ['Decidir','',['1 · problema antes, com números','2 · escreva: o não escrito não escala','3 · reversível rápido, irreversível devagar','4 · o mais simples para 2 anos','5 · regra importante = teste no CI','6 · perto do código, toda semana'],'blue'],
+    ['Conviver','',['7 · sucesso medido pelos times','8 · discorde e se comprometa','9 · patrocine pessoas: indique nomes','10 · mude aos poucos, medindo','11 · "não sei" e "eu errei" em voz alta','12 · proteja o tempo de foco'],'green'],
+  ], {h:230, step:6, rodape:'Lista própria do volume, montada a partir de Larson, Reilly e Ford · revise a cada trimestre'}) },
+
+/* ---------- PROJETOS ---------- */
+{ id:'trimestre', ch:'Projetos de staff', title:'O trimestre visto pelo staff',
+  say:'No planejamento do trimestre, o tech lead pensa no seu time; o staff, no que atravessa os times. Três entregas suas. O mapa de dependências entre times: a maioria dos atrasos de trimestre nasce de uma dependência que ninguém listou. A divisão de capacidade explícita, algo como setenta por cento para produto, vinte para saúde técnica e dez para exploração, combinada antes. E a lista de riscos técnicos com dono e sinal de alerta datado. No meio do trimestre, revise os três.',
+  v:GRID(3, [
+    ['Mapa de dependências','entre times',['quem depende de quem','e quando','a dependência não listada atrasa'],'blue'],
+    ['Capacidade explícita','combinada antes',['~70% produto','~20% saúde técnica','~10% exploração'],'green'],
+    ['Riscos técnicos','com dono e sinal',['"se o schema de qualidade','não sair até a semana 6,','o OEE em tempo real atrasa"'],'amber'],
+  ], {h:230, step:4, rodape:'Os números variam por empresa · revise os três no meio do trimestre: plano não revisado vira promessa esquecida'}) },
+
+{ id:'metodo-ci', ch:'Projetos de staff', title:'Scrum, Kanban e CI de verdade',
+  say:'Scrum: sprints fixas, compromisso com itens, velocidade; bom para produto novo, com risco de virar mini cascata. Kanban: fluxo contínuo, limite de WIP, lead time e vazão; bom para plataforma e operação, com risco de nada ser revisto. Como staff, padronize só o comum: definição de pronto, métricas e registro de decisões. E integração contínua é integrar na principal ao menos uma vez por dia: trunk-based, feature flags, build de até dez minutos, principal sempre verde como o andon, e as métricas DORA, comparando o time com ele mesmo.',
+  v:GRID(3, [
+    ['Scrum','sprints de 2 semanas',['produto novo, planeável','velocidade, objetivo','risco: mini-cascata'],'blue'],
+    ['Kanban','fluxo contínuo',['plataforma, operação','lead time e vazão','risco: nada é revisto'],'green'],
+    ['CI de verdade','na principal, todo dia',['trunk-based, PR pequeno','feature flags','build ≤ 10 min, sempre verde'],'amber'],
+  ], {h:230, step:4, rodape:'Padronize definição de pronto, métricas e decisões; o resto cada time escolhe · DORA: compare o time com ele mesmo'}) },
+
+/* ---------- LAB ---------- */
+{ id:'lab-projeto', ch:'Lab: guardião', title:'O MES com duas violações',
+  say:'O laboratório escreve uma fitness function de verdade: cerca de cem linhas, sem dependências, executada no Node vinte e dois. O projeto de exemplo é um MES pequeno com quatro módulos: ordens, apontamento, qualidade e estoque. O arquitetura json é a arquitetura declarada, quem pode depender de quem, revisada como código. E há duas violações plantadas: qualidade entra pela porta dos fundos do apontamento, importando um arquivo interno, e estoque usa qualidade sem ter declarado a dependência.',
+  v:S('mes/ (resumo)','mes-exemplo.mjs','js')},
+
+{ id:'guardiao', ch:'Lab: guardião', title:'O guardião: imports e regras',
+  say:'O guardião lê os arquivos com uma regex que cobre import, export from e import dinâmico; num projeto grande, troque por um parser ou pelo dependency-cruiser. Localizar descobre a que módulo cada arquivo pertence. Para cada import relativo entre módulos diferentes, monta o grafo e aplica duas regras: só se entra pela API pública, e só dependências declaradas. A terceira regra, nenhum ciclo, usa o grafo. A mensagem diz o que fazer, e o código de saída um faz o CI bloquear o merge.',
+  v:S('guardiao.mjs','guardiao.mjs','js')},
+
+{ id:'ciclos', ch:'Lab: guardião', title:'Ciclos, instabilidade e o CI',
+  say:'A busca de ciclos é uma busca em profundidade: ao reencontrar um nó que já está no caminho, achou um ciclo, que é normalizado para começar pelo menor nome e ser contado uma vez só. A instabilidade conta, para cada módulo, quantos ele usa e quantos o usam. E no GitHub Actions é um passo a mais no workflow do PR: setup node com a versão vinte e dois e rodar o guardião. A partir daí, nenhum PR entra furando uma fronteira, e ninguém precisa lembrar disso na revisão.',
+  v:S('guardiao.mjs (continuação)','ciclos.mjs','js')},
+
+{ id:'lab-run', ch:'Lab: guardião', title:'Rodar, testar e os desafios',
+  say:'Rodando no exemplo, as duas violações aparecem, e a instabilidade mostra o desenho saudável: ordens com zero, a base estável embaixo, e estoque com um, a ponta instável em cima. Os seis testes montam projetos temporários e passam. Desafios: corrija a violação de qualidade usando só a API pública; adicione um import de estoque em ordens e veja um único import criar dois ciclos; implemente a catraca com exceções conhecidas; e rode num projeto real seu. Esse número de violações é o problema de uma RFC.',
+  v:T('c|node guardiao.mjs mes',
+      'o|instabilidade por módulo: { apontamento: 0.5, estoque: 1, ordens: 0, qualidade: 0.5 }',
+      'err|[dependencia-nao-declarada] src/modulos/estoque/index.mjs: estoque -> qualidade …',
+      'err|[api-publica] src/modulos/qualidade/interno/regras.mjs: … apontamento/interno/calculo.mjs',
+      'err|2 violação(ões): build bloqueado',
+      'c|node --test',
+      'ok|# tests 6  # pass 6  # fail 0',
+      'c|# desafio: import \'../estoque/index.mjs\' no fim de ordens/index.mjs',
+      'err|[ciclo] -: estoque -> ordens -> estoque',
+      'err|[ciclo] -: apontamento -> ordens -> estoque -> qualidade -> apontamento',
+      'c|# desafio: excecoes.json em modo catraca, e um teste que impede a volta')},
+
+/* ---------- ENTREVISTA ---------- */
+{ id:'entrevista', ch:'Entrevista de staff', title:'Como é a entrevista de staff',
+  say:'A entrevista de staff tem system design mais profundo, uma rodada de arquitetura ou revisão de design e uma comportamental focada em influência; o código pesa menos. Monólito ou microsserviços: comece pelos motivos fortes e recomende o mais simples. Como a arquitetura não se degrada: fitness functions, catraca e ADRs. Consistência entre serviços: outbox, saga, idempotência e reconciliação. Mudança em vários times: problema com número, RFC e quem resistiu. Revise este design: pergunte o requisito antes de criticar.',
+  v:GRID(4, [
+    ['Monólito ou micro?','julgamento',['motivos fortes primeiro','o mais simples'],'blue'],
+    ['Não se degrada?','governança',['fitness, catraca, ADR','mostre o guardião'],'blue'],
+    ['Consistência','profundidade',['outbox, saga, idempotência','estado visível'],'green'],
+    ['Mudança multi-time','influência',['RFC, resistência','resultado medido'],'green'],
+    ['Decisão errada','humildade',['reversão em 5 passos'],'amber'],
+    ['Em que trabalhar?','priorização',['impacto em vários times','o que só você faz'],'amber'],
+    ['Revise o design','olhar crítico',['requisito antes','riscos por impacto'],''],
+    ['Sua história','comece agora',['RFC, fitness no CI','migração conduzida'],'ext'],
+  ], {step:1.8}) },
+
+{ id:'check', ch:'Entrevista de staff', title:'Checklist de staff',
+  say:'Antes de dizer que domina: você sabe o que muda do tech lead para o staff e qual arquétipo quer, defende o monólito modular e sabe quando extrair, corta fronteiras por contexto com porta da frente e dados por módulo, desenha sagas com compensação, idempotência e reconciliação, transforma regras em fitness functions com catraca, escreve RFC e influencia sem autoridade.',
+  v:CK('Escopo: vários times, 1 a 3 anos', 'Arquétipo de staff escolhido', 'Monólito modular primeiro', 'Motivos fortes para extrair', 'Linguagem, mudança, conversa', 'Porta da frente + schema por módulo', 'Saga com compensação e estado visível', 'Idempotência e reconciliação', 'Fitness functions no CI com catraca', 'Instabilidade I = Ce ÷ (Ca + Ce)', 'RFC com problema, alternativas, decisor', 'Influência: fato, opções, construir junto')},
+
+{ id:'outro', ch:'Entrevista de staff', title:'Próximo passo',
+  say:'Abaixo do vídeo estão o monólito modular lado a lado com microsserviços, os links para as cenas das trilhas Do Pleno ao Staff e de System Design, a trilha de estudo, o checklist e as perguntas de entrevista. O exercício que mais rende: escreva o arquitetura json do sistema em que você trabalha, rode o guardião e use o número de violações como o problema de uma RFC de duas páginas. O Volume vinte e três leva estas ideias para o desenvolvimento com IA.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Mudança de arquitetura sem parar o time', 'v21', 'arquitetura', 'ADR, piloto e estrangulador no nível do time'],
+  ['Perfis de decisão', 'v21', 'perfis', 'Preparar cada conversa de influência'],
+  ['Monólito, microsserviços e fronteiras', 'v06', 'monolito', 'A mesma decisão em system design'],
+  ['Fronteiras de serviço', 'v06', 'fronteiras', 'Onde cortar em uma entrevista'],
+  ['Falhas, retries e timeouts', 'v06', 'falhas', 'O custo da chamada de rede'],
+  ['Outbox no Kafka', 'kafka', 'outbox', 'Gravar dado e evento juntos'],
+  ['Idempotência no consumidor', 'kafka', 'idem', 'A mensagem que chega duas vezes'],
+  ['Consistência eventual', 'cs', 'consistencia', 'Consistência entre serviços em .NET'],
+  ['Modelo de design doc e ADR', 'staff', 'designdoc', 'Os modelos de documento'],
+  ['DDD e contextos delimitados', 'staff', 'ddd', 'De onde vêm as fronteiras'],
+  ['Sistemas legados', 'staff', 'legado', 'Migrar aos poucos'],
+  ['DORA e métricas de entrega', 'staff', 'dora', 'Medir se a entrega melhora'],
+  ['Da ambiguidade a um plano', 'staff', 'ambiguidade', 'Execução em projetos grandes'],
+  ['Design doc e RFC no Vol 10', 'v10', 'design-doc', 'Decidir por escrito'],
+];
+
+const MATRIZ = [
+  ['Deploy', 'Um só, simples', 'Um por serviço; exige CI/CD maduro'],
+  ['Chamada entre partes', 'Chamada de função, nanossegundos, nunca falha por rede', 'Chamada de rede, milissegundos, pode falhar; precisa de retry e timeout'],
+  ['Transação entre partes', 'Pode usar transação do banco quando preciso', 'Exige saga, outbox e consistência eventual'],
+  ['Mudar uma fronteira errada', 'Refatoração com a IDE em horas', 'Migração de dados e de contrato entre times, em semanas'],
+  ['Times independentes', 'Funciona até algumas dezenas de pessoas com regras de fronteira', 'Melhor quando muitos times precisam publicar sem coordenação'],
+  ['Escala', 'Escala tudo junto', 'Escala só a parte que precisa'],
+  ['Isolamento de falha', 'Um vazamento de memória derruba tudo', 'A falha fica contida, se houver circuit breaker'],
+  ['Custo de operação', 'Baixo', 'Alto: observabilidade distribuída, plantão, rede, versões de contrato'],
+];
+
+const STUDY = [
+  ['StaffEng (Will Larson)', 'Os arquétipos e histórias de staff', 'https://staffeng.com/book', 'arquetipos'],
+  ['The Staff Engineer\'s Path', 'Tanya Reilly: visão, execução, pessoas', 'https://www.oreilly.com/library/view/the-staff-engineers/9781098118723/', 'arquetipos'],
+  ['Building Evolutionary Architectures', 'Fitness functions e arquitetura evolutiva', 'https://www.oreilly.com/library/view/building-evolutionary-architectures/9781492097532/', 'fitness'],
+  ['Microservices Patterns: Saga', 'Chris Richardson: sagas e compensação', 'https://microservices.io/patterns/data/saga.html', 'saga'],
+  ['MonolithFirst (Martin Fowler)', 'Por que começar pelo monólito', 'https://martinfowler.com/bliki/MonolithFirst.html', 'monolito'],
+  ['dependency-cruiser', 'Regras de dependência em projetos JS/TS', 'https://github.com/sverweij/dependency-cruiser', 'guardiao'],
+  ['Pact', 'Testes de contrato entre serviços', 'https://docs.pact.io/', 'fitness'],
+  ['Design docs no Google', 'Como e por que escrever', 'https://www.industrialempathy.com/posts/design-docs-at-google/', 'rfc-doc'],
+  ['Trunk Based Development', 'Branches curtas e integração diária', 'https://trunkbaseddevelopment.com/', 'metodo-ci'],
+  ['DORA', 'As quatro métricas de entrega', 'https://dora.dev/', 'metodo-ci'],
+  ['node:test', 'O executor de testes nativo do Node', 'https://nodejs.org/api/test.html', 'lab-run'],
+];
+
+const CHECK = [
+  ['Papel', 'Escrever uma página sobre o seu arquétipo', 'arquetipos'],
+  ['Arquitetura', 'Responder "monólito ou microsserviços?" com motivos', 'motivos'],
+  ['Modularização', 'Desenhar o grafo de módulos e marcar ciclos', 'cortar'],
+  ['Modularização', 'Mapear JOINs e FKs que atravessam módulos', 'dados'],
+  ['Consistência', 'Desenhar a saga de uma transação entre módulos', 'saga'],
+  ['Consistência', 'Escrever o job de reconciliação diário', 'regras-saga'],
+  ['Governança', 'Listar três fitness functions que faltam', 'fitness'],
+  ['Governança', 'Implementar a catraca com excecoes.json', 'gate'],
+  ['Lab', 'Rodar o guardião e os testes no MES', 'lab-run'],
+  ['Lab', 'Escrever o arquitetura.json do seu sistema', 'lab-projeto'],
+  ['Lab', 'Pôr o guardião no CI do PR', 'ciclos'],
+  ['RFC', 'RFC de duas páginas com comentários de três pessoas', 'rfc-doc'],
+  ['Influência', 'Reescrever uma proposta sua com fato e opções', 'propor'],
+  ['Projetos', 'Mapa de dependências do próximo trimestre', 'trimestre'],
+];
+
+const FAQ = [
+ ['Arquitetura','Monólito ou microsserviços para este sistema?',`<p>Começo pelo monólito modular e só extraio com motivo forte: time que precisa publicar no seu ritmo, perfil de carga muito diferente, isolamento de falha ou segurança, ou outra tecnologia. E só com fronteira estável e plataforma de operação madura. "É moderno" e "o código está bagunçado" não são motivos.</p>`],
+ ['Arquitetura','O que é um monólito modular?',`<p>Uma aplicação com um deploy, dividida em módulos com fronteiras rígidas: cada um tem API pública, esconde o resto e é dono dos seus dados. O oposto dele é a grande bola de lama, não o microsserviço.</p>`],
+ ['Modularização','Como saber se uma fronteira está boa?',`<p>Três testes: linguagem (a mesma palavra muda de sentido dos dois lados?), mudança (uma regra muda abrindo um módulo só?) e conversa (um módulo chama o outro várias vezes para algo simples?). Corte por contexto delimitado, nunca por camada.</p>`],
+ ['Consistência','Como manter consistência entre dois serviços?',`<p>Transação local por módulo, evento com outbox, e saga com compensação quando há vários passos. Idempotência em cada passo, retry e alerta nas compensações, reconciliação diária e um estado intermediário visível com nome de negócio, como "aguardando qualidade".</p>`],
+ ['Consistência','Por que não usar commit em duas fases?',`<p>O 2PC trava recursos em todos os participantes até a confirmação e o coordenador vira ponto único de falha. Em sistemas novos, quase nunca compensa.</p>`],
+ ['Governança','Como você garante que a arquitetura não se degrada?',`<p>Transformo cada regra importante em fitness function no CI: imports só pela API pública, sem ciclos, complexidade, contratos, p95, vulnerabilidades. Quality gate rápido, medindo o código novo, com catraca para o legado. Mostro o guardião.</p>`],
+ ['Governança','O que é a catraca (ratchet)?',`<p>Num sistema com 40 violações, grava as 40 como exceções conhecidas e bloqueia só as novas. Quando alguém corrige uma, ela sai da lista e não pode voltar: o número só desce.</p>`],
+ ['Métricas','O que é a instabilidade de um módulo?',`<p>I = Ce ÷ (Ca + Ce), de Robert Martin. Perto de 0, estável: muitos dependem dele, deve ser simples e abstrato. Perto de 1, instável: pode mudar à vontade. O alerta é um estável dependendo de um instável.</p>`],
+ ['RFC','Qual a diferença entre RFC e ADR?',`<p>A RFC é a discussão antes da decisão, longa, com alternativas e prazo de revisão. O ADR é o registro curto da decisão tomada. Uma RFC aprovada costuma gerar um ou mais ADRs.</p>`],
+ ['Influência','Conte de uma mudança que você liderou em vários times.',`<p>Em STAR: o problema com número (por exemplo, lead time de 9 dias e duas quebras), a RFC, quem resistiu e como incorporei a crítica, e o resultado medido. O melhor sinal: a solução ficou conhecida como do time.</p>`],
+ ['Influência','Uma decisão sua deu errado. O que fez?',`<p>Separei decisão de resultado, medi o custo de continuar contra o de voltar, escrevi um ADR que substitui o antigo, assumi minha parte em público e reverti aos poucos. Sem cair no custo afundado.</p>`],
+ ['Prioridade','Como você decide em que trabalhar?',`<p>Pelo impacto em vários times, pelo que só eu consigo fazer naquele momento e pelo que a liderança precisa. Problemas sem dono que atravessam times costumam ser o melhor uso do tempo de um staff.</p>`],
+];
+
+const CMDS = [
+  ['node guardiao.mjs mes', 'Rodar a fitness function no exemplo'],
+  ['node --test', 'Rodar os testes do guardião'],
+  ['process.exitCode = 1', 'Faz o CI bloquear o merge'],
+  ['I = Ce ÷ (Ca + Ce)', 'Instabilidade de um módulo'],
+  ['CREATE SCHEMA apontamento', 'Um schema por módulo'],
+  ['run: node guardiao.mjs .', 'Passo do GitHub Actions'],
+  ['npx depcruise src', 'dependency-cruiser em projetos maiores'],
+  ['npx madge --circular src', 'Achar ciclos com madge'],
+  ['npm audit', 'Fitness function de segurança'],
+  ['~70% produto · ~20% saúde técnica · ~10% exploração', 'Divisão de capacidade do trimestre'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

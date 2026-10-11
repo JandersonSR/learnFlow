@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha CCDAK e CCAAK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"Consumidor.java": "// Consumidor com commit manual: at-least-once controlado por você\nProperties c = new Properties();\nc.put(\"bootstrap.servers\", \"localhost:9092\");\nc.put(\"group.id\", \"faturamento\");           // o grupo divide as partições\nc.put(\"key.deserializer\", StringDeserializer.class.getName());\nc.put(\"value.deserializer\", KafkaAvroDeserializer.class.getName());\nc.put(\"enable.auto.commit\", \"false\");       // padrão true: commita a cada 5 s\nc.put(\"auto.offset.reset\", \"earliest\");     // só sem offset salvo; padrão latest\nc.put(\"max.poll.records\", \"200\");           // padrão 500\nc.put(\"max.poll.interval.ms\", \"300000\");    // passou disso sem poll: sai do grupo\nc.put(\"isolation.level\", \"read_committed\"); // ignora transações abortadas\nc.put(\"group.instance.id\", \"fat-1\");        // membro estático: menos rebalance\n\ntry (var consumer = new KafkaConsumer<String, Pedido>(c)) {\n  consumer.subscribe(List.of(\"pedidos\"));\n  while (rodando) {\n    var lote = consumer.poll(Duration.ofMillis(500)); // também envia heartbeat\n    for (var r : lote) {\n      faturar(r.value());                   // idempotente: pode repetir\n    }\n    consumer.commitSync();                  // DEPOIS de processar o lote\n  }\n}\n// commit antes de processar = at-most-once (pode perder)\n// commit depois de processar = at-least-once (pode repetir → idempotência)\n// commitSync bloqueia e repete; commitAsync não repete (use no loop + sync ao sair)", "Produtor.java": "// Produtor confiável: o que mais cai na CCDAK está nestas linhas\nProperties p = new Properties();\np.put(\"bootstrap.servers\", \"localhost:9092\");\np.put(\"key.serializer\", StringSerializer.class.getName());\np.put(\"value.serializer\", KafkaAvroSerializer.class.getName());\np.put(\"schema.registry.url\", \"http://localhost:8081\");\n\n// Durabilidade e duplicatas (padrões desde o Kafka 3.0)\np.put(\"acks\", \"all\");                      // espera as réplicas em sincronia (ISR)\np.put(\"enable.idempotence\", \"true\");       // PID + sequência: retry sem duplicar\np.put(\"max.in.flight.requests.per.connection\", \"5\"); // até 5 mantém a ordem\np.put(\"delivery.timeout.ms\", \"120000\");    // teto total, retries incluídos\n\n// Vazão: lotes maiores, menos requisições\np.put(\"linger.ms\", \"20\");                  // espera para encher o lote\np.put(\"batch.size\", \"65536\");              // bytes por lote, por partição\np.put(\"compression.type\", \"zstd\");         // gzip, snappy, lz4, zstd\n\ntry (var producer = new KafkaProducer<String, Pedido>(p)) {\n  var rec = new ProducerRecord<>(\"pedidos\", pedido.id(), pedido); // chave = id\n  producer.send(rec, (meta, erro) -> {      // assíncrono, com callback\n    if (erro != null) log.error(\"falhou após os retries\", erro);\n    else log.info(\"p{} offset {}\", meta.partition(), meta.offset());\n  });\n  producer.flush();                         // força o envio dos lotes pendentes\n}\n// mesma chave → mesma partição (hash murmur2 % nº de partições) → ordem garantida\n// chave nula → partitioner \"sticky\": enche um lote por partição e alterna", "Topologia.java": "// Kafka Streams: total de vendas por loja em janelas de 5 minutos\nProperties s = new Properties();\ns.put(StreamsConfig.APPLICATION_ID_CONFIG, \"vendas-por-loja\"); // = group.id + prefixo\ns.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, \"localhost:9092\");\ns.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);\ns.put(StreamsConfig.NUM_STANDBY_REPLICAS_CONFIG, 1);    // cópia quente do estado\n\nStreamsBuilder b = new StreamsBuilder();\nKStream<String, Venda> vendas = b.stream(\"vendas\");    // fluxo: cada evento conta\nKTable<String, Loja> lojas = b.table(\"lojas\");         // tabela: último valor por chave\n\nvendas\n  .filter((k, v) -> v.valor() > 0)                     // sem estado\n  .selectKey((k, v) -> v.lojaId())                     // troca a chave → repartição\n  .join(lojas, (v, loja) -> v.comRegiao(loja.regiao())) // exige co-particionamento\n  .groupByKey()\n  .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(5))) // tumbling\n  .aggregate(() -> 0.0, (loja, v, total) -> total + v.valor(),\n      Materialized.as(\"total-por-loja\"))               // state store + changelog\n  .toStream()\n  .to(\"vendas-5min\");\n\nnew KafkaStreams(b.build(), s).start();\n// paralelismo máximo = nº de partições de entrada (1 tarefa por partição)\n// GlobalKTable: cópia inteira em cada instância, sem co-particionamento\n// janelas: tumbling (fixa), hopping (sobreposta), sliding, session (inatividade)", "Transacao.java": "// Exactly-once em consume → transforma → produz, tudo dentro do Kafka\np.put(\"transactional.id\", \"conciliador-1\");   // estável entre reinícios\nvar producer = new KafkaProducer<String, String>(p);\nproducer.initTransactions();                  // isola (\"fence\") a instância zumbi\n\nc.put(\"enable.auto.commit\", \"false\");\nc.put(\"isolation.level\", \"read_committed\");\n\nwhile (rodando) {\n  var lote = consumer.poll(Duration.ofMillis(500));\n  if (lote.isEmpty()) continue;\n  producer.beginTransaction();\n  try {\n    for (var r : lote) {\n      producer.send(new ProducerRecord<>(\"conciliados\", r.key(), conciliar(r)));\n    }\n    // os offsets do consumidor entram na MESMA transação\n    producer.sendOffsetsToTransaction(proximosOffsets(lote),\n        consumer.groupMetadata());\n    producer.commitTransaction();             // tudo ou nada\n  } catch (ProducerFencedException e) {\n    producer.close();                         // outra instância assumiu: pare\n    break;\n  } catch (KafkaException e) {\n    producer.abortTransaction();              // nada fica visível para read_committed\n    voltarParaUltimoCommit(consumer);\n  }\n}\n// Fora do Kafka (banco, e-mail, API) volta a ser at-least-once:\n// use idempotência ou o padrão outbox.", "conector.json": "{\n  \"name\": \"pedidos-jdbc-source\",\n  \"config\": {\n    \"connector.class\": \"io.confluent.connect.jdbc.JdbcSourceConnector\",\n    \"tasks.max\": \"2\",\n    \"connection.url\": \"jdbc:postgresql://db:5432/loja\",\n    \"connection.user\": \"${file:/opt/segredos.properties:db.user}\",\n    \"connection.password\": \"${file:/opt/segredos.properties:db.senha}\",\n    \"mode\": \"timestamp+incrementing\",\n    \"timestamp.column.name\": \"atualizado_em\",\n    \"incrementing.column.name\": \"id\",\n    \"table.whitelist\": \"pedidos\",\n    \"topic.prefix\": \"pg-\",\n    \"key.converter\": \"org.apache.kafka.connect.storage.StringConverter\",\n    \"value.converter\": \"io.confluent.connect.avro.AvroConverter\",\n    \"value.converter.schema.registry.url\": \"http://schema-registry:8081\",\n    \"transforms\": \"chave,mascara\",\n    \"transforms.chave.type\": \"org.apache.kafka.connect.transforms.ValueToKey\",\n    \"transforms.chave.fields\": \"id\",\n    \"transforms.mascara.type\": \"org.apache.kafka.connect.transforms.MaskField$Value\",\n    \"transforms.mascara.fields\": \"cpf\"\n  }\n}", "server.properties": "# Broker KRaft com SASL_SSL para clientes e mTLS entre brokers\nprocess.roles=broker                      # controllers dedicados em produção\nnode.id=4\ncontroller.quorum.bootstrap.servers=c1:9093,c2:9093,c3:9093\ncontroller.listener.names=CONTROLLER\nlisteners=CLIENTES://:9092,INTERNO://:9094\nadvertised.listeners=CLIENTES://kafka4.loja.com:9092,INTERNO://kafka4:9094\nlistener.security.protocol.map=CLIENTES:SASL_SSL,INTERNO:SSL,CONTROLLER:SSL\ninter.broker.listener.name=INTERNO\n\n# Autenticação: SCRAM para apps, certificado (mTLS) entre brokers\nlistener.name.clientes.sasl.enabled.mechanisms=SCRAM-SHA-512\nssl.keystore.location=/etc/kafka/tls/kafka4.keystore.p12\nssl.truststore.location=/etc/kafka/tls/truststore.p12\nlistener.name.interno.ssl.client.auth=required\n\n# Autorização: ACLs no KRaft\nauthorizer.class.name=org.apache.kafka.metadata.authorizer.StandardAuthorizer\nsuper.users=User:admin;User:CN=kafka4\nallow.everyone.if.no.acl.found=false      # padrão: sem ACL, sem acesso\n\n# Durabilidade e operação\nbroker.rack=sa-east-1a                    # réplicas espalhadas por zona\ndefault.replication.factor=3\nmin.insync.replicas=2\nunclean.leader.election.enable=false      # padrão: não aceita perder dados\nauto.create.topics.enable=false"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Cert · Confluent CCDAK + CCAAK =====================
+const CONF = {
+  title: 'Trilha CCDAK e CCAAK', file: 'Cert - Confluent Kafka Developer e Administrator', key: 'ckafka',
+  eyebrow: 'Certificação · Confluent', h1: 'Kafka certificado: o desenvolvedor e o administrador',
+  lead: 'Roteiro em vídeo para as duas certificações da Confluent sobre Apache Kafka: CCDAK, para quem escreve aplicações, e CCAAK, para quem opera clusters. Segue os domínios publicados nos guias de preparação (referência: outubro de 2026): produtor, consumidor, transações, Schema Registry, Kafka Streams, Kafka Connect, testes e observabilidade na parte de desenvolvimento; KRaft, configuração, retenção, segurança, arquitetura, métricas e troubleshooting na parte de administração. RabbitMQ não tem certificação oficial: ele está no Volume 1 e na trilha Node. Preço, nº de questões e pesos mudam: confira a página oficial.',
+  pills: ['CCDAK', 'CCAAK', 'Produtor e consumidor', 'Transações', 'Schema Registry', 'Kafka Streams', 'Kafka Connect', 'KRaft e segurança'],
+  term: 'bash · ~/lab-kafka',
+  faqPlaceholder: 'Buscar: acks, ISR, rebalance, compatibilidade, ACL…',
+  cmdsTitle: 'Comandos e números de bolso',
+  matriz: {title: 'Domínios das duas provas × onde estudar', desc: 'Pesos conforme os guias de preparação da Confluent em outubro de 2026 (a soma publicada não fecha exatamente em 100%). A página oficial carrega os guias dinamicamente: confira antes de agendar.', cols: ['Domínio', 'Peso', 'O que cai', 'Onde estudar']},
+};
+const TITLE = {k: 'Certificação · Confluent', h: 'CCDAK e CCAAK: Apache Kafka',
+  p: 'Duas provas, um só sistema. A de desenvolvedor pergunta o que acontece com cada mensagem; a de administrador, o que acontece com cada broker. Saber as duas é entender o Kafka por inteiro.',
+  chips: ['90 minutos cada', 'múltipla escolha', 'acks e ISR', 'grupos e offsets', 'exactly-once', 'Streams e Connect', 'KRaft · ACLs · métricas']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Cada mensagem, cada broker',
+  p: 'Abaixo do vídeo estão os domínios das duas provas com pesos, os links para as cenas de Kafka já vistas, a trilha de estudo, o checklist de prontidão e um simulado com questões originais.',
+  chips: ['acks=all + min.insync=2', 'commit depois de processar', 'BACKWARD: consumidor primeiro', 'URP = 0']};
+
+const SCENES = [
+/* ---------- AS PROVAS ---------- */
+{ id:'intro', ch:'As provas', title:'Duas provas, um sistema',
+  say:'A Confluent tem duas certificações de Apache Kafka. A CCDAK, de desenvolvedor, valida que você escreve produtores, consumidores, aplicações Kafka Streams e conectores com as garantias certas. A CCAAK, de administrador, valida que você configura, protege, monitora e conserta um cluster. Esta trilha cobre as duas, com a referência de outubro de dois mil e vinte e seis. Uma nota: RabbitMQ não tem certificação oficial; ele está no Volume 1 e na trilha Node.',
+  v:{type:'title'} },
+
+{ id:'formato', ch:'As provas', title:'Formato, regras e renovação',
+  say:'As duas provas têm noventa minutos, são online e supervisionadas por webcam pelo Honorlock, no Chrome. As questões são de múltipla escolha, associação e ordenação, e todas em inglês. A certificação vale dois anos. Guias de preparação de terceiros citam sessenta questões, preço de cento e cinquenta dólares e resultado só aprovado ou reprovado, sem nota publicada; a página oficial não deixa esses números visíveis, então confira antes de pagar. Não há pré-requisito formal.',
+  v:GRID(3, [
+    ['CCDAK','desenvolvedor',['produtor e consumidor','Streams e Connect','testes e observabilidade'],'blue'],
+    ['CCAAK','administrador',['configuração e KRaft','segurança e arquitetura','métricas e troubleshooting'],'green'],
+    ['Comum às duas','confirmado na página oficial',['90 min, remota, Honorlock','escolha, associação, ordem','só em inglês · vale 2 anos'],'amber'],
+  ], {h:250, step:3, rodape:'≈ 60 questões e US$ 150 segundo guias de terceiros · resultado aprovado/reprovado · confira em confluent.io/certification'}) },
+
+{ id:'dominios', ch:'As provas', title:'Os domínios e os pesos',
+  say:'Na CCDAK, desenvolvimento de aplicações é o maior bloco, com vinte e oito por cento; fundamentos, vinte e três; Kafka Connect, quinze; observabilidade, treze; Kafka Streams, doze; e testes, oito. Na CCAAK, configuração do cluster lidera com vinte e dois; fundamentos, segurança e troubleshooting têm quinze cada; arquitetura de implantação e Connect, doze; observabilidade, dez. Fundamentos e Connect aparecem nas duas: estude uma vez, use duas.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'blue', html:B('CCDAK · desenvolvedor','')+UL('Desenvolvimento de aplicações · 28%','Fundamentos · 23%','Kafka Connect · 15%','Observabilidade da aplicação · 13%','Kafka Streams · 12%','Testes de aplicação · 8%')},
+    {at:6, x:494,y:92,w:430,h:250, cls:'green', html:B('CCAAK · administrador','')+UL('Configuração do cluster · 22%','Fundamentos · 15%','Segurança · 15%','Troubleshooting · 15%','Arquitetura de implantação · 12%','Kafka Connect · 12%','Observabilidade · 10%')},
+    {at:12, x:36,y:362,w:888,h:96, cls:'region', html:'<span class="rl">estude uma vez, use duas</span>'+UL('fundamentos (réplicas, ISR, KRaft) e Kafka Connect caem nas duas provas','dev: comece pela CCDAK · ops: comece pela CCAAK')},
+    {at:15, x:36,y:472,w:888,h:34, cls:'ext', html:NOTE('pesos dos guias de preparação (out/2026) · a soma publicada não fecha 100% · confira o guia oficial')},
+  ]}},
+
+{ id:'lab', ch:'As provas', title:'Lab: um broker KRaft em 1 minuto',
+  say:'Para treinar de graça, a imagem oficial apache barra kafka sobe um nó KRaft que é broker e controller ao mesmo tempo. Os scripts ficam em barra opt barra kafka barra bin. Crie um tópico com três partições, produza mensagens com chave usando o console producer e leia com o console consumer mostrando chave e partição. Para Schema Registry, Connect e ksqlDB, use o docker compose do Confluent Platform ou a camada de teste da Confluent Cloud.',
+  v:T('c|docker run -d --name kafka -p 9092:9092 apache/kafka:4.1.0', 'c|alias kt="docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server :9092"', 'c|kt --create --topic pedidos --partitions 3 --replication-factor 1', 'ok|Created topic pedidos.', 'c|docker exec -it kafka /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server :9092 \\', 'c|   --topic pedidos --property parse.key=true --property key.separator=:', 'o|> p1:{"valor":100}', 'o|> p1:{"valor":120}', 'c|kafka-console-consumer.sh --topic pedidos --from-beginning \\', 'c|   --property print.key=true --property print.partition=true', 'ok|Partition:2   p1   {"valor":100}', 'ok|Partition:2   p1   {"valor":120}     # mesma chave, mesma partição')},
+
+/* ---------- FUNDAMENTOS ---------- */
+{ id:'fundamentos', ch:'Fundamentos', title:'Log, partição, réplica e líder',
+  say:'O tópico é dividido em partições; cada partição é um log ordenado, gravado só no fim, com offsets crescentes. Cada partição tem uma réplica líder, que atende leituras e escritas, e seguidoras que copiam o líder. As que estão em dia formam o ISR, o conjunto de réplicas em sincronia. Ordem existe só dentro da partição. O consumidor lê até o high watermark, o último offset copiado por todo o ISR. E ler não apaga: a retenção é que decide.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:200, cls:'region', html:'<span class="rl">tópico pedidos · 3 partições · fator de replicação 3</span>'},
+    {at:2, x:56,y:130,w:270,h:140, cls:'blue', html:B('Partição 0','líder no broker 1')+UL('seguidoras: 2 e 3','ISR = {1, 2, 3}')},
+    {at:3.5, x:345,y:130,w:270,h:140, cls:'blue', html:B('Partição 1','líder no broker 2')+UL('seguidoras: 3 e 1','ISR = {2, 3}: a 1 atrasou')},
+    {at:5, x:634,y:130,w:270,h:140, cls:'blue', html:B('Partição 2','líder no broker 3')+UL('seguidoras: 1 e 2','ISR = {3, 1, 2}')},
+    {at:9, x:36,y:312,w:430,h:190, cls:'green', html:B('Offsets e high watermark','')+UL('offset: posição na partição','ordem só dentro da partição','consumidor lê até o HW','HW = copiado por todo o ISR')},
+    {at:13, x:494,y:312,w:430,h:190, cls:'amber', html:B('O que decide a partição','')+UL('com chave: hash murmur2 % N','sem chave: sticky, lote a lote','mais partições: muda o destino','ler não apaga: retenção apaga')},
+  ]}},
+
+{ id:'kraft', ch:'Fundamentos', title:'KRaft: o fim do ZooKeeper',
+  say:'Desde o Kafka quatro, o ZooKeeper saiu: os metadados vivem num log interno replicado pelo protocolo Raft entre os controllers, o KRaft. Um controller é o ativo, os outros são votantes; três toleram a perda de um, cinco de dois. Cada nó tem process roles: broker, controller ou os dois, o modo combinado, só para teste. O armazenamento é formatado com um cluster ID antes de subir. Guias e questões antigas ainda citam ZooKeeper: saiba que ele existiu e por que saiu.',
+  v:{type:'boxes', defs:[
+    ['process.roles','broker, controller ou ambos', .8],
+    ['Quórum','3 tolera 1 · 5 tolera 2', 2.8],
+    ['Controller ativo','líder do log de metadados', 4.8],
+    ['__cluster_metadata','o log interno do KRaft', 6.8],
+    ['kafka-storage','format com o cluster ID', 8.8],
+    ['Combinado','só desenvolvimento', 10.8],
+  ], items:[
+    {at:12, x:470,y:92,w:454,h:200, cls:'blue', html:B('Antes: ZooKeeper','até o Kafka 3.x')+UL('outro sistema para operar','limite de partições','failover de controller lento')},
+    {at:15, x:470,y:312,w:454,h:190, cls:'green', html:B('Agora: KRaft','obrigatório no Kafka 4')+UL('metadados como log Raft','controllers em standby quente','milhões de partições')},
+  ]}},
+
+{ id:'replicacao', ch:'Fundamentos', title:'acks, min.insync e durabilidade',
+  say:'A pergunta mais clássica das duas provas. Com acks igual a zero, o produtor não espera nada; com um, só o líder; com all, todo o ISR. O min.insync.replicas diz quantas réplicas o ISR precisa ter para aceitar uma escrita com acks all; abaixo disso, o produtor recebe NotEnoughReplicas. A receita de produção é fator três, min insync dois e acks all: tolera um broker fora sem perder nada. E unclean leader election desligado impede que uma réplica atrasada vire líder.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:150, cls:'ext', html:B('acks=0','dispara e esquece')+UL('mais rápido','pode perder')},
+    {at:3, x:340,y:92,w:280,h:150, cls:'amber', html:B('acks=1','só o líder')+UL('perde se o líder cair','antes da cópia')},
+    {at:5, x:644,y:92,w:280,h:150, cls:'green', html:B('acks=all','todo o ISR')+UL('padrão desde o 3.0','com min.insync=2')},
+    {at:9, x:36,y:262,w:888,h:120, cls:'region', html:'<span class="rl">a receita</span>'+UL('RF=3 · min.insync.replicas=2 · acks=all → um broker pode cair sem perda e sem parar as escritas','dois fora: ISR=1 &lt; 2 → NotEnoughReplicasException; leitura continua')},
+    {at:15, x:36,y:402,w:888,h:100, cls:'blue', html:B('unclean.leader.election.enable=false','padrão: prefere ficar indisponível a eleger réplica fora do ISR e perder dados')},
+  ]}},
+
+/* ---------- CCDAK · DESENVOLVIMENTO ---------- */
+{ id:'produtor', ch:'CCDAK · Dev 28%', title:'O produtor confiável',
+  say:'O produtor agrupa mensagens em lotes por partição. Para durabilidade, acks all e idempotência, que já são padrão desde o Kafka três. A idempotência dá a cada produtor um ID e a cada lote um número de sequência: o broker descarta o retry duplicado, e a ordem se mantém com até cinco requisições em voo. Para vazão, linger ms e batch size enchem o lote, e a compressão reduz rede e disco. O delivery timeout é o teto total do envio, com os retries incluídos.',
+  v:S('Produtor.java','Produtor.java','java')},
+
+{ id:'consumidor', ch:'CCDAK · Dev 28%', title:'O consumidor e o commit',
+  say:'O consumidor faz poll em loop; o poll também mantém a participação no grupo. O auto commit, ligado por padrão, grava o offset a cada cinco segundos, mesmo que o processamento falhe. Com commit manual depois de processar, você tem at-least-once e precisa de idempotência; commit antes é at-most-once. O auto offset reset só vale quando o grupo não tem offset salvo. E se o processamento demorar mais que o max poll interval, o consumidor é expulso e o grupo rebalanceia.',
+  v:S('Consumidor.java','Consumidor.java','java')},
+
+{ id:'grupos', ch:'CCDAK · Dev 28%', title:'Grupos, rebalance e assignors',
+  say:'O grupo divide as partições: cada partição vai para um só membro, e membros além do número de partições ficam ociosos. Entrar, sair ou travar dispara rebalance. No protocolo clássico, o eager para todos; o cooperative sticky só move o necessário. Membros estáticos, com group instance id, reiniciam sem rebalance dentro do session timeout. No Kafka quatro, o novo protocolo de grupo, com group protocol igual a consumer, move a atribuição para o broker e torna o rebalance incremental.',
+  v:{type:'boxes', defs:[
+    ['Regra','1 partição → 1 membro do grupo', .8],
+    ['Sessão','sem heartbeat por 45 s: fora', 2.8],
+    ['Poll','intervalo > 5 min: fora', 4.8],
+    ['Assignors','range, round robin, sticky', 6.8],
+    ['Cooperative','move só o necessário', 8.8],
+    ['Estático','group.instance.id', 10.8],
+  ], items:[
+    {at:12, x:470,y:92,w:454,h:200, cls:'region', html:'<span class="rl">6 partições, 8 consumidores</span><div class="pods" style="margin-top:12px"><span class="pod">c1: p0</span><span class="pod">c2: p1</span><span class="pod">c3: p2</span><span class="pod">c4: p3</span><span class="pod">c5: p4</span><span class="pod">c6: p5</span><span class="pod">c7: ocioso</span><span class="pod">c8: ocioso</span></div>'+UL('c7 e c8 só entram se alguém sair','escalar além: mais partições')},
+    {at:16, x:470,y:312,w:454,h:190, cls:'green', html:B('Novo protocolo (KIP-848)','Kafka 4: group.protocol=consumer')+UL('o broker calcula a atribuição','rebalance incremental por membro','assignors do lado do servidor')},
+  ]}},
+
+{ id:'offsets-cli', ch:'CCDAK · Dev 28%', title:'Lag e reset de offsets na prática',
+  say:'Os offsets do grupo ficam no tópico interno consumer offsets. O kafka consumer groups mostra, por partição, o offset atual, o fim do log e o lag, a diferença entre eles. Para reprocessar, pare o grupo e use reset offsets: para o início, para uma data ou deslocando N posições. Sem execute, ele só mostra o plano, o famoso dry run. Com o grupo ativo, o reset é recusado. Essa sequência cai nas duas provas.',
+  v:T('c|kafka-consumer-groups.sh --bootstrap-server :9092 --describe --group faturamento', 'o|TOPIC    PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG   CONSUMER-ID', 'o|pedidos  0          1200            1210            10    fat-1-3c9a…', 'err|pedidos  1          800             5800            5000  fat-2-77b1…', 'o|pedidos  2          950             950             0     fat-3-a01f…', 'c|kafka-consumer-groups.sh --bootstrap-server :9092 --group faturamento \\', 'c|   --topic pedidos --reset-offsets --to-datetime 2026-10-09T00:00:00.000', 'o|GROUP        TOPIC    PARTITION  NEW-OFFSET     # só o plano (dry run)', 'o|faturamento  pedidos  1          4120', 'c|  … --reset-offsets --to-earliest --execute', 'err|Error: Assignments can only be reset if the group is inactive', 'c|# pare os consumidores e repita com --execute', 'ok|faturamento  pedidos  0  0')},
+
+{ id:'eos', ch:'CCDAK · Dev 28%', title:'Transações e exactly-once',
+  say:'Exactly-once no Kafka vale para o ciclo consumir, transformar e produzir, dentro do próprio Kafka. O produtor ganha um transactional id estável; o init transactions isola a instância zumbi pelo epoch. Mensagens e offsets do consumidor entram na mesma transação, com send offsets to transaction, e o commit é tudo ou nada. Quem lê com isolation level read committed não vê o que foi abortado. Efeito fora do Kafka volta a ser at-least-once.',
+  v:S('Transacao.java','Transacao.java','java')},
+
+{ id:'schema', ch:'CCDAK · Dev 28%', title:'Schema Registry e compatibilidade',
+  say:'O Schema Registry guarda os esquemas Avro, Protobuf ou JSON Schema; a mensagem carrega só um ID de cinco bytes. O subject padrão é o nome do tópico mais key ou value. A compatibilidade padrão é BACKWARD: o esquema novo lê dados antigos, então atualize primeiro os consumidores. FORWARD é o inverso: produtores primeiro. FULL exige os dois, e o sufixo TRANSITIVE compara com todas as versões, não só a última. Campo novo com valor padrão é a mudança segura.',
+  v:GRID(4, [
+    ['BACKWARD','padrão',['novo lê o antigo','consumidores primeiro','remover campo; somar com padrão'],'green'],
+    ['FORWARD','',['antigo lê o novo','produtores primeiro','somar campo; remover com padrão'],'blue'],
+    ['FULL','',['os dois sentidos','qualquer ordem','só campos com padrão'],'amber'],
+    ['NONE','',['sem verificação','quebra em produção','evite'],'ext'],
+  ], {h:260, step:2.5, rodape:'_TRANSITIVE: compara com todas as versões · subject = <tópico>-value (TopicNameStrategy) · magic byte + ID de 4 bytes'}) },
+
+/* ---------- CCDAK · STREAMS E CONNECT ---------- */
+{ id:'streams', ch:'CCDAK · Streams 12%', title:'Kafka Streams: topologia',
+  say:'Kafka Streams é uma biblioteca, não um cluster: roda dentro da sua aplicação. O application id vira o group id e prefixo dos tópicos internos. KStream é um fluxo de eventos; KTable, o último valor por chave. Trocar a chave antes de agrupar ou juntar cria um tópico de repartição. Agregações guardam estado num state store local, RocksDB, com um tópico changelog para recuperar. E exactly once v2 liga as transações com uma linha.',
+  v:S('Topologia.java','Topologia.java','java')},
+
+{ id:'streams-conceitos', ch:'CCDAK · Streams 12%', title:'Joins, janelas e paralelismo',
+  say:'Três coisas que as questões adoram. Joins: KStream com KStream exige janela; KStream com KTable exige co-particionamento, mesmo número de partições e mesma chave; com GlobalKTable não, porque cada instância tem a tabela inteira. Janelas: tumbling fixa, hopping sobreposta, sliding por diferença de tempo e session por inatividade. Paralelismo: uma tarefa por partição de entrada; instâncias além disso ficam ociosas, ou servem de standby.',
+  v:GRID(3, [
+    ['Joins','',['stream-stream: com janela','stream-table: co-particionado','GlobalKTable: sem exigência'],'blue'],
+    ['Janelas','',['tumbling: fixa, sem sobrepor','hopping: tamanho + avanço','sliding · session'],'green'],
+    ['Escala e estado','',['tarefas = partições de entrada','state store + changelog','standby replicas'],'amber'],
+  ], {h:250, step:3.5, rodape:'stateless: filter, map, branch · stateful: groupBy + count/aggregate/reduce, join, janela · ksqlDB: o mesmo em SQL'}) },
+
+{ id:'connect', ch:'CCDAK · Connect 15%', title:'Kafka Connect: integrar sem código',
+  say:'Connect move dados entre o Kafka e outros sistemas por configuração. Source traz para o Kafka; sink leva para fora. Workers em modo distribuído guardam configuração, offsets e status em três tópicos internos e dividem as tasks entre si; o standalone guarda offsets num arquivo local. Converters serializam, como Avro ou JSON; SMTs fazem transformações leves por mensagem. Segredos vêm de config providers, nunca em texto puro.',
+  v:S('pedidos-jdbc-source.json','conector.json','json')},
+
+{ id:'connect-rest', ch:'CCDAK · Connect 15%', title:'A API REST do Connect',
+  say:'Tudo no Connect modo distribuído passa pela API REST na porta oito zero oito três: criar ou atualizar com PUT no config, ver o status do conector e de cada task, reiniciar uma task que falhou, pausar e retomar. Erros num sink podem ser tolerados com errors tolerance all e enviados para uma dead letter queue. Um conector rodando com uma task em FAILED é a pegadinha: o trace no status diz a causa.',
+  v:T('c|curl -s -X PUT -H "Content-Type: application/json" localhost:8083/connectors/pg/config \\', 'c|   -d @config.json | jq .name', 'ok|"pg"', 'c|curl -s localhost:8083/connectors/pg/status | jq -c ".connector.state, .tasks[]"', 'o|"RUNNING"', 'o|{"id":0,"state":"RUNNING","worker_id":"connect-1:8083"}', 'err|{"id":1,"state":"FAILED","trace":"org.postgresql.util.PSQLException: …"}', 'c|curl -s -X POST localhost:8083/connectors/pg/tasks/1/restart', 'c|curl -s -X PUT localhost:8083/connectors/pg/pause', 'c|# sink: errors.tolerance=all + errors.deadletterqueue.topic.name=dlq-pg', 'c|curl -s localhost:8083/connector-plugins | jq -r ".[].class" | head -3')},
+
+/* ---------- CCDAK · TESTES E OBSERVABILIDADE ---------- */
+{ id:'testes', ch:'CCDAK · Testes 8%', title:'Testar aplicações Kafka',
+  say:'Cada camada tem sua ferramenta. Lógica de produtor e consumidor se testa com MockProducer e MockConsumer, sem broker. Topologias do Kafka Streams, com o TopologyTestDriver, que roda síncrono e controla o tempo para testar janelas. Esquemas, com o registry em memória, usando a URL mock dois pontos barra barra. E a integração de ponta a ponta, com Testcontainers subindo um broker real no teste. Teste também retries, duplicatas e mensagens envenenadas.',
+  v:GRID(4, [
+    ['Unidade','',['MockProducer','MockConsumer','sem broker'],'blue'],
+    ['Streams','',['TopologyTestDriver','TestInputTopic','avança o tempo'],'green'],
+    ['Esquemas','',['mock:// no registry','compatibilidade no CI'],'amber'],
+    ['Integração','',['Testcontainers','broker real, efêmero','ponta a ponta'],''],
+  ], {h:220, step:2.5, rodape:'teste o caminho triste: retry, duplicata, mensagem envenenada (desserialização) e rebalance no meio do lote'}) },
+
+{ id:'observ-dev', ch:'CCDAK · Observ. 13%', title:'Observar produtor e consumidor',
+  say:'Os clientes expõem métricas por JMX. No produtor: taxa de envio, taxa de erro, latência das requisições, tamanho médio do lote e buffer disponível; buffer esgotado faz o send bloquear. No consumidor: records lag max, o atraso da partição mais atrasada, taxa de fetch, e taxa de commit e de rebalance. Lag subindo sem parar é consumidor lento ou poucas partições. Logue com o offset e a partição para rastrear uma mensagem.',
+  v:GRID(2, [
+    ['Produtor','',['record-send-rate · record-error-rate','request-latency-avg','batch-size-avg · compression-rate','buffer-available-bytes'],'blue'],
+    ['Consumidor','',['records-lag-max','fetch-rate · records-consumed-rate','commit-rate · rebalance-rate','last-poll-seconds-ago'],'green'],
+  ], {h:230, step:4, rodape:'lag crescente: processamento lento, dependência travada, poucas partições · rebalance em loop: max.poll.interval estourado'}) },
+
+/* ---------- CCAAK · CONFIGURAÇÃO ---------- */
+{ id:'config', ch:'CCAAK · Config 22%', title:'Configuração de broker e tópico',
+  say:'Configuração tem camadas. A do tópico vence a do broker. Muitas configs de broker são dinâmicas: mudam com kafka configs, por broker ou para o cluster inteiro, sem reiniciar. A ordem de precedência é dinâmica por broker, depois o padrão dinâmico do cluster, depois o server ponto properties, depois o padrão do Kafka. Crie tópicos com fator de replicação e partições explícitos e desligue a criação automática em produção.',
+  v:T('c|kafka-topics.sh --bootstrap-server :9092 --create --topic pagamentos \\', 'c|   --partitions 12 --replication-factor 3 --config min.insync.replicas=2', 'ok|Created topic pagamentos.', 'c|kafka-configs.sh --bootstrap-server :9092 --alter --entity-type topics \\', 'c|   --entity-name pagamentos --add-config retention.ms=259200000', 'ok|Completed updating config for topic pagamentos.', 'c|kafka-configs.sh --bootstrap-server :9092 --alter --entity-type brokers \\', 'c|   --entity-default --add-config log.cleaner.threads=2     # cluster inteiro', 'c|kafka-configs.sh --bootstrap-server :9092 --describe --entity-type topics --entity-name pagamentos', 'o|  min.insync.replicas=2 sensitive=false synonyms={DYNAMIC_TOPIC_CONFIG:…}', 'o|  retention.ms=259200000 sensitive=false synonyms={DYNAMIC_TOPIC_CONFIG:…}', 'c|kafka-topics.sh --bootstrap-server :9092 --alter --topic pagamentos --partitions 24')},
+
+{ id:'retencao', ch:'CCAAK · Config 22%', title:'Retenção, segmentos e compactação',
+  say:'A partição é gravada em segmentos; só segmentos fechados são apagados ou compactados, nunca o ativo. Com cleanup policy delete, o Kafka apaga por tempo, sete dias por padrão, ou por tamanho. Com compact, guarda o último valor de cada chave, ideal para estado e changelogs. Uma mensagem com valor nulo é o tombstone: apaga a chave, e some depois do delete retention. Dá para combinar as duas políticas. Aumentar partições depois muda o destino das chaves.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:230, cls:'blue', html:B('cleanup.policy=delete','padrão')+UL('retention.ms: 7 dias','retention.bytes: -1 (sem limite)','apaga segmentos fechados inteiros','segment.bytes 1 GB · segment.ms 7 d')},
+    {at:6, x:494,y:92,w:430,h:230, cls:'green', html:B('cleanup.policy=compact','último valor por chave')+UL('tombstone: valor nulo apaga a chave','delete.retention.ms: 1 dia','min.cleanable.dirty.ratio: 0,5','__consumer_offsets é compactado')},
+    {at:12, x:36,y:342,w:888,h:160, cls:'region', html:'<span class="rl">lembre</span>'+UL('o segmento ativo nunca é apagado nem compactado','compact,delete: compacta e também expira por tempo','mais partições depois: hash % N muda, a ordem por chave quebra na transição')},
+  ]}},
+
+{ id:'reassign', ch:'CCAAK · Config 22%', title:'Mover partições e líderes',
+  say:'Broker novo não recebe partições sozinho. O kafka reassign partitions gera um plano, executa com throttle para não saturar a rede e verifica o fim, que também remove o throttle. A réplica preferida é a primeira da lista; depois de quedas, os líderes ficam desbalanceados, e o leader election devolve a liderança, coisa que o auto leader rebalance também faz. O kafka metadata quorum mostra a saúde do KRaft.',
+  v:T('c|kafka-reassign-partitions.sh --bootstrap-server :9092 --generate \\', 'c|   --topics-to-move-json-file topicos.json --broker-list "1,2,3,4" > plano.json', 'c|kafka-reassign-partitions.sh --bootstrap-server :9092 --execute \\', 'c|   --reassignment-json-file plano.json --throttle 50000000     # 50 MB/s', 'ok|Successfully started partition reassignments for pagamentos-0,pagamentos-1,…', 'c|kafka-reassign-partitions.sh --bootstrap-server :9092 --verify --reassignment-json-file plano.json', 'ok|Reassignment of partition pagamentos-0 is completed.   Clearing throttle…', 'c|kafka-leader-election.sh --bootstrap-server :9092 --election-type PREFERRED --all-topic-partitions', 'c|kafka-metadata-quorum.sh --bootstrap-server :9092 describe --status', 'o|LeaderId: 1   HighWatermark: 48211   CurrentVoters: [1,2,3]   CurrentObservers: [4,5,6]')},
+
+/* ---------- CCAAK · SEGURANÇA ---------- */
+{ id:'seguranca', ch:'CCAAK · Segurança 15%', title:'Listeners, TLS, SASL e ACLs',
+  say:'Cada listener tem um protocolo: PLAINTEXT, SSL, SASL PLAINTEXT ou SASL SSL. O advertised listeners é o endereço que o cliente recebe: errado, o cliente conecta no bootstrap e falha depois. Autenticação é TLS mútuo ou SASL: PLAIN, SCRAM, GSSAPI para Kerberos e OAUTHBEARER. SASL PLAIN só com TLS. A autorização é por ACLs, no KRaft com o StandardAuthorizer; sem ACL, ninguém acessa, exceto os super users. Criptografia em repouso é com o disco, não com o Kafka.',
+  v:S('server.properties','server.properties','bash')},
+
+{ id:'acls', ch:'CCAAK · Segurança 15%', title:'Usuários SCRAM e ACLs no terminal',
+  say:'Crie a credencial SCRAM com kafka configs, no tipo users. As ACLs dizem principal, operação, recurso e host. Os atalhos producer e consumer criam o conjunto mínimo: Write, Describe e Create no tópico, ou Read no tópico e no grupo. Um consumidor sem Read no grupo falha com GroupAuthorizationException, outra pegadinha. Prefixos de recurso evitam uma ACL por tópico. O cliente usa um arquivo de propriedades com protocolo, mecanismo e JAAS.',
+  v:T('c|kafka-configs.sh --bootstrap-server :9092 --command-config admin.properties --alter \\', 'c|   --add-config "SCRAM-SHA-512=[password=troque]" --entity-type users --entity-name app-fat', 'c|kafka-acls.sh --bootstrap-server :9092 --command-config admin.properties --add \\', 'c|   --allow-principal User:app-fat --consumer --topic pedidos --group faturamento', 'o|Adding ACLs for resource `ResourcePattern(resourceType=TOPIC, name=pedidos…)`:', 'o|  (principal=User:app-fat, host=*, operation=READ, permissionType=ALLOW)', 'c|kafka-acls.sh … --add --allow-principal User:app-pag --producer \\', 'c|   --topic pag- --resource-pattern-type prefixed     # todos os tópicos pag-*', 'c|kafka-acls.sh --bootstrap-server :9092 --command-config admin.properties --list --topic pedidos', 'c|cat app.properties', 'o|security.protocol=SASL_SSL   sasl.mechanism=SCRAM-SHA-512   sasl.jaas.config=…', 'c|# sem a ACL do grupo, o consumidor falharia assim:', 'err|GroupAuthorizationException: Not authorized to access group: faturamento')},
+
+/* ---------- CCAAK · ARQUITETURA, OBSERVABILIDADE, TROUBLESHOOTING ---------- */
+{ id:'arquitetura', ch:'CCAAK · Arquit. 12%', title:'Arquitetura de implantação',
+  say:'Em produção: controllers KRaft dedicados, três ou cinco; brokers em pelo menos três zonas, com broker rack para espalhar réplicas, e client rack com o seletor ciente de rack para o consumidor ler da réplica mais próxima. Disco é o gargalo comum: dimensione por vazão vezes retenção vezes fator de replicação. Entre data centers: MirrorMaker dois, sobre o Connect, ou na Confluent o Cluster Linking. Um cluster esticado entre regiões exige latência baixa.',
+  v:GRID(3, [
+    ['Dentro da região','',['controllers dedicados: 3 ou 5','brokers em 3 zonas · broker.rack','client.rack: ler do vizinho'],'blue'],
+    ['Dimensionar','',['disco = vazão × retenção × RF','rede: replicação + consumidores','partições: vazão alvo ÷ por partição'],'green'],
+    ['Entre regiões','',['MirrorMaker 2 (Connect)','Cluster Linking (Confluent)','esticado: só com latência baixa'],'amber'],
+  ], {h:250, step:3.5, rodape:'Confluent Platform soma Schema Registry, Control Center, RBAC e Tiered Storage · confira o que cai no guia oficial'}) },
+
+{ id:'observ-admin', ch:'CCAAK · Observ. 10%', title:'As métricas que acordam alguém',
+  say:'Poucas métricas de broker dizem quase tudo. Under replicated partitions deve ser zero; acima disso, algum broker atrasou ou caiu. Offline partitions, partições sem líder, é incidente. Active controller count somado no cluster deve ser exatamente um. Under min ISR mostra onde as escritas com acks all vão falhar. Idle percent baixo nos request handlers e na rede indica broker saturado. ISR encolhendo e expandindo sem parar sugere rede ou disco instáveis.',
+  v:GRID(2, [
+    ['Alerta imediato','',['UnderReplicatedPartitions > 0','OfflinePartitionsCount > 0','ActiveControllerCount ≠ 1 no total','UnderMinIsrPartitionCount > 0'],'ext'],
+    ['Saturação e saúde','',['RequestHandlerAvgIdlePercent baixo','NetworkProcessorAvgIdlePercent baixo','IsrShrinksPerSec oscilando','lag dos grupos · disco livre'],'amber'],
+  ], {h:240, step:4, rodape:'JMX → Prometheus/Grafana ou Control Center · logs: server.log, controller.log, state-change.log'}) },
+
+{ id:'troubleshooting', ch:'CCAAK · Trouble. 15%', title:'Troubleshooting: do sintoma à causa',
+  say:'O roteiro: primeiro, quais partições estão sub-replicadas ou sem líder, com as flags do kafka topics. Se tudo aponta para um broker, veja o processo, o disco e o log dele. Se o produtor recebe NotEnoughReplicas, o ISR caiu abaixo do min insync. Se o cliente conecta e depois falha com host desconhecido, é o advertised listeners. E consumidor parado com lag alto: descreva o grupo para ver se há membros e se o rebalance não termina.',
+  v:T('c|kafka-topics.sh --bootstrap-server :9092 --describe --under-replicated-partitions', 'err|Topic: pagamentos  Partition: 3  Leader: 1  Replicas: 1,3,2  Isr: 1,2', 'err|Topic: pagamentos  Partition: 7  Leader: 2  Replicas: 2,3,1  Isr: 2,1', 'c|kafka-topics.sh --bootstrap-server :9092 --describe --unavailable-partitions', 'o|(vazio: todas têm líder)', 'c|ssh kafka3 "df -h /var/lib/kafka; tail -2 /var/log/kafka/server.log"', 'err|/dev/nvme1n1   2.0T  2.0T     0 100% /var/lib/kafka', 'err|ERROR Error while appending records … No space left on device', 'c|# libere disco ou reduza retenção; o broker volta e alcança o ISR', 'c|kafka-topics.sh --bootstrap-server :9092 --describe --under-replicated-partitions', 'ok|(vazio: URP = 0)')},
+
+/* ---------- ESTRATÉGIA ---------- */
+{ id:'pegadinhas', ch:'Estratégia', title:'Pegadinhas das duas provas',
+  say:'As que mais derrubam. Achar que acks all sozinho garante durabilidade, sem min insync. Esperar ordem global num tópico com várias partições. Pensar que mais consumidores que partições acelera. Confundir auto offset reset com reprocessamento. Inverter BACKWARD e FORWARD. Achar que exactly-once cobre o banco. No lado de administração: advertised listeners errado, ACL de grupo esquecida, compactação no segmento ativo e aumentar partições de tópico com chave.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:300, cls:'blue', html:B('CCDAK','')+UL('acks=all sem min.insync=2','ordem só por partição','consumidores > partições: ociosos','auto.offset.reset ≠ reprocessar','BACKWARD: consumidor primeiro','EOS não cobre o banco')},
+    {at:9, x:494,y:92,w:430,h:300, cls:'green', html:B('CCAAK','')+UL('advertised.listeners errado','consumidor sem ACL no grupo','segmento ativo não compacta','mais partições quebra a chave','par de controllers não ajuda','reassign sem throttle')},
+    {at:17, x:36,y:412,w:888,h:90, cls:'ext', html:B('Leia o padrão de cada config','muitas questões são "qual o comportamento padrão?": acks=all, idempotência on, auto commit on, reset latest, retenção 7 dias')},
+  ]}},
+
+{ id:'estrategia', ch:'Estratégia', title:'Tempo, simulados e plano',
+  say:'Noventa minutos para cerca de sessenta questões dá um minuto e meio cada. Na primeira passada, responda o que sabe e marque o resto. Em questões de cenário, ache a palavra que decide: sem perda, sem duplicata, menor latência, ordem por cliente. Elimine as alternativas que violam um padrão conhecido. O plano: os cursos gratuitos da Confluent Developer, o lab local para cada comando desta trilha e simulados até passar com folga. Faça a CCDAK primeiro se você é dev.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:210, cls:'blue', html:B('1,5 min por questão','90 min ÷ ~60')+UL('1ª passada: o que sabe','marque e volte','não deixe em branco')},
+    {at:5, x:340,y:92,w:280,h:210, cls:'amber', html:B('A palavra que decide','')+UL('sem perda → acks, ISR','sem duplicata → idempotência','ordem → chave','latência → linger, acks')},
+    {at:10, x:644,y:92,w:280,h:210, cls:'green', html:B('Elimine','')+UL('viola um padrão','usa recurso inexistente','resolve outro problema')},
+    {at:15, x:36,y:322,w:888,h:180, cls:'region', html:'<span class="rl">plano de 6 semanas</span>'+UL('semanas 1–2: fundamentos, produtor, consumidor e lab local','semanas 3–4: CCDAK (transações, Schema Registry, Streams, Connect, testes)','semanas 5–6: CCAAK (KRaft, config, segurança, métricas, troubleshooting) + simulados')},
+  ]}},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Prontidão para as duas provas',
+  say:'Você está pronto quando explica acks, ISR e min insync de cabeça; escolhe o commit certo para cada garantia; descreve o rebalance e os assignors; escreve uma transação consumir-produzir; acerta a ordem de deploy em cada compatibilidade; monta uma topologia com janela; cria e diagnostica um conector; e, como administrador, configura tópicos, ACLs e listeners, move partições e lê as métricas que importam.',
+  v:CK('acks, ISR e min.insync', 'Padrões de produtor e consumidor', 'Commit e garantias de entrega', 'Rebalance e assignors', 'Transação consumir-produzir', 'Compatibilidade de esquemas', 'Streams: joins e janelas', 'Connect: status e DLQ', 'Retenção e compactação', 'Listeners, SASL e ACLs', 'Reassign e líder preferido', 'URP, offline e controller')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os domínios das duas provas com pesos, os links para as cenas de Kafka das trilhas anteriores, como outbox, idempotência e rebalance, a trilha de estudo com as páginas oficiais, o checklist e um simulado com questões originais. Faça o lab local para cada comando: na prova, quem já viu o comportamento acerta a pergunta sobre ele.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Kafka não é fila: é um log', 'v01', 'kafka-log', 'O modelo mental do log e do offset'],
+  ['O vocabulário do Kafka', 'v01', 'kafka-conceitos', 'Tópico, partição, chave e grupo'],
+  ['A regra das partições', 'v01', 'kafka-particoes', 'Paralelismo e escolha do número de partições'],
+  ['RabbitMQ, Kafka e a nuvem', 'v01', 'rabbit-kafka', 'Quando usar cada um'],
+  ['Ack e garantias de entrega', 'v01', 'ack-garantias', 'At-most, at-least e exactly-once'],
+  ['Kafka: o vocabulário em .NET', 'kafka', 'conceitos', 'Tópicos, partições, grupos e offsets'],
+  ['O produtor na prática', 'kafka', 'produtor', 'Configuração e envio em .NET'],
+  ['Tópicos e partições', 'kafka', 'topicos', 'Criação e dimensionamento'],
+  ['Offsets e commits', 'kafka', 'offsets', 'Onde o consumidor está'],
+  ['Rebalanceamento', 'kafka', 'rebalance', 'O que acontece quando um consumidor entra ou sai'],
+  ['Lag do consumidor', 'kafka', 'lag', 'Medir e reagir ao atraso'],
+  ['Idempotência e retry', 'kafka', 'idem', 'Consumidor que aguenta duplicatas'],
+  ['Dead letter queue', 'kafka', 'dlq', 'Mensagens envenenadas'],
+  ['Outbox e relay', 'kafka', 'outbox', 'Escrita dupla sem perder evento'],
+  ['RabbitMQ: os conceitos', 'node', 'rabbit-conceitos', 'O broker sem certificação oficial'],
+  ['Raft: replicação do log', 'ndist', 'raft-log', 'O algoritmo por trás do KRaft'],
+  ['Exactly-once efetivo', 'ndist', 'idempotencia', 'Por que o efeito externo exige idempotência'],
+  ['EventBridge, Kinesis ou MSK', 'naws', 'eventos', 'Kafka gerenciado na AWS'],
+  ['CDC e streaming', 'v17', 'cdc', 'Quando vale levar o banco para o Kafka'],
+];
+
+const MATRIZ = [
+  ['CCDAK · Desenvolvimento de aplicações', '28%', 'Produtor (acks, idempotência, lotes), consumidor (poll, commit, reset), grupos e rebalance, transações, Schema Registry', 'Cenas produtor a schema · trilha kafka · produtor, offsets'],
+  ['CCDAK · Fundamentos', '23%', 'Log, partições, réplicas, ISR, high watermark, KRaft, acks e min.insync', 'Cenas fundamentos, kraft, replicacao · Vol 01 · kafka-log'],
+  ['CCDAK · Kafka Connect', '15%', 'Source e sink, workers, converters, SMTs, REST, DLQ', 'Cenas connect e connect-rest'],
+  ['CCDAK · Observabilidade', '13%', 'Métricas JMX de produtor e consumidor, lag, rebalance', 'Cena observ-dev · trilha kafka · lag'],
+  ['CCDAK · Kafka Streams', '12%', 'KStream, KTable, GlobalKTable, joins, janelas, state store, EOS v2', 'Cenas streams e streams-conceitos'],
+  ['CCDAK · Testes', '8%', 'MockProducer/Consumer, TopologyTestDriver, mock://, Testcontainers', 'Cena testes'],
+  ['CCAAK · Configuração do cluster', '22%', 'Broker × tópico, configs dinâmicas, retenção, compactação, partições, reassign', 'Cenas config, retencao, reassign'],
+  ['CCAAK · Fundamentos', '15%', 'Réplicas, ISR, líder, KRaft e quórum, durabilidade', 'Cenas fundamentos, kraft, replicacao · ndist · raft-log'],
+  ['CCAAK · Segurança', '15%', 'Listeners, TLS, SASL (PLAIN, SCRAM, GSSAPI, OAUTHBEARER), ACLs, super users', 'Cenas seguranca e acls'],
+  ['CCAAK · Troubleshooting', '15%', 'URP, partições offline, disco cheio, advertised.listeners, grupo travado', 'Cena troubleshooting'],
+  ['CCAAK · Arquitetura de implantação', '12%', 'Controllers dedicados, racks e zonas, dimensionamento, MirrorMaker 2, Cluster Linking', 'Cena arquitetura · naws · eventos'],
+  ['CCAAK · Kafka Connect', '12%', 'Modo distribuído, tópicos internos, operação via REST', 'Cenas connect e connect-rest'],
+  ['CCAAK · Observabilidade', '10%', 'UnderReplicated, Offline, ActiveController, idle percent, lag', 'Cena observ-admin'],
+];
+
+const STUDY = [
+  ['Certificações Confluent', 'Página oficial: provas, regras e guias de preparação', 'https://www.confluent.io/certification/', 'formato'],
+  ['Confluent Developer: cursos', 'Kafka 101, Streams, Connect, Schema Registry, segurança (grátis)', 'https://developer.confluent.io/courses/', 'estrategia'],
+  ['Apache Kafka: documentação', 'Configs de broker, produtor, consumidor e operação', 'https://kafka.apache.org/documentation/', 'config'],
+  ['Apache Kafka: quickstart', 'O primeiro broker KRaft', 'https://kafka.apache.org/quickstart', 'lab'],
+  ['Imagem Docker apache/kafka', 'Broker KRaft para o lab local', 'https://hub.docker.com/r/apache/kafka', 'lab'],
+  ['Kafka Streams', 'Documentação oficial da biblioteca', 'https://kafka.apache.org/documentation/streams/', 'streams'],
+  ['Schema Registry: evolução de esquemas', 'BACKWARD, FORWARD, FULL e TRANSITIVE', 'https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html', 'schema'],
+  ['Kafka Connect (Confluent)', 'Workers, conectores, converters e SMTs', 'https://docs.confluent.io/platform/current/connect/index.html', 'connect'],
+  ['Segurança no Kafka', 'TLS, SASL e ACLs na documentação oficial', 'https://kafka.apache.org/documentation/#security', 'seguranca'],
+  ['Monitoramento no Kafka', 'As métricas JMX de broker e clientes', 'https://kafka.apache.org/documentation/#monitoring', 'observ-admin'],
+  ['Testcontainers: Kafka', 'Broker real nos testes de integração', 'https://testcontainers.com/modules/kafka/', 'testes'],
+];
+
+const CHECK = [
+  ['Fundamentos', 'Explicar ISR, high watermark e líder', 'fundamentos'],
+  ['Fundamentos', 'Calcular quantos brokers podem cair com RF e min.insync', 'replicacao'],
+  ['CCDAK', 'Configurar um produtor idempotente com lotes e compressão', 'produtor'],
+  ['CCDAK', 'Consumidor com commit manual depois de processar', 'consumidor'],
+  ['CCDAK', 'Resetar offsets de um grupo para uma data', 'offsets-cli'],
+  ['CCDAK', 'Escrever uma transação consumir-transformar-produzir', 'eos'],
+  ['CCDAK', 'Evoluir um esquema Avro sem quebrar consumidores', 'schema'],
+  ['CCDAK', 'Topologia Streams com janela e join', 'streams'],
+  ['CCDAK', 'Testar uma topologia com TopologyTestDriver', 'testes'],
+  ['Connect', 'Subir um conector e reiniciar uma task FAILED', 'connect-rest'],
+  ['CCAAK', 'Alterar configs dinâmicas de tópico e de cluster', 'config'],
+  ['CCAAK', 'Criar tópico compactado e testar um tombstone', 'retencao'],
+  ['CCAAK', 'Reassign com throttle e eleição de líder preferido', 'reassign'],
+  ['CCAAK', 'Usuário SCRAM com ACL de consumidor', 'acls'],
+  ['CCAAK', 'Diagnosticar partições sub-replicadas', 'troubleshooting'],
+  ['Prova', 'Passar com folga em dois simulados de cada prova', 'estrategia'],
+];
+
+const FAQ = [
+ ['CCDAK · Fundamentos','Um tópico tem fator de replicação 3 e min.insync.replicas=2. O produtor usa acks=all. Dois brokers caem. O que acontece?',`<p>A) As escritas continuam só no líder. B) O produtor recebe NotEnoughReplicas e as escritas param; leituras continuam. C) O Kafka elege uma réplica fora do ISR automaticamente. D) As mensagens são gravadas e replicadas depois.</p><p><b>Resposta: B.</b> Com uma réplica no ISR, abaixo de min.insync=2, escritas com acks=all são recusadas. A ignora o acks; C só com unclean leader election ligado (padrão desligado); D descreve acks=1.</p>`],
+ ['CCDAK · Fundamentos','Os eventos de cada cliente precisam ser processados em ordem, com alto paralelismo. O que fazer?',`<p>A) Usar uma única partição. B) Usar o ID do cliente como chave da mensagem. C) Usar chave nula e max.in.flight=1. D) Usar um tópico por cliente.</p><p><b>Resposta: B.</b> Mesma chave vai sempre para a mesma partição, que é ordenada, e clientes diferentes se espalham. A mata o paralelismo; C espalha o cliente por partições; D não escala.</p>`],
+ ['CCDAK · Desenvolvimento','Um produtor tem retries ligado e às vezes grava mensagens duplicadas após timeouts. Qual configuração resolve?',`<p>A) acks=0. B) enable.idempotence=true. C) linger.ms=0. D) auto.commit=false.</p><p><b>Resposta: B.</b> A idempotência usa ID do produtor e sequência para o broker descartar o retry duplicado. acks=0 perde dados; linger afeta lotes; auto commit é config de consumidor.</p>`],
+ ['CCDAK · Desenvolvimento','Um consumidor com enable.auto.commit=true cai no meio do processamento de um lote. Qual o risco?',`<p>A) Nenhum, o Kafka reprocessa tudo. B) Mensagens já commitadas e não processadas podem ser perdidas, e outras repetidas. C) O tópico é apagado. D) O grupo para de funcionar.</p><p><b>Resposta: B.</b> O auto commit grava offsets por tempo, sem saber se o processamento terminou. Para at-least-once, commit manual depois de processar.</p>`],
+ ['CCDAK · Desenvolvimento','Um grupo novo começa a ler um tópico com dados de uma semana, mas só recebe mensagens novas. Por quê?',`<p>A) A retenção apagou os dados. B) auto.offset.reset tem o padrão latest. C) Faltou group.instance.id. D) isolation.level=read_committed.</p><p><b>Resposta: B.</b> Sem offset salvo, latest começa do fim. Use earliest. A não, os dados existem; C e D não mudam o ponto de partida.</p>`],
+ ['CCDAK · Desenvolvimento','Um consumidor faz chamadas lentas a uma API e é expulso do grupo com frequência, gerando rebalances. O que ajustar primeiro?',`<p>A) Aumentar session.timeout.ms para 10 minutos. B) Reduzir max.poll.records ou aumentar max.poll.interval.ms. C) Aumentar o número de partições para 1 000. D) Desligar a idempotência.</p><p><b>Resposta: B.</b> A expulsão vem do intervalo entre polls. session.timeout trata heartbeat, que roda em thread própria; partições e idempotência não mudam o tempo de processamento.</p>`],
+ ['CCDAK · Desenvolvimento','O time usa compatibilidade BACKWARD e vai remover um campo do esquema. Qual a ordem de deploy?',`<p>A) Produtores primeiro. B) Consumidores primeiro. C) Os dois ao mesmo tempo, obrigatoriamente. D) Não importa.</p><p><b>Resposta: B.</b> BACKWARD garante que o esquema novo lê dados antigos: atualize quem lê antes. Produtores primeiro é FORWARD; FULL permite qualquer ordem.</p>`],
+ ['CCDAK · Desenvolvimento','Uma aplicação lê de um tópico, transforma e grava em outro. Ela não pode duplicar nem perder resultados em falhas. O que usar?',`<p>A) acks=1 e commit assíncrono. B) Produtor transacional com sendOffsetsToTransaction e consumidores read_committed. C) Auto commit a cada 1 s. D) Uma partição só.</p><p><b>Resposta: B.</b> Saída e offsets na mesma transação dão exactly-once dentro do Kafka. As outras não tornam atômicos envio e commit.</p>`],
+ ['CCDAK · Streams','Um join KStream-KTable falha com erro de co-particionamento. Qual alternativa evita a exigência?',`<p>A) Trocar a KTable por uma GlobalKTable. B) Aumentar num.stream.threads. C) Usar uma janela tumbling. D) Desligar o exactly-once.</p><p><b>Resposta: A.</b> A GlobalKTable é replicada inteira em cada instância, então não exige mesmo número de partições. Threads, janelas e garantia não resolvem o particionamento.</p>`],
+ ['CCDAK · Streams','Uma aplicação Streams lê um tópico de 8 partições. Quantas instâncias de uma thread processam ativamente ao mesmo tempo, no máximo?',`<p>A) 1. B) 4. C) 8. D) Ilimitadas.</p><p><b>Resposta: C.</b> Há uma tarefa por partição de entrada; instâncias além disso ficam ociosas ou como standby.</p>`],
+ ['CCDAK · Connect','Um conector aparece RUNNING, mas os dados não chegam. Onde olhar primeiro?',`<p>A) No status das tasks pela API REST. B) No __consumer_offsets. C) No server.properties do broker. D) No Schema Registry.</p><p><b>Resposta: A.</b> O conector pode estar RUNNING com uma task FAILED; o campo trace mostra a causa. As outras podem ajudar depois, mas não mostram o estado das tasks.</p>`],
+ ['CCDAK · Testes','Como testar uma agregação com janela de 5 minutos sem esperar o tempo real e sem broker?',`<p>A) Testcontainers com sleep. B) TopologyTestDriver, avançando o tempo dos registros. C) MockConsumer. D) Rodar em produção com flag.</p><p><b>Resposta: B.</b> O TopologyTestDriver roda a topologia em memória e controla timestamps. Testcontainers precisa de broker; MockConsumer não roda topologias.</p>`],
+ ['CCAAK · Configuração','Um tópico precisa guardar só o último estado de cada conta, para sempre. Qual configuração?',`<p>A) retention.ms=-1 com delete. B) cleanup.policy=compact. C) segment.bytes mínimo. D) min.insync.replicas=1.</p><p><b>Resposta: B.</b> A compactação mantém o último valor por chave. A guardaria todo o histórico; C e D não mudam o que é mantido.</p>`],
+ ['CCAAK · Configuração','Um broker novo entrou no cluster, mas não tem nenhuma partição. O que fazer?',`<p>A) Reiniciar o broker. B) Gerar e executar um plano com kafka-reassign-partitions, com throttle. C) Aumentar o fator de replicação padrão. D) Nada, ele recebe partições sozinho.</p><p><b>Resposta: B.</b> Partições existentes não migram sozinhas. Reiniciar não move nada; o padrão só vale para tópicos novos.</p>`],
+ ['CCAAK · Segurança','Um consumidor autentica com SCRAM, tem READ no tópico, mas falha com GroupAuthorizationException. O que falta?',`<p>A) ACL WRITE no tópico. B) ACL READ no grupo de consumidores. C) Trocar para SASL PLAIN. D) super.users.</p><p><b>Resposta: B.</b> Consumir com grupo exige READ no tópico e no grupo; o atalho --consumer --group cria as duas. Super user resolveria, mas viola o menor privilégio.</p>`],
+ ['CCAAK · Troubleshooting','Clientes conectam no bootstrap, mas falham logo depois com host desconhecido. Causa mais provável?',`<p>A) ACL ausente. B) advertised.listeners com endereço que o cliente não resolve. C) Disco cheio. D) min.insync alto.</p><p><b>Resposta: B.</b> O bootstrap devolve os endereços anunciados; se forem internos, o cliente não alcança. ACL daria erro de autorização; disco e ISR afetam escrita, não a resolução de nomes.</p>`],
+ ['CCAAK · Observabilidade','Qual métrica, somada em todos os brokers, deve ser exatamente 1 num cluster saudável?',`<p>A) UnderReplicatedPartitions. B) ActiveControllerCount. C) OfflinePartitionsCount. D) records-lag-max.</p><p><b>Resposta: B.</b> Só um controller é ativo por vez. URP e partições offline devem ser 0; lag é métrica do consumidor.</p>`],
+];
+
+const CMDS = [
+  ['RF=3 · min.insync.replicas=2 · acks=all', 'Tolera 1 broker fora sem perda'],
+  ['enable.idempotence=true · max.in.flight ≤ 5', 'Retry sem duplicar, com ordem'],
+  ['kafka-topics.sh --describe --under-replicated-partitions', 'Partições com réplica atrasada'],
+  ['kafka-consumer-groups.sh --describe --group G', 'Offset, fim do log e lag por partição'],
+  ['… --reset-offsets --to-earliest --topic T --execute', 'Reprocessar (grupo parado)'],
+  ['kafka-configs.sh --alter --entity-type topics --add-config k=v', 'Config dinâmica de tópico'],
+  ['kafka-reassign-partitions.sh --execute --throttle N', 'Mover partições sem saturar a rede'],
+  ['kafka-acls.sh --add --allow-principal User:X --consumer --group G', 'ACL mínima de consumidor'],
+  ['kafka-metadata-quorum.sh describe --status', 'Saúde do quórum KRaft'],
+  ['curl :8083/connectors/C/status', 'Estado do conector e das tasks'],
+  ['BACKWARD → consumidores primeiro · FORWARD → produtores', 'Ordem de deploy de esquemas'],
+  ['90 min ÷ ~60 questões ≈ 1,5 min', 'Ritmo de prova'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

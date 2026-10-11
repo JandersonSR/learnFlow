@@ -1,0 +1,1139 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Engenharia de Dados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:392px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+</style>
+
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Squad · dados</span>
+    <h1>Engenharia de dados</h1>
+    <p class="lead">Roteiro em vídeo do dado operacional ao dado analítico: OLTP e OLAP, ETL e ELT, data lake, lakehouse e arquitetura medalhão, Parquet e Delta, modelagem dimensional e SCD, cargas incrementais e CDC, Spark, dbt, orquestração, streaming com janelas, qualidade, governança e LGPD, com o mapa dos serviços no Azure. O que já foi coberto em outras trilhas tem link direto para a cena, logo abaixo do vídeo.</p>
+    <div class="meta">
+      <span class="pill">ELT e lakehouse</span><span class="pill">Modelagem dimensional</span><span class="pill">CDC</span><span class="pill">Spark e dbt</span><span class="pill">Streaming</span><span class="pill">Qualidade e governança</span>
+    </div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch">Partes do caminho do dado que já foram explicadas em outras trilhas. Cada link abre o vídeo correspondente direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow">Decisão</span><h2>Ferramentas e serviços</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch">Mapa para se orientar, não para escolher sozinho. Os serviços de dados do Azure mudam com frequência: confirme o estado atual na documentação antes de decidir.</p>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Ferramenta</th><th>Papel</th><th>Use quando</th><th>Cuidado</th><th>Exemplo</th></tr></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Documentação oficial das ferramentas e os livros de referência da área. A marcação fica salva só neste navegador.</p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Cada item vale quando foi aplicado em código, não só lido. O botão ao lado leva à cena do vídeo.</p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" placeholder="Buscar: Parquet, CDC, dbt, SCD…" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2>Comandos de bolso</h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer>Material de estudo da AGX. Os códigos são didáticos e não foram executados neste material. Nomes, recursos e preços de serviços de dados mudam rápido: confirme na documentação oficial antes de usar.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"dag.py": "# Airflow: o orquestrador agenda, ordena, repete e alerta\nfrom datetime import datetime, timedelta\nfrom airflow.decorators import dag, task\n\n@dag(schedule=\"0 3 * * *\", start_date=datetime(2026, 10, 1),\n     catchup=False, max_active_runs=1,\n     default_args={\"retries\": 3, \"retry_delay\": timedelta(minutes=5)})\ndef propostas_diario():\n\n    @task\n    def extrair(data_logica: str = \"{{ ds }}\") -> str:\n        # extrai o dia da execução (não \"hoje\"): reprocessar ontem dá o mesmo resultado\n        return copiar_para_landing(\"propostas\", data_logica)\n\n    @task\n    def validar(caminho: str) -> str:\n        checar_esquema_e_volume(caminho, minimo_linhas=1)  # falha cedo\n        return caminho\n\n    @task\n    def transformar(caminho: str):\n        rodar_job_spark(\"medalhao_propostas\", caminho)\n\n    @task\n    def modelar():\n        rodar(\"dbt build --select +fato_proposta\")\n\n    transformar(validar(extrair())) >> modelar()\n\npropostas_diario()", "dbt_modelo.sql": "-- models/marts/fato_proposta.sql  (dbt: SELECT versionado, testado e documentado)\n{{ config(materialized='incremental', unique_key='proposta_id') }}\n\nselect\n    p.proposta_id,\n    c.cliente_sk,\n    {{ dbt_utils.generate_surrogate_key(['p.produto']) }} as produto_sk,\n    cast(p.criado_em as date)                            as data,\n    p.valor,\n    p.status = 'aprovada'                                as aprovada,\n    p.atualizado_em\nfrom {{ ref('stg_propostas') }} p\njoin {{ ref('dim_cliente') }} c\n  on c.cliente_id = p.cliente_id\n and p.criado_em >= c.valido_de\n and (c.valido_ate is null or p.criado_em < c.valido_ate)\n\n{% if is_incremental() %}\n  -- só o que mudou desde a última execução deste modelo\n  where p.atualizado_em > (select max(atualizado_em) from {{ this }})\n{% endif %}\n\n-- ref() monta o grafo de dependências e a linhagem automaticamente\n-- dbt build = roda modelos + testes na ordem do grafo", "estrela.sql": "-- Modelo estrela: um fato no centro, dimensões em volta\nCREATE TABLE dim_cliente (\n  cliente_sk    BIGINT IDENTITY PRIMARY KEY,  -- chave substituta (surrogate)\n  cliente_id    BIGINT NOT NULL,              -- chave do sistema de origem\n  uf            CHAR(2), faixa_renda VARCHAR(20),\n  valido_de     DATETIME2 NOT NULL,\n  valido_ate    DATETIME2 NULL,               -- NULL = versão atual\n  atual         BIT NOT NULL DEFAULT 1\n);\nCREATE TABLE dim_data (data_sk INT PRIMARY KEY, data DATE, ano INT, mes INT, dia_semana VARCHAR(10));\n\nCREATE TABLE fato_proposta (         -- grão: uma linha por proposta\n  proposta_id   BIGINT NOT NULL,\n  cliente_sk    BIGINT NOT NULL REFERENCES dim_cliente,\n  data_sk       INT    NOT NULL REFERENCES dim_data,\n  produto_sk    INT    NOT NULL,\n  valor         DECIMAL(18,2),       -- medida aditiva\n  aprovada      BIT,\n  minutos_ate_decisao INT\n);\n\n-- Pergunta de negócio: taxa de aprovação por UF e mês\nSELECT c.uf, d.ano, d.mes,\n       COUNT(*)                                   AS propostas,\n       AVG(CAST(f.aprovada AS DECIMAL(5,4)))      AS taxa_aprovacao\nFROM fato_proposta f\nJOIN dim_cliente c ON c.cliente_sk = f.cliente_sk\nJOIN dim_data    d ON d.data_sk    = f.data_sk\nGROUP BY c.uf, d.ano, d.mes;", "incremental.sql": "-- Carga incremental por marca d'água (watermark)\nDECLARE @ultima DATETIME2 =\n  (SELECT valor FROM ctl_watermark WHERE tabela = 'propostas');\nDECLARE @ate DATETIME2 = DATEADD(MINUTE, -5, SYSUTCDATETIME()); -- margem p/ transações em voo\n\n-- Extrai só o que mudou desde a última execução\nINSERT INTO stg_propostas (id, cliente_id, status, valor, atualizado_em)\nSELECT id, cliente_id, status, valor, atualizado_em\nFROM   origem.propostas\nWHERE  atualizado_em >  @ultima\n  AND  atualizado_em <= @ate;\n\n-- Upsert idempotente no destino: rodar duas vezes dá o mesmo resultado\nMERGE dw.propostas AS t\nUSING stg_propostas AS s ON t.id = s.id\nWHEN MATCHED AND s.atualizado_em > t.atualizado_em THEN\n  UPDATE SET status = s.status, valor = s.valor, atualizado_em = s.atualizado_em\nWHEN NOT MATCHED THEN\n  INSERT (id, cliente_id, status, valor, atualizado_em)\n  VALUES (s.id, s.cliente_id, s.status, s.valor, s.atualizado_em);\n\n-- Só avança a marca depois do sucesso\nUPDATE ctl_watermark SET valor = @ate WHERE tabela = 'propostas';\n\n-- Limites: não enxerga DELETE e depende de atualizado_em confiável → CDC", "medalhao.py": "# PySpark + Delta: bronze → prata → ouro\nfrom pyspark.sql import functions as F\n\n# Bronze: dado bruto como chegou, com metadados de carga\nbruto = (spark.read.json(\"abfss://landing@agxdados.dfs.core.windows.net/propostas/2026/10/08/\")\n         .withColumn(\"_ingerido_em\", F.current_timestamp())\n         .withColumn(\"_arquivo\", F.col(\"_metadata.file_path\")))\nbruto.write.format(\"delta\").mode(\"append\").saveAsTable(\"bronze.propostas\")\n\n# Prata: limpa, tipa, remove duplicados e descarta o inválido para quarentena\nprata = (spark.table(\"bronze.propostas\")\n         .withColumn(\"valor\", F.col(\"valor\").cast(\"decimal(18,2)\"))\n         .withColumn(\"criado_em\", F.to_timestamp(\"criado_em\"))\n         .filter(F.col(\"cliente_id\").isNotNull())\n         .dropDuplicates([\"proposta_id\"]))\nprata.write.format(\"delta\").mode(\"overwrite\") \\\n     .partitionBy(\"dt\").saveAsTable(\"prata.propostas\")   # na prática: MERGE incremental\n\n# Ouro: agregado pronto para o negócio\nouro = (spark.table(\"prata.propostas\")\n        .groupBy(\"uf\", F.to_date(\"criado_em\").alias(\"dia\"))\n        .agg(F.count(\"*\").alias(\"propostas\"),\n             F.avg(F.col(\"aprovada\").cast(\"int\")).alias(\"taxa_aprovacao\")))\nouro.write.format(\"delta\").mode(\"overwrite\").saveAsTable(\"ouro.aprovacao_diaria\")", "scd2.sql": "-- SCD tipo 2: guardar o histórico quando um atributo muda\n-- 1) Fecha a versão atual de quem mudou\nUPDATE d\nSET    valido_ate = s.extraido_em, atual = 0\nFROM   dim_cliente d\nJOIN   stg_cliente s ON s.cliente_id = d.cliente_id\nWHERE  d.atual = 1\n  AND (d.uf <> s.uf OR d.faixa_renda <> s.faixa_renda);\n\n-- 2) Insere a nova versão (clientes novos ou alterados)\nINSERT INTO dim_cliente (cliente_id, uf, faixa_renda, valido_de, valido_ate, atual)\nSELECT s.cliente_id, s.uf, s.faixa_renda, s.extraido_em, NULL, 1\nFROM   stg_cliente s\nLEFT JOIN dim_cliente d\n       ON d.cliente_id = s.cliente_id AND d.atual = 1\nWHERE  d.cliente_id IS NULL;\n\n-- O fato aponta para a versão vigente na data do evento:\n-- a proposta de março continua ligada à UF que o cliente tinha em março.\n-- Tipo 1 (sobrescrever) serve para correções sem valor histórico.\n-- Rode os dois passos na mesma transação e torne a carga idempotente.", "streaming.py": "# Spark Structured Streaming lendo o Event Hubs pela interface Kafka\nfrom pyspark.sql import functions as F\n\neventos = (spark.readStream.format(\"kafka\")\n    .option(\"kafka.bootstrap.servers\", \"agx-ns.servicebus.windows.net:9093\")\n    .option(\"subscribe\", \"propostas.decididas\")\n    .option(\"startingOffsets\", \"latest\")\n    # + opções de autenticação SASL/OAuth (ver trilha de Kafka)\n    .load()\n    .select(F.from_json(F.col(\"value\").cast(\"string\"), esquema).alias(\"e\"))\n    .select(\"e.*\"))\n\npor_janela = (eventos\n    .withWatermark(\"decidido_em\", \"10 minutes\")          # aceita atraso de até 10 min\n    .groupBy(F.window(\"decidido_em\", \"5 minutes\"), \"uf\")  # janela por tempo do EVENTO\n    .agg(F.count(\"*\").alias(\"decisoes\"),\n         F.avg(F.col(\"aprovada\").cast(\"int\")).alias(\"taxa\")))\n\n(por_janela.writeStream\n    .format(\"delta\")\n    .outputMode(\"append\")\n    .option(\"checkpointLocation\", \"abfss://chk@agxdados.dfs.core.windows.net/aprovacao/\")\n    .toTable(\"ouro.aprovacao_tempo_real\"))\n\n# checkpoint guarda offsets e estado: reiniciar continua de onde parou", "testes.yaml": "# models/marts/schema.yml — contrato e testes do modelo\nmodels:\n  - name: fato_proposta\n    config:\n      contract:\n        enforced: true          # quebra o build se colunas ou tipos mudarem\n    columns:\n      - name: proposta_id\n        data_type: bigint\n        tests: [unique, not_null]\n      - name: cliente_sk\n        data_type: bigint\n        tests:\n          - not_null\n          - relationships:\n              to: ref('dim_cliente')\n              field: cliente_sk\n      - name: valor\n        data_type: numeric\n        tests:\n          - dbt_utils.accepted_range:\n              min_value: 0\n      - name: aprovada\n        data_type: boolean\nsources:\n  - name: origem\n    freshness:                  # alerta se a origem parar de chegar\n      warn_after: {count: 2, period: hour}\n      error_after: {count: 6, period: hour}\n    loaded_at_field: atualizado_em\n    tables: [{name: propostas}]"};
+
+const TR = {
+  aks: ['Trilha AKS', 'https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt'],
+  kafka: ['Trilha Kafka e Event Hubs', 'https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd'],
+  tf: ['Trilha Terraform', 'https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5'],
+  cs: ['Trilha C# e ASP.NET Core', 'https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h'],
+  node: ['Trilha Node e TypeScript', 'https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr'],
+  bt: ['Preparatório Big Tech', 'https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd'],
+  ia: ['Trilha de IA Aplicada', 'https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S'],
+  staff: ['Do Pleno ao Staff', 'https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V'],
+  tl: ['Tech Lead na Prática', 'https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH'],
+  front: ['Frontend React e Angular', 'https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP'],
+  sec: ['Segurança de Aplicação', 'https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq'],
+  db: ['Bancos de Dados a Fundo', 'https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv'],
+};
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const VISTO = (txt, y = 470) => ({at:0, x:36,y,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const TITLE = {k:'Squad · dados', h:'Engenharia de dados',
+  p:'Como o dado sai do sistema transacional e vira informação confiável para relatórios, modelos e decisões: arquitetura, modelagem, cargas, processamento, qualidade e governança.',
+  chips:['OLTP × OLAP','lakehouse e medalhão','modelo estrela','CDC','Spark e dbt','streaming']};
+const OUTRO = {k:'Fim do roteiro', h:'Dado confiável é produto',
+  p:'Abaixo do vídeo estão o mapa de ferramentas e serviços, os links para o que já foi coberto nas outras trilhas, a leitura recomendada, o checklist e as perguntas mais comuns.',
+  chips:['idempotência','contrato de dados','teste e frescor','linhagem']};
+const S = (file, key, lang = 'sql') => ({type:'code', file, lang, code: SNIP[key]});
+const TAB = (linhas) => '<pre class="kql" style="white-space:pre">' + linhas.join('\n') + '</pre>';
+
+const SCENES = [
+{ id:'intro', ch:'Visão geral', title:'Do dado operacional ao analítico',
+  say:'O sistema de propostas foi feito para gravar e consultar uma proposta por vez, rápido. Mas o negócio quer saber a taxa de aprovação por estado e por mês, comparar com o ano passado e alimentar modelos de crédito. Engenharia de dados é levar o dado de onde ele nasce para onde ele é analisado, de forma confiável, repetível e segura.',
+  v:{type:'title'} },
+
+{ id:'mapa', ch:'Visão geral', title:'Anatomia de uma plataforma de dados',
+  say:'Toda plataforma de dados tem as mesmas etapas. Fontes, como bancos, APIs e eventos. Ingestão, em lote ou contínua. Armazenamento, num data lake ou num data warehouse. Transformação, que limpa e modela. E consumo, por relatórios, analistas, APIs e modelos de IA. Por baixo de tudo, orquestração, qualidade, governança e segurança.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:100,w:164,h:150, cls:'blue', html:B('Fontes','')+UL('SQL da aplicação','APIs e arquivos','eventos')},
+    {at:2.5, x:208,y:100,w:164,h:150, cls:'green', html:B('Ingestão','')+UL('lote','incremental','CDC e streaming')},
+    {at:4, x:392,y:100,w:164,h:150, cls:'green', html:B('Armazenamento','')+UL('data lake','warehouse','lakehouse')},
+    {at:5.5, x:576,y:100,w:164,h:150, cls:'amber', html:B('Transformação','')+UL('limpar','modelar','agregar')},
+    {at:7, x:760,y:100,w:176,h:150, html:B('Consumo','')+UL('Power BI','analistas e APIs','modelos de IA')},
+    {at:10, x:24,y:290,w:912,h:80, cls:'ext', html:B('Transversal','orquestração · qualidade · catálogo e linhagem · segurança e LGPD · custo')},
+    {at:13, x:24,y:390,w:912,h:76, cls:'region', html:B('Regra de ouro','cada etapa idempotente: reexecutar não duplica nem perde dado')},
+  ], lines:[
+    {at:2.5, d:'M188 175 L 208 175', cls:'flow'}, {at:4, d:'M372 175 L 392 175', cls:'flow'},
+    {at:5.5, d:'M556 175 L 576 175', cls:'flow'}, {at:7, d:'M740 175 L 760 175', cls:'flow'},
+  ]}},
+
+{ id:'oltp-olap', ch:'Visão geral', title:'OLTP × OLAP',
+  say:'O banco da aplicação é OLTP: muitas transações pequenas, normalizado, guardando linha a linha. O analítico é OLAP: poucas consultas enormes que leem milhões de linhas, mas poucas colunas. Por isso usa armazenamento colunar, que lê só as colunas pedidas e comprime muito bem. Rodar relatório pesado direto no banco da aplicação disputa recursos com o cliente.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:230, cls:'blue', html:B('OLTP','sistema transacional')+UL('INSERT e UPDATE de uma linha','normalizado, com integridade','armazenamento por linha','milissegundos por operação')},
+    {at:5, x:494,y:92,w:430,h:230, cls:'green', html:B('OLAP','analítico')+UL('SUM e GROUP BY em milhões de linhas','desnormalizado, modelo estrela','armazenamento por coluna','segundos por consulta, aceitos')},
+    {at:10, x:36,y:342,w:888,h:120, cls:'ext', html:B('Por que colunar','a consulta usa 3 de 40 colunas: lê só as 3 · valores parecidos lado a lado comprimem 5 a 10 vezes · columnstore no SQL Server, Parquet no lake')},
+  ]}},
+
+{ id:'etl-elt', ch:'Arquitetura', title:'ETL e ELT',
+  say:'No ETL clássico, o dado é transformado num servidor intermediário antes de chegar ao warehouse. No ELT, o dado bruto é carregado primeiro e transformado lá dentro, com SQL, aproveitando o poder de processamento do destino. ELT virou o padrão porque guarda o bruto, permitindo reprocessar quando a regra muda, e porque a transformação vira código versionado e testado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:90, cls:'blue', html:B('ETL','extrai → transforma fora → carrega só o resultado · bom para mascarar dado sensível antes de carregar')},
+    {at:4, x:36,y:200,w:888,h:90, cls:'green', html:B('ELT','extrai → carrega o bruto → transforma dentro do destino com SQL ou Spark')},
+    {at:8, x:36,y:310,w:430,h:150, cls:'amber', html:B('Por que ELT venceu','')+UL('o bruto fica: dá para reprocessar','transformação como código (dbt)','destino escala o processamento')},
+    {at:12, x:494,y:310,w:430,h:150, html:B('Cuidado','')+UL('bruto com dado pessoal exige controle','"carregar tudo" sem dono vira pântano','custo de armazenamento e de computação')},
+  ]}},
+
+{ id:'lakehouse', ch:'Arquitetura', title:'Lake, warehouse, lakehouse e medalhão',
+  say:'O data warehouse guarda dado estruturado e modelado, com SQL rápido. O data lake guarda qualquer arquivo, barato, mas sem garantias. O lakehouse junta os dois: arquivos abertos no lake com uma camada de tabela que traz transações, esquema e histórico. A arquitetura medalhão organiza o lakehouse em três camadas: bronze com o bruto, prata limpa e padronizada, e ouro pronta para o negócio.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:120, cls:'blue', html:B('Warehouse','SQL rápido, modelado, mais caro e mais rígido')},
+    {at:2.5, x:340,y:92,w:280,h:120, html:B('Data lake','qualquer arquivo, barato, sem transação')},
+    {at:4.5, x:644,y:92,w:280,h:120, cls:'green', html:B('Lakehouse','arquivos abertos + tabelas com ACID')},
+    {at:8, x:36,y:250,w:280,h:150, cls:'amber', html:B('Bronze','')+UL('como chegou','só acrescenta','auditoria e reprocesso')},
+    {at:10, x:340,y:250,w:280,h:150, cls:'blue', html:B('Prata','')+UL('tipada e sem duplicados','chaves padronizadas','dado inválido em quarentena')},
+    {at:12, x:644,y:250,w:280,h:150, cls:'green', html:B('Ouro','')+UL('modelo estrela e agregados','pronta para o negócio','fonte dos relatórios')},
+    {at:14, x:36,y:420,w:888,h:44, cls:'ext', html:'<small>as camadas são uma convenção, não uma regra: o importante é separar bruto, limpo e pronto para uso</small>'},
+  ], lines:[
+    {at:10, d:'M316 325 L 340 325', cls:'flow'}, {at:12, d:'M620 325 L 644 325', cls:'flow'},
+  ]}},
+
+{ id:'formatos', ch:'Arquitetura', title:'CSV, Parquet, Delta e Iceberg',
+  say:'CSV e JSON são ótimos para troca, mas ruins para análise: sem tipos, sem compressão por coluna e lidos por inteiro. Parquet é colunar, tipado e comprimido, e guarda estatísticas que permitem pular blocos. Delta Lake e Apache Iceberg são formatos de tabela sobre Parquet: adicionam transações, evolução de esquema, histórico para consultar versões antigas e operações como MERGE.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, html:B('CSV e JSON','troca de dados')+UL('sem tipos garantidos','lê o arquivo inteiro','bom na entrada (bronze)')},
+    {at:4, x:340,y:92,w:280,h:200, cls:'blue', html:B('Parquet','arquivo colunar')+UL('tipado e comprimido','lê só as colunas','pula blocos por min/máx')},
+    {at:8, x:644,y:92,w:280,h:200, cls:'green', html:B('Delta e Iceberg','tabela sobre Parquet')+UL('ACID e MERGE','evolução de esquema','time travel (versões)')},
+    {at:12, x:36,y:312,w:888,h:150, cls:'ext', html:B('Problemas de desempenho mais comuns','')+UL('milhares de arquivos pequenos: compacte (OPTIMIZE)','partição demais: por dia em tabela pequena gera arquivos minúsculos','particione pelo filtro mais usado e com cardinalidade baixa')},
+  ]}},
+
+/* ---------- MODELAGEM ---------- */
+{ id:'estrela', ch:'Modelagem', title:'Modelagem dimensional: o modelo estrela',
+  say:'O modelo estrela tem uma tabela fato no centro, com os eventos e as medidas, como valor da proposta, e dimensões em volta, com o contexto: cliente, data, produto. A primeira decisão é o grão: o que exatamente uma linha do fato representa. As dimensões usam chave substituta própria, desacoplada do sistema de origem. Assim, a pergunta de negócio vira um GROUP BY simples.',
+  v:S('modelos/estrela.sql','estrela.sql')},
+
+{ id:'scd', ch:'Modelagem', title:'Dimensões que mudam: SCD',
+  say:'E quando o cliente muda de estado? Se você sobrescrever, as propostas antigas passam a aparecer no estado novo, e o relatório do ano passado muda sozinho. Isso é o SCD tipo 1, aceitável para correções. O tipo 2 fecha a versão antiga com data de fim e insere uma nova, preservando o histórico. O fato aponta para a versão vigente na data do evento.',
+  v:S('modelos/scd2.sql','scd2.sql')},
+
+/* ---------- INGESTÃO ---------- */
+{ id:'ingestao', ch:'Ingestão', title:'Carga completa, incremental e CDC',
+  say:'Há três jeitos de trazer dados. A carga completa copia tudo toda vez: simples, mas não escala. A incremental usa uma marca d água, como a data de atualização, e traz só o que mudou. Ela não enxerga exclusões e depende de que a data seja sempre atualizada. O CDC lê o log de transações do banco e entrega cada inserção, alteração e exclusão, na ordem.',
+  v:S('pipelines/incremental.sql','incremental.sql')},
+
+{ id:'cdc', ch:'Ingestão', title:'CDC: o log do banco como fonte',
+  say:'Com CDC, o banco já registra cada mudança no log de transações. O SQL Server tem CDC nativo, e o PostgreSQL expõe a replicação lógica. O Debezium lê esse log e publica eventos em tópicos Kafka ou no Event Hubs, de onde vão para o lake. A aplicação não muda. Diferente do outbox, o CDC expõe o esquema interno da tabela: bom para dados analíticos, ruim como contrato entre serviços.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:100,w:190,h:110, cls:'blue', html:B('Banco da aplicação','log de transações')},
+    {at:3, x:244,y:100,w:190,h:110, cls:'green', html:B('CDC','SQL Server CDC, replicação lógica, Debezium')},
+    {at:5, x:464,y:100,w:190,h:110, cls:'amber', html:B('Tópicos','Kafka ou Event Hubs')},
+    {at:7, x:684,y:100,w:240,h:110, html:B('Lake','bronze com cada mudança, depois MERGE na prata')},
+    {at:10, x:24,y:250,w:440,h:170, cls:'green', html:B('CDC','dado analítico')+UL('captura DELETE e toda mudança','sem alterar a aplicação','expõe o esquema interno')},
+    {at:13, x:484,y:250,w:440,h:170, cls:'blue', html:B('Outbox','integração entre serviços')+UL('evento de negócio com contrato','escrito pela aplicação','esquema interno protegido')},
+    VISTO('outbox, relay e idempotência na trilha de Kafka e Event Hubs', 440),
+  ], lines:[
+    {at:3, d:'M214 155 L 244 155', cls:'flow'}, {at:5, d:'M434 155 L 464 155', cls:'flow'}, {at:7, d:'M654 155 L 684 155', cls:'flow'},
+  ]}},
+
+/* ---------- PROCESSAMENTO ---------- */
+{ id:'spark', ch:'Processamento', title:'Spark e o medalhão na prática',
+  say:'O Apache Spark processa dados em paralelo, dividindo o trabalho entre vários nós. Aqui, o bronze recebe o JSON como chegou, com o horário e o arquivo de origem. A prata converte tipos, filtra o inválido e remove duplicados. E o ouro agrega por estado e dia. Em produção, a prata usaria MERGE incremental em vez de sobrescrever tudo.',
+  v:S('notebooks/medalhao_propostas.py','medalhao.py','py')},
+
+{ id:'spark-conceitos', ch:'Processamento', title:'Como o Spark executa',
+  say:'O código Spark é preguiçoso: as transformações só montam um plano, e uma ação, como gravar, dispara a execução. O plano é dividido em estágios separados por shuffles, quando dados precisam trocar de nó, como num groupBy ou join. O shuffle é a parte cara. Se uma chave concentra a maioria dos dados, uma tarefa fica gigante enquanto as outras esperam: é o skew.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, cls:'blue', html:B('Execução preguiçosa','')+UL('transformações montam o plano','ação dispara (write, count)','otimizador reordena')},
+    {at:4.5, x:340,y:92,w:280,h:200, cls:'amber', html:B('Shuffle','')+UL('groupBy, join, distinct','dados trocam de nó','a parte mais cara')},
+    {at:8.5, x:644,y:92,w:280,h:200, cls:'green', html:B('Otimizações','')+UL('broadcast da tabela pequena','filtrar e projetar cedo','adaptive query execution')},
+    {at:12, x:36,y:312,w:888,h:150, cls:'ext', html:B('Sinais na Spark UI','uma tarefa muito mais lenta que as outras (skew) · spill para disco · milhares de tarefas minúsculas · antes de aumentar o cluster, leia o plano · Spark para volume grande; para poucos GB, SQL ou DuckDB bastam')},
+  ]}},
+
+{ id:'dbt', ch:'Processamento', title:'Transformação como código com dbt',
+  say:'O dbt transforma o warehouse ou lakehouse com SELECTs versionados no Git. Cada modelo é um arquivo SQL, e a função ref liga um modelo ao outro, montando o grafo de dependências e a linhagem. O modelo incremental processa só o que mudou. Note o join com a dimensão pela data de vigência: é o SCD tipo 2 em uso. Com dbt build, modelos e testes rodam na ordem certa.',
+  v:S('models/marts/fato_proposta.sql','dbt_modelo.sql')},
+
+{ id:'orquestracao', ch:'Processamento', title:'Orquestração',
+  say:'O orquestrador agenda, ordena as etapas, repete as que falham e avisa quando algo dá errado. No Airflow, o fluxo é uma DAG em Python. Atenção a dois detalhes: cada execução processa a data lógica, não o dia de hoje, o que permite reprocessar um dia antigo com o mesmo resultado; e a validação vem antes da transformação, para falhar cedo. No Azure, o Data Factory cumpre esse papel com interface visual.',
+  v:S('dags/propostas_diario.py','dag.py','py')},
+
+{ id:'streaming', ch:'Processamento', title:'Streaming: tempo do evento e janelas',
+  say:'No streaming, o dado é processado conforme chega. Três conceitos são essenciais. Tempo do evento, quando aconteceu, é diferente do tempo de processamento, quando chegou. Janelas agrupam eventos por períodos, como cinco minutos. E a marca d água diz quanto atraso aceitar antes de fechar a janela. O checkpoint guarda offsets e estado, para retomar de onde parou após uma falha.',
+  v:S('streaming/aprovacao_tempo_real.py','streaming.py','py')},
+
+{ id:'lote-stream', ch:'Processamento', title:'Lote ou streaming?',
+  say:'Streaming é mais caro de construir e operar. A pergunta certa é: de quanto atraso o negócio precisa? Relatório diário, lote. Painel que atualiza a cada quinze minutos, microlote. Detecção de fraude em segundos, streaming. E a garantia de exatamente uma vez depende de toda a cadeia: na prática, entrega pelo menos uma vez com escrita idempotente.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, cls:'blue', html:B('Lote','horas ou dia')+UL('relatórios e fechamentos','mais simples e barato','reprocessar é fácil')},
+    {at:4, x:340,y:92,w:280,h:200, cls:'green', html:B('Microlote','minutos')+UL('painéis operacionais','incremental agendado','bom meio-termo')},
+    {at:7.5, x:644,y:92,w:280,h:200, cls:'amber', html:B('Streaming','segundos')+UL('fraude, alertas, preços','estado, janelas, atraso','operação contínua')},
+    {at:11, x:36,y:312,w:888,h:110, cls:'ext', html:B('Exatamente uma vez','na prática: pelo menos uma vez + escrita idempotente (MERGE por chave, checkpoint) · o mesmo princípio do consumidor idempotente')},
+    VISTO('partições, grupos e lag na trilha de Kafka · streams e backpressure na trilha de Node', 436),
+  ]}},
+
+/* ---------- QUALIDADE E GOVERNANÇA ---------- */
+{ id:'qualidade', ch:'Qualidade e governança', title:'Qualidade e contratos de dados',
+  say:'Dado errado em relatório é pior que relatório nenhum. Defina testes nos modelos: chave única e não nula, relacionamentos válidos, faixas aceitas. Monitore o frescor, para saber quando a origem parou de chegar. E use contratos: o modelo declara colunas e tipos, e a execução falha se mudarem. Quando o time da aplicação renomeia uma coluna, o pipeline avisa em vez de quebrar em silêncio.',
+  v:S('models/marts/schema.yml','testes.yaml','yaml')},
+
+{ id:'governanca', ch:'Qualidade e governança', title:'Governança, linhagem e LGPD',
+  say:'Governança responde quem é dono de cada dado, o que ele significa, de onde veio e quem pode ver. Um catálogo documenta as tabelas e mostra a linhagem, da origem ao relatório. Dados pessoais precisam de classificação, mascaramento, acesso mínimo e prazo de retenção. E a LGPD exige atender pedidos de exclusão, o que em tabelas imutáveis e com histórico precisa ser planejado desde o início.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:220, cls:'blue', html:B('Catálogo','')+UL('dono e descrição','glossário de negócio','linhagem ponta a ponta')},
+    {at:4.5, x:340,y:92,w:280,h:220, cls:'amber', html:B('Dados pessoais','')+UL('classificar CPF, renda, contato','mascarar ou pseudonimizar','acesso por papel e por linha')},
+    {at:8.5, x:644,y:92,w:280,h:220, cls:'green', html:B('Ciclo de vida','')+UL('retenção por finalidade','exclusão a pedido do titular','VACUUM apaga versões antigas')},
+    {at:12, x:36,y:332,w:888,h:90, cls:'ext', html:B('Exemplos de ferramentas','Microsoft Purview · Unity Catalog (Databricks) · OpenMetadata · linhagem do próprio dbt')},
+    VISTO('LGPD e dados pessoais na trilha de Segurança de Aplicação', 436),
+  ]}},
+
+{ id:'azure', ch:'Na nuvem', title:'O mapa no Azure',
+  say:'No Azure, as peças mais comuns são: Event Hubs para eventos, Data Factory para cópia e orquestração, o Data Lake Storage para arquivos, Azure Databricks para Spark e lakehouse, e o Microsoft Fabric, que reúne lake, warehouse, pipelines e Power BI num só produto. A Microsoft tem direcionado novos projetos analíticos para o Fabric, mas confirme o estado atual antes de decidir.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:92,w:220,h:120, cls:'blue', html:B('Ingestão','Event Hubs · Data Factory · CDC')},
+    {at:3, x:260,y:92,w:220,h:120, cls:'green', html:B('Armazenamento','Data Lake Storage Gen2 · OneLake')},
+    {at:5, x:496,y:92,w:220,h:120, cls:'amber', html:B('Processamento','Databricks · Fabric · Spark')},
+    {at:7, x:732,y:92,w:204,h:120, html:B('Consumo','Power BI · SQL · APIs')},
+    {at:9.5, x:24,y:240,w:440,h:190, cls:'ext', html:B('Escolha comum','')+UL('time .NET e Power BI: Fabric','Spark pesado e multinuvem: Databricks','o que a empresa já opera pesa muito')},
+    {at:13, x:484,y:240,w:452,h:190, html:B('Infra como código','')+UL('storage, Databricks e Event Hubs no Terraform','identidade gerenciada, sem chave','rede privada para o lake')},
+    VISTO('Terraform e identidade na trilha de Terraform · Event Hubs na trilha de Kafka', 444),
+  ], lines:[
+    {at:3, d:'M244 152 L 260 152', cls:'flow'}, {at:5, d:'M480 152 L 496 152', cls:'flow'}, {at:7, d:'M716 152 L 732 152', cls:'flow'},
+  ]}},
+
+{ id:'dev-dados', ch:'Na nuvem', title:'O dev de aplicação e o time de dados',
+  say:'Como desenvolvedor de aplicação, você é a origem dos dados. Tenha chave primária estável, coluna de atualização confiável e exclusão lógica ou CDC, para que mudanças sejam capturadas. Publique eventos de negócio com contrato e versão. Avise antes de mudar esquema. E para IA, o pipeline de RAG também é engenharia de dados: ingestão, limpeza, chunking, frescor e linhagem dos documentos.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:230, cls:'blue', html:B('Facilite a vida de quem consome','')+UL('chave primária estável','atualizado_em sempre preenchido','exclusão rastreável (lógica ou CDC)','eventos com contrato e versão')},
+    {at:6, x:494,y:92,w:430,h:230, cls:'green', html:B('Converse antes','')+UL('mudança de esquema avisada','dicionário dos campos','dono de cada dado','SLA de frescor combinado')},
+    {at:11, x:36,y:342,w:888,h:90, cls:'ext', html:B('Dados para IA','RAG = ingestão, limpeza, chunking, embeddings, frescor e linhagem: engenharia de dados com outro destino')},
+    VISTO('pipeline de RAG e chunking na trilha de IA Aplicada', 446),
+  ]}},
+
+{ id:'check', ch:'Fechamento', title:'Checklist de um pipeline',
+  say:'Use esta lista ao desenhar ou revisar um pipeline de dados. O checklist completo, com atalho para cada cena, está abaixo do vídeo.',
+  v:{type:'check', items:[
+    'Grão do fato definido por escrito',
+    'Bruto preservado para reprocessar',
+    'Cada etapa idempotente',
+    'Carga incremental ou CDC',
+    'Histórico com SCD onde importa',
+    'Parquet ou Delta, sem arquivos minúsculos',
+    'Data lógica, não "hoje"',
+    'Testes, contrato e frescor',
+    'Alerta quando falha ou atrasa',
+    'Dono e linhagem no catálogo',
+    'Dado pessoal mascarado e com retenção',
+    'Custo acompanhado',
+  ]}},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão o mapa de ferramentas e serviços, os links para o que já foi coberto nas outras trilhas, a leitura recomendada, o checklist e as perguntas mais comuns. Um bom exercício: monte o pipeline das propostas, do banco até um painel de aprovação por estado.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Outbox e relay', 'kafka', 'outbox', 'Eventos de negócio confiáveis, a alternativa ao CDC entre serviços'],
+  ['Idempotência, retry e dead letter', 'kafka', 'idem', 'A base de toda carga que pode ser repetida'],
+  ['Partições, grupos e lag', 'kafka', 'lag', 'Como medir o atraso de um consumidor de eventos'],
+  ['Event Hubs no Terraform', 'kafka', 'tf', 'Namespace e tópicos como código'],
+  ['Planos de execução', 'db', 'plano', 'Ler o plano das consultas analíticas no warehouse'],
+  ['Réplicas, particionamento e backup', 'db', 'escala', 'Tirar relatórios do primário e particionar por data'],
+  ['Streams e backpressure', 'node', 'streams', 'Processar arquivos grandes sem estourar memória'],
+  ['O pipeline de RAG', 'ia', 'rag', 'Ingestão de documentos para IA'],
+  ['Estratégias de chunking', 'ia', 'chunking', 'Preparar texto para embeddings'],
+  ['Particionamento e hashing consistente', 'bt', 'sharding', 'Distribuir dados entre nós'],
+  ['LGPD e dados pessoais', 'sec', 'lgpd', 'Bases legais, minimização e direitos do titular'],
+];
+const MATRIZ = [
+  ['Azure Data Factory','Cópia e orquestração','Copiar dados entre muitas fontes com pouco código.','Lógica de transformação complexa escondida em telas.','Copy activity + gatilho diário'],
+  ['Azure Databricks','Spark e lakehouse','Volume grande, Spark, ciência de dados e Delta Lake.','Cluster ligado sem uso: configure desligamento automático.','Notebook bronze → prata → ouro'],
+  ['Microsoft Fabric','Plataforma analítica unificada','Ecossistema Microsoft e Power BI; lake, warehouse e pipelines num só lugar.','Recursos e preços mudam rápido; capacidade compartilhada entre cargas.','Lakehouse + pipeline + relatório'],
+  ['dbt','Transformação em SQL','Modelos versionados, testados e com linhagem dentro do warehouse.','Não ingere nem agenda sozinho; precisa de orquestrador.','dbt build --select +fato'],
+  ['Apache Airflow','Orquestração em código','Muitas dependências entre sistemas; time confortável com Python.','Usar o Airflow para processar dado pesado, em vez de só orquestrar.','DAG diária com retries'],
+  ['Event Hubs / Kafka','Ingestão de eventos','Eventos contínuos, CDC e streaming.','Tratar como banco de dados; retenção é limitada.','Debezium → tópico → bronze'],
+  ['Spark Structured Streaming','Processamento contínuo','Janelas, agregações e junções sobre eventos.','Sem watermark, o estado cresce para sempre.','withWatermark + window'],
+  ['DuckDB','Analítico local e leve','Arquivos Parquet de alguns GB, análises e testes de pipeline.','Não é cluster; não substitui a plataforma.','SELECT * FROM \'*.parquet\''],
+];
+const STUDY = [
+  ['Fundamentals of Data Engineering','Reis e Housley · o ciclo de vida do dado','https://www.oreilly.com/library/view/fundamentals-of-data/9781098108298/','mapa'],
+  ['The Data Warehouse Toolkit','Kimball · modelagem dimensional','https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/books/data-warehouse-dw-toolkit/','estrela'],
+  ['Designing Data-Intensive Applications','Kleppmann · lotes, streams e logs','https://dataintensive.net/','streaming'],
+  ['Medallion architecture','Documentação do Databricks','https://learn.microsoft.com/pt-br/azure/databricks/lakehouse/medallion','lakehouse'],
+  ['Delta Lake','Documentação oficial','https://docs.delta.io/','formatos'],
+  ['Apache Iceberg','Documentação oficial','https://iceberg.apache.org/docs/latest/','formatos'],
+  ['Apache Spark: Structured Streaming','Guia de programação','https://spark.apache.org/docs/latest/streaming/index.html','streaming'],
+  ['dbt: documentação','Modelos, testes, contratos e incrementais','https://docs.getdbt.com/','dbt'],
+  ['Apache Airflow','Conceitos e boas práticas','https://airflow.apache.org/docs/apache-airflow/stable/best-practices.html','orquestracao'],
+  ['Debezium','CDC a partir do log do banco','https://debezium.io/documentation/','cdc'],
+  ['SQL Server: Change Data Capture','Documentação Microsoft','https://learn.microsoft.com/pt-br/sql/relational-databases/track-changes/about-change-data-capture-sql-server','cdc'],
+  ['Microsoft Fabric','Visão geral','https://learn.microsoft.com/pt-br/fabric/fundamentals/microsoft-fabric-overview','azure'],
+];
+const CHECK = [
+  ['Fundamentos','Explicar OLTP × OLAP e armazenamento colunar','oltp-olap'],
+  ['Fundamentos','Diferenciar ETL e ELT e justificar a escolha','etl-elt'],
+  ['Fundamentos','Desenhar bronze, prata e ouro para um caso real','lakehouse'],
+  ['Fundamentos','Escolher entre CSV, Parquet e Delta/Iceberg','formatos'],
+  ['Modelagem','Definir o grão e montar um modelo estrela','estrela'],
+  ['Modelagem','Implementar SCD tipo 2','scd'],
+  ['Ingestão','Carga incremental idempotente com watermark','ingestao'],
+  ['Ingestão','Explicar CDC e quando usar outbox no lugar','cdc'],
+  ['Processamento','Escrever um job Spark e ler a Spark UI','spark-conceitos'],
+  ['Processamento','Modelo incremental e testes no dbt','dbt'],
+  ['Processamento','DAG com data lógica, retries e validação','orquestracao'],
+  ['Processamento','Tempo do evento, janelas e watermark','streaming'],
+  ['Governança','Testes, contratos e frescor nos modelos','qualidade'],
+  ['Governança','Catálogo, linhagem e tratamento de dado pessoal','governanca'],
+  ['Governança','Mapear os serviços de dados do Azure','azure'],
+];
+const FAQ = [
+ ['Carreira','Dev .NET precisa saber engenharia de dados?',`<p>Não precisa virar engenheiro de dados, mas precisa saber o suficiente para ser uma boa origem de dados, conversar com o time de dados e desenhar sistemas em que relatórios e IA não sejam remendos. Modelagem dimensional, CDC e cargas idempotentes são os pontos de maior retorno.</p>`],
+ ['Carreira','Qual linguagem aprender para dados?',`<p>SQL primeiro, sempre. Depois Python, que domina Spark, Airflow e o ecossistema de dados. C# aparece pouco no processamento, mas segue útil em integrações e APIs que consomem o dado pronto.</p>`],
+ ['Arquitetura','Preciso de Spark?',`<p>Só com volume grande. Até dezenas de GB, SQL no warehouse, DuckDB ou um banco relacional com columnstore costumam resolver com muito menos custo e complexidade.</p>`],
+ ['Arquitetura','Posso fazer relatórios direto no banco da aplicação?',`<p>Para pouco volume e consultas leves, sim, de preferência numa réplica de leitura. Quando os relatórios disputam recursos com os clientes ou precisam de histórico e dados de várias fontes, é hora de uma camada analítica separada.</p>`],
+ ['Arquitetura','Data lake ou data warehouse?',`<p>Hoje a resposta comum é um lakehouse: arquivos abertos no lake com formato de tabela (Delta ou Iceberg) e SQL por cima. Um warehouse tradicional segue ótimo quando o dado é todo estruturado e o time é forte em SQL.</p>`],
+ ['Modelagem','Modelo estrela ainda faz sentido com armazenamento barato?',`<p>Sim. O motivo do modelo estrela não é só economizar espaço: ele deixa as perguntas de negócio simples, dá nomes claros e resolve histórico com SCD. Tabelas largas desnormalizadas convivem bem com ele na camada ouro.</p>`],
+ ['Ingestão','CDC ou outbox?',`<p>CDC para levar dados ao analítico sem mexer na aplicação; outbox para eventos de negócio entre serviços, com contrato estável. Muitas empresas usam os dois.</p>`],
+ ['Qualidade','Como evitar que uma mudança na aplicação quebre o pipeline?',`<p>Contrato de dados com colunas e tipos declarados, testes que rodam a cada execução, aviso de mudança de esquema combinado entre os times e, para eventos, versões no contrato.</p>`],
+ ['LGPD','Como apagar dados de um titular num lake com histórico?',`<p>Planeje desde o início: separe dados pessoais em tabelas próprias, use pseudonimização com chave guardada à parte, apague com DELETE nas tabelas Delta ou Iceberg e depois remova as versões antigas (VACUUM ou expiração de snapshots). Confirme as exigências com o jurídico.</p>`],
+];
+const CMDS = [
+  ['OPTIMIZE prata.propostas ZORDER BY (cliente_id);','Compactar arquivos e agrupar dados (Delta)'],
+  ['VACUUM prata.propostas RETAIN 168 HOURS;','Remover arquivos de versões antigas (Delta)'],
+  ['DESCRIBE HISTORY prata.propostas;','Ver versões da tabela (Delta)'],
+  ['SELECT * FROM prata.propostas VERSION AS OF 12;','Consultar uma versão antiga (Delta)'],
+  ['dbt build --select +fato_proposta','Rodar o modelo, dependências e testes'],
+  ['dbt source freshness','Verificar frescor das fontes'],
+  ['airflow dags test propostas_diario 2026-10-07','Testar a DAG para uma data lógica'],
+  ['EXEC sys.sp_cdc_enable_table @source_schema=\'dbo\', @source_name=\'propostas\', @role_name=NULL;','Ligar CDC numa tabela (SQL Server)'],
+  ['duckdb -c "SELECT count(*) FROM \'propostas/*.parquet\'"','Inspecionar Parquet localmente'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED const let function export type interface else try catch finally throw extends satisfies switch case break typeof instanceof null undefined void readonly never unknown string number boolean CMD UPDATE SET DELETE INSERT INTO VALUES BEGIN COMMIT ROLLBACK JOIN LEFT INNER EXPLAIN ANALYZE TRANSACTION ISOLATION LEVEL'.split(' '));
+function findComment(line, lang){
+  let q = null;
+  const slash = lang === 'cs' || lang === 'ts';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === q) q = null; continue; }
+    if (ch === '"' || (lang === 'ts' && (ch === "'" || ch === '`'))) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'txt') continue;
+    if (!slash && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if (slash && ch === '/' && line[i+1] === '/') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = lang === 'ts'
+    ? /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`[^`]*`?)|(\b\d[\d_]*(?:\.\d+)?n?\b)|([A-Za-z_$][\w$]*)/g
+    : /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : ((lang === 'cs' || lang === 'py' || lang === 'ts') && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>bash · ~/agx-dados-analiticos</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', ts:'TypeScript', py:'Python', sql:'SQL', txt:'Texto', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>
+      <button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button></div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+renderList('studyList', 'progStudy', 'data-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', 'data-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+
+$('matrizBody').innerHTML = MATRIZ.map(r => `<tr><td>${esc(r[0])}</td><td><span class="ent">${esc(r[1])}</span></td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td><code>${esc(r[4])}</code></td></tr>`).join('');
+
+
+/* já visto em outras trilhas */
+$('jaVisto').innerHTML = JA_VISTO.map(([tema, t, cena, oque]) => {
+  const [nome, url] = TR[t];
+  return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${url}#${cena}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${url}#${cena}" target="_blank" rel="noopener">abrir cena ↗</a></div>`;
+}).join('');
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

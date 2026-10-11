@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha DP-700</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"carga_dw.sql": "-- Warehouse wh_vendas: dimensão e fato a partir do lakehouse de prata\n-- Consulta entre itens do mesmo workspace: nome em três partes (lh_prata.dbo.tabela)\n\n-- 1. Membro \"desconhecido\" para fato que chega antes da dimensão\nIF NOT EXISTS (SELECT 1 FROM dbo.dim_cliente WHERE sk_cliente = -1)\n    INSERT INTO dbo.dim_cliente (sk_cliente, id_cliente, nome, cidade)\n    VALUES (-1, 'N/D', 'Desconhecido', 'N/D');\n\n-- 2. Cliente novo ganha surrogate key na sequência\nINSERT INTO dbo.dim_cliente (sk_cliente, id_cliente, nome, cidade)\nSELECT m.max_sk + ROW_NUMBER() OVER (ORDER BY c.id_cliente),\n       c.id_cliente, c.nome, c.cidade\nFROM lh_prata.dbo.clientes AS c\nCROSS JOIN (SELECT COALESCE(MAX(sk_cliente), 0) AS max_sk\n            FROM dbo.dim_cliente) AS m\nWHERE NOT EXISTS (SELECT 1 FROM dbo.dim_cliente AS d\n                  WHERE d.id_cliente = c.id_cliente);\n\n-- 3. Fato do dia, idempotente: apaga a data e insere de novo\nDECLARE @dia date = '2026-10-09';\n\nBEGIN TRANSACTION;\nDELETE FROM dbo.fato_vendas WHERE data_venda = @dia;\n\nINSERT INTO dbo.fato_vendas (data_venda, sk_cliente, id_produto, qtd, receita)\nSELECT p.data_venda,\n       COALESCE(d.sk_cliente, -1),           -- cliente ainda não chegou\n       p.id_produto,\n       SUM(p.qtd),\n       SUM(p.qtd * p.preco)\nFROM lh_prata.dbo.pedidos AS p\nLEFT JOIN dbo.dim_cliente AS d ON d.id_cliente = p.id_cliente\nWHERE p.data_venda = @dia AND p.status = 'pago'\nGROUP BY p.data_venda, COALESCE(d.sk_cliente, -1), p.id_produto;\nCOMMIT;\n\n-- 4. Agregado para o painel, com CTAS\nDROP TABLE IF EXISTS dbo.agg_receita_mes;\nCREATE TABLE dbo.agg_receita_mes AS\nSELECT DATEFROMPARTS(YEAR(data_venda), MONTH(data_venda), 1) AS mes,\n       SUM(receita) AS receita\nFROM dbo.fato_vendas\nGROUP BY DATEFROMPARTS(YEAR(data_venda), MONTH(data_venda), 1);", "incremental.py": "from pyspark.sql import functions as F, Window\nfrom delta.tables import DeltaTable\n\n# 1. Incremental: só o que mudou depois da última marca d'água (watermark)\nultima = (spark.read.table(\"ctrl_watermark\")\n          .where(\"tabela = 'pedidos'\").first()[\"ultima_alteracao\"])\n\nnovos = spark.read.table(\"bronze_pedidos\").where(F.col(\"alterado_em\") > F.lit(ultima))\n\n# 2. Duplicados: fica só a versão mais recente de cada pedido\nw = Window.partitionBy(\"id_pedido\").orderBy(F.col(\"alterado_em\").desc())\nsem_dup = novos.withColumn(\"rn\", F.row_number().over(w)).where(\"rn = 1\").drop(\"rn\")\n\n# 3. Ausentes: sem chave é descartado; o resto ganha valor padrão\nlimpos = (sem_dup\n          .dropna(subset=[\"id_pedido\", \"id_cliente\"])\n          .fillna({\"canal\": \"desconhecido\", \"desconto\": 0.0})\n          .withColumn(\"data_venda\", F.to_date(\"criado_em\")))\n\n# 4. Upsert (MERGE) na prata: reprocessar o mesmo lote não duplica nada\nprata = DeltaTable.forName(spark, \"prata_pedidos\")\n(prata.alias(\"t\")\n     .merge(limpos.alias(\"s\"), \"t.id_pedido = s.id_pedido\")\n     .whenMatchedUpdateAll(condition=\"s.alterado_em > t.alterado_em\")\n     .whenNotMatchedInsertAll()\n     .execute())\n\n# 5. A marca d'água só avança depois do MERGE dar certo\nnova = limpos.agg(F.max(\"alterado_em\")).first()[0]\nif nova is not None:\n    spark.sql(f\"\"\"UPDATE ctrl_watermark SET ultima_alteracao = '{nova}'\n                  WHERE tabela = 'pedidos'\"\"\")\n\n# 6. Desnormaliza (junta o produto) e agrega para a camada ouro\nouro = (spark.read.table(\"prata_pedidos\").where(\"status = 'pago'\")\n        .join(spark.read.table(\"prata_produtos\"), \"id_produto\", \"left\")\n        .groupBy(\"data_venda\", \"categoria\")\n        .agg(F.sum(F.col(\"qtd\") * F.col(\"preco\")).alias(\"receita\"),\n             F.countDistinct(\"id_pedido\").alias(\"pedidos\")))\n\nouro.write.mode(\"overwrite\").option(\"overwriteSchema\", \"true\") \\\n    .saveAsTable(\"ouro_receita_categoria\")", "orquestracao.py": "# Célula marcada como \"parameters\": o pipeline sobrescreve estes valores\ndata_ref = \"2026-10-09\"\nmodo = \"incremental\"\n\n# --- célula seguinte: orquestra outros notebooks em DAG, com paralelismo ---\nimport json\n\ndag = {\n    \"activities\": [\n        {\"name\": \"bronze\", \"path\": \"nb_bronze_pedidos\",\n         \"args\": {\"data_ref\": data_ref, \"modo\": modo}},\n        {\"name\": \"clientes\", \"path\": \"nb_prata_clientes\", \"args\": {}},\n        {\"name\": \"prata\", \"path\": \"nb_prata_pedidos\",\n         \"args\": {\"data_ref\": data_ref}, \"dependencies\": [\"bronze\"]},\n        {\"name\": \"ouro\", \"path\": \"nb_ouro_vendas\",\n         \"args\": {\"data_ref\": data_ref}, \"dependencies\": [\"prata\", \"clientes\"]},\n    ],\n    \"timeoutInSeconds\": 3600,\n    \"concurrency\": 3,\n}\nnotebookutils.notebook.runMultiple(dag)     # notebookutils já vem carregado\n\nlinhas = (spark.read.table(\"ouro_fato_vendas\")\n          .where(f\"data_venda = '{data_ref}'\").count())\n\n# Devolve um valor para quem chamou (pipeline ou outro notebook)\nnotebookutils.notebook.exit(json.dumps({\"data_ref\": data_ref, \"linhas\": linhas}))\n\n# ---------------------------------------------------------------------------\n# No pipeline, atividade Notebook → Base parameters:\n#   data_ref = @formatDateTime(addDays(utcNow(), -1), 'yyyy-MM-dd')\n#   modo     = @pipeline().parameters.modo\n# A atividade seguinte lê o retorno:\n#   @json(activity('nb_orquestrador').output.result.exitValue).linhas\n# If Condition: @greater(json(activity('nb_orquestrador').output.result.exitValue).linhas, 0)", "otimizar.sql": "-- ===== Lakehouse · notebook com Spark SQL =====\n-- Sintoma: milhares de arquivos pequenos depois de muitas cargas em micro-lote\nDESCRIBE DETAIL prata_pedidos;                 -- numFiles, sizeInBytes\n\n-- 1. Compactar arquivos pequenos (bin compaction)\nOPTIMIZE prata_pedidos;\n\n-- 2. Z-Order na coluna mais filtrada + V-Order (leitura rápida no SQL e no Direct Lake)\nOPTIMIZE prata_pedidos ZORDER BY (id_cliente) VORDER;\n\n-- 3. Compactação automática a cada escrita (propriedade da tabela)\nALTER TABLE prata_pedidos SET TBLPROPERTIES ('delta.autoOptimize.autoCompact' = 'true');\n\n-- 4. Remover arquivos sem referência; 7 dias é o padrão seguro (menos quebra time travel)\nVACUUM prata_pedidos RETAIN 168 HOURS;\n\n-- 5. Histórico e viagem no tempo\nDESCRIBE HISTORY prata_pedidos;\nSELECT COUNT(*) FROM prata_pedidos VERSION AS OF 12;\n\n-- ===== Warehouse · T-SQL =====\n-- 6. As consultas mais lentas dos últimos dias (query insights)\nSELECT TOP 10 start_time, total_elapsed_time_ms, command\nFROM queryinsights.exec_requests_history\nORDER BY total_elapsed_time_ms DESC;\n\n-- 7. Estatística na coluna de junção (as automáticas nem sempre bastam)\nCREATE STATISTICS st_fato_cliente ON dbo.fato_vendas (sk_cliente) WITH FULLSCAN;\nUPDATE STATISTICS dbo.fato_vendas;\n\n-- 8. Carga em lote, nunca linha a linha (INSERT ... VALUES em laço gera arquivos pequenos)\nINSERT INTO dbo.fato_vendas\nSELECT * FROM lh_prata.dbo.vendas_lote WHERE data_venda = '2026-10-09';", "seguranca.sql": "-- Warehouse wh_vendas: segurança em camadas para quem lê pelo SQL\n-- Admin, Member e Contributor do workspace têm CONTROL: veem tudo, sem filtro\n\n-- 1. Objeto (OLS): analistas não enxergam a tabela de custos\nDENY SELECT ON dbo.custos TO [analistas@contoso.com];\n\n-- 2. Coluna (CLS): só as colunas liberadas da dimensão\nGRANT SELECT ON dbo.dim_cliente (sk_cliente, nome, cidade, uf)\n    TO [analistas@contoso.com];\n\n-- 3. Máscara dinâmica (DDM): quem não tem UNMASK vê o dado mascarado\nALTER TABLE dbo.dim_cliente\n    ALTER COLUMN email ADD MASKED WITH (FUNCTION = 'email()');      -- aXXX@XXXX.com\nALTER TABLE dbo.dim_cliente\n    ALTER COLUMN cpf ADD MASKED WITH (FUNCTION = 'partial(0,\"***.***.***-\",2)');\nGRANT UNMASK TO [auditoria@contoso.com];\n\n-- 4. Linha (RLS): cada vendedor só vê a própria região\nCREATE SCHEMA seg;\nGO\nCREATE FUNCTION seg.fn_regiao(@regiao AS varchar(20))\n    RETURNS TABLE\nWITH SCHEMABINDING\nAS\n    RETURN SELECT 1 AS permitido\n    FROM dbo.mapa_vendedor AS m\n    WHERE m.regiao = @regiao\n      AND m.email = USER_NAME();          -- no Fabric, o UPN de quem consulta\nGO\nCREATE SECURITY POLICY seg.filtro_regiao\n    ADD FILTER PREDICATE seg.fn_regiao(regiao) ON dbo.fato_vendas\n    WITH (STATE = ON);\nGO\n\n-- Para mudar a regra: DROP da policy, ALTER da função, CREATE da policy de novo", "streaming.py": "from pyspark.sql import functions as F\n\n# Eventstream grava as leituras cruas na tabela Delta bronze_leituras.\n# O notebook lê essa tabela como fluxo (Spark Structured Streaming).\nleituras = (spark.readStream.table(\"bronze_leituras\")\n            .withColumn(\"ts\", F.to_timestamp(\"ts\"))\n            .where(F.col(\"temp\").between(-40, 200)))\n\n# Janela fixa (tumbling) de 5 minutos por máquina.\n# Watermark de 10 min: evento até 10 min atrasado ainda entra;\n# depois disso a janela fecha e o atrasado é descartado.\nmedia = (leituras\n         .withWatermark(\"ts\", \"10 minutes\")\n         .groupBy(F.window(\"ts\", \"5 minutes\"), \"maquina\")\n         .agg(F.avg(\"temp\").alias(\"temp_media\"),\n              F.max(\"temp\").alias(\"temp_max\"),\n              F.count(\"*\").alias(\"leituras\")))\n\n# Janela deslizante (hopping): 10 min de largura, nova a cada 5 min\n# F.window(\"ts\", \"10 minutes\", \"5 minutes\")\n\nconsulta = (media\n    .select(F.col(\"window.start\").alias(\"inicio\"), F.col(\"window.end\").alias(\"fim\"),\n            \"maquina\", \"temp_media\", \"temp_max\", \"leituras\")\n    .writeStream\n    .format(\"delta\")\n    .outputMode(\"append\")                       # com watermark: só janelas fechadas\n    .option(\"checkpointLocation\", \"Files/checkpoints/temp_5min\")\n    .trigger(processingTime=\"1 minute\")         # micro-lote a cada minuto\n    .toTable(\"prata_temp_5min\"))\n\n# Checkpoint = onde o fluxo parou. Apagar o checkpoint reprocessa tudo do início.\n# Em produção: rode como Spark job definition, com política de nova tentativa.", "telemetria.kql": "// Eventhouse · KQL database \"telemetria\" · tabela nativa LeiturasBrutas (via Eventstream)\n\n// 1. Janela fixa (tumbling) de 5 min: média por máquina\nLeiturasBrutas\n| where ts > ago(1h)\n| summarize temp_media = avg(temp), leituras = count() by maquina, bin(ts, 5m)\n| render timechart\n\n// 2. Duplicados: fica a última versão de cada leitura\nLeiturasBrutas\n| summarize arg_max(ingestion_time(), *) by id_leitura\n\n// 3. Janela de sessão: nova sessão depois de 10 min sem leitura\nLeiturasBrutas\n| sort by maquina asc, ts asc\n| extend sessao = row_window_session(ts, 8h, 10m, maquina != prev(maquina))\n| summarize inicio = min(ts), fim = max(ts), leituras = count() by maquina, sessao\n\n// 4. Atrasados: gerado muito antes de chegar\nLeiturasBrutas\n| extend atraso = ingestion_time() - ts\n| where atraso > 15m\n| summarize atrasados = count() by maquina\n\n// 5. Transformar na ingestão (update policy): bruto → limpo\n.create-or-alter function LimparLeituras() {\n    LeiturasBrutas\n    | where isnotempty(maquina) and temp between (-40.0 .. 200.0)\n    | project ts, maquina, temp = round(temp, 1)\n}\n.alter table Leituras policy update\n    @'[{\"IsEnabled\": true, \"Source\": \"LeiturasBrutas\", \"Query\": \"LimparLeituras()\"}]'\n\n// 6. Agregação contínua e barata de consultar (materialized view)\n.create materialized-view with (backfill = true) Temp5Min on table Leituras {\n    Leituras | summarize temp_media = avg(temp) by maquina, bin(ts, 5m)\n}\n\n// 7. Erros de ingestão (mapeamento, formato) das últimas 24 h\n.show ingestion failures\n| where FailedOn > ago(1d)"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"], "csc500": ["Cert · SC-500 Cloud and AI Security", "https://claude.ai/artifact/PhJmPwwXH1A4zaQoywZmkU"], "csc100": ["Cert · SC-100 Cybersecurity Architect", "https://claude.ai/artifact/Fg63ZrBdBQC4mWJrPB3Jmh"], "csc2003": ["Cert · SC-200 e SC-300", "https://claude.ai/artifact/AiAtvk2jwqACoPN32mYu6S"], "c901": ["Cert · AI-901 AI Fundamentals", "https://claude.ai/artifact/E5sF2gdYzJkQhoTuPqnnJ1"], "cdp700": ["Cert · DP-700 Fabric Data Engineer", "https://claude.ai/artifact/StB9Z2V1nRRLeiHqLqzrKX"], "cpl300": ["Cert · PL-300 Power BI", "https://claude.ai/artifact/YNPpL7WWufh7Lub5aRKRqk"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Cert · DP-700 Fabric Data Engineer =====================
+const CONF = {
+  title: 'Trilha DP-700', file: 'Cert - DP-700 Fabric Data Engineer', key: 'cdp700',
+  eyebrow: 'Certificação · Microsoft', h1: 'DP-700: engenharia de dados no Microsoft Fabric, da carga ao ajuste fino',
+  lead: 'Roteiro em vídeo para a prova DP-700 (Implementing Data Engineering Solutions Using Microsoft Fabric), que dá o título Microsoft Certified: Fabric Data Engineer Associate. Segue os três domínios e pesos do study guide oficial (skills measured de 19 de outubro de 2026, conferido em outubro de 2026): workspace, Git, deployment pipelines, segurança e orquestração; cargas full e incremental, lakehouse, warehouse, atalhos, mirroring, PySpark, T-SQL e streaming com Eventstream, Spark e KQL; monitoramento, erros e otimização. Com código real, pegadinhas, simulado e um laboratório na avaliação gratuita do Fabric.',
+  pills: ['OneLake e atalhos', 'Lakehouse × Warehouse', 'Pipelines e Dataflow Gen2', 'PySpark e Delta', 'T-SQL no Warehouse', 'Eventstream e KQL', 'Segurança e RLS', 'Monitorar e otimizar'],
+  term: 'fabric · ~/dp700',
+  faqPlaceholder: 'Buscar: atalho, mirroring, MERGE, watermark, Eventstream, KQL, RLS, máscara, V-Order, deployment pipeline…',
+  matriz: {title: 'Domínios da prova e onde estudar', desc: 'Os três domínios do study guide oficial da DP-700 (skills measured de 19/10/2026), quebrados por seção, com o peso, o que cai e onde o tema já aparece nas trilhas. Confira a página oficial antes de agendar.', cols: ['Domínio', 'Peso', 'O que cai', 'Onde estudar']},
+};
+const TITLE = {k: 'Certificação · Microsoft', h: 'DP-700: Fabric Data Engineer',
+  p: 'A prova de quem carrega, transforma, protege e mantém dados no Microsoft Fabric: lote e streaming, SQL, PySpark e KQL, e a operação que mantém tudo rápido e barato.',
+  chips: ['OneLake', 'Lakehouse', 'Warehouse', 'Pipelines', 'Dataflow Gen2', 'PySpark', 'Eventstream', 'KQL', 'RLS', 'V-Order']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Um lago, três linguagens, uma operação',
+  p: 'Abaixo do vídeo estão os domínios com onde estudar, o simulado com questões no estilo da prova, os links oficiais e o checklist de prontidão.',
+  chips: ['escolha a ferramenta certa', 'incremental e idempotente', 'segurança em camadas', 'menos arquivos pequenos']};
+
+const SCENES = [
+/* ---------- A PROVA ---------- */
+{ id:'intro', ch:'A prova', title:'O que a DP-700 valida',
+  say:'A DP-700 dá o título Fabric Data Engineer Associate. Valida quem ingere e transforma dados, protege e gerencia a solução, e monitora e otimiza, usando SQL, PySpark e KQL. São cem minutos, nota mínima setecentos de mil, prova oferecida em português do Brasil, sem pré-requisito formal, com renovação anual gratuita no Microsoft Learn. Referência: skills measured de dezenove de outubro de dois mil e vinte e seis, conferido em outubro. Número de questões e preço: confira a página oficial.',
+  v:{type:'title'} },
+
+{ id:'dominios', ch:'A prova', title:'Três domínios, o mesmo peso',
+  say:'O blueprint tem três domínios, cada um de trinta a trinta e cinco por cento. Implementar e gerenciar a solução: configurações do workspace, ciclo de vida com Git e deployment pipelines, segurança e governança, e orquestração. Ingerir e transformar: padrões de carga, lote e streaming. Monitorar e otimizar: monitorar itens, achar e resolver erros e ajustar desempenho. Peso igual quer dizer que a operação vale tanto quanto escrever a carga. Na atualização de outubro, só mudanças menores em configurações do workspace e em otimização.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:270, cls:'blue', html:B('Implementar e gerenciar','30–35%')+UL('configurar o workspace','Git e deployment pipelines','segurança e governança','orquestrar processos')},
+    {at:3.5, x:340,y:92,w:280,h:270, cls:'green', html:B('Ingerir e transformar','30–35%')+UL('full e incremental','modelo dimensional','lote: PySpark, SQL, KQL','streaming e janelas')},
+    {at:6, x:644,y:92,w:280,h:270, cls:'amber', html:B('Monitorar e otimizar','30–35%')+UL('ingestão e transformação','refresh do modelo, alertas','erros por tipo de item','desempenho de ponta a ponta')},
+    {at:10, x:36,y:382,w:888,h:56, cls:'amber', html:B('Peso igual','operação e erro valem tanto quanto escrever a carga')},
+    {at:13, x:36,y:452,w:888,h:50, cls:'region', html:NOTE('Study guide oficial da DP-700 · skills measured de 19/10/2026 · mudanças menores em workspace settings e optimize performance · confira antes de agendar', 'amber')},
+  ]}},
+
+{ id:'mapa', ch:'A prova', title:'O Fabric em uma tela',
+  say:'Antes dos domínios, o mapa. O Fabric é SaaS: você compra uma capacidade, F dois, F sessenta e quatro, que é um saldo de unidades de computação dividido por todos os itens. Os workspaces moram numa capacidade e guardam os itens. Embaixo de tudo, o OneLake: um único lago por tenant, com tabelas em Delta Parquet. Lakehouse, Warehouse, Eventhouse e o modelo semântico leem o mesmo arquivo, sem cópia. É por isso que tantas questões perguntam qual item ou qual motor, e não onde guardar a cópia.',
+  v:FLOW([
+    ['Capacidade','F SKU · CUs compartilhadas','amber'],
+    ['Workspace','papéis, Git, domínio','blue'],
+    ['Itens','lakehouse, warehouse…','blue'],
+    ['OneLake','um lago · Delta Parquet','green'],
+  ], {y:100, h:96, step:1.8, cards:[
+    ['Motores sobre o mesmo dado','',['Spark: notebooks, PySpark','T-SQL: warehouse e endpoint SQL','KQL: Eventhouse','Direct Lake: Power BI'],'green'],
+    ['O que muda na prova','',['qual item? qual motor?','atalho em vez de cópia','capacidade é custo e limite','avaliação gratuita para estudar'],'amber'],
+  ]}) },
+
+/* ---------- IMPLEMENTAR E GERENCIAR ---------- */
+{ id:'workspace', ch:'Implementar · 30–35%', title:'Configurações do workspace',
+  say:'Quatro grupos de configuração caem. Spark: o pool padrão, inicial com sessão rápida ou personalizado com tamanho de nó e autoscale, o ambiente com runtime e bibliotecas, e a alta simultaneidade, que divide uma sessão entre notebooks. Domínio: o workspace entra num domínio de negócio, como Vendas, que agrupa itens e delega administração, no estilo data mesh. OneLake: o cache de atalhos externos, de um a vinte e oito dias, para cortar custo de saída entre nuvens. E Apache Airflow: o pool que roda os DAGs do Airflow job.',
+  v:GRID(4, [
+    ['Spark','pool e ambiente',['pool inicial ou próprio','ambiente: runtime, libs','alta simultaneidade','Native Execution Engine'],'blue'],
+    ['Domínio','data mesh',['Vendas, Fábrica, RH','admin do domínio','subdomínios','descoberta no catálogo'],'green'],
+    ['OneLake','acesso e cache',['cache de atalhos externos','1 a 28 dias','S3, GCS, gateway','reset do cache'],'amber'],
+    ['Apache Airflow','Airflow job',['DAGs em Python','pool inicial ou próprio','tamanho do nó','orquestração em código'],'ext'],
+  ], {h:250, step:3, rodape:'Configuração do tenant (Admin portal) vem antes da do workspace: se o tenant bloqueia, o workspace não libera'}) },
+
+{ id:'ciclo', ch:'Implementar · 30–35%', title:'Git, database projects e deploy',
+  say:'Ciclo de vida tem três peças. Controle de versão: o workspace se conecta a uma branch do Azure DevOps ou do GitHub; você faz commit do que mudou e update do que veio do repositório, e cada item vira uma pasta com a definição. Database projects: o warehouse ou o SQL database vira um projeto SQL, com o esquema em arquivos, build e publicação por DACPAC. Deployment pipelines: de dois a dez estágios, por padrão desenvolvimento, teste e produção, com regras de implantação que trocam conexão e parâmetro por estágio.',
+  v:FLOW([
+    ['Branch de feature','workspace pessoal','blue'],
+    ['Pull request','revisão no Git','blue'],
+    ['Dev → Teste','deployment pipeline','amber'],
+    ['Produção','regras por estágio','green'],
+  ], {y:100, h:96, step:1.8, cards:[
+    ['Git no workspace','Azure DevOps ou GitHub',['um workspace, uma branch','commit e update','conflito: resolver no Git','nem todo item é suportado'],'blue'],
+    ['Deployment pipelines','2 a 10 estágios',['comparar estágios','regras: fonte e parâmetro','implantar seleção de itens','database project: DACPAC'],'green'],
+  ]}) },
+
+{ id:'acesso', ch:'Implementar · 30–35%', title:'Acesso: workspace e item',
+  say:'Acesso no workspace tem quatro papéis. Admin faz tudo, inclusive apagar o workspace. Member adiciona pessoas com papel igual ou menor e compartilha itens. Contributor cria e edita itens, mas não compartilha nem gerencia acesso. Viewer só lê. Acesso por item é para quem não está no workspace: compartilhar o lakehouse com Read, ReadData, que lê pelo endpoint SQL, ReadAll, que lê os arquivos pelo Spark e pelo OneLake, e Build, para criar relatórios. Menor privilégio: compartilhe o item, não o workspace.',
+  v:{type:'boxes', defs:[
+    ['Admin','tudo, inclusive apagar', .8],
+    ['Member','adiciona e compartilha', 2.6],
+    ['Contributor','cria e edita, não compartilha', 4.4],
+    ['Viewer','só leitura', 6.2],
+  ], items:[
+    {at:9, x:470,y:92,w:454,h:230, cls:'blue', html:B('Permissões de item','sem entrar no workspace')+UL('Read: ver e abrir o item','ReadData: ler pelo SQL','ReadAll: arquivos via Spark e OneLake','Build: relatório sobre o modelo')},
+    {at:14, x:470,y:342,w:454,h:160, cls:'amber', html:B('Regra de prova','')+UL('menor privilégio: item, não workspace','RLS e máscara não valem para Contributor+','ReadAll ignora a RLS do SQL')},
+  ]}},
+
+{ id:'seguranca', ch:'Implementar · 30–35%', title:'Linha, coluna, objeto e máscara',
+  say:'No warehouse, a segurança fina é T-SQL. DENY na tabela esconde o objeto. GRANT SELECT com lista de colunas libera só aquelas colunas. A máscara dinâmica troca o e-mail por a, xis, xis, xis, e só quem tem UNMASK vê o valor real. A RLS é uma função com o filtro, usando USER NAME, que no Fabric devolve o e-mail de quem consulta, presa à tabela por uma security policy de filtro. Atenção: Admin, Member e Contributor têm CONTROL e veem tudo. A segurança fina protege quem lê com Viewer ou com ReadData.',
+  v:S('seguranca.sql','seguranca.sql','sql')},
+
+{ id:'governanca', ch:'Implementar · 30–35%', title:'Rótulos, endosso, auditoria, OneLake',
+  say:'Governança. Rótulos de sensibilidade do Microsoft Purview, como Confidencial, marcam itens e acompanham o dado na exportação e nos itens derivados. Endosso tem três níveis: Promovido, que qualquer um com escrita aplica; Certificado e Dados mestres, só por quem o administrador autoriza. Logs de auditoria: as atividades do Fabric vão para a auditoria do Purview, para saber quem leu, exportou ou compartilhou. E a OneLake security define papéis de acesso a dados por pasta e tabela, com filtro de linha e coluna, valendo para todos os motores.',
+  v:GRID(4, [
+    ['Rótulos','Microsoft Purview',['Público a Confidencial','herdam para derivados','seguem na exportação'],'blue'],
+    ['Endosso','confiança',['Promovido: quem escreve','Certificado: autorizados','Dados mestres'],'green'],
+    ['Auditoria','quem fez o quê',['auditoria do Purview','leitura, exportação','compartilhamento'],'amber'],
+    ['OneLake security','papéis de dados',['pasta e tabela','linha e coluna','todos os motores'],'ext'],
+  ], {h:230, step:3, rodape:'Permissão de pasta e arquivo: papéis de acesso a dados do OneLake · Purview também faz catálogo e linhagem'}) },
+
+{ id:'orquestrar', ch:'Implementar · 30–35%', title:'Dataflow Gen2, pipeline ou notebook',
+  say:'Pergunta que cai sempre: qual ferramenta. Dataflow Gen2 é Power Query na nuvem: sem código, centenas de conectores, bom para quem vem do Excel e do Power BI e para volumes moderados. Pipeline é o orquestrador: copia em escala com a atividade Copy, controla fluxo com ForEach, If e Until, e chama dataflows, notebooks e procedures. Notebook é código, PySpark ou Spark SQL, para transformação complexa e grandes volumes. Na prática, o pipeline chama os outros dois e cuida de agenda, nova tentativa e alerta.',
+  v:GRID(3, [
+    ['Dataflow Gen2','Power Query, low-code',['300+ conectores','destino: lakehouse, warehouse','volume moderado','quem vem do Power BI'],'green'],
+    ['Pipeline','orquestrar e copiar',['Copy em escala','ForEach, If, Until','agenda e gatilho','chama os outros dois'],'blue'],
+    ['Notebook','código Spark',['PySpark, Spark SQL','lógica complexa','grande volume','MERGE em Delta'],'amber'],
+  ], {h:250, step:4, rodape:'Copy job: cópia simples e incremental sem montar pipeline · Airflow job: orquestração em código Python'}) },
+
+{ id:'parametros', ch:'Implementar · 30–35%', title:'Parâmetros, expressões e gatilhos',
+  say:'Orquestração com parâmetros. A célula marcada como parameters recebe valores do pipeline. O runMultiple roda notebooks em DAG, com dependências e paralelismo. O exit devolve um valor, que o pipeline lê com activity, output, result, exitValue. As expressões dinâmicas usam arroba: pipeline parameters, utcNow, formatDateTime, concat e item, dentro do ForEach. Gatilhos: agenda, ou evento, como arquivo chegando no storage ou no OneLake, ligado pelo Activator. As dependências entre atividades são sucesso, falha, conclusão e ignorada.',
+  v:S('nb_orquestrador.py','orquestracao.py','py')},
+
+/* ---------- INGERIR E TRANSFORMAR ---------- */
+{ id:'cargas', ch:'Ingerir · 30–35%', title:'Carga full, incremental e streaming',
+  say:'Full recarrega tudo: simples, serve para tabela pequena ou dimensão sem coluna de alteração. Incremental traz só o que mudou: com marca d água, guardando a maior data de alteração já lida; com CDC da origem; ou com mirroring. O clássico no pipeline: Lookup da marca antiga, Copy com consulta filtrada, procedure que grava a marca nova. Para o modelo dimensional, prepare surrogate keys, membro desconhecido e SCD tipo dois. Para streaming, eventos entram pelo Eventstream e caem no Eventhouse ou no lakehouse.',
+  v:FLOW([
+    ['Lookup','marca d\'água antiga','blue'],
+    ['Copy','WHERE alterado > marca','blue'],
+    ['Transformar','MERGE na prata','amber'],
+    ['Gravar marca','só se deu certo','green'],
+  ], {y:100, h:96, step:1.8, cards:[
+    ['Full × incremental','',['full: pequeno ou sem coluna de data','incremental: watermark ou CDC','mirroring: réplica contínua','reprocessar não pode duplicar'],'blue'],
+    ['Preparar o dimensional','',['surrogate key na dimensão','membro desconhecido (-1)','SCD tipo 2: válido de/até','fato no grão declarado'],'green'],
+  ]}) },
+
+{ id:'armazem', ch:'Ingerir · 30–35%', title:'Lakehouse, Warehouse ou Eventhouse',
+  say:'Escolher o armazenamento. Lakehouse: arquivos e tabelas Delta, Spark para escrever e um endpoint SQL só de leitura; bom para dado semiestruturado e times de engenharia em Python. Warehouse: T-SQL completo, com insert, update, delete e transação entre várias tabelas; bom para times de SQL. Eventhouse: bancos KQL para eventos, logs e séries temporais, com ingestão contínua e consulta em segundos. SQL database: transacional, para aplicação. Todos guardam no OneLake, então um lê o outro sem cópia.',
+  v:GRID(4, [
+    ['Lakehouse','Spark + Delta',['arquivos e tabelas','endpoint SQL: só leitura','semiestruturado','time de Python'],'blue'],
+    ['Warehouse','T-SQL completo',['DML e DDL','transação multitabela','time de SQL','modelo dimensional'],'green'],
+    ['Eventhouse','KQL',['eventos e logs','séries temporais','ingestão contínua','consulta em segundos'],'amber'],
+    ['SQL database','transacional',['aplicação, OLTP','réplica no OneLake','não é o analítico'],'ext'],
+  ], {h:250, step:3, rodape:'Pegadinha: precisa de UPDATE em T-SQL? Warehouse. O endpoint SQL do lakehouse não grava'}) },
+
+{ id:'transformar', ch:'Ingerir · 30–35%', title:'Dataflow, notebook, KQL ou T-SQL',
+  say:'Escolher a linguagem de transformação segue quem mantém e onde está o dado. Dataflow Gen2 para low-code e fontes de negócio. Notebook com PySpark para volume grande, lógica complexa, dado semiestruturado e MERGE em Delta. T-SQL quando o destino é o warehouse e o time é de SQL: procedures, CTAS e INSERT SELECT. KQL quando o dado está no Eventhouse e precisa de transformação na ingestão, com update policy, ou agregação contínua, com materialized view. A prova descreve o time e o volume: leia isso antes da tecnologia.',
+  v:GRID(4, [
+    ['Dataflow Gen2','low-code',['negócio mantém','fontes SaaS e arquivos','volume moderado'],'green'],
+    ['PySpark','notebook',['grande volume','JSON aninhado','MERGE em Delta'],'blue'],
+    ['T-SQL','warehouse',['time de SQL','procedures, CTAS','INSERT … SELECT'],'amber'],
+    ['KQL','Eventhouse',['update policy','materialized view','séries temporais'],'ext'],
+  ], {h:220, step:3, rodape:'Leia o cenário: quem vai manter, onde o dado está, qual volume e qual latência'}) },
+
+{ id:'atalhos', ch:'Ingerir · 30–35%', title:'Atalhos do OneLake e mirroring',
+  say:'Atalho aponta para dado que está em outro lugar, sem copiar: outro item do OneLake, ADLS Gen dois, S3, Google Cloud Storage, Dataverse. Em Tables, só no primeiro nível, e Delta vira tabela sozinha. Atalho interno usa a identidade de quem consulta; externo usa a credencial da conexão. Apagar o atalho não apaga a origem, mas apagar um arquivo dentro dele apaga lá. Mirroring é outra coisa: replica continuamente um banco, como Azure SQL, Cosmos DB ou Snowflake, para Delta no OneLake, só de leitura, quase em tempo real.',
+  v:GRID(2, [
+    ['Atalho','aponta, não copia',['OneLake, ADLS, S3, GCS, Dataverse','Tables: só no 1º nível','interno: identidade do usuário','apagar arquivo dentro apaga na origem'],'blue'],
+    ['Mirroring','réplica contínua',['Azure SQL, Cosmos DB, Snowflake','vira Delta no OneLake','quase tempo real, só leitura','consulta pelo endpoint SQL'],'green'],
+  ], {h:250, step:5, rodape:'Atalho: dado já está num lago · mirroring: dado está num banco operacional · cópia: precisa transformar ou isolar'}) },
+
+{ id:'pyspark', ch:'Ingerir · 30–35%', title:'PySpark: incremental, limpo e upsert',
+  say:'O notebook da prata. Lê só o que mudou desde a marca d água. Remove duplicados com row number por pedido, ficando com a versão mais recente. Trata ausentes: sem chave é descartado, o resto ganha padrão. Faz MERGE na tabela Delta: atualiza se a origem é mais nova e insere o que não existe, então reprocessar não duplica. Só depois avança a marca. No fim, desnormaliza juntando o produto e agrega receita e pedidos por dia e categoria, gravando a tabela ouro. Group by, join e window caem em leitura de código.',
+  v:S('nb_prata_pedidos.py','incremental.py','py')},
+
+{ id:'tsql', ch:'Ingerir · 30–35%', title:'T-SQL: dimensão e fato no Warehouse',
+  say:'O mesmo caminho em T-SQL. O warehouse lê o lakehouse do mesmo workspace com nome em três partes, sem copiar. Primeiro, o membro desconhecido, chave menos um. Depois, clientes novos ganham surrogate key com row number somado à maior chave. O fato do dia é idempotente: numa transação, apaga a data e insere de novo, agregando no grão. O pedido de um cliente que ainda não chegou vai para o menos um, e é corrigido na próxima carga. Por fim, um CTAS cria o agregado mensal para o painel.',
+  v:S('carga_dw.sql','carga_dw.sql','sql')},
+
+{ id:'qualidade', ch:'Ingerir · 30–35%', title:'Duplicado, ausente e atrasado',
+  say:'Três problemas que a prova nomeia. Duplicados: chegam por reenvio ou por nova tentativa; resolva com chave natural e row number, dropDuplicates ou MERGE, e no KQL com arg max. Ausentes: decida por coluna se descarta, preenche com padrão ou manda para quarentena, e conte quantos foram. Atrasados: fato que chega antes da dimensão vai para o membro desconhecido e é reapontado depois; no streaming, a watermark define quanto atraso ainda entra na janela. O erro clássico é a carga que duplica ao ser reprocessada.',
+  v:GRID(3, [
+    ['Duplicados','reenvio, retry',['row_number por chave','dropDuplicates, MERGE','KQL: arg_max'],'ext'],
+    ['Ausentes','nulo, vazio',['descartar sem chave','fillna com padrão','quarentena e contagem'],'amber'],
+    ['Atrasados','chegam depois',['membro desconhecido -1','reapontar na próxima carga','streaming: watermark'],'blue'],
+  ], {h:240, step:4, rodape:'Teste de ouro: rode a mesma carga duas vezes; o total não pode mudar'}) },
+
+{ id:'stream-escolha', ch:'Ingerir · 30–35%', title:'Qual motor de streaming',
+  say:'Três motores de streaming. Eventstream: sem código, conecta fontes como Event Hubs, IoT Hub, Kafka e CDC de bancos, transforma e entrega. Spark Structured Streaming: código, para lógica complexa e destino Delta no lakehouse. KQL no Eventhouse: ingestão contínua e consulta em segundos sobre séries temporais. No Real-Time Intelligence, tabela nativa é dado ingerido no Eventhouse, com o melhor desempenho. Atalho do OneLake consulta sem ingerir. E atalho com aceleração de consulta indexa e guarda em cache, por um custo.',
+  v:GRID(3, [
+    ['Eventstream','sem código',['Event Hubs, IoT Hub, Kafka','CDC de bancos','filtro, agregação, janela'],'green'],
+    ['Spark Streaming','código',['lógica complexa','destino Delta','watermark e checkpoint'],'blue'],
+    ['KQL / Eventhouse','tempo real',['ingestão contínua','séries temporais','update policy'],'amber'],
+    ['Tabela nativa','ingerida',['melhor desempenho','política de cache e retenção'],'blue'],
+    ['Atalho','sem ingerir',['dado fica no OneLake','consulta mais lenta'],'ext'],
+    ['Atalho acelerado','cache e índice',['quase nativo','custo de cache'],'green'],
+  ], {h:170, step:2.4}) },
+
+{ id:'eventstream', ch:'Ingerir · 30–35%', title:'Eventstream: fonte, operação, destino',
+  say:'O Eventstream é um fluxo visual. Fontes: Azure Event Hubs, IoT Hub, CDC de Azure SQL, PostgreSQL e Cosmos DB, Kafka, endpoint personalizado, eventos do Fabric e do storage, e dados de exemplo. Operações: filtrar, gerenciar campos, agregar, agrupar com janela, unir, expandir arrays e juntar. Janelas de tempo: tumbling, fixa e sem sobreposição; hopping, com sobreposição; sliding; session, que fecha após silêncio; e snapshot. Destinos: Eventhouse, lakehouse, Activator para alertas, stream derivado e endpoint personalizado.',
+  v:FLOW([
+    ['Fontes','Event Hubs, IoT, CDC, Kafka','blue'],
+    ['Operações','filtro, campos, união','amber'],
+    ['Group by','janela de tempo','amber'],
+    ['Destinos','Eventhouse, lakehouse','green'],
+  ], {y:100, h:96, step:1.8, cards:[
+    ['Janelas de tempo','',['tumbling: fixa, sem sobrepor','hopping: fixa, com sobreposição','sliding: a cada evento','session: fecha após silêncio','snapshot: mesmo instante'],'amber'],
+    ['Destinos','',['Eventhouse: KQL','lakehouse: Delta','Activator: alerta e ação','stream derivado','endpoint personalizado'],'green'],
+  ]}) },
+
+{ id:'spark-stream', ch:'Ingerir · 30–35%', title:'Spark Structured Streaming',
+  say:'O Eventstream grava as leituras cruas numa tabela Delta, e o notebook a lê como fluxo com readStream. A agregação usa uma janela fixa de cinco minutos por máquina. A watermark de dez minutos diz quanto atraso ainda entra; depois a janela fecha e o atrasado é descartado. Com watermark, o modo append grava só janelas fechadas. O checkpoint guarda onde o fluxo parou: apagar reprocessa tudo. O trigger define o micro-lote de um minuto. Para janela com sobreposição, passe o passo como terceiro argumento do window.',
+  v:S('nb_stream_temp.py','streaming.py','py')},
+
+{ id:'kql', ch:'Ingerir · 30–35%', title:'KQL: janelas, update policy e views',
+  say:'KQL lê de cima para baixo, cada linha recebe a anterior. Janela fixa é summarize com bin de cinco minutos. Duplicado se resolve com arg max por identificador. Janela de sessão usa row window session sobre dados ordenados. Atraso é a diferença entre ingestion time e o horário do evento. A update policy transforma na ingestão, do bruto para o limpo. A materialized view mantém a agregação sempre pronta e barata. E o show ingestion failures mostra erros de mapeamento e formato, que cai no domínio de erros.',
+  v:S('telemetria.kql','telemetria.kql','kql')},
+
+/* ---------- MONITORAR E OTIMIZAR ---------- */
+{ id:'monitorar', ch:'Monitorar · 30–35%', title:'Monitorar ingestão, refresh e alertar',
+  say:'Monitorar. O Monitoring hub mostra, num lugar só, execuções de pipelines, refresh de dataflows, notebooks, Spark jobs e modelos semânticos, com status, duração e quem disparou. O app Capacity Metrics mostra o consumo de CUs e o throttling. O workspace monitoring guarda logs e métricas detalhadas num Eventhouse, consultáveis com KQL. Refresh do modelo semântico: histórico e notificação de falha. Alertas: Activator sobre eventos do Fabric, como job que falhou, ou sobre um valor no fluxo; e atividade de Teams ou Outlook no caminho de falha do pipeline.',
+  v:GRID(2, [
+    ['Onde olhar','',['Monitoring hub: todas as execuções','Capacity Metrics: CUs e throttling','workspace monitoring: KQL','histórico de refresh do modelo'],'blue'],
+    ['Como alertar','',['Activator: job com falha','Activator: valor no fluxo','pipeline: Teams e Outlook na falha','e-mail de falha do refresh'],'green'],
+  ], {h:250, step:5, rodape:'Throttling: acima de 10 min de uso futuro atrasa o interativo; acima de 60 rejeita; acima de 24 h rejeita tudo'}) },
+
+{ id:'erros', ch:'Monitorar · 30–35%', title:'Achar e resolver erros por item',
+  say:'Erros, item por item. Pipeline: abra a execução, veja entrada, saída e código de erro da atividade, ajuste nova tentativa e timeout, e reexecute a partir da atividade que falhou. Dataflow Gen2: histórico de refresh por consulta, tipo de dado incompatível no destino e gateway desligado. Notebook: célula com erro, logs do driver no Spark UI, falta de memória e lakehouse padrão não anexado. Eventhouse: show ingestion failures. Eventstream: status e logs da fonte e do destino. T-SQL: tipo não suportado e conflito de escrita. Atalho: credencial expirada ou destino movido.',
+  v:GRID(4, [
+    ['Pipeline','',['saída da atividade','retry e timeout','rerun da falha'],'blue'],
+    ['Dataflow Gen2','',['histórico por consulta','tipo no destino','gateway offline'],'green'],
+    ['Notebook','',['Spark UI, driver','falta de memória','lakehouse não anexado'],'amber'],
+    ['Eventhouse','',['ingestion failures','mapeamento','formato'],'ext'],
+    ['Eventstream','',['status da fonte','logs de execução','esquema diferente'],'ext'],
+    ['T-SQL','',['tipo não suportado','conflito de escrita','sintaxe fora do Fabric'],'amber'],
+    ['Atalho','',['credencial expirada','destino movido','sem permissão'],'green'],
+    ['Primeiro passo','',['Monitoring hub','mensagem completa','reproduzir pequeno'],'blue'],
+  ], {h:186, step:2}) },
+
+{ id:'otimizar', ch:'Monitorar · 30–35%', title:'Otimizar Delta e Warehouse',
+  say:'Otimizar a tabela do lakehouse começa por arquivos pequenos. O DESCRIBE DETAIL mostra quantos são. OPTIMIZE compacta; Z-Order agrupa pela coluna mais filtrada; V-Order reorganiza o Parquet para leitura rápida no SQL e no Direct Lake, e vem desligado por padrão em workspace novo. A compactação automática roda a cada escrita. VACUUM apaga o que não é mais referenciado, com sete dias como padrão seguro. No warehouse: query insights para achar a consulta lenta, estatísticas na coluna de junção e carga em lote, nunca linha a linha.',
+  v:S('manutencao.sql','otimizar.sql','sql')},
+
+{ id:'otimizar-mais', ch:'Monitorar · 30–35%', title:'Pipeline, Spark e tempo real',
+  say:'O resto da otimização. Pipeline: cópias em paralelo, ForEach com tamanho de lote em vez de sequencial, staging e partição na origem, e menos atividades encadeadas. Spark: Native Execution Engine no ambiente, pool inicial para sessão rápida, alta simultaneidade, broadcast em junção com tabela pequena e nada de collect em dado grande. Eventhouse: política de cache quente do tamanho das consultas, retenção, materialized views e update policies. Eventstream: nível de throughput e partições. E na consulta: filtre cedo e leia só as colunas necessárias.',
+  v:GRID(4, [
+    ['Pipeline','',['cópias paralelas','ForEach em lote','staging e partição'],'blue'],
+    ['Spark','',['Native Execution Engine','pool inicial','broadcast join','sem collect()'],'green'],
+    ['Eventhouse','',['cache quente certo','retenção','materialized view'],'amber'],
+    ['Eventstream','',['nível de throughput','partições','filtrar cedo'],'ext'],
+  ], {h:230, step:3, rodape:'Consulta: filtre cedo, só as colunas necessárias, partição por data em tabela grande · custo: confira a documentação atual'}) },
+
+/* ---------- NA HORA DA PROVA ---------- */
+{ id:'pegadinhas', ch:'Na hora da prova', title:'As pegadinhas da DP-700',
+  say:'O que mais derruba. O endpoint SQL do lakehouse é só leitura. Contributor e acima veem tudo, mesmo com RLS e máscara. ReadAll lê arquivos pelo Spark e ignora a RLS do SQL. Atalho em Tables só no primeiro nível, e apagar arquivo dentro dele apaga na origem. Mirroring é só leitura. V-Order vem desligado em workspace novo. VACUUM curto quebra time travel. Sem checkpoint o fluxo recomeça. Watermark descarta atrasado. E deployment pipeline não substitui o Git: um promove entre estágios, o outro versiona.',
+  v:GRID(2, [
+    ['Segurança','',['endpoint SQL: só leitura','Contributor+ vê tudo','ReadAll ignora a RLS do SQL','RLS: predicado de filtro'],'ext'],
+    ['OneLake','',['atalho em Tables: 1º nível','apagar dentro apaga na origem','mirroring: só leitura','cache só para atalho externo'],'amber'],
+    ['Delta e Spark','',['V-Order desligado por padrão','VACUUM curto: sem time travel','checkpoint guarda o progresso','watermark descarta atrasado'],'amber'],
+    ['Ciclo de vida','',['Git versiona','deployment pipeline promove','regras trocam a conexão','um workspace, uma branch'],'ext'],
+  ], {h:186, step:3}) },
+
+{ id:'estrategia', ch:'Na hora da prova', title:'Estratégia de prova',
+  say:'Cem minutos. Antes, faça o simulado gratuito do Microsoft Learn, o exam sandbox e o curso DP-700T00, e use a avaliação gratuita de sessenta dias do Fabric para praticar. Na prova, sublinhe o requisito: menor esforço, sem código, tempo real, time de SQL, sem copiar dados. Ele quase sempre escolhe sozinho entre Dataflow, pipeline e notebook, ou entre atalho, mirroring e cópia. Em leitura de código, siga a ordem das linhas. Pode haver estudos de caso e séries sem volta; durante a prova o Microsoft Learn pode ser consultado, mas custa tempo.',
+  v:GRID(3, [
+    ['Antes','',['simulado oficial gratuito','exam sandbox','avaliação de 60 dias'],'blue'],
+    ['Durante','',['sublinhe o requisito','sem código? tempo real?','time de SQL ou Python?'],'green'],
+    ['Formatos','',['leitura de código','estudo de caso','consulta ao Learn: pouco'],'amber'],
+  ], {h:230, step:4, rodape:'Prova em pt-BR disponível · versões localizadas chegam cerca de 8 semanas depois da inglesa · confira a página oficial'}) },
+
+/* ---------- LABORATÓRIO ---------- */
+{ id:'lab', ch:'Laboratório', title:'Lab: lote e streaming de ponta a ponta',
+  say:'O laboratório cabe na avaliação gratuita. Crie um workspace com dois lakehouses, bronze e prata, e um warehouse. Um pipeline copia um CSV para o bronze e chama o notebook de prata com MERGE e marca d água; rode duas vezes e confira que o total não muda. Carregue o warehouse com nome em três partes e aplique RLS e máscara. Crie um Eventstream com dados de exemplo para um Eventhouse e escreva a janela de cinco minutos em KQL. Por fim, monitore no Monitoring hub, rode OPTIMIZE e conecte o workspace ao Git.',
+  v:FLOW([['Lote','pipeline → bronze → prata','blue'],['Warehouse','fato, dimensão, RLS','blue'],['Streaming','Eventstream → KQL','amber'],['Operar','monitorar, OPTIMIZE, Git','green']],
+    {y:100, h:110, step:1.8, cards:[
+      ['Roteiro','',['lakehouses bronze e prata','pipeline com Lookup e Copy','notebook com MERGE','warehouse com RLS e máscara','Eventstream de exemplo','alerta no Activator'],'blue'],
+      ['Provas de que funcionou','',['rodar duas vezes: mesmo total','Viewer vê só a região dele','KQL mostra a janela de 5 min','Monitoring hub sem falhas','numFiles cai após OPTIMIZE','commit no Git'],'amber'],
+    ]}) },
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de prontidão',
+  say:'Pronto para agendar quando você: configura Spark, domínio e cache do OneLake no workspace; liga Git e monta um deployment pipeline; aplica papéis, RLS, máscara e rótulos; escolhe entre Dataflow, pipeline e notebook; faz carga incremental idempotente com MERGE; carrega um warehouse com T-SQL; usa atalho e mirroring no lugar certo; monta streaming com Eventstream, Spark e KQL com janelas; acha erros no Monitoring hub; otimiza Delta e warehouse. E passa de oitenta por cento no simulado oficial.',
+  v:CK('Workspace e domínio', 'Git e deployment pipeline', 'Papéis e permissões', 'RLS, CLS e máscara', 'Dataflow × pipeline × notebook', 'Incremental com MERGE', 'T-SQL no warehouse', 'Atalho × mirroring', 'Eventstream e janelas', 'KQL e update policy', 'Erros e Monitoring hub', 'Simulado acima de 80%')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os domínios com onde estudar, o simulado com questões no estilo da prova, os links oficiais e o checklist. O caminho que mais rende: faça os módulos do curso oficial no Microsoft Learn, refaça o laboratório desta trilha na avaliação gratuita, primeiro pelo portal e depois só com notebooks e T-SQL, e faça o simulado oficial até passar com folga. Com a DP-700, a PL-300 completa o par: você passa a entregar também o modelo semântico e o relatório.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['OLTP e OLAP', 'v17', 'oltp-olap', 'Por que o analítico mora fora do banco da aplicação'],
+  ['Bronze, prata e ouro', 'v17', 'medalhao', 'A arquitetura em camadas que o Fabric usa'],
+  ['Fato, dimensão e star schema', 'v17', 'star', 'O destino do warehouse e do modelo semântico'],
+  ['SCD tipo 2', 'v17', 'scd', 'Histórico na dimensão e surrogate key'],
+  ['ETL ou ELT', 'v17', 'elt', 'Por que carregar cru e transformar dentro'],
+  ['Warehouse ou lakehouse', 'v17', 'onde', 'Delta, Iceberg e Parquet fora do Fabric'],
+  ['Orquestração', 'v17', 'orquestracao', 'Idempotência, backfill e alerta de atraso'],
+  ['CDC e streaming', 'v17', 'cdc', 'Quando tempo real vale a pena'],
+  ['Qualidade de dados', 'v17', 'qualidade', 'Os testes que a carga deveria ter'],
+  ['Window functions', 'v17', 'window', 'ROW_NUMBER, LAG e janelas em SQL'],
+  ['pandas e Polars', 'npy', 'dados', 'DataFrames antes do PySpark'],
+  ['Joins e janelas no Kafka Streams', 'ckafka', 'streams-conceitos', 'Tumbling, hopping e session em outro motor'],
+  ['KQL no Azure Monitor', 'c104', 'kql', 'A mesma linguagem lendo logs'],
+  ['LGPD no código', 'v14', 'lgpd', 'Máscara e minimização com base legal'],
+];
+
+const MATRIZ = [
+  ['Implementar · configurar o workspace', '30–35% (domínio)', 'Spark (pool, ambiente, alta simultaneidade), domínios, OneLake (cache de atalhos) e Apache Airflow', 'esta trilha · workspace, mapa'],
+  ['Implementar · ciclo de vida', '30–35% (domínio)', 'Git com Azure DevOps ou GitHub, database projects, deployment pipelines e regras por estágio', 'Trilha AZ-400 · branches, ambientes · esta trilha · ciclo'],
+  ['Implementar · segurança e governança', '30–35% (domínio)', 'Papéis do workspace, permissões de item, RLS, CLS, OLS, pasta/arquivo, máscara dinâmica, rótulos, endosso, auditoria, OneLake security', 'Vol 14 · lgpd, modelos-authz · esta trilha · acesso, seguranca, governanca'],
+  ['Implementar · orquestrar', '30–35% (domínio)', 'Dataflow Gen2 × pipeline × notebook, agendas e gatilhos por evento, parâmetros e expressões dinâmicas', 'Vol 17 · orquestracao · esta trilha · orquestrar, parametros'],
+  ['Ingerir · padrões de carga', '30–35% (domínio)', 'Full e incremental, preparo para modelo dimensional, padrão de carga para streaming', 'Vol 17 · grao, scd, cdc · esta trilha · cargas'],
+  ['Ingerir · lote', '30–35% (domínio)', 'Escolher armazenamento e linguagem, atalhos, mirroring, pipelines, PySpark, SQL e KQL, desnormalizar, agregar, duplicados, ausentes e atrasados', 'Vol 17 · elt, onde, window · esta trilha · armazem, pyspark, tsql, qualidade'],
+  ['Ingerir · streaming', '30–35% (domínio)', 'Escolher motor, tabela nativa × atalho × atalho acelerado, Eventstream, Spark Structured Streaming, KQL e janelas', 'Trilha Kafka · streams-conceitos · esta trilha · eventstream, spark-stream, kql'],
+  ['Monitorar · itens', '30–35% (domínio)', 'Ingestão, transformação, refresh do modelo semântico e alertas', 'Vol 13 · sinais · esta trilha · monitorar'],
+  ['Monitorar · erros', '30–35% (domínio)', 'Erros de pipeline, Dataflow Gen2, notebook, Eventhouse, Eventstream, T-SQL e atalhos', 'esta trilha · erros'],
+  ['Monitorar · desempenho', '30–35% (domínio)', 'Tabela do lakehouse, pipeline, warehouse, Eventstream e Eventhouse, Spark e consultas', 'esta trilha · otimizar, otimizar-mais'],
+];
+
+const STUDY = [
+  ['Página da certificação', 'Detalhes da prova, idiomas, agendamento e renovação', 'https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/', 'intro'],
+  ['Study guide da DP-700', 'Skills measured oficial e o log de mudanças', 'https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/dp-700', 'dominios'],
+  ['Curso DP-700T00', 'Trilhas gratuitas do Microsoft Learn para a prova', 'https://learn.microsoft.com/en-us/training/courses/dp-700t00', 'estrategia'],
+  ['Simulado oficial (practice assessment)', 'Gratuito, no estilo e dificuldade da prova', 'https://learn.microsoft.com/en-us/credentials/certifications/practice-assessments-for-microsoft-certifications', 'estrategia'],
+  ['Exam sandbox', 'A interface e os tipos de questão', 'https://aka.ms/examdemo', 'estrategia'],
+  ['Avaliação gratuita do Fabric', '60 dias de capacidade para o laboratório', 'https://learn.microsoft.com/en-us/fabric/fundamentals/fabric-trial', 'lab'],
+  ['Atalhos do OneLake', 'Tipos, identidade, regras de Tables e cache', 'https://learn.microsoft.com/en-us/fabric/onelake/onelake-shortcuts', 'atalhos'],
+  ['RLS no Warehouse', 'Função de predicado e security policy', 'https://learn.microsoft.com/en-us/fabric/data-warehouse/row-level-security', 'seguranca'],
+  ['Máscara dinâmica no Warehouse', 'Funções de máscara e UNMASK', 'https://learn.microsoft.com/en-us/fabric/data-warehouse/dynamic-data-masking', 'seguranca'],
+  ['Compactação de tabelas Delta', 'OPTIMIZE, Z-Order, V-Order e auto compaction', 'https://learn.microsoft.com/en-us/fabric/data-engineering/table-compaction', 'otimizar'],
+  ['V-Order', 'O que é e o padrão por perfil de recursos', 'https://learn.microsoft.com/en-us/fabric/data-engineering/delta-optimization-and-v-order', 'otimizar'],
+  ['Eventstreams', 'Fontes, operações e destinos', 'https://learn.microsoft.com/en-us/fabric/real-time-intelligence/event-streams/overview', 'eventstream'],
+  ['Throttling da capacidade', 'Suavização e estágios de rejeição', 'https://learn.microsoft.com/en-us/fabric/enterprise/throttling', 'monitorar'],
+];
+
+const CHECK = [
+  ['Workspace', 'Criar ambiente Spark e ligar alta simultaneidade', 'workspace'],
+  ['Ciclo de vida', 'Conectar o workspace ao Git e fazer commit', 'ciclo'],
+  ['Ciclo de vida', 'Deployment pipeline com regra de fonte por estágio', 'ciclo'],
+  ['Segurança', 'Compartilhar só o item com ReadData', 'acesso'],
+  ['Segurança', 'RLS por região e máscara no e-mail', 'seguranca'],
+  ['Orquestrar', 'Pipeline com notebook parametrizado e exitValue', 'parametros'],
+  ['Ingerir', 'Carga incremental com watermark rodada duas vezes', 'pyspark'],
+  ['Ingerir', 'Dimensão com membro desconhecido no warehouse', 'tsql'],
+  ['Ingerir', 'Atalho para ADLS e um banco espelhado', 'atalhos'],
+  ['Streaming', 'Eventstream de exemplo para Eventhouse', 'eventstream'],
+  ['Streaming', 'Janela de 5 min com watermark no Spark', 'spark-stream'],
+  ['Streaming', 'Update policy e materialized view em KQL', 'kql'],
+  ['Monitorar', 'Alerta no Activator para job com falha', 'monitorar'],
+  ['Otimizar', 'OPTIMIZE e VACUUM comparando numFiles', 'otimizar'],
+  ['Prontidão', 'Passar de 80% no simulado oficial', 'estrategia'],
+];
+
+const FAQ = [
+ ['Implementar e gerenciar','Um analista externo ao workspace precisa consultar as tabelas de um lakehouse pelo endpoint SQL, sem ver outros itens e sem acessar os arquivos. O que fazer?',`<p>A) Papel Viewer no workspace · B) Compartilhar o lakehouse com ReadData · C) Compartilhar o lakehouse com ReadAll · D) Papel Contributor no workspace</p><p><b>Resposta: B.</b> ReadData no item libera a leitura pelo SQL e só daquele item. A dá acesso a todos os itens do workspace; C libera os arquivos via Spark e OneLake; D permite editar.</p>`],
+ ['Implementar e gerenciar','Você aplicou RLS no warehouse, mas uma usuária continua vendo todas as linhas. Ela é Contributor do workspace. Por quê?',`<p>A) A policy está com STATE = OFF · B) Contributor tem CONTROL no banco e não é filtrado · C) RLS só vale no Power BI · D) USER_NAME() não funciona no Fabric</p><p><b>Resposta: B.</b> Admin, Member e Contributor têm controle total e não são alcançados pela segurança fina; para ela, use Viewer ou permissão de item. A é possível, mas o cenário indica o papel; C e D estão errados.</p>`],
+ ['Implementar e gerenciar','O time precisa promover itens de desenvolvimento para teste e produção, trocando a conexão de origem em cada estágio, com o menor esforço. O que usar?',`<p>A) Exportar e importar os itens manualmente · B) Deployment pipeline com regras de implantação · C) Duas branches do Git apontando para o mesmo workspace · D) Copiar o workspace</p><p><b>Resposta: B.</b> Deployment pipelines promovem entre estágios e as regras trocam fonte e parâmetros. A dá trabalho e erra; C não é suportado (um workspace, uma branch); D não existe como recurso de promoção.</p>`],
+ ['Implementar e gerenciar','Analistas de negócio, que dominam Power Query e não programam, precisam integrar dados de um SaaS com 200 mil linhas por dia em um lakehouse. Qual ferramenta?',`<p>A) Notebook PySpark · B) Dataflow Gen2 com destino no lakehouse · C) Eventstream · D) Spark job definition</p><p><b>Resposta: B.</b> Low-code, conectores prontos e volume moderado apontam para Dataflow Gen2. A e D exigem código; C é para eventos em streaming, não para integração em lote de SaaS.</p>`],
+ ['Implementar e gerenciar','Um pipeline chama um notebook que termina com notebookutils.notebook.exit(\'42\'). Como a atividade seguinte lê esse valor?',`<p>A) @pipeline().parameters.exitValue · B) @activity(\'nb\').output.result.exitValue · C) @variables(\'exit\') · D) @item().exitValue</p><p><b>Resposta: B.</b> O valor devolvido pelo exit fica na saída da atividade Notebook. A lê parâmetros do pipeline; C lê uma variável que ninguém definiu; D só existe dentro de um ForEach.</p>`],
+ ['Ingerir e transformar','Uma tabela de pedidos na origem tem a coluna alterado_em. A carga diária deve trazer só o que mudou e não duplicar se for reexecutada. Qual abordagem?',`<p>A) Overwrite completo todos os dias · B) Append de tudo que tem alterado_em de hoje · C) Watermark com MERGE na tabela Delta e avanço da marca após sucesso · D) Atalho para a origem</p><p><b>Resposta: C.</b> Watermark traz só o delta e o MERGE torna a carga idempotente. A funciona mas é cara; B duplica ao reexecutar; D não se aplica a um banco operacional (seria mirroring).</p>`],
+ ['Ingerir e transformar','Os dados de uma conta ADLS Gen2 de outro departamento devem ser consultados no lakehouse sem cópia e sem duplicar armazenamento. O que fazer?',`<p>A) Atalho do OneLake para o ADLS Gen2 · B) Pipeline com Copy diário · C) Mirroring · D) Dataflow Gen2</p><p><b>Resposta: A.</b> Atalho aponta para o dado sem copiar. B, D copiam; mirroring (C) replica bancos operacionais, não contas de storage.</p>`],
+ ['Ingerir e transformar','O time de SQL precisa fazer UPDATE e DELETE em várias tabelas numa única transação. Qual item?',`<p>A) Endpoint SQL do lakehouse · B) Warehouse · C) Eventhouse · D) Banco espelhado</p><p><b>Resposta: B.</b> O warehouse tem DML completo e transações multitabela. O endpoint SQL (A) e o banco espelhado (D) são só leitura; Eventhouse (C) é para eventos com KQL.</p>`],
+ ['Ingerir e transformar','Um fato de vendas chega antes de o cliente existir na dimensão. A carga não pode perder a venda. O que fazer?',`<p>A) Descartar a venda · B) Apontar para um membro desconhecido (-1) e reapontar na próxima carga · C) Esperar a dimensão em um laço infinito · D) Gravar a chave natural no lugar da surrogate key</p><p><b>Resposta: B.</b> O membro desconhecido preserva a venda e mantém a integridade. A perde dado; C trava a carga; D quebra o modelo dimensional.</p>`],
+ ['Ingerir e transformar','Leituras de sensores chegam com até 8 minutos de atraso. A média de 5 minutos no Spark Structured Streaming deve incluir esses atrasados e gravar só janelas completas. Qual configuração?',`<p>A) withWatermark de 10 minutos e outputMode append · B) outputMode complete sem watermark · C) trigger de 8 minutos · D) Apagar o checkpoint a cada execução</p><p><b>Resposta: A.</b> A watermark aceita atraso até 10 minutos e, em append, só grava janelas fechadas. B mantém todo o estado e regrava tudo; C muda a frequência, não o atraso aceito; D reprocessa do início.</p>`],
+ ['Ingerir e transformar','Uma consulta KQL frequente agrega a temperatura média por máquina em blocos de 5 minutos e está ficando lenta. O que reduz o custo de consulta?',`<p>A) Materialized view com summarize avg() by maquina, bin(ts, 5m) · B) Aumentar a retenção · C) Trocar para atalho do OneLake · D) Remover a política de cache</p><p><b>Resposta: A.</b> A materialized view mantém a agregação pronta e incremental. B guarda mais dado; C costuma ser mais lento que tabela nativa; D piora o desempenho.</p>`],
+ ['Ingerir e transformar','No Real-Time Intelligence, você quer consultar com KQL uma tabela Delta grande do lakehouse, com desempenho próximo ao de tabela nativa e sem ingerir. Qual opção?',`<p>A) Atalho padrão do OneLake · B) Atalho do OneLake com aceleração de consulta · C) Copiar para o Eventhouse a cada hora · D) Mirroring</p><p><b>Resposta: B.</b> A aceleração indexa e guarda em cache os dados do atalho. A funciona, mas é mais lento; C ingere (o requisito diz que não); D é para bancos operacionais.</p>`],
+ ['Monitorar e otimizar','Depois de meses de cargas em micro-lote, consultas a uma tabela Delta ficaram lentas e DESCRIBE DETAIL mostra milhares de arquivos pequenos. Qual a primeira ação?',`<p>A) VACUUM RETAIN 0 HOURS · B) OPTIMIZE (com Z-Order na coluna mais filtrada) · C) Aumentar o pool Spark · D) Recriar a tabela como CSV</p><p><b>Resposta: B.</b> OPTIMIZE compacta os arquivos pequenos. A apaga histórico e não compacta; C gasta mais sem atacar a causa; D piora tudo.</p>`],
+ ['Monitorar e otimizar','O time quer ser avisado no Teams sempre que qualquer pipeline do workspace falhar, sem editar cada pipeline. O que usar?',`<p>A) Activator sobre os eventos de job do Fabric · B) Atividade de Teams no fim de cada pipeline · C) Capacity Metrics app · D) Logs do driver Spark</p><p><b>Resposta: A.</b> O Activator reage a eventos de execução de itens e dispara a ação. B funciona, mas exige editar cada pipeline; C mostra consumo; D é só para notebooks.</p>`],
+ ['Monitorar e otimizar','Usuários relatam que relatórios interativos estão sendo rejeitados, enquanto as cargas noturnas continuam rodando. Onde investigar e qual a causa provável?',`<p>A) Monitoring hub; um pipeline falhou · B) Capacity Metrics app; a capacidade passou do limite de 60 minutos de uso futuro · C) Git; conflito de branch · D) Eventstream; falta de partições</p><p><b>Resposta: B.</b> Rejeição do interativo com o background ainda rodando é o estágio de throttling entre 60 minutos e 24 horas de consumo futuro. A, C e D não explicam a rejeição.</p>`],
+ ['Monitorar e otimizar','O DESCRIBE HISTORY de uma tabela não permite mais voltar para a versão de ontem. Alguém rodou um comando de manutenção. Qual é o suspeito?',`<p>A) OPTIMIZE · B) VACUUM com retenção curta · C) DESCRIBE DETAIL · D) ZORDER BY</p><p><b>Resposta: B.</b> VACUUM remove arquivos não referenciados; com retenção curta, as versões antigas perdem os arquivos. OPTIMIZE e Z-Order (A, D) reescrevem, mas mantêm o histórico; C só lê metadados.</p>`],
+];
+
+const CMDS = [
+  ['OPTIMIZE tabela ZORDER BY (col) VORDER', 'Compactar, agrupar pela coluna filtrada e aplicar V-Order'],
+  ['VACUUM tabela RETAIN 168 HOURS', 'Remover arquivos não referenciados com retenção segura'],
+  ['DESCRIBE DETAIL tabela · DESCRIBE HISTORY tabela', 'Arquivos, tamanho e versões de uma tabela Delta'],
+  ['DeltaTable.forName(spark, t).merge(…)', 'Upsert idempotente em PySpark'],
+  ['notebookutils.notebook.runMultiple(dag)', 'Rodar notebooks em DAG com paralelismo'],
+  ['@activity(\'nb\').output.result.exitValue', 'Ler o retorno de um notebook no pipeline'],
+  ['CREATE SECURITY POLICY … ADD FILTER PREDICATE', 'RLS no warehouse'],
+  ['ALTER COLUMN c ADD MASKED WITH (FUNCTION = \'email()\')', 'Máscara dinâmica'],
+  ['summarize … by bin(ts, 5m)', 'Janela fixa em KQL'],
+  ['.alter table T policy update …', 'Transformar na ingestão do Eventhouse'],
+  ['.show ingestion failures', 'Erros de ingestão no Eventhouse'],
+  ['SELECT … FROM queryinsights.exec_requests_history', 'Consultas lentas no warehouse'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

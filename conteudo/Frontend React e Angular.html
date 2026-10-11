@@ -1,0 +1,1104 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Frontend React e Angular</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:392px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+</style>
+
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Squad · frontend</span>
+    <h1>Frontend moderno com React e Angular</h1>
+    <p class="lead">Roteiro em vídeo para quem vem do backend: onde a página é montada, React e Angular lado a lado, estado e dados do servidor, formulários, arquitetura do front, integração com a API e autenticação, desempenho, acessibilidade, testes, segurança e entrega. O que já foi coberto em outras trilhas tem link direto para a cena, logo abaixo do vídeo.</p>
+    <div class="meta">
+      <span class="pill">React 19</span><span class="pill">Angular com signals</span><span class="pill">TanStack Query</span><span class="pill">Core Web Vitals</span><span class="pill">Acessibilidade</span><span class="pill">Playwright</span>
+    </div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch">O lado do backend e as práticas de time que o front usa já foram explicados em detalhe. Cada link abre o vídeo correspondente direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow">Decisão</span><h2>React, Angular e alternativas</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch">Comece pelo tipo de aplicação e pelo que a empresa já mantém.</p>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Opção</th><th>Tipo</th><th>Escolha quando</th><th>Evite quando</th><th>Para começar</th></tr></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Documentação oficial dos frameworks, bibliotecas e padrões da web. A marcação fica salva só neste navegador.</p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Cada item vale quando foi aplicado em código, não só lido. O botão ao lado leva à cena do vídeo.</p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" placeholder="Buscar: Redux, token, CORS, Next…" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2>Comandos de bolso</h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer>Material de estudo da AGX. Os códigos são didáticos e não foram executados neste material. Versões de React, Angular e bibliotecas mudam rápido: confirme na documentação oficial.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"angular-comp.ts": "// Angular moderno: componente standalone, signals e o novo controle de fluxo\n@Component({\n  selector: 'agx-cartao-proposta',\n  imports: [MoedaPipe],\n  changeDetection: ChangeDetectionStrategy.OnPush,\n  template: `\n    @if (proposta(); as p) {\n      <article>\n        <h3>Proposta {{ p.numero }}</h3>\n        <p>{{ p.valorSolicitado | moeda }} · {{ p.status }}</p>\n        <button (click)=\"aberto.set(!aberto())\" [attr.aria-expanded]=\"aberto()\">\n          {{ aberto() ? 'Ocultar histórico' : 'Ver histórico' }}\n        </button>\n        @if (aberto()) {\n          <ul>\n            @for (h of p.historico; track h.id) { <li>{{ h.descricao }}</li> }\n          </ul>\n        }\n        <button [disabled]=\"!podeAprovar()\" (click)=\"aprovar.emit(p.id)\">Aprovar</button>\n      </article>\n    } @else {\n      <agx-esqueleto />\n    }\n  `,\n})\nexport class CartaoPropostaComponent {\n  readonly proposta = input.required<Proposta | undefined>();   // entrada como signal\n  readonly aprovar = output<string>();                          // evento para o pai\n  readonly aberto = signal(false);                              // estado local\n  readonly podeAprovar = computed(() => this.proposta()?.status === 'recebida');   // derivado\n}", "angular-servico.ts": "// Serviço com HttpClient: signals para o estado, RxJS para fluxos assíncronos\n@Injectable({ providedIn: 'root' })\nexport class PropostasService {\n  private readonly http = inject(HttpClient);\n\n  obter(id: string) {\n    return this.http.get<Proposta>(`/api/propostas/${id}`);   // Observable: cancelável e combinável\n  }\n}\n\n// No componente: Observable vira signal com toSignal\nexport class DetalhePropostaComponent {\n  private readonly servico = inject(PropostasService);\n  readonly id = input.required<string>();                     // vem da rota (withComponentInputBinding)\n  readonly proposta = toSignal(\n    toObservable(this.id).pipe(switchMap((id) => this.servico.obter(id))),   // troca de id cancela a anterior\n  );\n}\n\n// Interceptor funcional: correlação e tratamento de erro em um lugar só\nexport const correlacaoInterceptor: HttpInterceptorFn = (req, next) =>\n  next(req.clone({ setHeaders: { 'X-Correlation-Id': crypto.randomUUID() } })).pipe(\n    catchError((erro: HttpErrorResponse) => {\n      inject(AvisoService).mostrar(erro.error?.title ?? 'Erro inesperado');   // ProblemDetails\n      return throwError(() => erro);\n    }),\n  );\n\n// app.config.ts\nexport const appConfig: ApplicationConfig = {\n  providers: [\n    provideRouter(rotas, withComponentInputBinding()),\n    provideHttpClient(withInterceptors([correlacaoInterceptor])),\n  ],\n};", "componente.tsx": "// React: componente é uma função que recebe props e devolve UI\ntype Props = { propostaId: string; onAprovar: (id: string) => void };\n\nexport function CartaoProposta({ propostaId, onAprovar }: Props) {\n  const [aberto, setAberto] = useState(false);            // estado local do componente\n  const { data, isPending, error } = useProposta(propostaId);   // dados do servidor (próxima cena)\n\n  if (isPending) return <Esqueleto />;\n  if (error) return <Erro mensagem=\"Não foi possível carregar a proposta.\" />;\n\n  return (\n    <article aria-labelledby={`titulo-${propostaId}`}>\n      <h3 id={`titulo-${propostaId}`}>Proposta {data.numero}</h3>\n      <p>{formatarMoeda(data.valorSolicitado)} · {data.status}</p>\n\n      <button onClick={() => setAberto((a) => !a)} aria-expanded={aberto}>\n        {aberto ? 'Ocultar histórico' : 'Ver histórico'}\n      </button>\n      {aberto && (\n        <ul>\n          {data.historico.map((h) => <li key={h.id}>{h.descricao}</li>)}   {/* key estável, nunca o índice */}\n        </ul>\n      )}\n\n      <button disabled={data.status !== 'recebida'} onClick={() => onAprovar(propostaId)}>\n        Aprovar\n      </button>\n    </article>\n  );\n}\n\n// Dentro do componente: efeito só para sincronizar com algo FORA do React (título, assinatura, timer)\nuseEffect(() => {\n  document.title = `Proposta ${propostaId}`;\n}, [propostaId]);\n// Não use useEffect para buscar dados nem para calcular valores derivados das props", "dados.tsx": "// Estado do servidor com TanStack Query: cache, nova tentativa, atualização em segundo plano\nexport function useProposta(id: string) {\n  return useQuery({\n    queryKey: ['proposta', id],\n    queryFn: ({ signal }) => api.get<Proposta>(`/propostas/${id}`, { signal }),   // cancela ao desmontar\n    staleTime: 30_000,                                // 30 s considerado fresco\n  });\n}\n\nexport function useAprovarProposta() {\n  const queryClient = useQueryClient();\n  return useMutation({\n    mutationFn: (id: string) => api.post(`/propostas/${id}/aprovar`),\n    onSuccess: (_resultado, id) => {\n      queryClient.invalidateQueries({ queryKey: ['proposta', id] });   // recarrega o que mudou\n    },\n  });\n}\n\n// Cliente HTTP único: base, autenticação, ProblemDetails e correlação\nexport const api = criarCliente({\n  baseUrl: import.meta.env.VITE_API_URL,\n  headers: () => ({ 'X-Correlation-Id': crypto.randomUUID() }),\n  onErro: async (resposta) => {\n    const problema = await resposta.json();           // application/problem+json do backend\n    throw new ErroApi(problema.title, resposta.status, problema.errors);\n  },\n});\n\n// Tipos gerados do OpenAPI do backend: o contrato quebra na compilação, não em produção\n//   npx openapi-typescript https://api.agx.dev/openapi/v1.json -o src/api/schema.d.ts", "formulario.tsx": "// Formulário com React Hook Form + Zod: o mesmo schema valida e tipa\nconst NovaPreAnalise = z.object({\n  cpf: z.string().regex(/^\\d{11}$/, 'CPF com 11 dígitos'),\n  valorSolicitado: z.coerce.number().positive('Informe um valor').max(500_000, 'Até R$ 500 mil'),\n  canal: z.enum(['app', 'loja', 'parceiro']),\n});\ntype NovaPreAnalise = z.infer<typeof NovaPreAnalise>;\n\nexport function FormPreAnalise() {\n  const { register, handleSubmit, formState: { errors, isSubmitting } } =\n    useForm<NovaPreAnalise>({ resolver: zodResolver(NovaPreAnalise) });\n  const enviar = useEnviarPreAnalise();\n\n  return (\n    <form onSubmit={handleSubmit((dados) => enviar.mutateAsync(dados))} noValidate>\n      <label htmlFor=\"cpf\">CPF</label>\n      <input id=\"cpf\" inputMode=\"numeric\" aria-invalid={!!errors.cpf}\n             aria-describedby=\"cpf-erro\" {...register('cpf')} />\n      {errors.cpf && <p id=\"cpf-erro\" role=\"alert\">{errors.cpf.message}</p>}\n\n      <label htmlFor=\"valor\">Valor solicitado</label>\n      <input id=\"valor\" type=\"number\" {...register('valorSolicitado')} />\n      {errors.valorSolicitado && <p role=\"alert\">{errors.valorSolicitado.message}</p>}\n\n      <button type=\"submit\" disabled={isSubmitting}>\n        {isSubmitting ? 'Enviando…' : 'Enviar pré-análise'}\n      </button>\n    </form>\n  );\n}\n// A validação no front é para a experiência; o backend valida de novo, sempre", "teste.tsx": "// Teste de componente com Testing Library: teste o que o usuário vê e faz\ntest('mostra erro e não envia quando o CPF é inválido', async () => {\n  const usuario = userEvent.setup();\n  const enviar = vi.fn();\n  render(<FormPreAnalise onEnviar={enviar} />);\n\n  await usuario.type(screen.getByLabelText('CPF'), '123');\n  await usuario.click(screen.getByRole('button', { name: 'Enviar pré-análise' }));\n\n  expect(await screen.findByRole('alert')).toHaveTextContent('CPF com 11 dígitos');\n  expect(enviar).not.toHaveBeenCalled();\n});\n\n// Ponta a ponta com Playwright: fluxo crítico no navegador real, API simulada ou de teste\ntest('analista aprova uma proposta recebida', async ({ page }) => {\n  await page.route('**/api/propostas/7f3c', (rota) =>\n    rota.fulfill({ json: { id: '7f3c', numero: 1042, status: 'recebida', historico: [] } }));\n\n  await page.goto('/propostas/7f3c');\n  await page.getByRole('button', { name: 'Aprovar' }).click();\n  await expect(page.getByText('Proposta aprovada')).toBeVisible();\n});\n\n// Acessibilidade automática no mesmo teste\n//   const resultado = await new AxeBuilder({ page }).analyze();\n//   expect(resultado.violations).toEqual([]);"};
+
+const TR = {
+  aks: ['Trilha AKS', 'https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt'],
+  kafka: ['Trilha Kafka e Event Hubs', 'https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd'],
+  tf: ['Trilha Terraform', 'https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5'],
+  cs: ['Trilha C# e ASP.NET Core', 'https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h'],
+  node: ['Trilha Node e TypeScript', 'https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr'],
+  bt: ['Preparatório Big Tech', 'https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd'],
+  ia: ['Trilha de IA Aplicada', 'https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S'],
+  staff: ['Do Pleno ao Staff', 'https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V'],
+  tl: ['Tech Lead na Prática', 'https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH'],
+};
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const VISTO = (txt, y = 470) => ({at:0, x:36,y,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const TITLE = {k:'Squad · frontend', h:'Frontend moderno com React e Angular',
+  p:'Renderização, componentes, estado e dados, formulários, arquitetura do front, integração com o backend, desempenho, acessibilidade, testes, segurança e entrega, com os mesmos exemplos de pré-análise.',
+  chips:['React 19','Angular com signals','TanStack Query · RxJS','Core Web Vitals','acessibilidade','Playwright']};
+const OUTRO = {k:'Fim do roteiro', h:'Front é produto, não só tela',
+  p:'Abaixo do vídeo estão a comparação de frameworks, os links para o que já foi coberto nas outras trilhas, a leitura recomendada, o checklist e as perguntas mais comuns.',
+  chips:['estado do servidor ≠ estado da tela','acessível por padrão','meça os Web Vitals','teste o que o usuário vê']};
+const S = (file, key) => ({type:'code', file, lang:'ts', code: SNIP[key]});
+
+const SCENES = [
+{ id:'intro', ch:'Visão geral', title:'O que um front moderno precisa resolver',
+  say:'Esta trilha é para quem vem do backend e precisa entender, revisar e decidir sobre o frontend. Um front moderno resolve renderização, estado, dados do servidor, formulários, rotas, acessibilidade, desempenho, segurança e entrega. React e Angular resolvem tudo isso de jeitos diferentes, e vamos ver os dois com os mesmos exemplos de pré-análise.',
+  v:{type:'title'} },
+
+{ id:'mapa', ch:'Visão geral', title:'As camadas de uma aplicação web',
+  say:'Pense o front em camadas. A interface é feita de componentes que recebem dados e emitem eventos. O estado se divide em estado da tela, como um painel aberto, e estado do servidor, como a proposta carregada. Uma camada de acesso conversa com a API. O roteamento organiza as páginas. E em volta de tudo estão build, testes, acessibilidade, desempenho e observabilidade.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:64, cls:'blue', html:B('Componentes','UI composta de peças pequenas, com props de entrada e eventos de saída')},
+    {at:3, x:36,y:168,w:430,h:84, cls:'green', html:B('Estado da tela','aberto/fechado, aba ativa, rascunho de formulário')},
+    {at:4.5, x:494,y:168,w:430,h:84, cls:'green', html:B('Estado do servidor','dados da API: cache, recarga, invalidação')},
+    {at:6, x:36,y:264,w:430,h:70, cls:'amber', html:B('Acesso à API','cliente HTTP único, tipos gerados do OpenAPI')},
+    {at:7, x:494,y:264,w:430,h:70, cls:'amber', html:B('Rotas','páginas, parâmetros, carregamento sob demanda')},
+    {at:9, x:36,y:350,w:888,h:110, cls:'ext', html:B('Em volta de tudo','')+UL('build e variáveis de ambiente · testes de componente e ponta a ponta','acessibilidade · desempenho (Core Web Vitals) · segurança · observabilidade de erros')},
+  ]}},
+
+{ id:'renderizacao', ch:'Visão geral', title:'Onde a página é montada',
+  say:'A primeira decisão é onde o HTML é gerado. Em CSR, o navegador recebe JavaScript e monta tudo; ótimo para sistemas internos atrás de login. Em SSR, o servidor envia HTML pronto e o navegador hidrata, ganhando primeira carga rápida e SEO. Em SSG, o HTML é gerado no build. Next.js, React Router e Angular com SSR oferecem as opções; escolha pelo tipo de página, não por moda.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:230, cls:'blue', html:B('CSR','renderização no cliente')+UL('SPA com Vite','backoffice, painéis internos','simples de hospedar (CDN)','primeira carga mais lenta')},
+    {at:4.5, x:340,y:92,w:280,h:230, cls:'green', html:B('SSR','renderização no servidor')+UL('HTML pronto + hidratação','site público, SEO','precisa de servidor Node','Next.js, Angular SSR')},
+    {at:8.5, x:644,y:92,w:280,h:230, cls:'amber', html:B('SSG','gerado no build')+UL('páginas que mudam pouco','CDN, muito rápido','documentação, marketing')},
+    {at:12.5, x:36,y:342,w:888,h:120, cls:'ext', html:B('Para a squad','portal interno de analistas: CSR com Vite · página pública de simulação: SSR ou SSG · o mesmo backend .NET serve os dois')},
+  ]}},
+
+{ id:'escolha', ch:'Visão geral', title:'React ou Angular?',
+  say:'React é uma biblioteca de interface com um ecossistema enorme: você escolhe roteador, dados e formulários, ou adota um framework como Next.js. Angular é um framework completo e opinativo, com injeção de dependência, roteador, formulários e HTTP incluídos, familiar para quem vem de C#. Os dois servem para sistemas grandes. A decisão costuma ser do time e da empresa: o que já existe, quem vai manter e o que o mercado local oferece.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'blue', html:B('React','biblioteca + ecossistema')+UL('liberdade de escolha das peças','Next.js para SSR e rotas no servidor','JSX: lógica e marcação juntas','maior mercado de vagas','exige padrões definidos pelo time')},
+    {at:5, x:494,y:92,w:430,h:250, cls:'green', html:B('Angular','framework completo')+UL('DI, roteador, forms, HTTP incluídos','TypeScript e estrutura por padrão','signals para reatividade','familiar para times .NET','menos decisões, mais convenção')},
+    {at:10, x:36,y:362,w:888,h:100, cls:'ext', html:B('Critério','o que a empresa já usa · quem vai manter por anos · se o time quer convenção pronta (Angular) ou montar as peças (React)')},
+  ]}},
+
+{ id:'react-componente', ch:'React', title:'Componentes, estado e efeitos',
+  say:'Em React, um componente é uma função que recebe props e devolve a interface. useState guarda estado local, e cada mudança renderiza de novo. Listas precisam de uma key estável. O erro mais comum é usar useEffect para tudo: ele serve para sincronizar com algo fora do React, como o título da página. Para buscar dados, use uma biblioteca de dados; para valores derivados, calcule durante a renderização.',
+  v:S('src/propostas/CartaoProposta.tsx','componente.tsx')},
+
+{ id:'react-dados', ch:'React', title:'Dados do servidor com TanStack Query',
+  say:'Dados do servidor não são estado comum: eles têm cache, ficam desatualizados, falham e precisam ser recarregados. O TanStack Query cuida disso: cada consulta tem uma chave, um tempo em que é considerada fresca e cancelamento automático. Depois de uma mutação, invalide as chaves afetadas. Um cliente HTTP único trata autenticação, correlação e erros no formato ProblemDetails, e os tipos vêm do OpenAPI do backend.',
+  v:S('src/api/propostas.ts','dados.tsx')},
+
+{ id:'react-form', ch:'React', title:'Formulários com validação',
+  say:'Formulários são onde a experiência mais quebra. React Hook Form com Zod usa o mesmo schema para validar e para tipar os dados. Cada campo tem rótulo ligado ao input, mensagem de erro ligada ao campo e anunciada a leitores de tela, e o botão mostra o envio em andamento. A validação do front é para a experiência; o backend valida tudo de novo.',
+  v:S('src/pre-analise/FormPreAnalise.tsx','formulario.tsx')},
+
+{ id:'react19', ch:'React', title:'React moderno: servidor e ações',
+  say:'O React 19 trouxe Server Components, que rodam só no servidor e enviam o resultado já pronto, e Actions, que tratam envio de formulário, estado pendente e atualização otimista. Eles brilham em frameworks com servidor, como o Next.js. Numa SPA com Vite, o modelo clássico com TanStack Query continua sendo o caminho mais simples. Adote o novo modelo quando o projeto tiver SSR.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:200, cls:'blue', html:B('Server Components','rodam só no servidor')+UL('acessam dados direto, sem API intermediária','não enviam JavaScript para o navegador','não usam estado nem eventos')},
+    {at:5, x:494,y:92,w:430,h:200, cls:'green', html:B('Actions e hooks novos','')+UL('form action com estado pendente','useOptimistic para resposta imediata','use() para ler promises e contexto')},
+    {at:10, x:36,y:312,w:888,h:150, cls:'ext', html:B('Quando adotar','projeto com Next.js ou outro framework com servidor: sim · SPA atrás de login com API .NET: o modelo clássico é mais simples · confira o suporte do framework escolhido')},
+  ]}},
+
+{ id:'angular-componente', ch:'Angular', title:'Componentes com signals',
+  say:'No Angular moderno, componentes são standalone e a reatividade usa signals: input para entradas, output para eventos, signal para estado local e computed para valores derivados, recalculados só quando algo muda. O novo controle de fluxo, com @if e @for, substitui as diretivas antigas, e @for exige um track. Com OnPush, o Angular só atualiza o que mudou.',
+  v:S('src/app/propostas/cartao-proposta.component.ts','angular-comp.ts')},
+
+{ id:'angular-servico', ch:'Angular', title:'Serviços, HttpClient e interceptors',
+  say:'Serviços concentram o acesso a dados e são injetados com inject. O HttpClient devolve Observables, que são canceláveis e combináveis; switchMap cancela a requisição anterior quando o id muda. toSignal transforma o resultado em signal para o template. Interceptors funcionais tratam correlação, autenticação e erros num só lugar, registrados na configuração da aplicação.',
+  v:S('src/app/propostas/propostas.service.ts','angular-servico.ts')},
+
+{ id:'estado', ch:'Arquitetura do front', title:'Estado: onde cada coisa deve morar',
+  say:'A maior fonte de complexidade no front é estado no lugar errado. Dados do servidor ficam numa biblioteca de dados. Filtros, página e aba ativa ficam na URL, para o link ser compartilhável. Estado de um componente fica nele. Só o que é realmente global, como usuário logado e preferências, vai para um store, como Zustand, Redux Toolkit ou o Signal Store do NgRx.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:205,h:220, cls:'blue', html:B('Servidor','TanStack Query · HttpClient + signals')+UL('propostas, clientes','cache e recarga')},
+    {at:3.5, x:257,y:92,w:205,h:220, cls:'green', html:B('URL','query string, rota')+UL('filtros, página, aba','compartilhável')},
+    {at:6, x:478,y:92,w:205,h:220, cls:'amber', html:B('Local','useState · signal')+UL('aberto/fechado','rascunho')},
+    {at:8.5, x:699,y:92,w:225,h:220, html:B('Global','Zustand · Redux · NgRx')+UL('usuário, tema','pouco e explícito')},
+    {at:12, x:36,y:332,w:888,h:130, cls:'ext', html:B('Sinais de problema','dados da API copiados para um store global · o mesmo dado em três lugares · filtro que some ao recarregar a página')},
+  ]}},
+
+{ id:'estrutura', ch:'Arquitetura do front', title:'Estrutura, design system e escala',
+  say:'Organize por funcionalidade, não por tipo de arquivo: cada pasta de feature tem seus componentes, dados e testes. Componentes visuais reutilizáveis formam um design system, documentado no Storybook. Com vários apps, um monorepo com Nx ou Turborepo compartilha código e acelera o build. Micro-frontends resolvem um problema de organização entre times; adote só quando vários times precisam publicar partes da mesma tela de forma independente.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:250, cls:'blue', html:B('Por funcionalidade','')+UL('features/propostas/','features/pre-analise/','shared/ui (design system)','shared/api (cliente)')},
+    {at:4.5, x:340,y:92,w:280,h:250, cls:'green', html:B('Design system','')+UL('botões, campos, tabelas','tokens de cor e espaçamento','acessível por padrão','Storybook como vitrine')},
+    {at:8.5, x:644,y:92,w:280,h:250, cls:'amber', html:B('Escala','')+UL('monorepo (Nx, Turborepo)','limites entre módulos','micro-frontends: só com motivo de times')},
+    {at:12.5, x:36,y:362,w:888,h:100, cls:'ext', html:B('Regra','uma feature não importa outra diretamente: o que é compartilhado sobe para shared')},
+  ]}},
+
+{ id:'backend', ch:'Arquitetura do front', title:'Integração com o backend e autenticação',
+  say:'O contrato com o backend vem do OpenAPI, com tipos gerados para o front. Erros chegam como ProblemDetails e viram mensagens úteis. Para autenticação com o Entra ID, o fluxo recomendado é o código de autorização com PKCE. Evite guardar tokens no localStorage, onde qualquer script injetado os lê: um BFF, backend para o frontend, guarda os tokens no servidor e usa cookie seguro e HttpOnly.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:210, cls:'blue', html:B('Contrato','')+UL('OpenAPI do backend','tipos gerados no build','quebra na compilação')},
+    {at:4, x:340,y:92,w:280,h:210, cls:'green', html:B('Erros','')+UL('ProblemDetails padronizado','mensagem útil ao usuário','traceId para o suporte')},
+    {at:7.5, x:644,y:92,w:280,h:210, cls:'amber', html:B('Autenticação','')+UL('OIDC: código + PKCE','BFF com cookie HttpOnly','sem token no localStorage')},
+    {at:11.5, x:36,y:322,w:888,h:140, cls:'ext', html:B('BFF','um backend pequeno do próprio front: guarda os tokens, junta chamadas, adapta respostas para a tela e reduz o que fica exposto no navegador')},
+    VISTO('ProblemDetails, Minimal API e OpenAPI na trilha de C# · segurança de API na trilha de C#'),
+  ]}},
+
+{ id:'desempenho', ch:'Qualidade', title:'Desempenho e Core Web Vitals',
+  say:'O Google mede a experiência real com três métricas, as Core Web Vitals. LCP, o tempo até o maior conteúdo aparecer, idealmente abaixo de 2,5 segundos. INP, o tempo de resposta a interações, abaixo de 200 milissegundos. E CLS, o quanto a página pula durante o carregamento. Reduza JavaScript enviado, carregue rotas sob demanda, otimize imagens e meça com usuários reais, não só no seu computador.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:170, cls:'green', html:B('LCP ≤ 2,5 s','maior conteúdo visível')+UL('imagem otimizada','SSR ou pré-carga')},
+    {at:3.5, x:340,y:92,w:280,h:170, cls:'blue', html:B('INP ≤ 200 ms','resposta a interações')+UL('menos trabalho na thread','listas virtualizadas')},
+    {at:6, x:644,y:92,w:280,h:170, cls:'amber', html:B('CLS ≤ 0,1','estabilidade visual')+UL('tamanho reservado','fontes sem salto')},
+    {at:9, x:36,y:282,w:430,h:180, cls:'ext', html:B('Técnicas','')+UL('lazy loading de rotas','divisão de bundle','cache de assets com hash','debounce em buscas')},
+    {at:12.5, x:494,y:282,w:430,h:180, html:B('Medir','')+UL('Lighthouse no CI','dados de campo (RUM)','análise do bundle','orçamento de tamanho')},
+  ]}},
+
+{ id:'a11y', ch:'Qualidade', title:'Acessibilidade',
+  say:'Acessibilidade é requisito, não detalhe: garante uso por pessoas com deficiência e, no Brasil, há obrigações legais para vários tipos de serviço. Comece pelo HTML semântico: botão é button, link é a, todo campo tem label. Tudo precisa funcionar só com teclado, com foco visível. Contraste suficiente, textos alternativos, mensagens de erro anunciadas e testes automáticos com axe no pipeline.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:220, cls:'blue', html:B('Semântica','')+UL('button, a, label, nav','títulos em ordem','ARIA só quando o HTML não basta')},
+    {at:4.5, x:340,y:92,w:280,h:220, cls:'green', html:B('Teclado e foco','')+UL('tudo navegável por Tab','foco visível sempre','modal prende e devolve o foco')},
+    {at:8.5, x:644,y:92,w:280,h:220, cls:'amber', html:B('Percepção','')+UL('contraste WCAG AA','não depender só de cor','texto alternativo útil')},
+    {at:12.5, x:36,y:332,w:888,h:130, cls:'ext', html:B('No processo','axe nos testes automáticos · teste manual com leitor de tela (NVDA, VoiceOver) nas telas críticas · critério de pronto inclui acessibilidade')},
+  ]}},
+
+{ id:'testes', ch:'Qualidade', title:'Testes de front',
+  say:'Teste o que o usuário vê e faz, não detalhes de implementação. Com Testing Library, você encontra elementos por papel e rótulo, como um leitor de tela faria, e simula digitação e cliques. Com Playwright, os fluxos críticos rodam num navegador real, com a API simulada ou de teste, e o axe verifica acessibilidade no mesmo teste. Poucos testes de ponta a ponta, muitos de componente.',
+  v:S('src/pre-analise/FormPreAnalise.test.tsx','teste.tsx')},
+
+{ id:'seguranca', ch:'Qualidade', title:'Segurança no navegador',
+  say:'React e Angular escapam o conteúdo por padrão, o que já evita a maioria dos XSS. O risco aparece quando se desliga essa proteção, com dangerouslySetInnerHTML ou bypassSecurityTrust. Configure uma Content Security Policy, não guarde tokens no localStorage, valide e sanitize HTML vindo de usuários e mantenha as dependências atualizadas. Nada no front é secreto: chave de API no bundle é chave pública.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:170, cls:'amber', html:B('XSS','')+UL('evite dangerouslySetInnerHTML e bypassSecurityTrust','se precisar de HTML do usuário: sanitize (DOMPurify)','CSP restringe scripts de terceiros')},
+    {at:4.5, x:494,y:92,w:430,h:170, cls:'blue', html:B('Tokens e segredos','')+UL('nada secreto no bundle','sem token no localStorage','BFF com cookie HttpOnly')},
+    {at:9, x:36,y:282,w:888,h:180, cls:'ext', html:B('Também','')+UL('dependências: npm audit, Dependabot, poucas bibliotecas','headers de segurança no servidor que entrega o front','validação no front é conveniência; a regra mora no backend')},
+  ]}},
+
+{ id:'entrega', ch:'Entrega', title:'Build, configuração e deploy',
+  say:'O build com Vite ou o Angular CLI gera arquivos estáticos com hash no nome, que podem ficar em cache por muito tempo; o index.html não. Variáveis de ambiente entram no build, então para usar a mesma imagem em vários ambientes, carregue a configuração em tempo de execução. Hospede em CDN, como o Azure Static Web Apps, ou num contêiner nginx no AKS. E registre erros e Web Vitals de usuários reais.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:220, cls:'blue', html:B('Build','')+UL('Vite ou Angular CLI','assets com hash: cache longo','index.html: sem cache','source maps privados')},
+    {at:4.5, x:340,y:92,w:280,h:220, cls:'green', html:B('Configuração','')+UL('VITE_*: fixado no build','config.json em runtime','mesma imagem, vários ambientes')},
+    {at:8.5, x:644,y:92,w:280,h:220, cls:'amber', html:B('Hospedagem','')+UL('Azure Static Web Apps / CDN','ou nginx no AKS','fallback de rota para SPA')},
+    {at:12.5, x:36,y:332,w:888,h:130, cls:'ext', html:B('Observar em produção','erros de JavaScript com contexto (Application Insights JS ou Sentry) · Web Vitals de usuários reais · correlação com o traceId do backend')},
+  ]}},
+
+{ id:'check', ch:'Fechamento', title:'Checklist do front',
+  say:'Antes de dar como pronto, confira esta lista. Ela vale para React e para Angular. O checklist completo, com atalho para cada cena, está abaixo do vídeo.',
+  v:{type:'check', items:[
+    'Renderização escolhida por tipo de página',
+    'Estado do servidor numa biblioteca de dados',
+    'Filtros e páginas na URL',
+    'Formulários com schema e erros acessíveis',
+    'Tipos gerados do OpenAPI',
+    'Autenticação com PKCE, sem token no localStorage',
+    'Organização por funcionalidade',
+    'Core Web Vitals medidos',
+    'Navegável só com teclado',
+    'Testes de componente e axe no CI',
+    'Fluxos críticos no Playwright',
+    'Erros de produção monitorados',
+  ]}},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a comparação entre React, Angular e os frameworks mais usados, os links para o que já foi coberto nas outras trilhas, a leitura recomendada, o checklist e as perguntas mais comuns de quem vem do backend.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['OpenAPI e Minimal API organizada', 'cs', 'minimal', 'O contrato que gera os tipos do front'],
+  ['Erros com ProblemDetails', 'cs', 'erros', 'O formato de erro que o front trata'],
+  ['Segurança de API', 'cs', 'seguranca', 'Autenticação, autorização e dados pessoais'],
+  ['TypeScript estrito', 'node', 'tipos', 'Uniões discriminadas e tipos marcados'],
+  ['Validação com Zod', 'node', 'zod', 'O mesmo schema no front e no back'],
+  ['Streaming com SSE', 'ia', 'streaming', 'Mostrar texto enquanto é gerado'],
+  ['Pipeline com aprovação', 'tf', 'pipeline', 'Entrega contínua com Azure DevOps'],
+  ['Testes do time', 'tl', 'testes', 'Pirâmide e o que bloqueia o merge'],
+];
+const MATRIZ = [
+  ['React + Vite','SPA','Sistemas internos atrás de login, painéis, backoffice; liberdade de escolher as peças.','SEO forte ou primeira carga crítica em conexões lentas.','npm create vite'],
+  ['Next.js','React com servidor','Sites públicos, SEO, Server Components, rotas e dados no servidor.','Time sem operação de Node ou app 100% interno simples.','npx create-next-app'],
+  ['Angular','Framework completo','Sistemas grandes de negócio, times .NET, convenção e DI prontas.','Projeto pequeno onde a estrutura pesa mais que ajuda.','ng new'],
+  ['Angular SSR','Angular com servidor','Mesmos casos do Angular com páginas públicas e SEO.','App só interno.','ng new --ssr'],
+  ['Vue / Nuxt','Alternativa progressiva','Curva de aprendizado suave, times pequenos.','Empresa já padronizada em React ou Angular.','npm create vue'],
+  ['Blazor','UI em C#','Time só .NET, sistemas internos.','Ecossistema de componentes JS é essencial.','dotnet new blazor'],
+];
+const STUDY = [
+  ['react.dev','Documentação oficial do React','https://react.dev/learn','react-componente'],
+  ['You Might Not Need an Effect','Quando não usar useEffect','https://react.dev/learn/you-might-not-need-an-effect','react-componente'],
+  ['TanStack Query','Estado do servidor em React','https://tanstack.com/query/latest','react-dados'],
+  ['React Hook Form','Formulários performáticos','https://react-hook-form.com/','react-form'],
+  ['Next.js','Framework React com servidor','https://nextjs.org/docs','renderizacao'],
+  ['angular.dev','Documentação oficial do Angular','https://angular.dev/','angular-componente'],
+  ['Signals no Angular','Guia oficial','https://angular.dev/guide/signals','angular-componente'],
+  ['RxJS','Programação reativa','https://rxjs.dev/','angular-servico'],
+  ['Vite','Build e servidor de desenvolvimento','https://vite.dev/','entrega'],
+  ['Testing Library','Testes centrados no usuário','https://testing-library.com/','testes'],
+  ['Playwright','Testes de ponta a ponta','https://playwright.dev/','testes'],
+  ['web.dev: Core Web Vitals','LCP, INP e CLS','https://web.dev/articles/vitals','desempenho'],
+  ['WCAG (W3C)','Diretrizes de acessibilidade','https://www.w3.org/WAI/standards-guidelines/wcag/','a11y'],
+  ['MDN: Content Security Policy','Como configurar CSP','https://developer.mozilla.org/docs/Web/HTTP/CSP','seguranca'],
+  ['OAuth 2.0 para apps no navegador (IETF)','Boas práticas atuais para SPAs','https://datatracker.ietf.org/doc/draft-ietf-oauth-browser-based-apps/','backend'],
+  ['Storybook','Vitrine de componentes','https://storybook.js.org/','estrutura'],
+];
+const CHECK = [
+  ['Base','Escolher CSR, SSR ou SSG pelo tipo de página','renderizacao'],
+  ['Base','Justificar React ou Angular para o contexto','escolha'],
+  ['React','Componentes sem useEffect desnecessário','react-componente'],
+  ['React','Dados do servidor com TanStack Query','react-dados'],
+  ['React','Formulário com schema e erros acessíveis','react-form'],
+  ['Angular','Componentes com signals e controle de fluxo novo','angular-componente'],
+  ['Angular','Serviços, interceptors e toSignal','angular-servico'],
+  ['Arquitetura','Estado no lugar certo (servidor, URL, local, global)','estado'],
+  ['Arquitetura','Organização por funcionalidade e design system','estrutura'],
+  ['Integração','Tipos do OpenAPI e autenticação com PKCE/BFF','backend'],
+  ['Qualidade','Core Web Vitals medidos e com orçamento','desempenho'],
+  ['Qualidade','Acessibilidade por teclado e com axe','a11y'],
+  ['Qualidade','Testes de componente e Playwright','testes'],
+  ['Qualidade','Sem XSS por HTML cru e com CSP','seguranca'],
+  ['Entrega','Configuração em runtime e monitoramento de erros','entrega'],
+];
+const FAQ = [
+ ['Escolha','Venho de C#. React ou Angular é mais fácil?',`<p>Angular costuma ser mais familiar: classes, injeção de dependência, TypeScript forte e estrutura definida. React pede entender bem funções, imutabilidade e hooks. Os dois são aprendíveis em semanas para quem já programa bem.</p>`],
+ ['Escolha','Preciso de Next.js?',`<p>Se a aplicação é interna e atrás de login, uma SPA com Vite resolve com menos operação. Next.js compensa quando há páginas públicas, SEO ou quando você quer buscar dados no servidor com Server Components.</p>`],
+ ['Escolha','E o Blazor?',`<p>Faz sentido para sistemas internos em times só .NET, compartilhando modelos com o backend. Para produtos públicos ou times com experiência em JavaScript, React e Angular têm ecossistema muito maior.</p>`],
+ ['Estado','Preciso de Redux?',`<p>Na maioria dos casos, não. Com o estado do servidor numa biblioteca de dados e filtros na URL, sobra pouco estado global, que cabe em contexto, Zustand ou signals. Redux Toolkit ou NgRx valem em aplicações com muito estado de cliente compartilhado e regras complexas.</p>`],
+ ['Estado','Por que meu componente renderiza tantas vezes?',`<p>Em React, toda mudança de estado ou de props renderiza o componente e seus filhos. Normalmente isso é barato. Otimize só quando medir lentidão: separe componentes, evite criar objetos novos a cada render e, se preciso, use memo. No Angular, OnPush e signals limitam o que é verificado.</p>`],
+ ['Integração','Onde guardar o token de acesso?',`<p>O mais seguro é não guardar no navegador: um BFF faz o login, guarda os tokens no servidor e o navegador usa um cookie seguro, HttpOnly e SameSite. Se não houver BFF, mantenha o token só em memória e use bibliotecas oficiais como o MSAL.</p>`],
+ ['Integração','Como lidar com CORS?',`<p>CORS é configurado no backend, liberando apenas as origens conhecidas do front. Com o front e a API no mesmo domínio, atrás do mesmo ingress ou de um BFF, o problema desaparece.</p>`],
+ ['Qualidade','Quanto testar no front?',`<p>Testes de componente para formulários, regras de exibição e estados de erro; Playwright para os poucos fluxos que não podem quebrar; e verificação de acessibilidade automática. Testes de snapshot grandes costumam gerar ruído e pouco valor.</p>`],
+ ['Qualidade','Acessibilidade é obrigatória?',`<p>Além de ser a coisa certa, há exigências legais no Brasil, como a Lei Brasileira de Inclusão, especialmente para serviços ao público. Na prática, quanto mais cedo entra no design system, mais barato fica.</p>`],
+ ['Entrega','Como usar a mesma build em homologação e produção?',`<p>Não dependa de variáveis embutidas no build para o que muda por ambiente. Sirva um config.json por ambiente e carregue-o antes de iniciar a aplicação.</p>`],
+];
+const CMDS = [
+  ['npm create vite@latest portal -- --template react-ts','Nova SPA React com TypeScript'],
+  ['npx create-next-app@latest','Novo projeto Next.js'],
+  ['npm install -g @angular/cli && ng new portal','Novo projeto Angular'],
+  ['ng generate component propostas/cartao-proposta','Gerar componente Angular'],
+  ['npx openapi-typescript <url>/openapi/v1.json -o src/api/schema.d.ts','Tipos a partir do OpenAPI'],
+  ['npx vitest','Testes de unidade e componente'],
+  ['npx playwright test --ui','Testes de ponta a ponta com interface'],
+  ['npx lighthouse https://localhost:5173 --view','Relatório de desempenho e acessibilidade'],
+  ['npx vite-bundle-visualizer','O que está pesando no bundle'],
+  ['npm audit --omit=dev','Vulnerabilidades nas dependências'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED const let function export type interface else try catch finally throw extends satisfies switch case break typeof instanceof null undefined void readonly never unknown string number boolean CMD UPDATE SET DELETE INSERT INTO VALUES BEGIN COMMIT ROLLBACK JOIN LEFT INNER EXPLAIN ANALYZE TRANSACTION ISOLATION LEVEL'.split(' '));
+function findComment(line, lang){
+  let q = null;
+  const slash = lang === 'cs' || lang === 'ts';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === q) q = null; continue; }
+    if (ch === '"' || (lang === 'ts' && (ch === "'" || ch === '`'))) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'txt') continue;
+    if (!slash && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if (slash && ch === '/' && line[i+1] === '/') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = lang === 'ts'
+    ? /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`[^`]*`?)|(\b\d[\d_]*(?:\.\d+)?n?\b)|([A-Za-z_$][\w$]*)/g
+    : /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : ((lang === 'cs' || lang === 'py' || lang === 'ts') && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>bash · ~/agx-portal</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', ts:'TypeScript', py:'Python', sql:'SQL', txt:'Texto', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>
+      <button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button></div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+renderList('studyList', 'progStudy', 'front-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', 'front-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+
+$('matrizBody').innerHTML = MATRIZ.map(r => `<tr><td>${esc(r[0])}</td><td><span class="ent">${esc(r[1])}</span></td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td><code>${esc(r[4])}</code></td></tr>`).join('');
+
+
+/* já visto em outras trilhas */
+$('jaVisto').innerHTML = JA_VISTO.map(([tema, t, cena, oque]) => {
+  const [nome, url] = TR[t];
+  return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${url}#${cena}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${url}#${cena}" target="_blank" rel="noopener">abrir cena ↗</a></div>`;
+}).join('');
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

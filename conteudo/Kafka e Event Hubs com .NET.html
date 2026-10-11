@@ -1,0 +1,1481 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kafka e Event Hubs com .NET</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:392px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Squad .NET · formação da dupla de Kafka</span>
+    <h1>Kafka e Event Hubs na prática: a pré-análise assíncrona</h1>
+    <p class="lead">Roteiro em vídeo para construir e operar comunicação assíncrona em .NET com o protocolo do Kafka: Kafka local em Docker no desenvolvimento e Azure Event Hubs na nuvem, mudando só a configuração de conexão. Abaixo do vídeo estão a trilha de estudo, o checklist técnico e as perguntas que o cliente costuma fazer.</p>
+    <div class="meta">
+      <span class="pill">.NET 10 · Confluent.Kafka</span><span class="pill">Apache Kafka em Docker</span><span class="pill">Event Hubs Standard</span><span class="pill">Entra ID / OAuth</span><span class="pill">Terraform</span>
+    </div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Parte 1</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Documentação oficial do Apache Kafka, da Confluent e da Microsoft, na ordem sugerida. A marcação fica salva só neste navegador.</p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Parte 3</span><h2>Checklist de experiência técnica</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Cada item precisa ser feito no projeto da Parte 2. O botão ao lado leva à cena do vídeo que mostra como.</p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas que o cliente vai fazer</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" placeholder="Buscar: lag, ordem, duplicada, throttling…" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2>Comandos de bolso</h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer>Material de estudo da AGX. Nomes de recursos, dados de proposta e saídas de terminal são exemplos fictícios; confira versões, limites e recursos por plano na documentação oficial antes de aplicar em produção.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+// ===================== CENAS =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const TITLE = {k:'Squad .NET · AGX', h:'Kafka e Event Hubs, do evento ao reprocessamento',
+  p:'Uma API e dois consumidores em .NET trocando eventos de pré-análise, com Kafka local no desenvolvimento e Azure Event Hubs na nuvem, mudando só a configuração.',
+  chips:['Confluent.Kafka','Outbox','Retry + DLQ','Entra ID / OAuth','Terraform']};
+const OUTRO = {k:'Fim do roteiro', h:'Agora, faça no projeto',
+  p:'Trilha de estudo, checklist da Parte 3 com atalhos para cada cena e as perguntas do cliente estão logo abaixo do vídeo.',
+  chips:['docker compose up','kafka-consumer-groups.sh','terraform apply','terraform destroy']};
+
+const SCENES = [
+/* ---------- VISÃO GERAL ---------- */
+{ id:'intro', ch:'Visão geral', title:'Comunicação assíncrona na prática',
+  say:'Este vídeo é o roteiro da dupla de Kafka da squad .NET. Vamos construir um fluxo assíncrono de pré-análise de proposta: uma API que responde na hora e dois consumidores que processam depois. O mesmo código roda com o Kafka local, em Docker, e com o Azure Event Hubs, porque os dois falam o protocolo do Kafka.',
+  v:{type:'title'} },
+
+{ id:'arq', ch:'Visão geral', title:'O fluxo da pré-análise',
+  say:'A API recebe a pré-análise, grava no banco junto com uma linha de outbox e responde 202 sem esperar. Um relay lê o outbox e publica o evento no tópico, usando o ID da proposta como chave. O processador, num grupo de consumidores, avalia e grava o resultado. A auditoria, em outro grupo, lê os mesmos eventos de forma independente. O que falha de vez vai para o tópico de dead letter.',
+  v:{type:'boxes', items:[
+    {at:.5, x:24,y:100,w:150,h:62, html:B('Cliente','POST /pre-analises')},
+    {at:1.5, x:204,y:100,w:170,h:62, cls:'blue', html:B('API .NET','responde 202 Accepted')},
+    {at:3, x:204,y:200,w:170,h:96, cls:'amber', html:B('SQL Server','PreAnalises + Outbox','mesma transação','am')},
+    {at:4.5, x:204,y:330,w:170,h:62, cls:'blue', html:B('Outbox relay','BackgroundService')},
+    {at:6, x:404,y:84,w:236,h:330, cls:'region', html:'<span class="rl">Kafka local ou Event Hubs</span>'},
+    {at:6.5, x:420,y:120,w:204,h:150, cls:'ns', html:'<span class="rl">pre-analise.recebida · 6 partições</span><div class="pods" style="margin-top:10px">'+[0,1,2,3,4,5].map(i=>`<span class="pod">P${i}</span>`).join('')+'</div><small style="font:12px var(--f-mono);color:var(--st-dim);margin-top:8px">chave = PropostaId</small>'},
+    {at:16, x:420,y:300,w:204,h:96, cls:'ns', html:'<span class="rl">pre-analise.recebida.dlq</span><small style="font:12px var(--f-mono);color:var(--st-dim);margin-top:6px">falhou após as tentativas</small>'},
+    {at:9, x:676,y:84,w:258,h:136, cls:'green', html:B('Processador','grupo processador-pre-analise')+'<div class="pods"><span class="pod">instância A</span><span class="pod">instância B</span></div>'},
+    {at:11, x:676,y:244,w:258,h:96, html:B('Auditoria','grupo auditoria','lê tudo de novo','am')},
+    {at:13, x:676,y:364,w:258,h:62, cls:'amber', html:B('SQL Server','ResultadosPreAnalise')},
+    {at:18, x:24,y:440,w:910,h:70, cls:'ext', html:B('Troca de ambiente','Development → localhost:9092 (PLAINTEXT) · Azure → evhns-agx-prop.servicebus.windows.net:9093 (SASL_SSL + OAuth)')},
+  ], lines:[
+    {at:1.5, d:'M174 131 L 204 131', cls:'flow'},
+    {at:3, d:'M289 162 L 289 200', cls:'amber'},
+    {at:4.5, d:'M289 296 L 289 330', cls:'amber'},
+    {at:6.5, d:'M374 361 C 400 361, 395 200, 420 195', cls:'flow'},
+    {at:9, d:'M624 170 C 650 170, 650 150, 676 150', cls:'flow'},
+    {at:11, d:'M624 220 C 650 220, 650 292, 676 292', cls:'flow'},
+    {at:13, d:'M934 150 C 954 150, 954 395, 934 395', cls:'amber'},
+    {at:16, d:'M676 190 C 640 230, 650 330, 624 340', cls:'dim'},
+  ]}},
+
+/* ---------- CONCEITOS ---------- */
+{ id:'conceitos', ch:'Conceitos (Parte 1)', title:'O vocabulário do Kafka',
+  say:'Um evento é um fato que aconteceu, com chave, valor e cabeçalhos. Ele é gravado num tópico, dividido em partições. Cada evento ganha um offset, a posição dentro da partição. O broker guarda os dados. O produtor escreve; o consumidor lê. E o grupo de consumidores divide as partições entre suas instâncias: cada partição é lida por uma só instância do grupo.',
+  v:{type:'boxes', defs:[
+    ['Evento','chave, valor, cabeçalhos e horário',1],
+    ['Tópico','log de eventos de um mesmo assunto',3],
+    ['Partição','fatia ordenada do tópico; unidade de paralelismo',5],
+    ['Offset','posição do evento dentro da partição',7.5],
+    ['Broker','servidor que guarda e entrega os dados',10],
+    ['Produtor','escreve eventos no tópico',12],
+    ['Consumidor','lê eventos e confirma o offset',14],
+    ['Grupo','divide as partições entre instâncias',16.5],
+  ], items:[
+    {at:10, x:452,y:84,w:478,h:436, cls:'region', html:'<span class="rl">broker</span>'},
+    {at:3, x:470,y:116,w:440,h:206, cls:'ns', html:'<span class="rl">tópico pre-analise.recebida</span>'},
+    {at:5, x:486,y:146,w:410,h:44, html:'<small>P0 &nbsp;│ 0 │ 1 │ 2 │ 3 │ 4 │ ▸</small>'},
+    {at:5.3, x:486,y:200,w:410,h:44, html:'<small>P1 &nbsp;│ 0 │ 1 │ 2 │ ▸</small>'},
+    {at:5.6, x:486,y:254,w:410,h:44, html:'<small>P2 &nbsp;│ 0 │ 1 │ 2 │ 3 │ ▸</small>'},
+    {at:7.5, x:760,y:146,w:136,h:44, cls:'amber', html:B('offset 4','próximo a ler')},
+    {at:12, x:470,y:340,w:200,h:62, cls:'blue', html:B('Produtor','API / outbox relay')},
+    {at:14, x:690,y:340,w:220,h:62, cls:'green', html:B('Consumidor','instância A')},
+    {at:16.5, x:470,y:422,w:440,h:80, cls:'green', html:B('Grupo processador-pre-analise','A lê P0 e P1 · B lê P2 · nenhuma partição é lida por duas instâncias do grupo')},
+  ], lines:[]}},
+
+{ id:'eh', ch:'Conceitos (Parte 1)', title:'Kafka e Event Hubs lado a lado',
+  say:'No Event Hubs, o namespace faz o papel do cluster Kafka e cada event hub é um tópico. Partições, offsets e grupos de consumidores funcionam do mesmo jeito para o cliente Kafka. O endpoint fica na porta 9093, com TLS e autenticação. No plano Standard, o menor com Kafka, não há transações do Kafka e a retenção vai até sete dias. Por isso o projeto usa o padrão outbox.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:84,w:430,h:290, cls:'blue', html:B('Apache Kafka','')+'<ul class="ul"><li>Cluster de brokers</li><li>Tópico</li><li>Partição, offset</li><li>Grupo de consumidores</li><li>localhost:9092 em Docker</li><li>Você opera os brokers</li></ul>'},
+    {at:3.5, x:494,y:84,w:430,h:290, cls:'amber', html:B('Azure Event Hubs','')+'<ul class="ul"><li>Namespace (evhns-agx-prop)</li><li>Event hub</li><li>Partição, offset (iguais para o cliente)</li><li>Grupo criado pelo próprio cliente Kafka</li><li>&lt;namespace&gt;.servicebus.windows.net:9093</li><li>O Azure opera; você escolhe a capacidade</li></ul>'},
+    {at:9, x:36,y:396,w:284,h:118, cls:'green', html:B('Standard','menor plano com Kafka · até 7 dias de retenção · sem transações','protótipo AGX','gr')},
+    {at:10.5, x:338,y:396,w:284,h:118, html:B('Premium','recursos isolados · retenção maior · mais partições')},
+    {at:12, x:640,y:396,w:284,h:118, html:B('Dedicated','cluster exclusivo, alta escala','grande porte','am')},
+  ]}},
+
+/* ---------- LOCAL ---------- */
+{ id:'compose', ch:'Ambiente local', title:'Kafka e SQL Server em Docker',
+  say:'No desenvolvimento, o docker compose sobe a imagem oficial do Apache Kafka em modo KRaft, sem ZooKeeper, num único nó, e o SQL Server. A criação automática de tópicos fica desligada: cada tópico é criado de propósito, com o número de partições decidido. A senha do banco vem de um arquivo env fora do Git.',
+  v:{type:'code', file:'docker-compose.yml', lang:'yaml', code:
+`services:
+  kafka:
+    image: apache/kafka:4.1.0                 # imagem oficial, modo KRaft
+    container_name: agx-kafka
+    ports: ["9092:9092"]
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"  # tópicos criados de propósito
+
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: agx-sql
+    ports: ["1433:1433"]
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: \${SQL_SA_PASSWORD}     # arquivo .env, fora do Git`}},
+
+{ id:'topicos', ch:'Ambiente local', title:'Criar os tópicos',
+  say:'Crie os tópicos com o script do próprio Kafka. O tópico principal tem seis partições: é o máximo de instâncias do processador trabalhando em paralelo, com folga para crescer. Diminuir partições não é possível, e aumentar muda para qual partição cada chave vai. Por isso a escolha fica registrada num ADR no repositório.',
+  v:{type:'term', lines:[
+    'c|docker compose up -d',
+    'o| ✔ Container agx-kafka  Started',
+    'o| ✔ Container agx-sql    Started',
+    'c|docker exec -it agx-kafka bash',
+    'c|cd /opt/kafka/bin',
+    'c|./kafka-topics.sh --bootstrap-server localhost:9092 --create \\',
+    'k|    --topic pre-analise.recebida --partitions 6 --replication-factor 1',
+    'ok|Created topic pre-analise.recebida.',
+    'c|./kafka-topics.sh --bootstrap-server localhost:9092 --create \\',
+    'k|    --topic pre-analise.recebida.dlq --partitions 1 --replication-factor 1',
+    'ok|Created topic pre-analise.recebida.dlq.',
+    'c|./kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic pre-analise.recebida',
+    'o|Topic: pre-analise.recebida  PartitionCount: 6  ReplicationFactor: 1',
+    'o|  Partition: 0  Leader: 1  Replicas: 1  Isr: 1',
+    'o|  Partition: 1  Leader: 1  Replicas: 1  Isr: 1',
+    'o|  …',
+  ]}},
+
+/* ---------- PRODUZIR ---------- */
+{ id:'contrato', ch:'Produzir', title:'Contrato do evento e interface própria',
+  say:'O contrato do evento tem um campo de versão. Evoluir sem quebrar significa só acrescentar campos opcionais: o consumidor antigo ignora o que não conhece, e o novo trata a ausência. O acesso à mensageria fica atrás de interfaces da própria aplicação; o cliente da Confluent aparece apenas no projeto de infraestrutura.',
+  v:{type:'code', file:'src/Agx.PreAnalise.Contratos/PreAnaliseRecebida.cs', lang:'cs', code:
+`// Contrato publicado: só se acrescentam campos opcionais
+public sealed record PreAnaliseRecebida(
+    int Versao,                    // 1 = original · 2 = acrescentou Canal
+    Guid EventoId,                 // usado para idempotência no consumidor
+    Guid PropostaId,               // também é a chave da mensagem
+    string CpfMascarado,           // dados fictícios no protótipo
+    decimal ValorSolicitado,
+    DateTimeOffset RecebidaEm,
+    string? Canal = null);         // v2: opcional, v1 continua válido
+
+// Abstração da mensageria (Definição 01): nada de Confluent.Kafka fora da infra
+public sealed record MensagemSaida(
+    string Topico, string Chave, string Tipo, int Versao,
+    byte[] Corpo, IReadOnlyDictionary<string, string> Cabecalhos);
+
+public interface IEventPublisher
+{
+    Task PublicarAsync(MensagemSaida mensagem, CancellationToken ct);
+}
+
+public interface IEventHandler<TEvento>
+{
+    Task TratarAsync(TEvento evento, ContextoEvento contexto, CancellationToken ct);
+}`}},
+
+{ id:'produtor', ch:'Produzir', title:'Produtor confiável',
+  say:'O produtor espera a confirmação de todas as réplicas, com acks igual a all, e liga a idempotência: se a rede falhar no meio do envio, a nova tentativa não duplica a mensagem. O tempo limite de entrega faz a falha voltar como erro em vez de travar. A chave é o ID da proposta, e a correlação vai num cabeçalho.',
+  v:{type:'code', file:'src/Agx.PreAnalise.Infra/Mensageria/KafkaEventPublisher.cs', lang:'cs', code:
+`public sealed class KafkaEventPublisher : IEventPublisher, IDisposable
+{
+    private readonly IProducer<string, byte[]> _producer;
+
+    public KafkaEventPublisher(KafkaClientFactory fabrica)
+    {
+        var cfg = fabrica.ProducerConfig();      // Kafka local ou Event Hubs
+        cfg.Acks = Acks.All;                     // espera a confirmação do envio
+        cfg.EnableIdempotence = true;            // retry de envio sem duplicar
+        cfg.MessageTimeoutMs = 30_000;           // desiste com erro, não trava
+        _producer = fabrica.BuildProducer(cfg);
+    }
+
+    public async Task PublicarAsync(MensagemSaida m, CancellationToken ct)
+    {
+        var msg = new Message<string, byte[]> { Key = m.Chave, Value = m.Corpo, Headers = new() };
+        msg.Headers.Add("tipo", Encoding.UTF8.GetBytes(m.Tipo));
+        msg.Headers.Add("versao", Encoding.UTF8.GetBytes(m.Versao.ToString()));
+        foreach (var (k, v) in m.Cabecalhos) msg.Headers.Add(k, Encoding.UTF8.GetBytes(v));
+        try
+        {
+            await _producer.ProduceAsync(m.Topico, msg, ct);
+        }
+        catch (ProduceException<string, byte[]> ex)
+        {
+            throw new PublicacaoFalhouException(m.Topico, ex);  // tipo próprio, sem vazar o Kafka
+        }
+    }
+
+    public void Dispose() { _producer.Flush(TimeSpan.FromSeconds(10)); _producer.Dispose(); }
+}`}},
+
+{ id:'outbox', ch:'Produzir', title:'API com outbox',
+  say:'Gravar no banco e publicar no Kafka são duas operações; se uma falhar, a outra não pode ficar sozinha. Com o outbox, a API grava a pré-análise e a mensagem a publicar na mesma transação do banco, e responde 202. Se o Kafka estiver fora, nada se perde: o evento espera no outbox.',
+  v:{type:'code', file:'src/Agx.PreAnalise.Api/Program.cs', lang:'cs', code:
+`app.MapPost("/pre-analises", async (NovaPreAnalise req, AppDb db, HttpContext http) =>
+{
+    var correlationId = http.Request.Headers["X-Correlation-Id"].FirstOrDefault()
+                        ?? Guid.NewGuid().ToString();
+    var preAnalise = PreAnalise.Criar(req);                    // dados fictícios
+    var evento = preAnalise.ParaEvento(versao: 2);
+
+    db.PreAnalises.Add(preAnalise);
+    db.Outbox.Add(OutboxMessage.Criar(
+        topico: "pre-analise.recebida",
+        chave: preAnalise.PropostaId.ToString(),               // mesma partição por proposta
+        evento, correlationId));
+    await db.SaveChangesAsync();                               // uma transação só
+
+    return Results.Accepted($"/pre-analises/{preAnalise.PropostaId}",
+        new { preAnalise.PropostaId, status = "Recebida" });  // não espera o processamento
+});`}},
+
+{ id:'relay', ch:'Produzir', title:'O relay do outbox',
+  say:'Um serviço em segundo plano lê o outbox em ordem e publica. Se a publicação falhar porque o Kafka está indisponível, ele registra o aviso, para o lote e tenta de novo no próximo ciclo. A API continua aceitando requisições normalmente. Como o relay pode publicar de novo uma mensagem já enviada, o consumidor precisa ser idempotente.',
+  v:{type:'code', file:'src/Agx.PreAnalise.Api/Outbox/OutboxRelay.cs', lang:'cs', code:
+`public sealed class OutboxRelay(IServiceScopeFactory scopes, IEventPublisher publisher,
+    ILogger<OutboxRelay> log) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stop)
+    {
+        while (!stop.IsCancellationRequested)
+        {
+            using var scope = scopes.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+            var pendentes = await db.Outbox.Where(o => o.EnviadoEm == null)
+                .OrderBy(o => o.Id).Take(100).ToListAsync(stop);
+
+            foreach (var m in pendentes)
+            {
+                try
+                {
+                    await publisher.PublicarAsync(m.ParaMensagem(), stop);
+                    m.EnviadoEm = DateTimeOffset.UtcNow;
+                }
+                catch (PublicacaoFalhouException ex)
+                {
+                    log.LogWarning(ex, "Mensageria indisponível; outbox {Id} segue pendente", m.Id);
+                    break;                                   // tenta de novo no próximo ciclo
+                }
+            }
+            await db.SaveChangesAsync(stop);
+            if (pendentes.Count == 0) await Task.Delay(TimeSpan.FromSeconds(1), stop);
+        }
+    }
+}`}},
+
+/* ---------- CONSUMIR ---------- */
+{ id:'worker', ch:'Consumir', title:'Consumidor como Worker Service',
+  say:'O processador é um serviço de trabalho do .NET, separado da API. O commit automático fica desligado: o offset só avança depois que o processamento termina. No desligamento, o evento em andamento é concluído, e o Close avisa o grupo para redistribuir as partições na hora, em vez de esperar o tempo de sessão expirar.',
+  v:{type:'code', file:'src/Agx.PreAnalise.Processador/ProcessadorWorker.cs', lang:'cs', code:
+`public sealed class ProcessadorWorker(KafkaClientFactory fabrica, Processamento processamento,
+    ILogger<ProcessadorWorker> log) : BackgroundService
+{
+    protected override Task ExecuteAsync(CancellationToken stop) =>
+        Task.Run(() => LoopAsync(stop), stop);              // Consume é bloqueante
+
+    private async Task LoopAsync(CancellationToken stop)
+    {
+        var cfg = fabrica.ConsumerConfig(groupId: "processador-pre-analise");
+        cfg.EnableAutoCommit = false;                       // commit manual
+        cfg.AutoOffsetReset = AutoOffsetReset.Earliest;
+
+        using var consumer = fabrica.BuildConsumer(cfg, log);  // loga atribuição e revogação
+        consumer.Subscribe("pre-analise.recebida");
+        try
+        {
+            while (!stop.IsCancellationRequested)
+            {
+                var cr = consumer.Consume(stop);
+                using var _ = log.BeginScope(Contexto.De(cr));   // CorrelationId, PropostaId, partição
+                await processamento.ExecutarAsync(cr, CancellationToken.None); // termina o que começou
+                consumer.Commit(cr);                        // só agora o offset avança
+            }
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            consumer.Close();                               // sai do grupo e libera as partições
+        }
+    }
+}`}},
+
+{ id:'idem', ch:'Consumir', title:'Idempotência, retry e dead letter',
+  say:'A entrega é de pelo menos uma vez, então o mesmo evento pode chegar duas vezes. O handler consulta a tabela de eventos processados, e uma chave primária no EventoId barra duplicatas concorrentes. Falhas temporárias são repetidas com espera crescente. Se continuar falhando, o evento vai para o tópico de dead letter, com o erro nos cabeçalhos, e o fluxo segue.',
+  v:{type:'code', file:'src/Agx.PreAnalise.Processador/Processamento.cs', lang:'cs', code:
+`public async Task ExecutarAsync(ConsumeResult<string, byte[]> cr, CancellationToken ct)
+{
+    for (var tentativa = 1; ; tentativa++)
+    {
+        try { await TratarAsync(Desserializar(cr), ct); return; }
+        catch (Exception ex) when (EhTemporaria(ex) && tentativa < 5)
+        {
+            var espera = TimeSpan.FromSeconds(Math.Pow(2, tentativa)) + Jitter(); // 2, 4, 8, 16 s
+            log.LogWarning(ex, "Falha temporária na tentativa {Tentativa}; nova em {Espera}", tentativa, espera);
+            await Task.Delay(espera, ct);
+        }
+        catch (Exception ex)
+        {
+            await publisher.PublicarAsync(MensagemSaida.ParaDlq(cr, "pre-analise.recebida.dlq", ex, tentativa), ct);
+            log.LogError(ex, "Evento enviado para a DLQ após {Tentativa} tentativas", tentativa);
+            return;                                         // o offset será commitado
+        }
+    }
+}
+
+private async Task TratarAsync(PreAnaliseRecebida e, CancellationToken ct)
+{
+    if (await db.EventosProcessados.AnyAsync(x => x.EventoId == e.EventoId, ct))
+        return;                                             // já processado: não duplica
+    db.Resultados.Add(MotorPreAnalise.Avaliar(e));          // Canal == null em eventos v1
+    db.EventosProcessados.Add(new EventoProcessado(e.EventoId, "processador-pre-analise"));
+    await db.SaveChangesAsync(ct);                          // PK em EventoId barra corrida
+}`}},
+
+{ id:'ponta', ch:'Consumir', title:'Do POST ao resultado',
+  say:'Com tudo rodando localmente, uma chamada à API volta em milissegundos com 202. Nos logs dá para seguir a mesma proposta: o relay publica na partição definida pela chave, o processador grava o resultado e a auditoria registra o mesmo evento no seu próprio grupo. O CorrelationId é o mesmo em todas as linhas.',
+  v:{type:'term', lines:[
+    'c|dotnet run --project src/Agx.PreAnalise.Api &',
+    'c|dotnet run --project src/Agx.PreAnalise.Processador &',
+    'c|dotnet run --project src/Agx.PreAnalise.Auditoria &',
+    'c|curl -s -X POST localhost:5080/pre-analises -H "Content-Type: application/json" \\',
+    'k|    -H "X-Correlation-Id: demo-001" -d @exemplos/pre-analise-ficticia.json',
+    'ok|{"propostaId":"7f3c2d0e-…","status":"Recebida"}   (202 em 18 ms)',
+    'o|[api]         CorrelationId=demo-001 outbox 1 publicado · partição 4 · offset 0',
+    'o|[processador] CorrelationId=demo-001 PropostaId=7f3c… avaliada: Aprovada · commit P4@1',
+    'o|[auditoria]   CorrelationId=demo-001 PropostaId=7f3c… registrada · commit P4@1',
+  ]}},
+
+{ id:'rebalance', ch:'Consumir', title:'Partições, instâncias e grupos',
+  say:'Veja a divisão do trabalho. Com uma instância, ela lê as seis partições. Quando a segunda sobe, o grupo rebalanceia e cada uma fica com três. Quando uma cai, as partições dela voltam para a outra. Enquanto isso, a auditoria, em outro grupo, lê as mesmas partições com seus próprios offsets, sem interferir no processador.',
+  v:{type:'rebalance'} },
+
+/* ---------- OPERAR LOCAL ---------- */
+{ id:'lag', ch:'Operar', title:'Lag: o atraso do consumidor',
+  say:'O lag é a diferença entre o último offset do tópico e o offset confirmado pelo grupo. Com o processador parado, os eventos continuam chegando e o lag cresce. Quando ele volta, consome o acumulado e o lag cai a zero. Lag que só cresce é o principal sinal de que o consumidor não dá conta.',
+  v:{type:'lag'} },
+
+{ id:'offsets', ch:'Operar', title:'Ver o lag e voltar o offset',
+  say:'O script de grupos de consumidores mostra offset atual, final e lag por partição. Para reprocessar eventos antigos, pare as instâncias do grupo e volte o offset para uma data. Teste antes sem o execute, que só mostra o resultado. A idempotência garante que o reprocessamento não duplica resultados.',
+  v:{type:'term', lines:[
+    'c|./kafka-consumer-groups.sh --bootstrap-server localhost:9092 \\',
+    'k|    --describe --group processador-pre-analise',
+    'o|TOPIC                 PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG',
+    'o|pre-analise.recebida  0          418             418             0',
+    'err|pre-analise.recebida  1          377             512             135',
+    'o|pre-analise.recebida  2          402             402             0',
+    'c|# processador parado; agora, reprocessar desde as 9h na auditoria',
+    'c|./kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group auditoria \\',
+    'k|    --topic pre-analise.recebida --reset-offsets --to-datetime 2026-10-08T09:00:00.000 --execute',
+    'o|GROUP      TOPIC                 PARTITION  NEW-OFFSET',
+    'ok|auditoria  pre-analise.recebida  0          301',
+    'ok|auditoria  pre-analise.recebida  1          288',
+  ]}},
+
+{ id:'dlq', ch:'Operar', title:'Reprocessar a dead letter',
+  say:'Quando um evento cai na dead letter, primeiro corrija a causa: aqui, o banco estava em manutenção. Depois, uma ferramenta de linha de comando do próprio projeto lê a DLQ e republica o evento original no tópico principal, com a mesma chave e os mesmos cabeçalhos, mais um cabeçalho indicando o reprocessamento.',
+  v:{type:'term', lines:[
+    'c|dotnet run --project tools/Agx.PreAnalise.Dlq -- listar',
+    'o|OFFSET  PROPOSTA   TENTATIVAS  ERRO',
+    'err|17      7f3c…a91   5           SqlException: Timeout expired (banco em manutenção)',
+    'c|# causa corrigida; republicar',
+    'c|dotnet run --project tools/Agx.PreAnalise.Dlq -- reprocessar --offset 17',
+    'ok|Evento 7f3c…a91 republicado em pre-analise.recebida (chave e cabeçalhos preservados, reprocessado=true)',
+    'o|[processador] CorrelationId=demo-017 PropostaId=7f3c…a91 avaliada: Aprovada · commit P2@403',
+  ]}},
+
+/* ---------- AZURE ---------- */
+{ id:'tf', ch:'Event Hubs no Azure', title:'Namespace e tópicos no Terraform',
+  say:'No Azure, o Terraform cria o namespace no plano Standard com uma unidade de throughput, desliga a autenticação por chave SAS para aceitar só o Entra ID e cria os event hubs, que são os tópicos, com partições e retenção definidas. O estado fica num storage do Azure, como na tarefa de Kubernetes.',
+  v:{type:'code', file:'infra/eventhubs.tf', lang:'hcl', code:
+`terraform {
+  backend "azurerm" {                                  # estado fora da máquina local
+    resource_group_name  = "rg-agx-tfstate"
+    storage_account_name = "stagxtfstate"
+    container_name       = "tfstate"
+    key                  = "mensageria.tfstate"
+    use_azuread_auth     = true
+  }
+}
+
+resource "azurerm_eventhub_namespace" "ns" {
+  name                         = "evhns-agx-prop"
+  resource_group_name          = azurerm_resource_group.rg.name
+  location                     = azurerm_resource_group.rg.location
+  sku                          = "Standard"            # menor plano com Kafka
+  capacity                     = 1                     # 1 TU: ~1 MB/s entrada, 2 MB/s saída
+  auto_inflate_enabled         = false
+  local_authentication_enabled = false                 # sem SAS: só Entra ID
+  minimum_tls_version          = "1.2"
+}
+
+resource "azurerm_eventhub" "pre_analise" {
+  name              = "pre-analise.recebida"
+  namespace_id      = azurerm_eventhub_namespace.ns.id
+  partition_count   = 6                                # ver docs/adr/001-particoes.md
+  message_retention = 7                                # dias; máximo do Standard
+}
+
+resource "azurerm_eventhub" "pre_analise_dlq" {
+  name              = "pre-analise.recebida.dlq"
+  namespace_id      = azurerm_eventhub_namespace.ns.id
+  partition_count   = 1
+  message_retention = 7
+}
+
+resource "azurerm_role_assignment" "envio" {
+  scope                = azurerm_eventhub_namespace.ns.id
+  role_definition_name = "Azure Event Hubs Data Sender"
+  principal_id         = var.principal_servicos            # identidade dos serviços / grupo dev
+}
+
+resource "azurerm_role_assignment" "leitura" {
+  scope                = azurerm_eventhub_namespace.ns.id
+  role_definition_name = "Azure Event Hubs Data Receiver"
+  principal_id         = var.principal_servicos
+}`}},
+
+{ id:'oauth', ch:'Event Hubs no Azure', title:'Conexão por OAuth e configuração recomendada',
+  say:'A fábrica de clientes é o único lugar que sabe onde está a mensageria. Para o Event Hubs, usa SASL SSL com OAuth: o DefaultAzureCredential obtém o token do Entra ID, seja a conta do desenvolvedor ou a identidade de carga de trabalho no AKS. Junto vão as configurações recomendadas pela Microsoft, como keepalive e tempos de metadados e sessão.',
+  v:{type:'code', file:'src/Agx.PreAnalise.Infra/Mensageria/KafkaClientFactory.cs', lang:'cs', code:
+`// appsettings.Development.json → "Mensageria": { "Provedor": "Kafka", "Servidores": "localhost:9092" }
+// appsettings.Azure.json       → "Mensageria": { "Provedor": "EventHubs", "Namespace": "evhns-agx-prop" }
+
+private T Base<T>(T cfg) where T : ClientConfig
+{
+    if (_opt.Provedor == "Kafka") { cfg.BootstrapServers = _opt.Servidores; return cfg; }
+
+    cfg.BootstrapServers = $"{_opt.Namespace}.servicebus.windows.net:9093";
+    cfg.SecurityProtocol = SecurityProtocol.SaslSsl;
+    cfg.SaslMechanism = SaslMechanism.OAuthBearer;
+    cfg.SocketKeepaliveEnable = true;            // recomendações para o Event Hubs
+    cfg.MetadataMaxAgeMs = 180_000;
+    cfg.ConnectionsMaxIdleMs = 180_000;
+    return cfg;
+}
+
+public ConsumerConfig ConsumerConfig(string groupId) =>
+    Base(new ConsumerConfig { GroupId = groupId, SessionTimeoutMs = 30_000, MaxPollIntervalMs = 300_000 });
+
+private void Token(IClient client, string _)
+{
+    try
+    {
+        var scope = $"https://{_opt.Namespace}.servicebus.windows.net/.default";
+        var t = _credential.GetToken(new TokenRequestContext([scope]), default);   // DefaultAzureCredential
+        client.OAuthBearerSetToken(t.Token, t.ExpiresOn.ToUnixTimeMilliseconds(), "agx-pre-analise");
+    }
+    catch (Exception ex) { client.OAuthBearerSetTokenFailure(ex.Message); }
+}
+// builder.SetOAuthBearerTokenRefreshHandler(Token) quando Provedor == "EventHubs"`}},
+
+{ id:'azure-run', ch:'Event Hubs no Azure', title:'Os mesmos serviços, outra conexão',
+  say:'Depois do terraform apply, basta trocar o ambiente. Nenhuma linha de código muda: o processador se conecta ao namespace na porta 9093, autentica com o token do Entra ID e recebe as seis partições. O mesmo POST percorre o mesmo caminho, agora pelo Event Hubs.',
+  v:{type:'term', lines:[
+    'c|cd infra && terraform init && terraform apply',
+    'ok|Apply complete! Resources: 6 added, 0 changed, 0 destroyed.',
+    'c|az login            # sua conta tem Data Sender e Data Receiver no namespace',
+    'c|export DOTNET_ENVIRONMENT=Azure ASPNETCORE_ENVIRONMENT=Azure',
+    'c|dotnet run --project src/Agx.PreAnalise.Processador',
+    'o|info: Mensageria: EventHubs · evhns-agx-prop.servicebus.windows.net:9093 · SASL_SSL/OAUTHBEARER',
+    'o|info: Partições atribuídas: pre-analise.recebida [0,1,2,3,4,5]',
+    'ok|info: CorrelationId=demo-101 PropostaId=91be… avaliada: Aprovada · commit P1@1',
+  ]}},
+
+{ id:'correlacao', ch:'Event Hubs no Azure', title:'Correlação de ponta a ponta',
+  say:'O identificador de correlação nasce na requisição, é gravado no outbox, viaja como cabeçalho da mensagem e entra no escopo de log do consumidor. Com logs estruturados indo para o mesmo Log Analytics, uma consulta pelo CorrelationId mostra todo o caminho de uma proposta, da API ao resultado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:96,w:200,h:76, cls:'blue', html:B('Requisição','X-Correlation-Id: demo-101')},
+    {at:2.4, x:262,y:96,w:200,h:76, cls:'amber', html:B('Outbox','coluna CorrelationId')},
+    {at:4, x:488,y:96,w:200,h:76, html:B('Mensagem','header correlation-id')},
+    {at:5.6, x:714,y:96,w:210,h:76, cls:'green', html:B('Consumidor','log.BeginScope(…)')},
+    {at:8, x:36,y:206,w:888,h:200, cls:'amber', html:B('Consulta no Log Analytics','')+`<pre class="kql">ContainerLogV2
+| where LogMessage has "demo-101"
+| project TimeGenerated, ContainerName, LogMessage
+| order by TimeGenerated asc</pre><small style="margin-top:8px">api 10:02:11.204 · outbox publicado P1@0 → processador 10:02:11.391 avaliada → auditoria 10:02:11.402 registrada</small>`},
+    {at:12, x:36,y:428,w:888,h:72, cls:'ext', html:B('Dica','OpenTelemetry propaga o traceparent pelos cabeçalhos e liga API e consumidor no mesmo trace do Application Insights')},
+  ], lines:[
+    {at:2.4, d:'M236 134 L 262 134', cls:'flow'},
+    {at:4, d:'M462 134 L 488 134', cls:'flow'},
+    {at:5.6, d:'M688 134 L 714 134', cls:'flow'},
+  ]}},
+
+{ id:'monitor', ch:'Event Hubs no Azure', title:'Métricas no Azure Monitor',
+  say:'No Azure Monitor, acompanhe mensagens recebidas e enviadas, bytes de entrada e saída, erros do servidor e, principalmente, requisições limitadas. Throttling significa que a capacidade do namespace acabou: aumente as unidades de throughput ou ligue o auto-inflate. O lag do consumidor vem do lado do cliente e vira métrica da aplicação.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:96,w:280,h:96, cls:'blue', html:B('Incoming Messages','eventos publicados por minuto')},
+    {at:2, x:340,y:96,w:280,h:96, cls:'blue', html:B('Outgoing Messages','eventos lidos pelos grupos')},
+    {at:3.2, x:644,y:96,w:280,h:96, cls:'amber', html:B('Throttled Requests','capacidade de TU esgotada','alerta','am')},
+    {at:5, x:36,y:212,w:584,h:180, html:B('Throttled Requests · últimas 2 h','')+'<svg width="550" height="110" viewBox="0 0 550 110" style="margin-top:8px"><path class="spark" pathLength="100" d="M0 96 L60 96 L120 95 L180 90 L220 60 L250 22 L280 30 L310 70 L360 94 L420 96 L550 96" fill="none" stroke="#F2B544" stroke-width="2.5"/><line x1="0" y1="50" x2="550" y2="50" stroke="#FF6B5E" stroke-dasharray="4 5"/><text x="4" y="44" fill="#FF6B5E" font-size="11" font-family="IBM Plex Mono, monospace">alerta: &gt; 0 por 5 min</text></svg>'},
+    {at:8, x:644,y:212,w:280,h:180, cls:'green', html:B('Ações','')+'<ul class="ul"><li>Subir a capacity (TU)</li><li>auto_inflate_enabled</li><li>Rever tamanho de lote</li></ul>'},
+    {at:11, x:36,y:412,w:888,h:90, cls:'ext', html:B('Lag no Event Hubs','calcule no cliente: QueryWatermarkOffsets − Position por partição, exposto como métrica OpenTelemetry e alertado no Azure Monitor')},
+  ]}},
+
+{ id:'testes', ch:'Qualidade', title:'Teste de integração com Kafka em container',
+  say:'Os testes de integração sobem um Kafka de verdade em container com o Testcontainers, iniciam a API e os consumidores apontando para ele, publicam uma pré-análise e esperam o resultado no banco. É o mesmo caminho da produção, rodando no pipeline.',
+  v:{type:'code', file:'tests/Agx.PreAnalise.IntegrationTests/FluxoPreAnaliseTests.cs', lang:'cs', code:
+`public sealed class FluxoPreAnaliseTests : IAsyncLifetime
+{
+    private readonly KafkaContainer _kafka = new KafkaBuilder()
+        .WithImage("confluentinc/cp-kafka:7.6.1").Build();
+    private readonly MsSqlContainer _sql = new MsSqlBuilder().Build();
+
+    public async Task InitializeAsync() =>
+        await Task.WhenAll(_kafka.StartAsync(), _sql.StartAsync());
+
+    public async Task DisposeAsync() =>
+        await Task.WhenAll(_kafka.DisposeAsync().AsTask(), _sql.DisposeAsync().AsTask());
+
+    [Fact]
+    public async Task Publica_e_consome_de_ponta_a_ponta()
+    {
+        await using var app = await AmbienteDeTeste.IniciarAsync(
+            kafka: _kafka.GetBootstrapAddress(), sql: _sql.GetConnectionString()); // API + workers
+
+        var resposta = await app.Api.PostAsJsonAsync("/pre-analises", Exemplos.PreAnaliseFicticia());
+        Assert.Equal(HttpStatusCode.Accepted, resposta.StatusCode);
+
+        var resultado = await app.EsperarResultadoAsync(TimeSpan.FromSeconds(30));
+        Assert.Equal("Aprovada", resultado.Status);
+    }
+}`}},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'aks', ch:'Fechamento', title:'Publicar no AKS',
+  say:'Quando o cluster da dupla de Kubernetes estiver pronto, cada serviço vira um Deployment no mesmo namespace. A API inclui o relay do outbox. O processador pode ter até seis réplicas, uma por partição; acima disso, as extras ficam ociosas. A identidade de carga de trabalho recebe os papéis de envio e leitura no namespace do Event Hubs.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:84,w:888,h:300, cls:'region', html:'<span class="rl">AKS · namespace pre-analise</span>'},
+    {at:2, x:60,y:126,w:260,h:110, cls:'blue', html:B('Deployment api','2+ réplicas · HPA por CPU · inclui o OutboxRelay')},
+    {at:4, x:350,y:126,w:260,h:110, cls:'green', html:B('Deployment processador','réplicas ≤ 6 partições · terminationGracePeriod 60 s')},
+    {at:6, x:640,y:126,w:260,h:110, html:B('Deployment auditoria','1 réplica · grupo auditoria')},
+    {at:8, x:60,y:260,w:840,h:100, cls:'amber', html:B('Workload Identity','ServiceAccount → identidade gerenciada → Azure Event Hubs Data Sender / Receiver · DOTNET_ENVIRONMENT=Azure no ConfigMap')},
+    {at:10.5, x:36,y:404,w:888,h:96, cls:'ext', html:B('Combinar com a dupla de Kubernetes','manifestos no chart Helm, sondas de liveness nos workers (heartbeat do loop), logs na saída padrão e o mesmo pipeline do Azure DevOps')},
+  ]}},
+
+{ id:'destroy', ch:'Fechamento', title:'Custo e destruição',
+  say:'O plano Standard cobra por unidade de throughput por hora, mesmo sem tráfego. Use uma unidade, sem auto-inflate, e destrua o namespace pelo Terraform quando não estiver em uso. O ambiente local some com o docker compose down. O README do repositório registra cada passo para o resto da squad.',
+  v:{type:'term', lines:[
+    'c|cd infra && terraform destroy',
+    'o|Plan: 0 to add, 0 to change, 6 to destroy.',
+    'ok|Destroy complete! Resources: 6 destroyed.',
+    'c|docker compose down -v',
+    'o| ✔ Container agx-kafka  Removed',
+    'o| ✔ Container agx-sql    Removed',
+  ]}},
+
+{ id:'check', ch:'Fechamento', title:'Checklist antes de dar como pronto',
+  say:'Antes de dar o protótipo como pronto, revise esta lista. Cada item precisa ter sido feito no projeto, não apenas lido. O checklist completo, com atalho para a cena correspondente, está logo abaixo do vídeo.',
+  v:{type:'check', items:[
+    'Interface própria para a mensageria',
+    'Partições decididas e registradas em ADR',
+    'Chave = PropostaId, contrato com versão',
+    'acks=all + idempotência no produtor',
+    'Outbox: banco e evento sem divergência',
+    'Workers separados, commit após processar',
+    'Consumidor idempotente, retry e DLQ',
+    'Rebalanceamento e segundo grupo vistos',
+    'Offset voltado e lag acompanhado',
+    'Terraform, estado remoto e OAuth (Entra ID)',
+    'Correlação nos logs e métricas no Monitor',
+    'Testes com Testcontainers e README',
+  ]}},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a trilha de estudo da Parte 1, com os links oficiais, o checklist da Parte 3 ligado a cada cena e as perguntas que o cliente costuma fazer sobre mensageria em uma aplicação de grande porte.',
+  v:{type:'outro'} },
+];
+// ===================== TRILHA, CHECKLIST, FAQ, COMANDOS =====================
+const STUDY = [
+  ['Introdução ao Apache Kafka','Evento, tópico, partição, offset, broker, produtor, consumidor e grupo','https://kafka.apache.org/43/getting-started/introduction/','conceitos'],
+  ['Design do Kafka','Produtor e consumidor por dentro','https://kafka.apache.org/43/design/design/','conceitos'],
+  ['Garantias de entrega','No máximo uma vez, pelo menos uma vez, exatamente uma vez','https://kafka.apache.org/43/design/design/#message-delivery-semantics','idem'],
+  ['Configurações do produtor','acks, enable.idempotence, delivery.timeout.ms','https://kafka.apache.org/43/configuration/producer-configs/','produtor'],
+  ['Configurações do consumidor','enable.auto.commit, auto.offset.reset, session.timeout.ms','https://kafka.apache.org/43/configuration/consumer-configs/','worker'],
+  ['Kafka em Docker','Subir um broker local','https://kafka.apache.org/43/getting-started/docker/','compose'],
+  ['Imagem oficial do Apache Kafka','apache/kafka no Docker Hub','https://hub.docker.com/r/apache/kafka','compose'],
+  ['Cliente .NET para Apache Kafka (Confluent)','Confluent.Kafka: produtor, consumidor e configuração','https://docs.confluent.io/kafka-clients/dotnet/current/overview.html','produtor'],
+  ['Protocolo do Kafka no Event Hubs','Planos com suporte, recursos disponíveis e autenticação','https://learn.microsoft.com/pt-br/azure/event-hubs/azure-event-hubs-apache-kafka-overview','eh'],
+  ['Recursos e terminologia do Event Hubs','Namespace, event hub, partição, grupo, retenção','https://learn.microsoft.com/pt-br/azure/event-hubs/event-hubs-features','eh'],
+  ['Guia do desenvolvedor Kafka para o Event Hubs','Exemplos e orientações por linguagem','https://learn.microsoft.com/pt-br/azure/event-hubs/apache-kafka-developer-guide','oauth'],
+  ['Início rápido do Kafka com o Event Hubs','Primeira conexão de um cliente Kafka','https://learn.microsoft.com/pt-br/azure/event-hubs/event-hubs-quickstart-kafka-enabled-event-hubs','azure-run'],
+  ['Exemplo oficial em .NET','azure-event-hubs-for-kafka/quickstart/dotnet','https://github.com/Azure/azure-event-hubs-for-kafka/tree/master/quickstart/dotnet','oauth'],
+  ['Configurações recomendadas para o Event Hubs','Valores de cliente sugeridos pela Microsoft','https://learn.microsoft.com/pt-br/azure/event-hubs/apache-kafka-configurations','oauth'],
+  ['Autenticação com o Microsoft Entra','Papéis Data Sender e Data Receiver, OAuth','https://learn.microsoft.com/pt-br/azure/event-hubs/authenticate-application','oauth'],
+  ['Planos do Event Hubs','Basic, Standard, Premium e Dedicated','https://learn.microsoft.com/pt-br/azure/event-hubs/compare-tiers','eh'],
+  ['Cotas e limites','Partições, retenção, tamanho de mensagem','https://learn.microsoft.com/pt-br/azure/event-hubs/event-hubs-quotas','tf'],
+  ['Escalabilidade','Unidades de throughput, partições e auto-inflate','https://learn.microsoft.com/pt-br/azure/event-hubs/event-hubs-scalability','monitor'],
+  ['Monitoramento do Event Hubs','Métricas, logs e alertas no Azure Monitor','https://learn.microsoft.com/pt-br/azure/event-hubs/monitor-event-hubs','monitor'],
+  ['Solução de problemas do Kafka no Event Hubs','Throttling, rebalanceamento, timeouts','https://learn.microsoft.com/pt-br/azure/event-hubs/apache-kafka-troubleshooting-guide','monitor'],
+  ['Perguntas frequentes do Kafka no Event Hubs','Diferenças e limitações','https://learn.microsoft.com/pt-br/azure/event-hubs/apache-kafka-frequently-asked-questions','eh'],
+  ['Serviços de trabalho do .NET','BackgroundService e hospedagem genérica','https://learn.microsoft.com/pt-br/dotnet/core/extensions/workers','worker'],
+  ['Padrão de consumidores concorrentes','Azure Architecture Center','https://learn.microsoft.com/pt-br/azure/architecture/patterns/competing-consumers','rebalance'],
+  ['Padrão de repetição','Azure Architecture Center','https://learn.microsoft.com/pt-br/azure/architecture/patterns/retry','idem'],
+  ['Namespace do Event Hubs no Terraform','azurerm_eventhub_namespace','https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub_namespace','tf'],
+];
+
+const CHECK = [
+  ['Código','Mensageria isolada atrás de uma interface própria','contrato'],
+  ['Tópicos','Partições de cada tópico definidas e motivo registrado','topicos'],
+  ['Tópicos','ID da proposta como chave, mesma partição e ordem','outbox'],
+  ['Contrato','Evento com campo de versão, evoluído sem quebrar o consumidor antigo','contrato'],
+  ['Produtor','Confirmação de envio (acks=all) com idempotência ativada','produtor'],
+  ['Produtor','Falha de publicação tratada sem perder o evento e sem travar a API','relay'],
+  ['Produtor','Banco e evento consistentes com o padrão outbox','outbox'],
+  ['Consumidor','Consumidores como Worker Services, separados da API','worker'],
+  ['Consumidor','Commit do offset só depois do processamento','worker'],
+  ['Consumidor','Consumidor idempotente: o mesmo evento duas vezes não duplica o resultado','idem'],
+  ['Consumidor','Retry com espera crescente e envio para a dead letter','idem'],
+  ['Consumidor','Evento da dead letter reprocessado após corrigir a causa','dlq'],
+  ['Grupos','Duas instâncias dividindo partições e rebalanceamento quando uma cai','rebalance'],
+  ['Grupos','Segundo grupo lendo os mesmos eventos sem interferir','rebalance'],
+  ['Grupos','Eventos antigos reprocessados voltando o offset','offsets'],
+  ['Consumidor','Encerramento gracioso, terminando o evento e liberando partições','worker'],
+  ['Operação','Lag acompanhado: cresce com o consumidor parado, cai quando volta','lag'],
+  ['Azure','Namespace Standard e tópicos criados só pelo Terraform','tf'],
+  ['Azure','Estado do Terraform em um storage do Azure','tf'],
+  ['Azure','Conexão por OAuth com o Entra ID, sem string de conexão com chave','oauth'],
+  ['Azure','Configurações recomendadas pela Microsoft aplicadas no cliente','oauth'],
+  ['Azure','Retenção configurada e limite do plano conferido','tf'],
+  ['Operação','CorrelationId da API ao consumidor, caminho completo nos logs','correlacao'],
+  ['Operação','Métricas do Event Hubs no Azure Monitor (recebidas, enviadas, limitadas)','monitor'],
+  ['Qualidade','Testes de integração com Kafka em container, de ponta a ponta','testes'],
+  ['Custo','Standard com menor capacidade e ambiente destruído quando parado','destroy'],
+  ['Custo','README: ambiente local e Azure, publicar, consumir e destruir','destroy'],
+];
+
+const FAQ = [
+ // Conceitos e escolha
+ ['Escolha','Por que mensageria assíncrona e não chamadas HTTP diretas?',`<p>Quem publica não depende de quem consome estar no ar nem de quanto ele demora. A API responde rápido, os picos ficam enfileirados no tópico e cada consumidor processa no seu ritmo. Em troca, o fluxo passa a ter consistência eventual: o resultado aparece alguns instantes depois.</p>`],
+ ['Escolha','Kafka ou Event Hubs: qual escolher?',`<p>O código é o mesmo, então a decisão é operacional. Kafka próprio (ou gerenciado por terceiros) dá acesso a todo o ecossistema, como Kafka Streams, Connect e transações. O Event Hubs elimina a operação dos brokers e integra com Entra ID, Monitor e Terraform no Azure, com algumas limitações por plano. Para a Crefaz, o ponto central é quanto do ecossistema Kafka eles usam hoje.</p>`],
+ ['Escolha','Por que não o Service Bus?',`<p>A Definição 01 descartou o Service Bus pela vazão menor. Ele continua forte para filas de comandos com dead letter nativa, sessões e agendamento, mas não é um log de eventos que vários sistemas releem.</p>`],
+ ['Escolha','O que o Event Hubs não suporta do Kafka?',`<p>Depende do plano. No Standard não há transações do Kafka; Kafka Streams e compactação de log variam por plano. Confira a página de visão geral do protocolo do Kafka no Event Hubs antes de usar um recurso específico.</p>`],
+ // Produzir
+ ['Produzir','Posso perder mensagens?',`<p>No envio, não, se o produtor usar <code>acks=all</code>, idempotência e o outbox. No consumo, também não, se o commit vier depois do processamento. O risco que sobra é a retenção: evento não consumido dentro do prazo (até 7 dias no Standard) é apagado.</p>`],
+ ['Produzir','Posso receber mensagens duplicadas?',`<p>Sim. A garantia padrão é de pelo menos uma vez: um consumidor que cai depois de processar e antes do commit recebe o evento de novo, e o relay do outbox pode republicar. Por isso o consumidor é idempotente, usando o <code>EventoId</code>.</p>`],
+ ['Produzir','Por que outbox em vez de transação do Kafka?',`<p>A transação do Kafka só cobre o próprio Kafka, não o SQL Server, e não está disponível no Standard do Event Hubs. O outbox usa a transação do banco: a pré-análise e o evento a publicar são gravados juntos, e o relay publica depois.</p>`],
+ ['Produzir','E a ordem dos eventos?',`<p>O Kafka garante ordem só dentro de uma partição. Com o <code>PropostaId</code> como chave, todos os eventos de uma proposta caem na mesma partição e são lidos em ordem. Entre propostas diferentes não há ordem garantida, e normalmente não precisa haver.</p>`],
+ ['Produzir','Qual o tamanho máximo de uma mensagem?',`<p>No Event Hubs Standard e Premium, 1 MB por evento. Publique fatos com identificadores e dados essenciais; documentos grandes vão para o Blob Storage e o evento leva a referência.</p>`],
+ ['Produzir','Como evoluir o contrato do evento?',`<p>Acrescente apenas campos opcionais e incremente a versão. Remover ou renomear campo é mudança que quebra: publique um novo tipo de evento ou um novo tópico e mantenha o antigo até todos os consumidores migrarem. Um Schema Registry ajuda a validar isso quando houver muitos times.</p>`],
+ // Consumir e escalar
+ ['Escalar','Como escalar o consumo?',`<p>Adicionando instâncias ao grupo, até o número de partições. Com 6 partições, a sétima instância fica ociosa. Por isso o número de partições é decidido pensando no pico futuro, já que no Standard ele não pode ser alterado depois de criado.</p>`],
+ ['Escalar','Quantas partições usar?',`<p>Estime a vazão necessária e quanto uma instância processa; o número de partições é o paralelismo máximo. Partições demais custam recursos e aumentam o tempo de rebalanceamento. No Event Hubs Standard o limite é de 32 por event hub. Registre a conta num ADR.</p>`],
+ ['Escalar','O que limita a vazão no Event Hubs?',`<p>As unidades de throughput (TU) do namespace: cada uma dá cerca de 1 MB/s ou 1.000 eventos/s de entrada e 2 MB/s de saída. Acima disso, as requisições são limitadas. Aumente a capacity ou ligue o auto-inflate; para cargas muito altas, Premium ou Dedicated.</p>`],
+ ['Escalar','Dá para escalar os consumidores no AKS automaticamente?',`<p>Sim, com o KEDA usando o scaler de Kafka (que lê o lag) ou de Event Hubs. O limite continua sendo o número de partições.</p>`],
+ ['Escalar','O que é um rebalanceamento e por que preocupa?',`<p>É a redistribuição de partições quando uma instância entra ou sai do grupo. Durante ele, o consumo pausa. Rebalanceamentos frequentes vêm de processamento mais lento que o <code>max.poll.interval.ms</code> ou de instâncias reiniciando. Feche o consumidor com <code>Close()</code> e mantenha o processamento dentro do intervalo.</p>`],
+ // Investigar
+ ['Investigar','O lag está crescendo. O que olhar?',`<p>Veja se o consumidor está no ar e sem erro, se o tempo por evento aumentou (banco lento, dependência externa), se há retries em excesso e se todas as partições têm dono. Se o volume subiu de verdade, adicione instâncias até o limite de partições.</p>`],
+ ['Investigar','Uma partição está parada e as outras não',`<p>Geralmente é um evento que falha sempre e trava a sequência daquela partição. O retry com limite e a dead letter existem para isso: depois das tentativas, o evento sai do caminho e a partição volta a andar.</p>`],
+ ['Investigar','O consumidor fica entrando e saindo do grupo',`<p>O processamento de um evento passou do <code>max.poll.interval.ms</code> (300 s aqui) ou a sessão expirou. Reduza o tempo de retry dentro do loop, processe em lotes menores ou aumente o intervalo com cuidado. No Event Hubs, siga os valores do guia de configurações recomendadas.</p>`],
+ ['Investigar','Erros de autenticação ao conectar no Event Hubs',`<p>Confira se a identidade tem o papel <code>Azure Event Hubs Data Sender</code> ou <code>Data Receiver</code> no namespace, se o escopo do token é <code>https://&lt;namespace&gt;.servicebus.windows.net/.default</code>, se a porta 9093 está liberada na rede e se o <code>az login</code> está na assinatura certa.</p>`],
+ ['Investigar','Como encontrar o caminho de uma proposta?',`<p>Filtre os logs pelo <code>CorrelationId</code> ou pelo <code>PropostaId</code>, que estão no escopo de log de cada serviço. Com OpenTelemetry, o trace no Application Insights mostra a mesma requisição atravessando API e consumidores.</p>`],
+ // Acompanhar
+ ['Acompanhar','Quais métricas acompanhar?',`<p>No namespace: mensagens recebidas e enviadas, bytes, requisições limitadas e erros. Na aplicação: lag por grupo, tempo de processamento, eventos na dead letter, tamanho do outbox pendente e taxa de retry. Alertas: throttling acima de zero, lag crescendo por mais de alguns minutos, DLQ recebendo eventos e outbox acumulando.</p>`],
+ ['Acompanhar','O Event Hubs mostra o lag do grupo?',`<p>As métricas do Azure Monitor não mostram o lag por grupo Kafka. Calcule no cliente (último offset da partição menos a posição atual) e exponha como métrica, ou use o scaler do KEDA, que faz essa conta.</p>`],
+ // Reprocessar e reter
+ ['Operar','Como reprocessar eventos antigos?',`<p>Pare as instâncias do grupo e volte o offset para uma data ou posição com <code>kafka-consumer-groups.sh --reset-offsets</code>. A idempotência garante que nada é duplicado. Outra opção é criar um grupo novo que lê desde o início.</p>`],
+ ['Operar','Por quanto tempo os eventos ficam guardados?',`<p>O que a retenção do tópico definir: até 7 dias no Standard e mais no Premium e Dedicated. O tópico não é banco de dados; o histórico permanente fica no SQL Server ou na captura para Storage.</p>`],
+ ['Operar','O que fazer com a dead letter?',`<p>Monitorar e tratar. Cada evento ali tem o erro e o número de tentativas nos cabeçalhos. Corrija a causa e republique com a ferramenta do projeto. Dead letter crescendo sem ninguém olhar é perda de dados com atraso.</p>`],
+ // Segurança e custo
+ ['Segurança','Como autenticar sem segredo?',`<p>OAuth com o Entra ID. No desenvolvimento, a conta do <code>az login</code>; no AKS, a identidade de carga de trabalho. O namespace fica com <code>local_authentication_enabled = false</code>, o que bloqueia as chaves SAS.</p>`],
+ ['Segurança','Como proteger a rede e os dados?',`<p>TLS sempre na porta 9093, Private Endpoint no Premium para tirar o tráfego da internet, papéis separados para quem publica e quem lê e nenhum dado pessoal real no protótipo. Em produção, avalie mascarar ou criptografar campos sensíveis no evento.</p>`],
+ ['Custos','Quanto custa o Event Hubs?',`<p>No Standard, paga-se por unidade de throughput por hora, ligada ou não, mais o volume de eventos. Premium e Dedicated cobram por unidade de processamento ou capacidade. Use a calculadora do Azure com o volume previsto e destrua o ambiente de estudo quando não estiver em uso.</p>`],
+ ['Custos','Como manter o custo baixo?',`<p>Comece com uma TU, ligue o auto-inflate com teto apenas se houver picos, mantenha a retenção no necessário e envie eventos enxutos. No ambiente de estudo, <code>terraform destroy</code> ao fim de cada ciclo.</p>`],
+];
+
+const CMDS = [
+  ['docker compose up -d\ndocker compose down -v','Subir e remover o Kafka e o SQL locais'],
+  ['./kafka-topics.sh --bootstrap-server localhost:9092 --list','Listar tópicos (dentro de /opt/kafka/bin)'],
+  ['./kafka-topics.sh --bootstrap-server localhost:9092 \\\n  --describe --topic pre-analise.recebida','Partições e líderes de um tópico'],
+  ['./kafka-console-consumer.sh --bootstrap-server localhost:9092 \\\n  --topic pre-analise.recebida --from-beginning --property print.key=true','Ler eventos no terminal'],
+  ['./kafka-consumer-groups.sh --bootstrap-server localhost:9092 \\\n  --describe --group processador-pre-analise','Offsets e lag por partição'],
+  ['./kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group auditoria \\\n  --topic pre-analise.recebida --reset-offsets --to-earliest --dry-run','Simular a volta do offset (troque por --execute)'],
+  ['./kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list','Grupos existentes'],
+  ['az eventhubs eventhub list -g rg-agx-mensageria \\\n  --namespace-name evhns-agx-prop -o table','Event hubs (tópicos) do namespace'],
+  ['az role assignment list --scope $(az eventhubs namespace show \\\n  -g rg-agx-mensageria -n evhns-agx-prop --query id -o tsv) -o table','Quem pode publicar e ler'],
+  ['dotnet test tests/Agx.PreAnalise.IntegrationTests','Testes de ponta a ponta com Testcontainers'],
+];
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG resource terraform provider backend variable output data features'.split(' '));
+function findComment(line, lang){
+  let q = null;
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === q) q = null; continue; }
+    if (ch === '"') { q = ch; continue; }
+    if (lang !== 'cs' && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if (lang === 'cs' && ch === '/' && line[i+1] === '/') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (lang === 'cs' && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>bash · ~/agx-pre-analise</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>
+      <button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button></div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+renderList('studyList', 'progStudy', 'kfk-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', 'kfk-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* início: primeira cena visível e parada */
+load(0); syncPlayBtn(); requestAnimationFrame(frame);
+</script>
+
+</body></html>

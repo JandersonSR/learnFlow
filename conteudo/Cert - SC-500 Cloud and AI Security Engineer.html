@@ -1,0 +1,1308 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha SC-500</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"ai-gateway.xml": "<!-- Política do AI Gateway (API Management) na frente do Microsoft Foundry -->\n<policies>\n  <inbound>\n    <base />\n    <!-- 1. só aceita token do Entra emitido para o app de chat -->\n    <validate-azure-ad-token tenant-id=\"{{tenant-id}}\" header-name=\"Authorization\"\n        failed-validation-httpcode=\"401\">\n      <client-application-ids>\n        <application-id>{{app-chat-id}}</application-id>\n      </client-application-ids>\n    </validate-azure-ad-token>\n    <!-- 2. cota de tokens por assinatura: segura custo e abuso -->\n    <llm-token-limit counter-key=\"@(context.Subscription.Id)\"\n        tokens-per-minute=\"5000\" estimate-prompt-tokens=\"true\"\n        remaining-tokens-header-name=\"x-tokens-restantes\" />\n    <!-- 3. Content Safety com Prompt Shields antes do modelo -->\n    <llm-content-safety backend-id=\"content-safety\" shield-prompt=\"true\" />\n    <!-- 4. sem chave de API: identidade gerenciada do APIM no backend -->\n    <authentication-managed-identity resource=\"https://cognitiveservices.azure.com\"\n        output-token-variable-name=\"tk\" ignore-error=\"false\" />\n    <set-header name=\"Authorization\" exists-action=\"override\">\n      <value>@(\"Bearer \" + (string)context.Variables[\"tk\"])</value>\n    </set-header>\n    <set-backend-service backend-id=\"foundry-pool\" />\n  </inbound>\n  <outbound>\n    <base />\n    <!-- 5. métrica de tokens por app no Azure Monitor -->\n    <llm-emit-token-metric namespace=\"ai-gateway\">\n      <dimension name=\"App\" value=\"@(context.Subscription.Id)\" />\n    </llm-emit-token-metric>\n  </outbound>\n</policies>", "deteccoes.kql": "// 1. Força bruta no Windows (SecurityEvent via AMA + regra de coleta)\nSecurityEvent\n| where TimeGenerated > ago(1h) and EventID == 4625\n| summarize falhas = count() by TargetAccount, IpAddress, bin(TimeGenerated, 10m)\n| where falhas > 20\n\n// 2. Login com sucesso apesar de risco alto no Entra ID\nSigninLogs\n| where TimeGenerated > ago(1d) and ResultType == \"0\"\n| where RiskLevelDuringSignIn == \"high\"\n| project TimeGenerated, UserPrincipalName, IPAddress, AppDisplayName,\n          ConditionalAccessStatus\n\n// 3. Quem ativou papel privilegiado pelo PIM\nAuditLogs\n| where OperationName == \"Add member to role completed (PIM activation)\"\n| extend quem = tostring(InitiatedBy.user.userPrincipalName)\n| project TimeGenerated, quem, papel = tostring(TargetResources[0].displayName)\n\n// 4. Firewall de borda via CEF: o que foi negado para um IP suspeito\nCommonSecurityLog\n| where DeviceAction in (\"deny\", \"drop\") and SourceIP == \"203.0.113.50\"\n| summarize tentativas = count() by DeviceVendor, DestinationPort\n\n// 5. Atividade do Microsoft 365 no advanced hunting do Defender XDR\nCloudAppEvents\n| where Timestamp > ago(1d) and ActionType == \"FileDownloaded\"\n| summarize arquivos = count() by AccountDisplayName\n| top 10 by arquivos", "kv-privado.bicep": "// kv-privado.bicep: Key Vault só por rede privada, RBAC e logs para o Sentinel\nparam nome string\nparam local string = resourceGroup().location\nparam subnetId string          // sub-rede dos private endpoints\nparam dnsZoneId string         // zona privatelink.vaultcore.azure.net\nparam appPrincipalId string    // identidade gerenciada do app\nparam workspaceId string       // Log Analytics do Sentinel\n\nresource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {\n  name: nome\n  location: local\n  properties: {\n    tenantId: subscription().tenantId\n    sku: { family: 'A', name: 'standard' }\n    enableRbacAuthorization: true      // RBAC, não access policy\n    enableSoftDelete: true\n    softDeleteRetentionInDays: 90\n    enablePurgeProtection: true        // não dá para desligar depois\n    publicNetworkAccess: 'Disabled'\n    networkAcls: { defaultAction: 'Deny', bypass: 'AzureServices' }\n  }\n}\nresource pe 'Microsoft.Network/privateEndpoints@2024-01-01' = {\n  name: '${nome}-pe'\n  location: local\n  properties: {\n    subnet: { id: subnetId }\n    privateLinkServiceConnections: [\n      { name: 'kv', properties: { privateLinkServiceId: kv.id, groupIds: ['vault'] } }\n    ]\n  }\n}\nresource zona 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {\n  parent: pe\n  name: 'default'\n  properties: {\n    privateDnsZoneConfigs: [ { name: 'kv', properties: { privateDnsZoneId: dnsZoneId } } ]\n  }\n}\n// Key Vault Secrets User: ler segredos, nada mais (menor privilégio)\nvar secretsUser = subscriptionResourceId('Microsoft.Authorization/roleDefinitions',\n  '4633458b-17de-408a-b874-0445c86b69e6')\nresource ra 'Microsoft.Authorization/roleAssignments@2022-04-01' = {\n  name: guid(kv.id, appPrincipalId, secretsUser)\n  scope: kv\n  properties: {\n    roleDefinitionId: secretsUser\n    principalId: appPrincipalId\n    principalType: 'ServicePrincipal'\n  }\n}\nresource diag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: 'para-sentinel'\n  scope: kv\n  properties: { workspaceId: workspaceId, logs: [ { categoryGroup: 'audit', enabled: true } ] }\n}", "policy-storage.json": "{\n  \"properties\": {\n    \"displayName\": \"Storage sem acesso público e sem chave compartilhada\",\n    \"policyType\": \"Custom\",\n    \"mode\": \"Indexed\",\n    \"metadata\": { \"category\": \"Storage\", \"version\": \"1.0.0\" },\n    \"parameters\": {\n      \"effect\": {\n        \"type\": \"String\",\n        \"allowedValues\": [\"Audit\", \"Deny\", \"Disabled\"],\n        \"defaultValue\": \"Deny\",\n        \"metadata\": { \"displayName\": \"Efeito\" }\n      }\n    },\n    \"policyRule\": {\n      \"if\": {\n        \"allOf\": [\n          { \"field\": \"type\", \"equals\": \"Microsoft.Storage/storageAccounts\" },\n          {\n            \"anyOf\": [\n              {\n                \"field\": \"Microsoft.Storage/storageAccounts/publicNetworkAccess\",\n                \"notEquals\": \"Disabled\"\n              },\n              {\n                \"field\": \"Microsoft.Storage/storageAccounts/allowSharedKeyAccess\",\n                \"notEquals\": false\n              },\n              {\n                \"field\": \"Microsoft.Storage/storageAccounts/minimumTlsVersion\",\n                \"notEquals\": \"TLS1_2\"\n              }\n            ]\n          }\n        ]\n      },\n      \"then\": { \"effect\": \"[parameters('effect')]\" }\n    }\n  }\n}"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"], "csc500": ["Cert · SC-500 Cloud and AI Security", "https://claude.ai/artifact/PhJmPwwXH1A4zaQoywZmkU"], "csc100": ["Cert · SC-100 Cybersecurity Architect", "https://claude.ai/artifact/Fg63ZrBdBQC4mWJrPB3Jmh"], "csc2003": ["Cert · SC-200 e SC-300", "https://claude.ai/artifact/AiAtvk2jwqACoPN32mYu6S"], "c901": ["Cert · AI-901 AI Fundamentals", "https://claude.ai/artifact/E5sF2gdYzJkQhoTuPqnnJ1"], "cdp700": ["Cert · DP-700 Fabric Data Engineer", "https://claude.ai/artifact/StB9Z2V1nRRLeiHqLqzrKX"], "cpl300": ["Cert · PL-300 Power BI", "https://claude.ai/artifact/YNPpL7WWufh7Lub5aRKRqk"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Cert · SC-500 Cloud and AI Security Engineer =====================
+const CONF = {
+  title: 'Trilha SC-500', file: 'Cert - SC-500 Cloud and AI Security Engineer', key: 'csc500',
+  eyebrow: 'Certificação · Microsoft', h1: 'SC-500: proteger nuvem, dados e agentes de IA no Azure',
+  lead: 'Roteiro em vídeo para a prova SC-500 (Microsoft Cloud and AI Security Engineer Associate), sucessora da AZ-500, que se aposentou em 31 de agosto de 2026. Segue os quatro domínios e pesos do study guide oficial (página atualizada em 13 de maio de 2026, conferida em outubro de 2026): identidade com PIM, Conditional Access, Key Vault e governança; storage, SQL e rede com Firewall, Private Link e Virtual Network Manager; computação com VMs, contêineres, App Service e segurança de IA (Entra Agent ID, Foundry, AI Gateway, Purview DSPM); e postura com Defender for Cloud, Sentinel e Security Copilot. Com comandos az, KQL, Bicep e Azure Policy, pegadinhas, simulado e laboratório.',
+  pills: ['PIM e Conditional Access', 'Key Vault', 'Azure Policy', 'Firewall e Private Link', 'Defender for Cloud', 'Segurança de IA', 'Sentinel e KQL', 'Security Copilot'],
+  term: 'bash · ~/sc500',
+  faqPlaceholder: 'Buscar: PIM, consent, Key Vault, purge, Policy, SAS, Firewall, private endpoint, JIT, Agent ID, Sentinel…',
+  matriz: {title: 'Domínios da prova e onde estudar', desc: 'Os quatro domínios do study guide oficial da SC-500 (página atualizada em 13/05/2026), com o peso, o que cai e onde o tema já aparece nas trilhas. Confira a página oficial antes de agendar.', cols: ['Domínio', 'Peso', 'O que cai', 'Onde estudar']},
+};
+const TITLE = {k: 'Certificação · Microsoft', h: 'SC-500: Cloud and AI Security Engineer',
+  p: 'A prova de quem implementa segurança no Azure e no ecossistema Microsoft: identidade, segredos, governança, rede, dados, computação, agentes de IA e operações de segurança.',
+  chips: ['PIM', 'Conditional Access', 'Key Vault', 'Policy', 'Firewall', 'Private Link', 'Defender', 'Agent ID', 'Sentinel', 'Copilot']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Menor privilégio, rede privada, postura medida',
+  p: 'Abaixo do vídeo estão os domínios com onde estudar, o simulado com questões no estilo da prova, os links oficiais e o checklist de prontidão.',
+  chips: ['elegível, não permanente', 'sem chave: identidade', 'privado por padrão', 'detectar e automatizar']};
+
+const SCENES = [
+/* ---------- A PROVA ---------- */
+{ id:'intro', ch:'A prova', title:'O que a SC-500 valida',
+  say:'A SC-500 dá o título Microsoft Cloud and AI Security Engineer Associate e substitui a AZ-500, aposentada em trinta e um de agosto de dois mil e vinte e seis. Ficou disponível em vinte e um de julho, depois de um beta aberto em maio. Valida quem implementa controles de identidade, rede, dados, computação e, agora, segurança de IA. Nota mínima setecentos; não há pré-requisito formal, e a renovação é anual e gratuita no Microsoft Learn. Duração, número de questões, preço e idiomas: confira a página oficial.',
+  v:{type:'title'} },
+
+{ id:'dominios', ch:'A prova', title:'Os quatro domínios e os pesos',
+  say:'O study guide tem quatro domínios. Identidade, acesso e governança, de vinte a vinte e cinco por cento: PIM, Conditional Access, aplicativos, Key Vault, Policy e papéis. Storage, bancos e rede, o maior, de vinte e cinco a trinta: Defender for Storage e Databases, NSG, Virtual Network Manager, Firewall e Private Link. Computação, de vinte a vinte e cinco: segurança de IA, VMs e plataformas de aplicação. E postura, de vinte a vinte e cinco: Defender for Cloud, Sentinel e Security Copilot.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:207,h:260, cls:'blue', html:B('Identidade e governança','20–25%')+UL('PIM e CA','MFA, passwordless','apps e consent','Key Vault','Policy, papéis')},
+    {at:2.5, x:263,y:92,w:207,h:260, cls:'green', html:B('Storage, bancos e rede','25–30%')+UL('storage e SQL','Defender p/ dados','NSG e AVNM','Firewall, VWAN','Private Link')},
+    {at:4.2, x:490,y:92,w:207,h:260, cls:'amber', html:B('Computação','20–25%')+UL('segurança de IA','Agent ID','VMs e Arc','contêineres','App Service, WAF')},
+    {at:5.9, x:717,y:92,w:207,h:260, cls:'ext', html:B('Postura','20–25%')+UL('Defender CSPM','planos de workload','Sentinel','KQL e playbooks','Security Copilot')},
+    {at:9, x:36,y:372,w:888,h:62, cls:'amber', html:B('O que mudou em relação à AZ-500','entra IA (Copilot, Foundry, agentes), Entra Private Access, AVNM e Security Copilot')},
+    {at:13, x:36,y:452,w:888,h:50, cls:'region', html:NOTE('Study guide oficial da SC-500 · página atualizada em 13/05/2026 · sem data "as of" publicada · confira antes de agendar', 'amber')},
+  ]}},
+
+/* ---------- IDENTIDADE E GOVERNANÇA ---------- */
+{ id:'pim-ca', ch:'Identidade · 20–25%', title:'PIM e Conditional Access',
+  say:'O PIM troca o administrador permanente pelo elegível: a pessoa ativa o papel quando precisa, por tempo limitado, com MFA, justificativa e, se exigido, aprovação. Vale para papéis do Entra, do Azure e para grupos, e pede licença P2 ou ID Governance. O Conditional Access decide cada login: atribuições, como usuários, apps e condições de risco, local e dispositivo; e controles, como exigir MFA, força de autenticação ou dispositivo em conformidade. Comece em modo somente relatório e exclua as contas de emergência.',
+  v:GRID(2, [
+    ['PIM','acesso just-in-time',['elegível × ativo','ativação com MFA','aprovação e justificativa','papéis Entra, Azure, grupos','alertas e access reviews','licença P2 ou ID Governance'],'blue'],
+    ['Conditional Access','se isto, então aquilo',['usuário, app, risco, local','exigir MFA ou força','dispositivo em conformidade','sessão: frequência, CAE','report-only primeiro','excluir contas break-glass'],'green'],
+  ], {h:270, step:5, rodape:'Proteja ações sensíveis com protected actions · licenciamento de PIM e risco: confira a documentação atual'}) },
+
+{ id:'auth-apps', ch:'Identidade · 20–25%', title:'Autenticação, apps e consent',
+  say:'Métodos de autenticação ficam na política de métodos: Authenticator, passkeys FIDO2, Windows Hello e certificado; a força de autenticação no Conditional Access exige métodos resistentes a phishing. App registration é o objeto global do aplicativo; enterprise application é o service principal no seu tenant. Permissão delegada age em nome do usuário; de aplicativo age sozinha e sempre pede consentimento do admin. Restrinja o consentimento do usuário e ligue o fluxo de pedido ao admin. Para recursos do Azure, identidade gerenciada: sem segredo para guardar.',
+  v:GRID(2, [
+    ['Métodos','política de métodos',['passkey FIDO2','Authenticator','Windows Hello, certificado','força anti-phishing'],'blue'],
+    ['Apps','dois objetos',['registration: global','enterprise app: SP','owners e certificados','atribuição exigida'],'green'],
+    ['Consent','quem autoriza',['delegada × aplicativo','restringir usuário','pedido ao admin','editor verificado'],'amber'],
+    ['Identidade gerenciada','sem segredo',['system: vida do recurso','user: reutilizável','federação p/ GitHub','sem rotação manual'],'ext'],
+  ], {h:170, step:3, rodape:'Permissão de aplicativo (application) sempre exige admin consent · prefira certificado ou federação a client secret'}) },
+
+{ id:'keyvault', ch:'Identidade · 20–25%', title:'Key Vault: acesso, rede e proteção',
+  say:'No Key Vault, prefira o modelo RBAC às access policies: papéis como Key Vault Secrets User dão só leitura de segredos, no escopo do cofre. Soft delete vem ligado; purge protection impede apagar de vez durante a retenção e não pode ser desligada depois. O firewall nega por padrão e libera private endpoint, redes e serviços confiáveis. Chaves e certificados têm política de rotação. O Defender for Key Vault alerta acessos anômalos, e o Defender CSPM varre segredos expostos em VMs, repositórios e implantações.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:230, cls:'blue', html:B('Acesso','plano de dados')+UL('RBAC, não access policy','Secrets User: só lê','Officer: gerencia','escopo: o cofre')},
+    {at:4, x:340,y:92,w:280,h:230, cls:'green', html:B('Proteção','contra exclusão')+UL('soft delete: 7–90 dias','purge protection','não desliga depois','backup de chaves')},
+    {at:8, x:644,y:92,w:280,h:230, cls:'amber', html:B('Rede','firewall do cofre')+UL('public access: off','private endpoint','serviços confiáveis','privatelink.vaultcore')},
+    {at:12, x:36,y:342,w:430,h:160, cls:'ext', html:B('Detectar','Defender')+UL('Defender for Key Vault','acesso anômalo, IP suspeito','CSPM: varredura de segredos')},
+    {at:15, x:494,y:342,w:430,h:160, cls:'blue', html:B('Ciclo de vida','')+UL('rotação automática de chaves','certificados com renovação','HSM: Premium ou Managed HSM')},
+  ]}},
+
+{ id:'kv-cli', ch:'Identidade · 20–25%', title:'Key Vault e identidade no terminal',
+  say:'No terminal: o cofre nasce com RBAC, purge protection e sem acesso público. O app recebe identidade gerenciada, e o principal ID dela ganha o papel Key Vault Secrets User só no escopo do cofre. Repare no erro: gravar um segredo de fora da rede privada falha, porque o firewall bloqueia até quem tem papel; acesso exige identidade e rede. Depois, a política de rotação da chave usada como chave do cliente, e o plano Defender for Key Vault ligado na assinatura.',
+  v:T('c|az keyvault create -n kv-loja-2026 -g rg-sec --enable-rbac-authorization true \\',
+      'o|   --enable-purge-protection true --public-network-access Disabled',
+      'c|PID=$(az webapp identity assign -g rg-app -n app-loja --query principalId -o tsv)',
+      'c|az role assignment create --assignee-object-id $PID --assignee-principal-type \\',
+      'o|   ServicePrincipal --role "Key Vault Secrets User" \\',
+      'o|   --scope $(az keyvault show -n kv-loja-2026 --query id -o tsv)',
+      'c|az keyvault secret set --vault-name kv-loja-2026 -n db-senha --value "$SENHA"',
+      'err|(Forbidden) Public network access is disabled … use o private endpoint',
+      'c|az keyvault key rotation-policy update --vault-name kv-loja-2026 -n cmk-sql \\',
+      'o|   --value @rotacao.json',
+      'c|az security pricing create -n KeyVaults --tier Standard',
+      'ok|"pricingTier": "Standard"   ← Defender for Key Vault ligado')},
+
+{ id:'governanca', ch:'Identidade · 20–25%', title:'Policy, papéis, locks e backup',
+  say:'Governança de segurança. Azure Policy com definições embutidas e personalizadas: Deny bloqueia, Audit aponta, DeployIfNotExists corrige. O Defender for Cloud mostra a conformidade com o Microsoft Cloud Security Benchmark e outros padrões. Papéis personalizados no Azure listam actions, dataActions e escopos; no Entra também existem, com P1. Reveja atribuições amplas, como Owner permanente na assinatura. Locks evitam exclusão acidental. No Backup: cofre imutável, soft delete e autorização multiusuário com Resource Guard. E tudo isso como código.',
+  v:GRID(2, [
+    ['Policy','prevenir e corrigir',['embutida ou custom','Deny, Audit, DINE','iniciativa','remediação'],'blue'],
+    ['Papéis','menor privilégio',['custom: actions','dataActions','Entra custom: P1','rever Owner amplo'],'green'],
+    ['Locks','contra acidente',['CanNotDelete','ReadOnly','vale até p/ Owner','herda do escopo'],'amber'],
+    ['Backup seguro','contra ransomware',['cofre imutável','soft delete','MUA: Resource Guard','chave do cliente'],'ext'],
+  ], {h:170, step:3, rodape:'Defender for Cloud: conformidade regulatória sobre o MCSB · IaC: Bicep e varredura de templates no DevOps security'}) },
+
+{ id:'policy-json', ch:'Identidade · 20–25%', title:'Uma Azure Policy personalizada',
+  say:'Uma definição personalizada que cai em questão de interpretação. O modo Indexed avalia recursos que aceitam tags e local. O parâmetro effect deixa escolher Audit, Deny ou Disabled na atribuição, sem editar a regra. A condição: se o tipo é conta de storage e qualquer uma das três propriedades estiver fora do padrão, acesso público não desligado, chave compartilhada permitida ou TLS abaixo de um ponto dois, aplica o efeito. Cada field usa um alias. Com Deny, a criação falha; com Audit, o recurso aparece como não conforme.',
+  v:S('policy-storage.json','policy-storage.json','json')},
+
+/* ---------- STORAGE, BANCOS E REDE ---------- */
+{ id:'storage', ch:'Rede e dados · 25–30%', title:'Storage: acesso, firewall e Defender',
+  say:'Na conta de storage: desligue a chave compartilhada e use Entra ID com papéis de dados, como Storage Blob Data Reader. Se precisar de SAS, prefira a de delegação de usuário e defina política de expiração; stored access policy permite revogar SAS de serviço. O firewall nega por padrão e libera redes, IPs, instâncias de recurso e serviços confiáveis. Criptografia com chave do cliente e camada dupla de infraestrutura. O Defender for Storage monitora atividade, faz varredura de malware no upload e detecta dados sensíveis.',
+  v:GRID(3, [
+    ['Acesso','identidade antes de chave',['Shared Key desligada','papéis Blob Data','SAS de delegação','stored access policy','expiração de SAS','RBAC no menor escopo'],'blue'],
+    ['Rede e cripto','',['firewall: Deny padrão','instância de recurso','chave do cliente','infraestrutura dupla','private endpoint','TLS 1.2 mínimo'],'green'],
+    ['Defender for Storage','proteção de ameaças',['atividade suspeita','malware no upload','dados sensíveis','alerta → Sentinel','resposta via Logic App','ligado por conta'],'amber'],
+  ], {h:280, step:4, rodape:'Imutabilidade (WORM) por tempo ou legal hold · varredura de malware é cobrada por GB: confira o preço atual'}) },
+
+{ id:'sql', ch:'Rede e dados · 25–30%', title:'Azure SQL: auth, cripto e auditoria',
+  say:'No Azure SQL, ative a autenticação somente Entra e desligue o login SQL. Rede: regras de firewall do servidor, regras de VNet ou private endpoint, desligando o acesso público. Criptografia: TDE em repouso, com chave do serviço ou do cliente no Key Vault; Always Encrypted protege colunas até do administrador do banco; máscara dinâmica só esconde na exibição. A auditoria vai para storage, Log Analytics ou Event Hub, no servidor ou no banco. O Defender for Databases cobre SQL, open source e Cosmos DB.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:220, cls:'blue', html:B('Plataforma','')+UL('somente Entra ID','firewall do servidor','private endpoint','TLS mínimo')},
+    {at:4, x:340,y:92,w:280,h:220, cls:'green', html:B('Criptografia','')+UL('TDE: serviço ou cliente','Always Encrypted: coluna','máscara: só exibição','enclaves seguros')},
+    {at:8, x:644,y:92,w:280,h:220, cls:'amber', html:B('Auditoria','SQL DB e MI')+UL('storage, LA, Event Hub','servidor vale p/ todos','MI: auditoria própria','retenção definida')},
+    {at:12, x:36,y:332,w:888,h:170, cls:'ext', html:B('Defender for Databases','um plano, vários motores')+UL('SQL: avaliação de vulnerabilidade','alertas de SQL injection e acesso anômalo','PostgreSQL, MySQL, MariaDB e Cosmos DB')},
+  ]}},
+
+{ id:'nsg-avnm', ch:'Rede e dados · 25–30%', title:'NSG, ASG e Virtual Network Manager',
+  say:'O NSG filtra por prioridade e a primeira regra que bate decide; o ASG agrupa VMs por papel. Em escala, o Azure Virtual Network Manager aplica regras de administrador de segurança a grupos de redes, em várias assinaturas. Elas são avaliadas antes do NSG: Deny e Always Allow não podem ser contornados por quem cuida do NSG, e Allow deixa o NSG decidir. Para diagnosticar, o Network Watcher: IP flow verify, diagnóstico de NSG, regras efetivas e flow logs de VNet, que substituem os de NSG.',
+  v:FLOW([['Admin rule AVNM','Deny ou Always Allow','ext'],['NSG da sub-rede','prioridade 100–4096','amber'],['NSG da NIC','os dois permitem','amber'],['VM','ASG por papel','green']],
+    {y:100, h:110, step:1.8, cards:[
+      ['Regras de admin (AVNM)','',['grupos de redes','várias assinaturas','avaliadas antes do NSG','Always Allow pula o NSG','Allow: NSG decide'],'blue'],
+      ['Network Watcher','',['IP flow verify','diagnóstico de NSG','regras efetivas','VNet flow logs','next hop'],'green'],
+    ]}) },
+
+{ id:'conectividade', ch:'Rede e dados · 25–30%', title:'Firewall, Virtual WAN, VPN e SSE',
+  say:'O Azure Firewall é stateful e gerenciado: regras de DNAT, rede e aplicação, organizadas em Firewall Policy hierárquica. O Premium soma inspeção TLS, IDPS por assinatura e filtro de URL. Na Virtual WAN, o hub seguro coloca o firewall no hub e o routing intent manda o tráfego privado e de internet por ele. VPN site a site usa política IPsec personalizada; ponto a site aceita autenticação Entra. E o Entra Private Access substitui a VPN por acesso Zero Trust por aplicativo, com conector e Conditional Access.',
+  v:GRID(2, [
+    ['Azure Firewall','stateful',['DNAT, rede, aplicação','Firewall Policy','Premium: TLS, IDPS','filtro de URL'],'blue'],
+    ['Virtual WAN','hub seguro',['firewall no hub','routing intent','privado e internet','vários hubs'],'green'],
+    ['VPN','gateway',['S2S: política IPsec','P2S: Entra ID','certificado, RADIUS','IKEv2 e OpenVPN'],'amber'],
+    ['Private Access','Entra · SSE',['ZTNA por aplicativo','conector local','CA por app','cliente GSA'],'ext'],
+  ], {h:170, step:3, rodape:'Firewall: threat intelligence alerta ou nega · UDR 0.0.0.0/0 → firewall · Basic, Standard ou Premium'}) },
+
+{ id:'private', ch:'Rede e dados · 25–30%', title:'Private endpoint × Private Link service',
+  say:'Dois lados da mesma tecnologia. O private endpoint traz um PaaS para dentro da sua VNet, com IP privado: storage, SQL, Key Vault. O que mais derruba é o DNS: sem a zona privatelink ligada à VNet, o nome resolve para o IP público. Depois de criar o endpoint, desligue o acesso público do recurso. O Private Link service é o contrário: você publica o seu serviço, atrás de um load balancer Standard, para clientes em outras VNets ou tenants, que se conectam por private endpoints, com aprovação.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:300, cls:'region', html:'<span class="rl">private endpoint · consumir PaaS</span>'},
+    {at:2, x:60,y:132,w:382,h:72, cls:'blue', html:B('VM na VNet','resolve kv.vault.azure.net')},
+    {at:3.5, x:60,y:220,w:382,h:72, cls:'amber', html:B('Zona privatelink.vaultcore','→ 10.0.5.4')},
+    {at:5, x:60,y:308,w:382,h:72, cls:'green', html:B('Private endpoint','NIC com IP privado')},
+    {at:8, x:494,y:92,w:430,h:300, cls:'region', html:'<span class="rl">Private Link service · publicar</span>'},
+    {at:9, x:518,y:132,w:382,h:72, cls:'blue', html:B('Cliente em outro tenant','cria private endpoint')},
+    {at:10.5, x:518,y:220,w:382,h:72, cls:'amber', html:B('Private Link service','aprovação da conexão')},
+    {at:12, x:518,y:308,w:382,h:72, cls:'green', html:B('Load balancer Standard','seu serviço no backend')},
+    {at:15, x:36,y:412,w:888,h:90, cls:'ext', html:B('Service endpoint é outra coisa','leva a sub-rede ao serviço pela rede Microsoft, mas o serviço segue com IP público')},
+  ]}},
+
+{ id:'rede-bicep', ch:'Rede e dados · 25–30%', title:'Cofre privado como código',
+  say:'Tudo junto em Bicep, que a prova cobra como controle por infraestrutura como código. O cofre com RBAC, purge protection e acesso público desligado. O private endpoint com groupIds vault, apontando para a sub-rede. O DNS zone group, que cria o registro na zona privatelink automaticamente, resolvendo o erro clássico de DNS. A atribuição de Key Vault Secrets User para a identidade do app, com nome determinístico por guid. E a diagnostic setting que manda o grupo de logs de auditoria para o workspace do Sentinel.',
+  v:S('kv-privado.bicep','kv-privado.bicep','bicep')},
+
+/* ---------- COMPUTAÇÃO E IA ---------- */
+{ id:'ia-dados', ch:'Computação · 20–25%', title:'IA: dados expostos e Copilot',
+  say:'A segurança de IA começa nos dados que ela enxerga. O Microsoft 365 Copilot respeita as permissões, então compartilhamento demais no SharePoint vira resposta demais: use os relatórios de governança de acesso e restrinja sites sensíveis. O Purview DSPM for AI mostra quem usa Copilot e apps de IA, com que dados sensíveis, e sugere políticas. Agentes do Copilot Studio ganham proteção em tempo real, que bloqueia ações suspeitas durante a execução. E os agentes da organização são inventariados e governados no Microsoft 365 admin center.',
+  v:GRID(2, [
+    ['SharePoint','excesso de acesso',['relatórios de acesso','sites sensíveis','"todos" demais','links públicos'],'blue'],
+    ['Purview DSPM for AI','risco de IA',['uso de Copilot e apps','dados sensíveis','políticas sugeridas','avaliação de excesso'],'green'],
+    ['Copilot Studio','em execução',['tempo real','bloqueia ação suspeita','alerta no Defender','agente por agente'],'amber'],
+    ['M365 admin center','inventário',['agentes da organização','publicar ou bloquear','quem pode usar','dono e ciclo de vida'],'ext'],
+  ], {h:170, step:3, rodape:'Copilot só mostra o que o usuário já pode acessar: o problema é a permissão larga, não o modelo'}) },
+
+{ id:'agent-id', ch:'Computação · 20–25%', title:'Entra Agent ID: identidade de agente',
+  say:'Agentes de IA viram identidades de primeira classe com o Entra Agent ID: cada agente tem identidade própria, dono responsável e permissões, em vez de usar a conta de uma pessoa ou um segredo compartilhado. O Conditional Access passa a valer para agentes, por exemplo bloqueando agentes de risco ou fora de condições aprovadas. O Defender XDR analisa o raio de impacto: se o agente for comprometido, a que dados e recursos ele chega. E a gestão de acesso segue o ciclo de vida, com revisão e remoção.',
+  v:FLOW([['Agente','identidade própria','blue'],['Conditional Access','política p/ agente','amber'],['Recurso','permissão mínima','green'],['Defender XDR','raio de impacto','ext']],
+    {y:100, h:110, step:1.8, cards:[
+      ['Gerenciar o acesso','',['dono humano responsável','permissões mínimas','revisão periódica','desligar agente órfão','nada de segredo compartilhado'],'blue'],
+      ['Por que importa','',['agente age sozinho','prompt injection vira ação','blast radius = permissões','auditoria por identidade','mesmo Zero Trust do humano'],'amber'],
+    ]}) },
+
+{ id:'foundry', ch:'Computação · 20–25%', title:'Foundry, Defender for AI e guardrails',
+  say:'No Microsoft Foundry, a proteção vem em camadas. Guardrails do agente e do modelo: filtros de conteúdo, Prompt Shields contra jailbreak e injeção indireta, e detecção de material protegido. No Defender for Cloud, o plano Defender for AI Services, dentro da proteção de workloads, alerta jailbreak, vazamento de dados e uso anômalo, com evidência do prompt. O painel Data and AI security junta postura e alertas de dados e IA. E o AI Gateway no API Management controla quem chama o modelo, quanto e com qual identidade.',
+  v:GRID(3, [
+    ['Guardrails no Foundry','no agente e no modelo',['filtros de conteúdo','Prompt Shields','material protegido','limites de ferramenta','groundedness','listas de bloqueio'],'blue'],
+    ['Defender for AI Services','plano de workload',['jailbreak detectado','vazamento de dados','uso anômalo','alerta → XDR','evidência do prompt','ligado na assinatura'],'amber'],
+    ['Painel Data and AI','Defender for Cloud',['postura de dados e IA','recursos expostos','alertas juntos','prioridade por risco','Foundry e OpenAI','storage e bancos'],'green'],
+  ], {h:280, step:4, rodape:'Postura de IA (AI-SPM) vem do Defender CSPM · proteção em execução vem do Defender for AI Services'}) },
+
+{ id:'ai-gateway', ch:'Computação · 20–25%', title:'AI Gateway no API Management',
+  say:'A política do AI Gateway, que a prova pede para configurar na frente do Foundry. Primeiro valida o token do Entra e aceita só o aplicativo de chat. Depois, a cota de tokens por minuto por assinatura, que segura custo e abuso. Em seguida, o Content Safety com Prompt Shields antes de o pedido chegar ao modelo. O APIM se autentica no backend com identidade gerenciada, então nenhum cliente conhece a chave do modelo. Na saída, emite métrica de tokens por aplicativo para o Azure Monitor.',
+  v:S('ai-gateway.xml','ai-gateway.xml','xml')},
+
+{ id:'vm', ch:'Computação · 20–25%', title:'VMs: criptografia, Trusted Launch, JIT',
+  say:'Na VM, criptografia: o disco já é cifrado no storage, com chave da plataforma ou do cliente por disk encryption set; encryption at host cifra também cache e disco temporário; e o Azure Disk Encryption, por dentro do sistema, tem aposentadoria anunciada. O tipo de segurança Trusted Launch traz secure boot, vTPM e monitoramento de integridade; VM confidencial vai além. Acesso: Bastion, sem IP público, e JIT do Defender for Servers, que abre a porta de gerenciamento só por algumas horas, para o seu IP.',
+  v:GRID(3, [
+    ['Criptografia','em camadas',['SSE com chave do cliente','encryption at host','ADE: aposentadoria','confidencial: disco do SO','disk encryption set','chave no Key Vault'],'blue'],
+    ['Trusted Launch','tipo de segurança',['secure boot','vTPM','integridade: atestação','padrão nas VMs novas','exige geração 2','confidencial vai além'],'green'],
+    ['Acesso','sem porta aberta',['Bastion, sem IP público','JIT: porta por horas','JIT exige Servers P2','NSG fecha o resto','Bastion: sub-rede /26','JIT: só o seu IP'],'amber'],
+  ], {h:280, step:4, rodape:'Monitoramento de integridade usa a extensão Guest Attestation · trocar o tipo de segurança pode exigir recriar'}) },
+
+{ id:'servers', ch:'Computação · 20–25%', title:'Defender for Servers, Arc e baseline',
+  say:'O Defender for Servers tem dois planos. O P1 integra o Defender for Endpoint, com EDR, e a gestão de vulnerabilidades básica. O P2 soma varredura sem agente, JIT, monitoramento de integridade de arquivos e a gestão de vulnerabilidades premium. Servidores locais, na AWS ou no GCP entram pelo Azure Arc ou pelos conectores multicloud, e recebem as mesmas políticas. A varredura sem agente tira snapshot do disco e analisa fora da VM. E o Machine Configuration audita ou aplica a configuração do sistema operacional por Azure Policy.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:220, cls:'blue', html:B('Servers P1','')+UL('Defender for Endpoint (EDR)','vulnerabilidades: básico','onboarding automático','Windows e Linux')},
+    {at:4, x:494,y:92,w:430,h:220, cls:'green', html:B('Servers P2','tudo do P1 e mais')+UL('varredura sem agente','JIT de VM','integridade de arquivos','vulnerabilidades premium')},
+    {at:9, x:36,y:332,w:430,h:170, cls:'amber', html:B('Híbrido e multicloud','')+UL('Azure Arc: azcmagent','conectores AWS e GCP','mesma Policy e Defender')},
+    {at:13, x:494,y:332,w:430,h:170, cls:'ext', html:B('Machine Configuration','baseline do SO')+UL('via Azure Policy','auditar ou aplicar','VMs Azure e Arc')},
+  ]}},
+
+{ id:'vm-cli', ch:'Computação · 20–25%', title:'VM endurecida no terminal',
+  say:'A VM nasce com Trusted Launch, secure boot, vTPM e encryption at host, sem IP público. A extensão Guest Attestation liga o monitoramento de integridade. O Bastion Standard com tunneling permite SSH pelo cliente nativo, com login do Entra. O plano P2 do Defender for Servers é ligado na assinatura, o que habilita JIT e varredura sem agente. E o servidor local entra no Azure pelo agente do Arc, passando a receber Policy e Defender como se fosse uma VM do Azure.',
+  v:T('c|az vm create -g rg-app -n vm-api --image Ubuntu2204 --security-type TrustedLaunch \\',
+      'o|   --enable-secure-boot true --enable-vtpm true --encryption-at-host true \\',
+      'o|   --public-ip-address "" --generate-ssh-keys',
+      'c|az vm extension set -g rg-app --vm-name vm-api --name GuestAttestation \\',
+      'o|   --publisher Microsoft.Azure.Security.LinuxAttestation',
+      'c|az network bastion create -g rg-hub -n bas-hub --vnet-name vnet-hub \\',
+      'o|   --public-ip-address pip-bas --sku Standard --enable-tunneling true',
+      'c|az network bastion ssh -g rg-hub -n bas-hub --auth-type AAD \\',
+      'o|   --target-resource-id $(az vm show -g rg-app -n vm-api --query id -o tsv)',
+      'c|az security pricing create -n VirtualMachines --tier Standard --subplan P2',
+      'c|sudo azcmagent connect -g rg-arc --location brazilsouth \\',
+      'o|   --subscription-id $SUB --tenant-id $TENANT',
+      'ok|Connected machine to Azure   ← servidor local agora recebe Policy e Defender')},
+
+{ id:'containers', ch:'Computação · 20–25%', title:'Defender for Containers, AKS e ACR',
+  say:'Contêineres. O Defender for Containers avalia a postura do cluster, varre imagens em busca de vulnerabilidades e detecta ameaças em tempo de execução, com o sensor nos nós. No AKS: Entra ID com Azure RBAC e contas locais desligadas, cluster privado ou IPs autorizados, workload identity no lugar de segredos e o add-on do Azure Policy. No ACR: usuário admin desligado, AcrPull para quem só baixa e private endpoint no Premium. ACI e Container Apps: rede privada, identidade gerenciada e ingresso interno.',
+  v:GRID(2, [
+    ['Defender for Containers','',['postura do cluster','vulnerab. de imagem','ameaça em execução','sensor nos nós'],'ext'],
+    ['AKS','',['Entra + Azure RBAC','sem conta local','cluster privado','workload identity'],'blue'],
+    ['ACR','registro',['admin desligado','AcrPull: só baixar','private endpoint','Premium p/ rede'],'green'],
+    ['ACI e Container Apps','',['VNet própria','identidade gerenciada','ingresso interno','restrição de IP'],'amber'],
+  ], {h:170, step:3, rodape:'Azure Policy no AKS (Gatekeeper): bloquear privilegiado, exigir limites e registro confiável'}) },
+
+{ id:'appsec', ch:'Computação · 20–25%', title:'App Service, Functions, WAF e APIM',
+  say:'Plataformas de aplicação seguem o mesmo roteiro: autenticação integrada do Entra, conhecida como Easy Auth; identidade gerenciada com referências ao Key Vault; restrições de acesso e private endpoint para entrada; HTTPS only, TLS mínimo e publicação básica por FTP desligada. Logic Apps somam entradas e saídas seguras no histórico. O WAF fica no Application Gateway, regional, ou no Front Door, global, com regras gerenciadas, modo prevenção e limite de taxa. E o API Management protege o backend com validação de token e cotas.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:250, cls:'blue', html:B('App Service e Functions','')+UL('Easy Auth com Entra','identidade + Key Vault','restrição de acesso','private endpoint','sem FTP básico','HTTPS only, TLS 1.2+')},
+    {at:4, x:340,y:92,w:280,h:250, cls:'green', html:B('Logic Apps','')+UL('identidade gerenciada','entradas seguras','saídas seguras','IP no gatilho','SAS do gatilho HTTP','private endpoint')},
+    {at:8, x:644,y:92,w:280,h:250, cls:'amber', html:B('WAF','')+UL('App Gateway: regional','Front Door: global','regras gerenciadas','bots e limite de taxa','regras custom','detecção → prevenção')},
+    {at:12, x:36,y:362,w:888,h:140, cls:'ext', html:B('API Management na frente do backend','')+UL('validate-jwt ou validate-azure-ad-token','rate-limit-by-key e quota-by-key','identidade gerenciada até o backend, backend só aceita o APIM')},
+  ]}},
+
+/* ---------- POSTURA ---------- */
+{ id:'defender-cloud', ch:'Postura · 20–25%', title:'Defender for Cloud: CSPM e planos',
+  say:'O Defender for Cloud tem duas metades. Postura: o CSPM básico, gratuito, dá secure score e recomendações do benchmark; o Defender CSPM, pago, soma análise de caminho de ataque, cloud security explorer, varredura sem agente, postura de dados e de IA. Proteção de workloads: planos por tipo, como Servers, Storage, Databases, Containers, Key Vault, APIs e AI Services. AWS e GCP entram por conectores. A gestão de vulnerabilidades do Defender cobre as VMs, e o Defender EASM descobre o que está exposto na internet.',
+  v:GRID(3, [
+    ['Postura (CSPM)','',['básico: secure score','Defender CSPM: caminhos','cloud security explorer','conformidade regulatória','análise sem agente','postura de dados e IA'],'blue'],
+    ['Workloads (CWP)','planos por tipo',['Servers, Storage','Databases, Containers','Key Vault, APIs','AI Services','App Service','Resource Manager'],'green'],
+    ['Alcance','',['conector AWS e GCP','Arc para o local','vulnerabilidades (MDVM)','EASM: superfície externa','DevOps: GitHub e ADO','recomendação por padrão'],'amber'],
+  ], {h:280, step:4, rodape:'Secure score mede postura; alerta é proteção de workload · padrões além do MCSB: confira o plano exigido'}) },
+
+{ id:'sentinel', ch:'Postura · 20–25%', title:'Sentinel: coleta, papéis e retenção',
+  say:'O Sentinel roda sobre um workspace do Log Analytics, e a Microsoft o está levando para o portal do Defender. Papéis: Reader, Responder e Contributor, mais Automation Contributor para playbooks. Conteúdo vem em soluções do content hub. Conectores Microsoft trazem Entra ID e atividade do Azure. Syslog e CEF chegam por um encaminhador Linux com o agente AMA; eventos de segurança do Windows, por regra de coleta, inclusive via Windows Event Forwarding. Tabelas personalizadas terminam em sublinhado CL. Retenção: camada de análise e data lake.',
+  v:FLOW([['Fontes','Entra, Azure, M365','blue'],['Coleta','conector, AMA, DCR','amber'],['Workspace','tabelas e retenção','green'],['Detecção','regras e incidentes','ext']],
+    {y:100, h:110, step:1.8, cards:[
+      ['Coletar','',['content hub: soluções','Syslog e CEF: AMA','SecurityEvent: DCR','WEF: WindowsEvent','custom: tabela _CL'],'blue'],
+      ['Operar','',['Reader, Responder','Contributor','Automation Contributor','análise × data lake','Purview Audit no XDR'],'amber'],
+    ]}) },
+
+{ id:'sentinel-kql', ch:'Postura · 20–25%', title:'KQL de detecção e automação',
+  say:'Consultas de detecção que a prova espera ler. Força bruta com o evento quatro mil seiscentos e vinte e cinco agrupado por conta e IP. Login com sucesso apesar de risco alto. Ativações de papel pelo PIM nos logs de auditoria. Bloqueios do firewall de borda vindos por CEF. E atividade do Microsoft 365 no advanced hunting do Defender XDR. Viram regras analíticas que criam incidentes; regras de automação atribuem, marcam e disparam playbooks, que são Logic Apps, por exemplo para desabilitar o usuário.',
+  v:S('deteccoes.kql','deteccoes.kql','kql')},
+
+{ id:'copilot', ch:'Postura · 20–25%', title:'Microsoft Security Copilot',
+  say:'O Security Copilot entra na prova como ferramenta a configurar. Capacidade em unidades de computação de segurança, provisionadas, e workspaces que separam times ou ambientes. Permissões em dois níveis: papéis do próprio Copilot, owner e contributor, e as permissões que o usuário já tem em cada produto, porque o Copilot não dá acesso a dados que a pessoa não poderia ver. Plugins da Microsoft, como Defender, Sentinel, Entra, Intune e Purview, e de terceiros. E agentes, da Microsoft e da Security Store, como o de triagem de phishing.',
+  v:GRID(2, [
+    ['Capacidade','',['unidades de computação','workspaces','uso por time','monitorar consumo'],'blue'],
+    ['Permissões','dois níveis',['owner e contributor','acesso do usuário','não amplia acesso','RBAC por produto'],'green'],
+    ['Plugins','fontes',['Defender, Sentinel','Entra, Intune','Purview','terceiros e custom'],'amber'],
+    ['Agentes','automação',['Microsoft','Security Store','triagem de phishing','aprovar e monitorar'],'ext'],
+  ], {h:170, step:3, rodape:'Licenciamento e capacidade inclusa mudam com frequência: confira a documentação atual'}) },
+
+/* ---------- NA HORA DA PROVA ---------- */
+{ id:'pegadinhas', ch:'Na hora da prova', title:'As pegadinhas da SC-500',
+  say:'O que mais derruba. PIM elegível não é ativo. Permissão de aplicativo sempre pede consentimento do admin. Purge protection não desliga. Firewall do Key Vault barra até quem tem papel. Private endpoint sem zona DNS resolve para o público. Regra de admin do AVNM vence o NSG. Service endpoint não dá IP privado. JIT é do Servers P2. Secure score não é alerta. Copilot não amplia acesso. E o plano certo: postura é CSPM, proteção em execução é plano de workload.',
+  v:GRID(2, [
+    ['Identidade','',['elegível ≠ ativo','app permission: admin','purge não desliga','firewall barra o papel','break-glass fora do CA'],'ext'],
+    ['Rede e dados','',['endpoint precisa DNS','AVNM vence o NSG','service ≠ private','Always Encrypted ≠ máscara','SAS: delegação'],'amber'],
+    ['Computação e IA','',['JIT: Servers P2','ADE aposentando','Agent ID ≠ conta humana','Copilot vê o que o usuário vê','gateway: identidade'],'amber'],
+    ['Postura','',['score ≠ alerta','CSPM ≠ workload','CEF: CommonSecurityLog','tabela custom: _CL','playbook = Logic App'],'ext'],
+  ], {h:186, step:3}) },
+
+{ id:'estrategia', ch:'Na hora da prova', title:'Estratégia de prova',
+  say:'Leia o que se pede primeiro: menor privilégio, menor esforço administrativo, sem segredo, ou menor custo, e elimine o que não atende. Desconfie de respostas que dão Owner, Global Administrator ou abrem a rede para a internet. Em séries com a mesma situação e soluções diferentes não dá para voltar: decida uma por vez. Estudos de caso: leia as perguntas antes das abas. Faça o simulado oficial e o exam sandbox. A prova pode ter itens em preview de uso comum: estude a documentação recente.',
+  v:GRID(3, [
+    ['Antes','',['simulado oficial gratuito','exam sandbox','laboratório desta trilha','módulos do Learn','docs de recursos novos'],'blue'],
+    ['Durante','',['requisito-chave primeiro','menor privilégio','sem segredo, sem IP público','Owner e Global: suspeite','marcar e revisar'],'green'],
+    ['Formatos','',['série sem voltar','estudo de caso','consulta ao Learn: pouco','tempo por caso','preview de uso comum'],'amber'],
+  ], {h:250, step:4, rodape:'Se não houver a prova no seu idioma, peça 30 minutos extras · idiomas e duração: confira a página oficial'}) },
+
+/* ---------- LABORATÓRIO ---------- */
+{ id:'lab', ch:'Laboratório', title:'Lab: do cofre ao incidente',
+  say:'O laboratório cobre os quatro domínios numa assinatura de estudo, com orçamento e alerta. Atribua a política personalizada de storage em modo Deny e veja a criação falhar. Implante o cofre privado em Bicep e prove que só se chega a ele pela VNet. Crie a VM com Trusted Launch, entre pelo Bastion e ligue o Defender for Servers. Ative o Sentinel, conecte o Entra ID e a atividade do Azure, crie uma regra com a consulta do PIM e um playbook. No fim, apague tudo.',
+  v:FLOW([['Governar','Policy em Deny','blue'],['Proteger','cofre privado, Bicep','blue'],['Endurecer','VM, Bastion, Defender','amber'],['Detectar','Sentinel e playbook','green']],
+    {y:100, h:110, step:1.8, cards:[
+      ['Comandos do roteiro','',['az policy definition create','az deployment group create','az vm create --security-type','az security pricing create','az sentinel (extensão)','az group delete no fim'],'blue'],
+      ['Para não pagar caro','',['budget com alerta no dia 1','avaliações gratuitas: confira','Sentinel: pouca ingestão','VM pequena, desalocada','desligar planos no fim','apagar o resource group'],'amber'],
+    ]}) },
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de prontidão',
+  say:'Pronto para agendar quando você: configura PIM e Conditional Access sem se trancar para fora, decide consentimento e identidade gerenciada, monta Key Vault com RBAC e rede privada, escreve uma Policy personalizada, protege storage e SQL, aplica regras do AVNM e diagnostica com o Network Watcher, publica com private endpoint e DNS, protege agentes de IA e o gateway do Foundry, endurece VMs e contêineres, lê o Defender for Cloud e escreve KQL no Sentinel. E passa de oitenta por cento no simulado oficial.',
+  v:CK('PIM e CA', 'Consent e identidade', 'Key Vault privado', 'Policy personalizada', 'Storage e SQL', 'AVNM e Firewall', 'Private endpoint + DNS', 'IA e AI Gateway', 'VM e contêiner', 'Defender CSPM', 'Sentinel e KQL', 'Simulado acima de 80%')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os domínios com onde estudar, o simulado com questões no estilo da prova, os links oficiais e o checklist. O caminho que mais rende: os módulos do Microsoft Learn, o laboratório desta trilha refeito só com Bicep e terminal, e o simulado oficial até passar com folga. Com a SC-500, o próximo passo natural é a SC-100, de arquiteto de cibersegurança, que aceita este título como pré-requisito e passa a perguntar por que, e não só como.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['RBAC, Policy e locks na AZ-104', 'c104', 'governanca', 'A base de governança que a SC-500 aprofunda'],
+  ['Private endpoint e DNS', 'c104', 'nsg', 'NSG, Bastion e endpoints do ponto de vista do admin'],
+  ['Network Watcher na prática', 'c104', 'rede-cli', 'IP flow verify e next hop no terminal'],
+  ['KQL que a prova espera ler', 'c104', 'kql', 'A sintaxe base antes das detecções'],
+  ['Autenticação e autorização', 'c305', 'autenticacao', 'Identidade em nível de arquitetura'],
+  ['Segurança de rede no design', 'c305', 'rede-seguranca', 'Firewall, WAF e Private Link'],
+  ['Segredos e criptografia de envelope', 'v14', 'envelope', 'Por que chave do cliente e KMS'],
+  ['MFA e passkeys', 'v14', 'mfa', 'Métodos resistentes a phishing'],
+  ['Cadeia de suprimentos no CI', 'v14', 'supply', 'Imagens e dependências confiáveis'],
+  ['Aplicações com LLM', 'v14', 'llm', 'Prompt injection e o que o guardrail resolve'],
+  ['Guardrails no Foundry', 'c103', 'guardrails', 'Filtros e Prompt Shields do lado do dev'],
+  ['Gateway de IA corporativo', 'v24', 'gateway', 'Cota, roteamento e identidade na frente do modelo'],
+  ['Segredos sem chave no AKS', 'aks', 'spc', 'Key Vault e workload identity'],
+];
+
+const MATRIZ = [
+  ['Gerenciar identidade, acesso e governança', '20–25%', 'PIM, Conditional Access, métodos de autenticação e passwordless, app registrations, enterprise apps, consent, identidades gerenciadas; Key Vault (acesso, firewall, chaves, Defender for Key Vault, varredura de segredos no CSPM); Azure Policy, conformidade no Defender for Cloud, locks, papéis custom, excesso de privilégio, segurança do Backup, IaC', 'Vol 14 · mfa, segredos, envelope · AZ-104 · rbac, governanca · esta trilha · pim-ca, keyvault, policy-json'],
+  ['Proteger storage, bancos e rede', '25–30%', 'Segurança e firewall do storage, Defender for Storage, políticas de acesso; Azure SQL (plataforma, auditoria), Defender for Databases; NSG e ASG, Virtual Network Manager, Virtual WAN, VPN, Entra Private Access, private endpoints, Private Link service, Azure Firewall, Network Watcher', 'AZ-104 · storage-acesso, nsg, rede-cli · AZ-305 · rede-seguranca · Nova AWS · endpoints · esta trilha · private, rede-bicep'],
+  ['Proteger computação', '20–25%', 'IA: SharePoint oversharing, Purview DSPM for AI, proteção em tempo real do Copilot Studio, Entra Agent ID (CA, raio de impacto no XDR, acesso), AI Gateway no APIM, Defender for AI Services, guardrails no Foundry, painel Data and AI, agentes no M365 admin center; VMs (disco, Bastion, JIT, Arc, Defender for Servers, varredura sem agente, Trusted Launch, Machine Configuration); AKS, ACR, ACI, Container Apps, Functions, Logic Apps, App Service, WAF, APIM', 'AI-103 · guardrails, seguranca · Vol 24 · gateway · Trilha AKS · spc · esta trilha · agent-id, ai-gateway, vm, containers'],
+  ['Gerenciar e monitorar a postura de segurança', '20–25%', 'Defender CSPM, conformidade, planos de workload, conectores AWS e GCP, Defender Vulnerability Management, Defender EASM; Sentinel (workspace, papéis, content hub, conectores, Syslog/CEF, eventos Windows por DCR e WEF, tabelas custom, automação e playbooks, retenção, Purview Audit no XDR); Security Copilot (workspaces, papéis, plugins, agentes)', 'Vol 13 · sinais · AZ-104 · kql · Vol 14 · incidente · esta trilha · defender-cloud, sentinel, sentinel-kql, copilot'],
+];
+
+const STUDY = [
+  ['Study guide da SC-500', 'Skills measured oficial, domínios e pesos', 'https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/sc-500', 'dominios'],
+  ['Simulados oficiais (practice assessments)', 'Gratuitos, no estilo da prova; confira se já há o da SC-500', 'https://learn.microsoft.com/en-us/credentials/certifications/practice-assessments-for-microsoft-certifications', 'estrategia'],
+  ['Exam sandbox', 'A interface e os tipos de questão', 'https://aka.ms/examdemo', 'estrategia'],
+  ['Privileged Identity Management', 'Elegível, ativação, aprovação e revisões', 'https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure', 'pim-ca'],
+  ['Conditional Access', 'Atribuições, condições e controles', 'https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview', 'pim-ca'],
+  ['Azure Key Vault: segurança', 'RBAC, rede, soft delete e purge protection', 'https://learn.microsoft.com/en-us/azure/key-vault/general/security-features', 'keyvault'],
+  ['Estrutura de definição do Azure Policy', 'Modo, parâmetros, regra e aliases', 'https://learn.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure-basics', 'policy-json'],
+  ['Azure Firewall', 'Standard, Premium, Firewall Policy', 'https://learn.microsoft.com/en-us/azure/firewall/overview', 'conectividade'],
+  ['Private Link e private endpoints', 'Endpoint, Private Link service e DNS', 'https://learn.microsoft.com/en-us/azure/private-link/private-link-overview', 'private'],
+  ['Microsoft Defender for Cloud', 'CSPM, planos de workload e conectores', 'https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-cloud-introduction', 'defender-cloud'],
+  ['Microsoft Sentinel', 'Conectores, regras, automação e retenção', 'https://learn.microsoft.com/en-us/azure/sentinel/overview', 'sentinel'],
+  ['Microsoft Security Copilot', 'Capacidade, papéis, plugins e agentes', 'https://learn.microsoft.com/en-us/copilot/security/microsoft-security-copilot', 'copilot'],
+];
+
+const CHECK = [
+  ['Identidade', 'Tornar um papel elegível no PIM com aprovação', 'pim-ca'],
+  ['Identidade', 'Política de CA em report-only exigindo força de autenticação', 'pim-ca'],
+  ['Identidade', 'Restringir consentimento e ligar o fluxo de pedido ao admin', 'auth-apps'],
+  ['Segredos', 'Cofre com RBAC, purge protection e sem acesso público', 'kv-cli'],
+  ['Governança', 'Criar e atribuir a Policy personalizada em Deny', 'policy-json'],
+  ['Governança', 'Cofre do Backup imutável com Resource Guard', 'governanca'],
+  ['Dados', 'Storage sem Shared Key e com Defender for Storage', 'storage'],
+  ['Dados', 'SQL com autenticação só Entra e auditoria no workspace', 'sql'],
+  ['Rede', 'Regra de admin no AVNM e conferir com o Network Watcher', 'nsg-avnm'],
+  ['Rede', 'Private endpoint com DNS zone group em Bicep', 'rede-bicep'],
+  ['IA', 'AI Gateway com token do Entra e cota de tokens', 'ai-gateway'],
+  ['Computação', 'VM Trusted Launch, Bastion e Defender for Servers P2', 'vm-cli'],
+  ['Postura', 'Conectar uma conta AWS ao Defender for Cloud', 'defender-cloud'],
+  ['Postura', 'Regra analítica e playbook no Sentinel', 'sentinel-kql'],
+  ['Prontidão', 'Passar de 80% no simulado oficial', 'estrategia'],
+];
+
+const FAQ = [
+ ['Identidade e governança','Administradores devem ter o papel Global Administrator só quando precisarem, por até 4 horas, com aprovação do CISO. O que configurar?',`<p>A) Conditional Access exigindo MFA · B) Atribuição elegível no PIM com aprovação e duração máxima · C) Grupo dinâmico com os administradores · D) Access review trimestral</p><p><b>Resposta: B.</b> O PIM dá acesso just-in-time, limitado no tempo e com aprovação. A não remove o acesso permanente; C não controla duração; D revisa, mas não ativa sob demanda.</p>`],
+ ['Identidade e governança','Um app de backend precisa ler e-mails de todas as caixas sem usuário logado. Que tipo de permissão e consentimento?',`<p>A) Delegada, consentimento do usuário · B) De aplicativo, consentimento do admin · C) Delegada, consentimento do admin · D) Nenhuma: identidade gerenciada dispensa permissão</p><p><b>Resposta: B.</b> Sem usuário logado, a permissão é de aplicativo, que sempre exige admin consent. Delegada (A, C) age em nome de alguém logado; identidade gerenciada (D) ainda precisa de permissão concedida.</p>`],
+ ['Identidade e governança','Uma Web App precisa ler segredos do Key Vault sem guardar credencial e com o menor privilégio. O que fazer?',`<p>A) Client secret em app setting e papel Key Vault Administrator · B) Identidade gerenciada e Key Vault Secrets User no cofre · C) Identidade gerenciada e Contributor no resource group · D) Access policy com todas as permissões de segredo</p><p><b>Resposta: B.</b> Identidade gerenciada elimina o segredo; Secrets User só lê segredos. A guarda segredo e dá poder demais; Contributor (C) é plano de controle e amplo; D concede além do necessário.</p>`],
+ ['Identidade e governança','Um cofre foi apagado por engano e precisa ser impossível de destruir definitivamente durante 90 dias. Qual configuração garante isso?',`<p>A) Lock ReadOnly · B) Soft delete com purge protection · C) Backup diário das chaves · D) RBAC com Reader</p><p><b>Resposta: B.</b> Soft delete guarda o cofre apagado e a purge protection impede expurgá-lo antes do fim da retenção. Lock (A) evita alterar, mas pode ser removido; C e D não impedem o expurgo.</p>`],
+ ['Identidade e governança','Toda conta de storage nova deve ser bloqueada se permitir acesso público, mas a equipe quer poder trocar para só auditar sem editar a regra. Como modelar?',`<p>A) Policy custom com parâmetro effect (Audit, Deny, Disabled) · B) Duas policies fixas · C) Lock em cada conta · D) Alerta do Activity Log</p><p><b>Resposta: A.</b> Parametrizar o efeito permite escolher na atribuição. B duplica manutenção; lock (C) não avalia configuração; alerta (D) só avisa depois.</p>`],
+ ['Storage, bancos e rede','Arquivos enviados por clientes a um contêiner precisam ser verificados contra malware assim que chegam. O que habilitar?',`<p>A) Soft delete de blobs · B) Defender for Storage com malware scanning no upload · C) Imutabilidade WORM · D) Firewall do storage</p><p><b>Resposta: B.</b> A varredura de malware do Defender for Storage analisa o blob no upload. Soft delete (A) e WORM (C) protegem contra exclusão; firewall (D) filtra rede, não conteúdo.</p>`],
+ ['Storage, bancos e rede','Colunas com CPF devem ficar ilegíveis até para o DBA do Azure SQL. Qual recurso?',`<p>A) TDE · B) Dynamic data masking · C) Always Encrypted · D) Auditoria do servidor</p><p><b>Resposta: C.</b> Always Encrypted cifra no cliente e o banco nunca vê a chave. TDE (A) cifra em repouso, mas o DBA lê; máscara (B) só esconde na exibição; auditoria (D) registra, não protege.</p>`],
+ ['Storage, bancos e rede','A equipe central de segurança precisa bloquear RDP vindo da internet em 200 VNets de várias assinaturas, sem que os donos das VNets possam liberar no NSG. O que usar?',`<p>A) NSG em cada sub-rede · B) Regra de administrador de segurança Deny no Azure Virtual Network Manager · C) Azure Policy com Audit · D) ASG compartilhado</p><p><b>Resposta: B.</b> As regras de admin do AVNM são avaliadas antes do NSG e o Deny não pode ser contornado. A é editável pelos donos; Audit (C) não bloqueia; ASG (D) não atravessa VNets dessa forma nem impõe regra.</p>`],
+ ['Storage, bancos e rede','Depois de criar um private endpoint para o SQL, as VMs ainda conectam pelo IP público. O que falta?',`<p>A) Service endpoint · B) Zona DNS privada privatelink.database.windows.net ligada à VNet, e desligar o acesso público · C) Regra NSG de saída · D) Azure Firewall Premium</p><p><b>Resposta: B.</b> Sem a zona privada ligada, o nome resolve para o público; e o acesso público deve ser desligado. A é outro mecanismo; C e D não mudam a resolução de nome.</p>`],
+ ['Storage, bancos e rede','Usuários remotos precisam acessar um app interno sem VPN de rede inteira, com MFA e dispositivo em conformidade por aplicativo. Qual solução?',`<p>A) VPN ponto a site com certificado · B) Microsoft Entra Private Access com Conditional Access · C) IP público com NSG restrito · D) Azure Bastion</p><p><b>Resposta: B.</b> Private Access dá acesso Zero Trust por aplicativo, aplicando CA. A abre a rede inteira; C expõe o app; Bastion (D) é para RDP/SSH em VMs.</p>`],
+ ['Proteger computação','Um agente de IA da empresa usa a conta de serviço de um analista para acessar dados. Qual a correção alinhada ao blueprint?',`<p>A) Rotacionar a senha do analista · B) Dar ao agente uma identidade do Entra Agent ID com permissões mínimas e Conditional Access · C) Desabilitar MFA para o agente · D) Guardar a senha no Key Vault</p><p><b>Resposta: B.</b> Agent ID dá identidade própria, governável por CA e auditável. A e D mantêm a conta humana; C enfraquece a proteção.</p>`],
+ ['Proteger computação','Apps internos chamam um modelo do Foundry com a chave de API no código e sem limite de uso. O que resolve os dois problemas?',`<p>A) Mover a chave para variável de ambiente · B) AI Gateway no API Management com validação de token do Entra, cota de tokens e identidade gerenciada no backend · C) Aumentar a cota do modelo · D) Filtro de conteúdo no modelo</p><p><b>Resposta: B.</b> O gateway tira a chave do cliente e limita tokens por app. A só move o segredo; C piora custo; D trata conteúdo, não acesso nem cota.</p>`],
+ ['Proteger computação','A porta 3389 de VMs deve ficar fechada e abrir só por 3 horas para o IP do administrador que pedir. O que usar e qual plano?',`<p>A) Bastion Basic · B) JIT VM access, no Defender for Servers Plano 2 · C) NSG com prioridade 100 · D) Azure Firewall DNAT permanente</p><p><b>Resposta: B.</b> JIT abre a porta temporariamente para o IP solicitante e exige o P2. Bastion (A) evita a porta, mas não é o pedido; C e D deixam a porta aberta.</p>`],
+ ['Postura de segurança','Você quer ver quais VMs expostas à internet têm vulnerabilidade crítica e caminho até um banco com dados sensíveis. Qual recurso?',`<p>A) Secure score · B) Análise de caminho de ataque do Defender CSPM · C) Alerta do Defender for Servers · D) Azure Advisor</p><p><b>Resposta: B.</b> Attack path analysis cruza exposição, vulnerabilidade e dados sensíveis. Secure score (A) é agregado; alerta (C) é ameaça em execução; Advisor (D) não faz essa análise.</p>`],
+ ['Postura de segurança','Um firewall local envia logs em CEF. Como levar ao Sentinel e em qual tabela os dados chegam?',`<p>A) Agente MMA direto no firewall, tabela Syslog · B) Encaminhador Linux com AMA e regra de coleta, tabela CommonSecurityLog · C) Diagnostic setting, tabela AzureDiagnostics · D) Logic App, tabela personalizada _CL</p><p><b>Resposta: B.</b> CEF chega por um encaminhador Linux com o Azure Monitor Agent e DCR, na CommonSecurityLog. MMA (A) foi aposentado; C é para recursos Azure; D é desnecessário.</p>`],
+ ['Postura de segurança','Quando um incidente de alta gravidade envolver um usuário, a conta deve ser desabilitada automaticamente. O que configurar no Sentinel?',`<p>A) Workbook · B) Regra de automação que dispara um playbook (Logic App) · C) Hunting query agendada · D) Watchlist</p><p><b>Resposta: B.</b> Automation rule mais playbook executa a ação. Workbook (A) visualiza; hunting (C) investiga; watchlist (D) é lista de referência.</p>`],
+];
+
+const CMDS = [
+  ['az keyvault create … --enable-rbac-authorization true --enable-purge-protection true', 'Cofre com RBAC e proteção contra expurgo'],
+  ['az role assignment create --assignee-object-id ID --role "Key Vault Secrets User" --scope COFRE', 'Menor privilégio para ler segredos'],
+  ['az policy definition create -n NOME --rules regra.json --params params.json --mode Indexed', 'Criar uma Policy personalizada'],
+  ['az policy assignment create -n NOME --policy DEF --params \'{"effect":{"value":"Deny"}}\'', 'Atribuir com o efeito escolhido'],
+  ['az security pricing create -n PLANO --tier Standard', 'Ligar um plano do Defender for Cloud'],
+  ['az network watcher test-ip-flow …', 'O pacote passa? Qual regra decide?'],
+  ['az network private-endpoint create … --group-id vault', 'Criar um private endpoint'],
+  ['az vm create … --security-type TrustedLaunch --enable-vtpm true', 'VM com Trusted Launch'],
+  ['az network bastion ssh … --auth-type AAD', 'SSH pelo Bastion com login do Entra'],
+  ['azcmagent connect -g RG --location LOCAL', 'Levar um servidor externo ao Azure Arc'],
+  ['SecurityEvent | where EventID == 4625', 'Falhas de logon do Windows no Sentinel'],
+  ['CommonSecurityLog | where DeviceAction == "deny"', 'Eventos CEF de firewall'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

@@ -1,0 +1,1318 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha AI-200</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"config_segura.py": "# config_segura.py: segredos no Key Vault, configuração no App Configuration, sem chaves\nimport os\nfrom azure.identity import DefaultAzureCredential\nfrom azure.keyvault.secrets import SecretClient\nfrom azure.appconfiguration.provider import (load, SettingSelector, WatchKey,\n                                             AzureAppConfigurationKeyVaultOptions)\n\ncred = DefaultAzureCredential()   # local: az login · Azure: managed identity\n\n# 1. Key Vault: ler e gravar segredos (papel Key Vault Secrets User / Officer)\nkv = SecretClient(vault_url=\"https://kv-rag.vault.azure.net\", credential=cred)\nchave_parceiro = kv.get_secret(\"parceiro-api-key\").value      # sempre a versão atual\nversoes = [p.version for p in kv.list_properties_of_secret_versions(\"parceiro-api-key\")]\n\n# rotação: nova versão; quem lê sem versão fixa já pega a nova\nkv.set_secret(\"parceiro-api-key\", \"novo-valor\", tags={\"rotacionado-por\": \"func-rotacao\"})\n\n# 2. App Configuration: chaves, rótulos por ambiente e referências ao Key Vault\nconfig = load(\n    endpoint=\"https://appcs-rag.azconfig.io\",\n    credential=cred,                                         # App Configuration Data Reader\n    selects=[SettingSelector(key_filter=\"rag:*\", label_filter=os.environ[\"AMBIENTE\"])],\n    trim_prefixes=[\"rag:\"],\n    keyvault_options=AzureAppConfigurationKeyVaultOptions(credential=cred),\n    refresh_on=[WatchKey(\"rag:sentinela\")],   # mudou a sentinela: recarrega tudo\n    refresh_interval=60,\n    feature_flag_enabled=True,\n)\nmodelo = config[\"modelo\"]          # ex.: gpt-4.1-mini em dev, gpt-4.1 em prod\ntop_k = int(config[\"top_k\"])\n\ndef a_cada_requisicao():\n    config.refresh()               # barato: só consulta a sentinela após o intervalo\n\n# App Service / Functions sem código: referência ao Key Vault no app setting\n#   PARCEIRO_KEY=@Microsoft.KeyVault(SecretUri=https://kv-rag.vault.azure.net/secrets/x/)\n# Rotação automática: evento Microsoft.KeyVault.SecretNearExpiry (Event Grid) -> Function", "consultas.kql": "// consultas.kql: Log Analytics / Application Insights (tabelas workspace-based)\n\n// 1. Saúde da API: volume, falhas e p95 por rota na última hora\nAppRequests\n| where TimeGenerated > ago(1h)\n| summarize total = count(), falhas = countif(Success == false),\n            p95_ms = percentile(DurationMs, 95) by Name\n| order by p95_ms desc\n\n// 2. Chamadas ao modelo: latência e 429 em janelas de 5 minutos\nAppDependencies\n| where TimeGenerated > ago(6h) and Target has \"openai\"\n| summarize chamadas = count(), p95_ms = percentile(DurationMs, 95),\n            limitadas = countif(ResultCode == \"429\") by bin(TimeGenerated, 5m)\n| render timechart\n\n// 3. Uma requisição de ponta a ponta: tudo com o mesmo OperationId\nunion AppRequests, AppDependencies, AppExceptions, AppTraces\n| where OperationId == \"4bf92f3577b34da6a3ce929d0e0e4736\"\n| project TimeGenerated, Type, Name, DurationMs, ResultCode, Message\n| order by TimeGenerated asc\n\n// 4. Exceções novas desde o último deploy, agrupadas\nAppExceptions\n| where TimeGenerated > ago(1d)\n| summarize n = count(), exemplo = any(OuterMessage) by ProblemId, AppRoleName\n| top 10 by n\n\n// 5. Container Apps: logs do console de uma revisão\nContainerAppConsoleLogs_CL\n| where RevisionName_s == \"rag-api--v2\" and Log_s has \"error\"\n| project TimeGenerated, Log_s\n| take 50\n\n// 6. AKS: reinícios de pods (OOMKilled, CrashLoopBackOff)\nKubePodInventory\n| where TimeGenerated > ago(1h) and PodRestartCount > 0\n| summarize reinicios = max(PodRestartCount) by Name, ContainerStatusReason", "cosmos_vetores.py": "# cosmos_vetores.py: embeddings e busca vetorial no Cosmos DB for NoSQL, sem chaves\nimport os\nfrom azure.cosmos import CosmosClient, PartitionKey\nfrom azure.identity import DefaultAzureCredential, get_bearer_token_provider\nfrom openai import AzureOpenAI\n\ncred = DefaultAzureCredential()                 # managed identity em produção\naoai = AzureOpenAI(azure_endpoint=os.environ[\"AOAI_ENDPOINT\"], api_version=\"2024-10-21\",\n    azure_ad_token_provider=get_bearer_token_provider(\n        cred, \"https://cognitiveservices.azure.com/.default\"))\ndb = CosmosClient(os.environ[\"COSMOS_URL\"], credential=cred).get_database_client(\"rag\")\n\npolitica_vetor = {\"vectorEmbeddings\": [{\"path\": \"/embedding\", \"dataType\": \"float32\",\n    \"distanceFunction\": \"cosine\", \"dimensions\": 1536}]}\npolitica_indice = {\n    \"includedPaths\": [{\"path\": \"/*\"}],\n    \"excludedPaths\": [{\"path\": \"/embedding/*\"}, {\"path\": \"/texto/?\"}],  # menos RU na escrita\n    \"vectorIndexes\": [{\"path\": \"/embedding\", \"type\": \"diskANN\"}],\n}\ntrechos = db.create_container_if_not_exists(id=\"trechos\",\n    partition_key=PartitionKey(path=\"/area\"),   # filtro mais comum = chave de partição\n    vector_embedding_policy=politica_vetor, indexing_policy=politica_indice)\n\ndef embed(texto: str) -> list[float]:\n    return aoai.embeddings.create(model=\"text-embedding-3-small\", input=texto).data[0].embedding\n\ndef indexar(id_: str, area: str, texto: str, fonte: str):\n    trechos.upsert_item({\"id\": id_, \"area\": area, \"texto\": texto, \"fonte\": fonte,\n                         \"embedding\": embed(texto)})\n\ndef buscar(pergunta: str, area: str, k: int = 5):\n    sql = (\"SELECT TOP @k c.id, c.texto, c.fonte, VectorDistance(c.embedding, @v) AS score \"\n           \"FROM c WHERE c.area = @area ORDER BY VectorDistance(c.embedding, @v)\")\n    params = [{\"name\": \"@k\", \"value\": k}, {\"name\": \"@v\", \"value\": embed(pergunta)},\n              {\"name\": \"@area\", \"value\": area}]\n    itens = list(trechos.query_items(sql, parameters=params, partition_key=area))\n    ru = trechos.client_connection.last_response_headers[\"x-ms-request-charge\"]\n    print(f\"{len(itens)} trechos, {ru} RU\")     # meça o custo de cada consulta\n    return itens", "deploy.yaml": "# deploy.yaml: API de RAG no AKS, imagem do ACR, identidade de workload (sem segredo)\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: rag-api\nspec:\n  replicas: 2\n  selector:\n    matchLabels: { app: rag-api }\n  template:\n    metadata:\n      labels:\n        app: rag-api\n        azure.workload.identity/use: \"true\"     # injeta o token federado no pod\n    spec:\n      serviceAccountName: rag-api-sa            # anotada com o client-id da identidade\n      containers:\n        - name: api\n          image: meuacr.azurecr.io/rag-api:1.4.0  # tag imutável, nunca :latest\n          ports: [{ containerPort: 8000 }]\n          env:\n            - name: COSMOS_URL\n              value: https://cosmos-rag.documents.azure.com:443/\n            - name: APPLICATIONINSIGHTS_CONNECTION_STRING\n              valueFrom:\n                secretKeyRef: { name: obs, key: appinsights }\n          resources:\n            requests: { cpu: 250m, memory: 512Mi }\n            limits: { memory: 1Gi }\n          readinessProbe:                       # fora do Service até ficar pronto\n            httpGet: { path: /health, port: 8000 }\n            initialDelaySeconds: 5\n          livenessProbe:                        # reinicia se travar\n            httpGet: { path: /health, port: 8000 }\n            periodSeconds: 20\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: rag-api\nspec:\n  selector: { app: rag-api }                    # precisa casar com os labels do pod\n  ports: [{ port: 80, targetPort: 8000 }]", "fila.py": "# fila.py: ingestão assíncrona com Service Bus (peek-lock, DLQ) e identidade gerenciada\nimport json\nfrom azure.identity import DefaultAzureCredential\nfrom azure.servicebus import ServiceBusClient, ServiceBusMessage, ServiceBusSubQueue\n\nNS = \"sb-rag.servicebus.windows.net\"        # namespace, sem connection string\ncred = DefaultAzureCredential()\n\nclass ErroPermanente(Exception): ...        # dado inválido: não adianta tentar de novo\n\ndef enviar(doc_id: str, url: str):\n    with ServiceBusClient(NS, cred) as sb, sb.get_queue_sender(\"ingestao\") as tx:\n        msg = ServiceBusMessage(json.dumps({\"doc\": doc_id, \"url\": url}),\n                                message_id=doc_id,       # detecção de duplicata\n                                application_properties={\"tipo\": \"pdf\"})\n        tx.send_messages(msg)\n\ndef consumir(processar):\n    with ServiceBusClient(NS, cred) as sb:\n        with sb.get_queue_receiver(\"ingestao\", max_wait_time=5) as rx:  # PEEK_LOCK\n            for msg in rx:\n                try:\n                    processar(json.loads(str(msg)))\n                    rx.complete_message(msg)                 # some da fila\n                except ErroPermanente as e:\n                    rx.dead_letter_message(msg, reason=\"invalido\",\n                                           error_description=str(e))\n                except Exception:\n                    rx.abandon_message(msg)  # volta; após MaxDeliveryCount vai à DLQ\n\ndef revisar_dlq():\n    with ServiceBusClient(NS, cred) as sb:\n        with sb.get_queue_receiver(\"ingestao\",\n                                   sub_queue=ServiceBusSubQueue.DEAD_LETTER) as dlq:\n            for msg in dlq.receive_messages(max_message_count=20, max_wait_time=5):\n                print(msg.dead_letter_reason, msg.delivery_count, str(msg)[:80])\n                dlq.complete_message(msg)            # depois de corrigir e reenviar\n\n# Tópico + assinaturas: um evento, vários consumidores com filtro próprio\n#   az servicebus topic subscription rule create --topic-name docs \\\n#     --subscription-name so-pdf --name tipo --filter-sql-expression \"tipo = 'pdf'\"", "function_app.py": "# function_app.py: Azure Functions, modelo de programação Python v2 (decorators)\nimport json, logging\nimport azure.functions as func\n\napp = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)\n\n# 1. API serverless: gatilho HTTP + saída para fila (binding, sem SDK)\n@app.route(route=\"documentos\", methods=[\"POST\"])\n@app.service_bus_queue_output(arg_name=\"fila\", queue_name=\"ingestao\",\n                              connection=\"SB\")    # SB__fullyQualifiedNamespace\ndef receber(req: func.HttpRequest, fila: func.Out[str]) -> func.HttpResponse:\n    corpo = req.get_json()\n    if \"url\" not in corpo:\n        return func.HttpResponse(\"url obrigatória\", status_code=400)\n    fila.set(json.dumps(corpo))\n    return func.HttpResponse(status_code=202)       # aceito, processa depois\n\n# 2. Evento: blob novo chega via Event Grid (filtro .pdf na assinatura)\n@app.event_grid_trigger(arg_name=\"evento\")\ndef blob_criado(evento: func.EventGridEvent):\n    dados = evento.get_json()\n    logging.info(\"novo blob %s (%s)\", evento.subject, dados.get(\"contentType\"))\n\n# 3. Fila: processa a ingestão; exceção = nova tentativa e, no limite, DLQ\n@app.service_bus_queue_trigger(arg_name=\"msg\", queue_name=\"ingestao\", connection=\"SB\")\ndef ingerir(msg: func.ServiceBusMessage):\n    doc = json.loads(msg.get_body().decode())\n    logging.info(\"indexando %s (tentativa %s)\", doc[\"url\"], msg.delivery_count)\n\n# 4. Change feed do Cosmos DB: reage a item novo ou alterado\n@app.cosmos_db_trigger(arg_name=\"itens\", connection=\"COSMOS\", database_name=\"rag\",\n                       container_name=\"documentos\", lease_container_name=\"leases\",\n                       create_lease_container_if_not_exists=True)\ndef mudou(itens: func.DocumentList):\n    for item in itens:\n        logging.info(\"reembed %s\", item[\"id\"])      # gerar embedding do texto novo\n\n# Deploy:  func azure functionapp publish func-rag\n# Planos:  Flex Consumption (escala a zero, VNet) · Premium (sem cold start) · Dedicado", "pg_rag.sql": "-- pg_rag.sql: RAG no Azure Database for PostgreSQL (flexible server) com pgvector\n-- antes: az postgres flexible-server parameter set -n azure.extensions -v VECTOR ...\nCREATE EXTENSION IF NOT EXISTS vector;\n\nCREATE TABLE trechos (\n  id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  doc_id     uuid        NOT NULL,\n  area       text        NOT NULL,           -- metadado de filtro (permissão)\n  revisao    smallint    NOT NULL,\n  texto      text        NOT NULL,\n  embedding  vector(1536) NOT NULL,          -- halfvec(1536) corta memória pela metade\n  criado_em  timestamptz NOT NULL DEFAULT now()\n);\n\n-- índice aproximado: HNSW (melhor recall/latência; build mais caro e mais memória)\nCREATE INDEX trechos_hnsw ON trechos\n  USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);\n-- alternativa: IVFFlat (build rápido; crie DEPOIS de carregar os dados)\n-- CREATE INDEX ON trechos USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);\n\nCREATE INDEX trechos_area ON trechos (area, revisao);   -- B-tree para o filtro\n\n-- busca semântica com filtro de metadado: o coração do RAG\nSET hnsw.ef_search = 40;                    -- mais alto = mais recall, mais CPU\nSELECT id, texto, 1 - (embedding <=> $1) AS similaridade\nFROM trechos\nWHERE area = ANY($2)                        -- só o que o usuário pode ver\n  AND revisao = (SELECT max(revisao) FROM trechos t2 WHERE t2.doc_id = trechos.doc_id)\nORDER BY embedding <=> $1                   -- <=> cosseno · <-> L2 · <#> produto interno\nLIMIT 5;\n\n-- conferir se o índice foi usado\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT id FROM trechos ORDER BY embedding <=> $1 LIMIT 5;", "telemetria.py": "# telemetria.py: OpenTelemetry com Azure Monitor (Application Insights)\nimport os, time\nfrom azure.monitor.opentelemetry import configure_azure_monitor\nfrom opentelemetry import trace, metrics\n\n# lê APPLICATIONINSIGHTS_CONNECTION_STRING; instrumenta requests, Django/Flask/FastAPI,\n# psycopg2, azure-core (Cosmos, Service Bus, Key Vault...) automaticamente\nconfigure_azure_monitor(logger_name=\"rag\")\n\ntracer = trace.get_tracer(\"rag.api\")\ntokens = metrics.get_meter(\"rag.api\").create_counter(\"llm.tokens\", unit=\"token\")\n\ndef responder(pergunta: str, area: str, buscar, gerar) -> str:\n    with tracer.start_as_current_span(\"rag.responder\") as span:\n        span.set_attribute(\"rag.area\", area)                 # nunca o texto do usuário\n        with tracer.start_as_current_span(\"rag.buscar\"):\n            trechos = buscar(pergunta, area)                 # vira dependência filha\n        span.set_attribute(\"rag.trechos\", len(trechos))\n        with tracer.start_as_current_span(\"llm.gerar\") as s:\n            t0 = time.perf_counter()\n            r = gerar(pergunta, trechos)\n            s.set_attribute(\"gen_ai.request.model\", r.model)\n            s.set_attribute(\"gen_ai.usage.input_tokens\", r.usage.prompt_tokens)\n            s.set_attribute(\"gen_ai.usage.output_tokens\", r.usage.completion_tokens)\n            tokens.add(r.usage.total_tokens, {\"modelo\": r.model})\n            s.set_attribute(\"llm.ms\", round((time.perf_counter() - t0) * 1000))\n        if not trechos:\n            span.add_event(\"sem_contexto\")                   # aparece na linha do tempo\n        return r.choices[0].message.content\n\n# O contexto (traceparent) viaja no HTTP e nas mensagens do Service Bus:\n# a mesma operation_Id liga API -> fila -> worker no mapa de aplicação."};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Cert · AI-200 Azure AI Cloud Developer =====================
+const CONF = {
+  title: 'Trilha AI-200', file: 'Cert - AI-200 Azure AI Cloud Developer', key: 'c200',
+  eyebrow: 'Certificação · Microsoft', h1: 'AI-200: o desenvolvedor Azure que entrega a nuvem por trás da IA',
+  lead: 'Roteiro em vídeo para a prova AI-200 (Developing AI Cloud Solutions on Azure), que dá o título Microsoft Certified: Azure AI Cloud Developer Associate e substituiu a AZ-204. Segue os quatro domínios e pesos do study guide oficial (skills measured de 15 de abril de 2026, atualizado em 5 de maio, conferido em outubro de 2026): contêineres no ACR, App Service, Container Apps com KEDA e AKS; Cosmos DB, PostgreSQL com pgvector e Azure Managed Redis para vetores e RAG; Service Bus, Event Grid e Functions; Key Vault, App Configuration, OpenTelemetry e KQL. Com comandos az reais, Python, pegadinhas, simulado e um laboratório de RAG de ponta a ponta.',
+  pills: ['ACR e App Service', 'Container Apps + KEDA', 'AKS', 'Cosmos DB vetorial', 'pgvector', 'Managed Redis', 'Service Bus e Event Grid', 'Key Vault, OTel e KQL'],
+  term: 'bash · ~/rag-azure',
+  faqPlaceholder: 'Buscar: Container Apps, KEDA, Cosmos, RU, pgvector, Service Bus, DLQ, Event Grid, KQL…',
+  matriz: {title: 'Domínios da prova e onde estudar', desc: 'Os quatro domínios do study guide oficial da AI-200, com o peso, o que cai e onde o tema já aparece nas trilhas.', cols: ['Domínio', 'Peso', 'O que cai', 'Onde estudar']},
+};
+const TITLE = {k: 'Certificação · Microsoft', h: 'AI-200: Azure AI Cloud Developer',
+  p: 'A prova que substituiu a AZ-204: contêineres, dados com vetores, mensageria e serverless, segurança e observabilidade. Não é uma prova de modelos; é a nuvem que faz a aplicação de IA funcionar em produção.',
+  chips: ['ACR', 'Container Apps', 'AKS', 'Cosmos DB', 'pgvector', 'Redis', 'Service Bus', 'Key Vault', 'KQL']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Identidade gerenciada, fila e trace em tudo',
+  p: 'Abaixo do vídeo estão os domínios com onde estudar, o simulado com questões no estilo da prova, os links oficiais e o checklist de prontidão.',
+  chips: ['sem chaves no código', 'RU medido', 'DLQ revisada', 'operation_Id de ponta a ponta']};
+
+const SCENES = [
+/* ---------- A PROVA ---------- */
+{ id:'intro', ch:'A prova', title:'O que a AI-200 valida',
+  say:'A AI-200, Developing AI Cloud Solutions on Azure, dá o título Azure AI Cloud Developer Associate e substituiu a AZ-204, aposentada em trinta e um de julho de dois mil e vinte e seis. São cento e vinte minutos, nota mínima setecentos de mil, com possíveis componentes interativos e oferta em português do Brasil. Não há pré-requisito formal; a página pede Python, SDKs do Azure, contêineres, mensageria e bancos vetoriais. Referência: study guide oficial, conferido em outubro de dois mil e vinte e seis. O simulado oficial ainda não saiu; número de questões e preço: confira a página.',
+  v:{type:'title'} },
+
+{ id:'mapa', ch:'A prova', title:'Os quatro domínios e os pesos',
+  say:'O blueprint tem quatro domínios. Contêineres, de vinte a vinte e cinco por cento: Container Registry, App Service, Container Apps com KEDA e AKS. Dados, o maior, de vinte e cinco a trinta: Cosmos DB for NoSQL, PostgreSQL com pgvector e Azure Managed Redis, sempre com vetores e RAG. Conectar e consumir serviços, de vinte a vinte e cinco: Service Bus, Event Grid e Functions. E segurança, monitoramento e troubleshooting, de vinte a vinte e cinco: Key Vault, App Configuration, OpenTelemetry e KQL. A trilha segue essa ordem.',
+  v:GRID(4, [
+    ['Contêineres','20–25%',['ACR e ACR Tasks','App Service','Container Apps, KEDA','AKS e troubleshooting'],'blue'],
+    ['Dados para IA','25–30% · o maior',['Cosmos DB NoSQL','PostgreSQL + pgvector','Azure Managed Redis','vetores e RAG'],'green'],
+    ['Conectar serviços','20–25%',['Service Bus','Event Grid','Azure Functions'],'amber'],
+    ['Segurança e obs.','20–25%',['Key Vault','App Configuration','OpenTelemetry','KQL'],'ext'],
+  ], {h:250, step:3, rodape:'Fonte: study guide oficial da AI-200 (skills measured de abril de 2026) · confira a página antes de agendar'}) },
+
+{ id:'mudou', ch:'A prova', title:'O que mudou em relação à AZ-204',
+  say:'Quem estudou para a AZ-204 reconhece Functions, Key Vault, App Configuration, Service Bus, Event Grid e Cosmos DB. Saíram da lista oficial temas como Blob Storage, API Management, Event Hubs, filas do Storage e autenticação com MSAL e Graph. Entraram AKS, Container Apps com KEDA, PostgreSQL com pgvector, Managed Redis com índice vetorial, busca vetorial no Cosmos, OpenTelemetry e KQL. Atenção: Logic Apps e implantação de modelos não aparecem no blueprint. Identidade gerenciada não é um item próprio, mas está em quase toda questão de segurança.',
+  v:GRID(3, [
+    ['Continua','da AZ-204',['Functions e bindings','Key Vault, App Configuration','Service Bus, Event Grid','Cosmos DB, App Service'],'blue'],
+    ['Entrou','foco em IA e contêiner',['AKS e Container Apps + KEDA','pgvector e Managed Redis','busca vetorial no Cosmos','OpenTelemetry e KQL'],'green'],
+    ['Saiu da lista','não estude primeiro',['Blob Storage, API Management','Event Hubs, filas do Storage','MSAL e Microsoft Graph','Logic Apps nem aparece'],'ext'],
+  ], {h:240, step:4, rodape:'Identidade gerenciada não é item próprio, mas é a resposta certa em quase toda questão de credencial'}) },
+
+/* ---------- CONTÊINERES ---------- */
+{ id:'acr', ch:'Contêineres · 20–25%', title:'Container Registry e ACR Tasks',
+  say:'O Azure Container Registry guarda, versiona e distribui imagens. az acr build é a quick task: manda o contexto, o build roda no Azure, sem Docker local. ACR Tasks automatizam: build a cada commit, quando a imagem base é atualizada, ou por agenda, e tarefas de várias etapas em YAML. Use tags imutáveis, como a versão ou o ID da execução, e não latest em produção. O AKS puxa a imagem com o papel AcrPull, dado por attach acr. Geo-replicação e Private Link exigem o SKU Premium.',
+  v:T('c|az acr create -g rg-ai -n meuacr --sku Standard',
+      'c|az acr build -r meuacr -t rag-api:{{.Run.ID}} -t rag-api:1.4.0 .',
+      'ok|Run ID: cb1 was successful after 52s · pushed meuacr.azurecr.io/rag-api:1.4.0',
+      'c|az acr task create -r meuacr -n build-api -t "rag-api:{{.Run.ID}}" \\',
+      'o|    -c https://github.com/empresa/rag-api.git#main -f Dockerfile --git-access-token $PAT',
+      'o|    # gatilhos: commit, atualização da imagem base e --schedule "0 3 * * *"',
+      'c|az acr repository show-tags -n meuacr --repository rag-api -o tsv',
+      'o|1.3.2    1.4.0    cb1',
+      'c|az aks update -g rg-ai -n aks-ai --attach-acr meuacr      # papel AcrPull',
+      'err|ImagePullBackOff no pod? quase sempre falta o AcrPull ou a tag não existe')},
+
+{ id:'appservice', ch:'Contêineres · 20–25%', title:'Contêiner no App Service',
+  say:'O App Service roda um contêiner como Web App com o mínimo de operação: TLS, domínio, slots de implantação e escala. As configurações do aplicativo viram variáveis de ambiente dentro do contêiner. Segredo não fica ali em texto: use a referência ao Key Vault, com a identidade gerenciada do app tendo o papel Key Vault Secrets User. Se a aplicação escuta numa porta diferente de oitenta, informe WEBSITES PORT. E a identidade gerenciada também puxa a imagem do ACR sem senha de administrador.',
+  v:{type:'boxes', defs:[
+    ['App settings','viram variáveis de ambiente', .8],
+    ['Referência ao Key Vault','@Microsoft.KeyVault(SecretUri=…)', 3.5],
+    ['Identidade gerenciada','lê o cofre e puxa do ACR', 7],
+    ['Porta','WEBSITES_PORT se não for 80', 10],
+    ['Slots','staging → swap para produção', 12.5],
+  ], items:[
+    {at:14, x:470,y:92,w:454,h:250, cls:'region', html:'<span class="rl">az cli</span><div style="margin-top:8px;font:12.5px/1.7 var(--f-mono)">az webapp identity assign -g rg-ai -n app-rag<br>az webapp config appsettings set -g rg-ai -n app-rag \\<br>&nbsp;&nbsp;--settings MODELO=gpt-4.1-mini WEBSITES_PORT=8000 \\<br>&nbsp;&nbsp;"API_KEY=@Microsoft.KeyVault(SecretUri=https://kv-rag.vault.azure.net/secrets/api-key/)"</div>'},
+    {at:18, x:470,y:362,w:454,h:140, cls:'amber', html:B('Quando escolher','')+UL('uma API ou site em contêiner','sem eventos nem escala a zero','time quer o menor esforço de operação')},
+  ]}},
+
+{ id:'containerapps', ch:'Contêineres · 20–25%', title:'Container Apps: ambiente e revisões',
+  say:'O Azure Container Apps roda contêineres sobre Kubernetes gerenciado, sem você ver o cluster. O ambiente é a fronteira: rede virtual e Log Analytics compartilhados entre os apps. Cada mudança de template cria uma revisão imutável. No modo single, a nova revisão substitui a antiga; no modo multiple, você divide o tráfego por peso, como oitenta e vinte, para um canário, e volta atrás mudando o peso. Segredos ficam no app ou referenciam o Key Vault, e mudar segredo não cria revisão: reinicie a revisão para ler o valor novo.',
+  v:FLOW([
+    ['Ambiente','VNet + Log Analytics','blue'],
+    ['App','ingress, segredos, identidade','blue'],
+    ['Revisão v1','80% do tráfego','green'],
+    ['Revisão v2','20%: canário','amber'],
+  ], {y:100, h:96, step:2.2, ch:190, cards:[
+    ['Revisões','',['template mudou = nova revisão','single: substitui a anterior','multiple: tráfego por peso ou rótulo','rollback = mudar o peso'],'green'],
+    ['Pegadinhas','',['segredo mudou: não cria revisão','reinicie a revisão para ler o novo','scale e ingress: config do app','escala a zero com min-replicas 0'],'amber'],
+  ]}) },
+
+{ id:'keda', ch:'Contêineres · 20–25%', title:'Escala por eventos com KEDA',
+  say:'A escala do Container Apps usa o KEDA. Por padrão, uma regra HTTP por requisições simultâneas. Para um worker de ingestão, a regra certa é a do Service Bus: o número de réplicas acompanha o tamanho da fila, e com mínimo zero você não paga quando não há mensagem. A regra precisa de autenticação: um segredo com a connection string ou a identidade gerenciada. Dica de prova: escala a zero mais regra de fila é a resposta clássica para processamento em segundo plano com custo mínimo.',
+  v:T('c|az containerapp create -n worker -g rg-ai --environment cae-ai \\',
+      'o|    --image meuacr.azurecr.io/worker:1.4.0 --registry-identity system \\',
+      'o|    --min-replicas 0 --max-replicas 20 --secrets "sb-conn=$SB_CONN" \\',
+      'o|    --scale-rule-name fila --scale-rule-type azure-servicebus \\',
+      'o|    --scale-rule-metadata queueName=ingestao namespace=sb-rag messageCount=20 \\',
+      'o|    --scale-rule-auth connection=sb-conn',
+      'ok|réplicas: 0 → 7 com 140 mensagens na fila (20 por réplica) → 0 quando esvaziar',
+      'c|az containerapp revision set-mode -n api -g rg-ai --mode multiple',
+      'c|az containerapp ingress traffic set -n api -g rg-ai --revision-weight api--v1=80 api--v2=20',
+      'c|az containerapp logs show -n worker -g rg-ai --type system --follow')},
+
+{ id:'aks', ch:'Contêineres · 20–25%', title:'AKS com arquivos de manifesto',
+  say:'No AKS você implanta com manifestos e kubectl apply. O Deployment declara réplicas, a imagem com tag imutável, requests e limits e as sondas: readiness tira o pod do Service até ficar pronto, liveness reinicia se travar. O Service encontra os pods pelo seletor de labels; se não casar, não há endpoints e a chamada falha sem erro no pod. Para acessar Cosmos e Key Vault sem segredo, use a identidade de workload: a service account anotada com o client ID e o label no pod.',
+  v:S('deploy.yaml','deploy.yaml','yaml')},
+
+{ id:'troubleshoot', ch:'Contêineres · 20–25%', title:'Troubleshooting: logs e eventos',
+  say:'Para diagnosticar, vá do geral ao específico. kubectl get pods mostra o estado. describe pod e get events dizem o porquê: ImagePullBackOff é tag errada ou falta de AcrPull; Pending é falta de recurso; OOMKilled é limite de memória. CrashLoopBackOff: logs com previous mostram o erro da execução anterior. Service sem resposta: confira os endpoints e teste de dentro do cluster. No Container Apps, os logs de console e de sistema vão para o Log Analytics, e há console interativo com exec.',
+  v:T('c|kubectl get pods -l app=rag-api',
+      'o|rag-api-7d9f-x2k   0/1   CrashLoopBackOff   5   4m',
+      'c|kubectl logs rag-api-7d9f-x2k --previous | tail -2',
+      'err|KeyError: \'COSMOS_URL\'          ← variável faltando no manifesto',
+      'c|kubectl get events --sort-by=.lastTimestamp | tail -3',
+      'o|Warning  Failed  pod/rag-api-6c1  Failed to pull image "rag-api:1.5": not found',
+      'c|kubectl get endpoints rag-api',
+      'err|rag-api   <none>        ← seletor do Service não casa com os labels do pod',
+      'c|kubectl run t --rm -it --image=curlimages/curl -- curl -s http://rag-api/health',
+      'c|az containerapp exec -n api -g rg-ai --command sh      # console no Container Apps')},
+
+{ id:'compute', ch:'Contêineres · 20–25%', title:'Qual hospedagem escolher',
+  say:'A decisão que mais cai: App Service para uma API ou site em contêiner com o mínimo de operação. Container Apps para microsserviços e workers orientados a evento, com escala a zero, revisões e KEDA, sem administrar Kubernetes. AKS quando você precisa da API completa do Kubernetes: operadores, controle de rede e de nós, GPU dedicada, DaemonSets. E Functions para código curto disparado por evento, com bindings. Se a questão diz sem gerenciar cluster e escalar por fila, a resposta é Container Apps.',
+  v:GRID(4, [
+    ['App Service','menor operação',['API ou site','slots e TLS prontos','sem escala a zero'],'blue'],
+    ['Container Apps','serverless de contêiner',['eventos e KEDA','revisões, escala a zero','sem ver o cluster'],'green'],
+    ['AKS','Kubernetes completo',['operadores, GPU, nós','controle de rede','você opera o cluster'],'amber'],
+    ['Functions','código por evento',['gatilhos e bindings','execução curta','Flex Consumption'],'ext'],
+  ], {h:220, step:3, rodape:'"Sem gerenciar Kubernetes" + "escalar pela fila" = Container Apps · "API do Kubernetes completa" = AKS'}) },
+
+/* ---------- DADOS ---------- */
+{ id:'cosmos', ch:'Dados e IA · 25–30%', title:'Cosmos DB: partição, RU e consistência',
+  say:'No Cosmos DB for NoSQL, tudo é cobrado em Request Units. Ler um item de um kilobyte pelo id e pela chave de partição custa cerca de uma RU; consulta entre partições custa muito mais. A chave de partição é a decisão mais importante: alta cardinalidade e presente no filtro mais comum. Cinco níveis de consistência: forte, bounded staleness, sessão, que é o padrão, prefixo consistente e eventual. Leitura forte e bounded custam cerca do dobro em RU. Excluir do índice os caminhos que você não filtra reduz o RU da escrita.',
+  v:{type:'boxes', defs:[
+    ['Request Unit','leitura pontual de 1 KB ≈ 1 RU', .8],
+    ['Chave de partição','cardinalidade alta, no filtro', 4],
+    ['Consulta cruzada','entre partições: cara', 7.5],
+    ['Política de índice','exclua o que não filtra', 13],
+    ['Cabeçalho de custo','x-ms-request-charge', 16],
+  ], items:[
+    {at:9, x:470,y:92,w:454,h:230, cls:'region', html:'<span class="rl">consistência, da mais forte à mais fraca</span>'+UL('Forte: lê sempre o último · ~2× RU','Bounded staleness: atraso máximo · ~2× RU','Sessão (padrão): lê o que você escreveu','Prefixo consistente: nunca fora de ordem','Eventual: mais barata e rápida')},
+    {at:17, x:470,y:342,w:454,h:160, cls:'amber', html:B('Pegadinhas','')+UL('relaxar por requisição: pode','fortalecer além da conta: não','chave de partição não muda')},
+  ]}},
+
+{ id:'cosmos-vetor', ch:'Dados e IA · 25–30%', title:'Busca vetorial no Cosmos DB',
+  say:'A busca vetorial do Cosmos fica no mesmo item que o texto e os metadados. Habilite o recurso na conta, depois crie o contêiner com duas políticas: a de embeddings diz caminho, tipo, distância e dimensões; a de índice declara o índice vetorial, flat, quantizedFlat ou diskANN, e exclui o vetor do índice comum para não gastar RU. A consulta usa VectorDistance no ORDER BY com TOP. Filtrar pela chave de partição mantém a busca barata. E a autenticação é sem chave, com DefaultAzureCredential no Cosmos e no Azure OpenAI.',
+  v:S('cosmos_vetores.py','cosmos_vetores.py','py')},
+
+{ id:'changefeed', ch:'Dados e IA · 25–30%', title:'Change feed: reagir a mudanças',
+  say:'O change feed é o registro ordenado, por partição, de itens criados e alterados. No modo padrão, exclusões não aparecem: use exclusão lógica com TTL. O change feed processor distribui as partições entre instâncias e guarda o progresso num contêiner de leases. No Python, o caminho mais direto é o gatilho do Cosmos DB no Azure Functions, que usa o processor por baixo. Uso típico em IA: documento alterado, gera o embedding de novo; ou materializar uma visão em outro contêiner.',
+  v:FLOW([
+    ['Item gravado','insert ou update','blue'],
+    ['Change feed','ordem por partição','green'],
+    ['Processor','leases: progresso','amber'],
+    ['Ação','reembed, projeção','blue'],
+  ], {y:100, h:96, step:2.2, ch:190, cards:[
+    ['Como implementar','',['gatilho Cosmos DB no Functions','SDK .NET/Java: ChangeFeedProcessor','contêiner de leases obrigatório','várias instâncias dividem partições'],'green'],
+    ['Pegadinhas','',['delete não aparece no modo padrão','use exclusão lógica + TTL','ordem só dentro da partição','processamento deve ser idempotente'],'amber'],
+  ]}) },
+
+{ id:'pgvector', ch:'Dados e IA · 25–30%', title:'PostgreSQL com pgvector',
+  say:'No Azure Database for PostgreSQL, flexible server, a extensão vector precisa ser liberada no parâmetro azure extensions antes do CREATE EXTENSION. Modele a tabela com os metadados que filtram, como área e revisão, e uma coluna vector com a dimensão do modelo. O índice HNSW dá o melhor equilíbrio de recall e latência; IVFFlat constrói rápido, mas deve ser criado depois de carregar os dados. A consulta ordena pelo operador de cosseno e filtra pelos metadados: é o RAG com permissão. E EXPLAIN confirma se o índice foi usado.',
+  v:S('pg_rag.sql','pg_rag.sql','sql')},
+
+{ id:'pg-perf', ch:'Dados e IA · 25–30%', title:'Desempenho vetorial no Postgres',
+  say:'Vetores pesam: mil e quinhentas e trinta e seis dimensões em float são seis kilobytes por linha. O índice HNSW precisa caber na memória: dimensione a memória do servidor e aumente maintenance work mem para o build. halfvec corta pela metade, e o Azure oferece ainda a extensão DiskANN para coleções grandes. Na consulta, ef search troca recall por CPU. Conexão: cada conexão do Postgres é um processo; use o PgBouncer embutido, na porta seis quatro três dois, e pool no cliente. E autentique com Entra ID, sem senha.',
+  v:GRID(3, [
+    ['Memória e índice','o HNSW precisa caber',['1.536 floats ≈ 6 KB/linha','maintenance_work_mem no build','halfvec: metade do tamanho'],'blue'],
+    ['Escolha do índice','',['HNSW: recall e latência','IVFFlat: build rápido, após carga','DiskANN: coleções enormes'],'green'],
+    ['Conexões','cada uma é um processo',['PgBouncer embutido: 6432','pool no cliente','Entra ID em vez de senha'],'amber'],
+  ], {h:220, step:4.5, rodape:'Ajuste fino: hnsw.ef_search (recall × CPU) · filtro por metadado com índice B-tree ao lado do vetorial'}) },
+
+{ id:'redis', ch:'Dados e IA · 25–30%', title:'Azure Managed Redis: cache e vetores',
+  say:'O Azure Managed Redis é o Redis gerenciado atual, com tiers balanceado, otimizado para memória, para computação e flash. Três operações que caem: cache aside, ler do Redis e, se faltar, buscar na fonte e gravar com expiração; invalidação, apagar ou sobrescrever a chave quando a fonte muda; e TTL para não servir dado velho. O módulo de busca cria índice vetorial, útil para cache semântico: se a pergunta nova for muito parecida com uma já respondida, devolve a resposta guardada. Cuidado: parecida não é igual, defina um limiar alto.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:200, cls:'blue', html:B('Cache e expiração','redis-py')+'<div style="margin-top:8px;font:12.5px/1.7 var(--f-mono)">v = r.get(chave)<br>if v is None:<br>&nbsp;&nbsp;v = fonte(); r.set(chave, v, ex=3600)<br>r.delete(chave)&nbsp;&nbsp;# invalidar ao mudar</div>'},
+    {at:9, x:494,y:92,w:430,h:200, cls:'green', html:B('Índice vetorial','módulo de busca')+'<div style="margin-top:8px;font:12px/1.7 var(--f-mono)">FT.CREATE idx ON HASH PREFIX 1 cache:<br>&nbsp;SCHEMA pergunta TEXT<br>&nbsp;vec VECTOR HNSW 6 TYPE FLOAT32<br>&nbsp;DIM 1536 DISTANCE_METRIC COSINE</div>'},
+    {at:15, x:36,y:312,w:430,h:190, cls:'amber', html:B('Cache semântico','pergunta parecida → resposta guardada')+UL('limiar alto: P-200 ≠ P-300','nada de dado pessoal no cache','TTL curto para dado que muda')},
+    {at:20, x:494,y:312,w:430,h:190, cls:'ext', html:B('Pegadinhas','')+UL('busca vetorial: não no tier Flash','Entra ID ou chave de acesso','cache não é fonte da verdade')},
+  ]}},
+
+{ id:'dados-escolha', ch:'Dados e IA · 25–30%', title:'Onde guardar os vetores',
+  say:'Três opções do blueprint, três perfis. Cosmos DB quando o app já é documento, precisa de escala global, multi-região e latência baixa, com vetor ao lado do item. PostgreSQL quando há relacionamentos, SQL, transações e o time já usa Postgres; o filtro por metadados com junções é natural. Managed Redis quando o requisito é latência de submilissegundo: cache, sessão e cache semântico, não o repositório principal. Em todas, o embedding vem do mesmo modelo na ingestão e na consulta: trocou o modelo, reindexa tudo.',
+  v:GRID(3, [
+    ['Cosmos DB NoSQL','documento e escala global',['vetor ao lado do item','multi-região, RU','change feed para reembed'],'blue'],
+    ['PostgreSQL + pgvector','relacional',['SQL, junções, transações','HNSW, IVFFlat, DiskANN','filtro por metadado natural'],'green'],
+    ['Managed Redis','latência mínima',['cache e sessão','cache semântico','não é a fonte da verdade'],'amber'],
+  ], {h:220, step:4.5, rodape:'Mesmo modelo de embedding na ingestão e na consulta · trocou o modelo = reindexar tudo'}) },
+
+/* ---------- SERVIÇOS ---------- */
+{ id:'servicebus', ch:'Serviços · 20–25%', title:'Service Bus: filas, tópicos e DLQ',
+  say:'Service Bus é o broker de mensagens corporativo. Fila: um consumidor processa cada mensagem. Tópico com assinaturas: cada assinatura recebe uma cópia, com filtro SQL ou de correlação. No modo peek lock, a mensagem fica travada até você completar; se abandonar ou falhar além do max delivery count, ela vai para a dead letter queue, que também recebe mensagens expiradas, se configurado. Erro permanente vai direto para a DLQ; erro transitório, abandone. Sessões dão ordem por chave, e message ID ativa a detecção de duplicatas.',
+  v:S('fila.py','fila.py','py')},
+
+{ id:'eventgrid', ch:'Serviços · 20–25%', title:'Event Grid: filtros, eventos, retry',
+  say:'Event Grid entrega eventos discretos, como blob criado, por push, para Functions, webhooks, filas ou hubs. A assinatura filtra por tipo de evento, por começo e fim do assunto e por filtros avançados nos dados. Eventos customizados vão para um tópico próprio, no esquema Event Grid ou CloudEvents. A entrega é ao menos uma vez, com retentativas e backoff exponencial até o máximo de tentativas ou o tempo de vida; esgotado, o evento vai para o dead letter num contêiner de blob, se configurado. Sem ele, o evento se perde.',
+  v:T('c|az eventgrid event-subscription create -n novo-pdf --source-resource-id $STORAGE_ID \\',
+      'o|    --endpoint-type azurefunction --endpoint $FUNC_ID/functions/blob_criado \\',
+      'o|    --included-event-types Microsoft.Storage.BlobCreated \\',
+      'o|    --subject-begins-with /blobServices/default/containers/docs/ --subject-ends-with .pdf \\',
+      'o|    --max-delivery-attempts 10 --event-ttl 120 \\',
+      'o|    --deadletter-endpoint $STORAGE_ID/blobServices/default/containers/eventos-mortos',
+      'c|az eventgrid topic create -g rg-ai -n tp-rag --input-schema cloudeventschemav1_0',
+      'c|az eventgrid event-subscription create -n reindexar --source-resource-id $TOPIC_ID \\',
+      'o|    --endpoint-type servicebusqueue --endpoint $SB_QUEUE_ID \\',
+      'o|    --advanced-filter data.area StringIn manutencao qualidade')},
+
+{ id:'functions', ch:'Serviços · 20–25%', title:'Azure Functions: gatilhos e bindings',
+  say:'Functions roda código curto disparado por gatilho; bindings de entrada e saída ligam serviços sem SDK. No modelo Python v2, tudo são decorators no function app. Aqui: uma API HTTP que valida e põe na fila pelo binding de saída e responde duzentos e dois; um gatilho de Event Grid para blob novo; um gatilho de Service Bus, em que exceção significa nova tentativa e, no limite, DLQ; e o gatilho do change feed do Cosmos. A conexão usa identidade: SB dois sublinhados fully qualified namespace.',
+  v:S('function_app.py','function_app.py','py')},
+
+{ id:'func-deploy', ch:'Serviços · 20–25%', title:'Configurar e implantar a function app',
+  say:'O segundo item de Functions é configurar e implantar. Escolha o plano: Flex Consumption escala a zero, tem VNet e instâncias sempre prontas; Premium evita cold start; Dedicado roda no plano do App Service. As app settings viram configuração e conexões: com sufixo dois sublinhados fully qualified namespace, o binding usa a identidade gerenciada, sem connection string. O host ponto json ajusta timeout, concorrência e retentativas. Publique com func azure functionapp publish ou zip deploy, e use slots para trocar sem queda onde o plano permitir.',
+  v:T('c|az functionapp create -g rg-ai -n func-rag --storage-account strag \\',
+      'o|    --flexconsumption-location eastus2 --runtime python --runtime-version 3.12',
+      'c|az functionapp identity assign -g rg-ai -n func-rag',
+      'c|az functionapp config appsettings set -g rg-ai -n func-rag --settings \\',
+      'o|    SB__fullyQualifiedNamespace=sb-rag.servicebus.windows.net \\',
+      'o|    COSMOS__accountEndpoint=https://cosmos-rag.documents.azure.com:443/',
+      'o|# host.json: "functionTimeout", extensions.serviceBus.maxConcurrentCalls',
+      'c|func azure functionapp publish func-rag',
+      'ok|Deployment successful · receber, blob_criado, ingerir, mudou',
+      'err|binding sem papel de dados (Service Bus Data Receiver)? 401 no log da função')},
+
+{ id:'mensageria', ch:'Serviços · 20–25%', title:'Service Bus ou Event Grid?',
+  say:'Pegadinha clássica. Service Bus é para mensagens de alto valor, que são comandos ou trabalho: o consumidor puxa no próprio ritmo, com transação, ordem por sessão, duplicatas e DLQ. Event Grid é para notificação de que algo aconteceu, com push, filtros e milhões de eventos, sem o consumidor controlar o ritmo. É comum usar os dois: Event Grid avisa do blob novo e entrega numa fila do Service Bus, que nivela a carga do worker. Event Hubs, para telemetria em streaming, saiu da lista desta prova.',
+  v:GRID(2, [
+    ['Service Bus','mensagem = trabalho a fazer',['consumidor puxa no seu ritmo','peek-lock, DLQ, max delivery','sessões: ordem por chave','duplicatas, transações','tópico: cópia por assinatura'],'blue'],
+    ['Event Grid','evento = algo aconteceu',['push para o assinante','filtros por tipo e assunto','retry com TTL, dead letter em blob','esquema CloudEvents','entrega ao menos uma vez'],'green'],
+  ], {h:230, step:5, rodape:'Combinação comum: Event Grid (blob criado) → fila do Service Bus → worker no Container Apps com KEDA'}) },
+
+/* ---------- SEGURANÇA ---------- */
+{ id:'segredos', ch:'Segurança · 20–25%', title:'Key Vault e App Configuration',
+  say:'Key Vault guarda segredos, chaves e certificados; App Configuration guarda configuração e feature flags, com rótulos por ambiente, e referencia segredos do cofre em vez de copiá-los. Leia o segredo sem fixar a versão: a rotação cria uma versão nova e o código pega na próxima leitura. A sentinela do App Configuration recarrega tudo quando muda. Automatize a rotação pelo evento SecretNearExpiry do Event Grid. E os papéis de dados certos: Key Vault Secrets User e App Configuration Data Reader.',
+  v:S('config_segura.py','config_segura.py','py')},
+
+{ id:'identidade', ch:'Segurança · 20–25%', title:'Identidade gerenciada em tudo',
+  say:'A resposta segura quase sempre é identidade gerenciada mais RBAC, sem connection string. Atribuída pelo sistema: nasce e morre com o recurso. Atribuída pelo usuário: compartilhada entre recursos e sobrevive a eles. No código, DefaultAzureCredential usa o az login local e a identidade gerenciada no Azure, sem mudar uma linha. No AKS, identidade de workload. Os papéis são de plano de dados: Cosmos DB Built-in Data Contributor, Service Bus Data Receiver, Key Vault Secrets User. Owner ou Contributor não leem dados.',
+  v:{type:'boxes', defs:[
+    ['Sistema','nasce e morre com o recurso', .8],
+    ['Usuário','compartilhada, vive à parte', 3],
+    ['Credencial padrão','DefaultAzureCredential', 6],
+    ['Workload identity','pod do AKS sem segredo', 10],
+  ], items:[
+    {at:12.5, x:470,y:92,w:454,h:250, cls:'green', html:B('Papéis de plano de dados','o mínimo para cada app')+UL('Cosmos DB Built-in Data Contributor','Azure Service Bus Data Sender / Receiver','Key Vault Secrets User','App Configuration Data Reader','AcrPull · Cognitive Services OpenAI User')},
+    {at:18, x:470,y:362,w:454,h:140, cls:'ext', html:B('Pegadinha','Owner e Contributor são plano de controle')+UL('gerenciam o recurso, não leem os dados','Key Vault: modelo RBAC, não access policy')},
+  ]}},
+
+{ id:'otel', ch:'Segurança · 20–25%', title:'Rastreamento com OpenTelemetry',
+  say:'O blueprint pede rastrear sistemas distribuídos com SDKs do OpenTelemetry. A distro do Azure Monitor, com configure azure monitor, envia traces, métricas e logs ao Application Insights e instrumenta HTTP, bancos e os SDKs do Azure. Você cria spans próprios para as etapas do RAG, com atributos como modelo e tokens, nunca o texto do usuário. O contexto W3C, traceparent, viaja no HTTP e nas mensagens do Service Bus: a mesma operation ID liga API, fila e worker no mapa de aplicação.',
+  v:S('telemetria.py','telemetria.py','py')},
+
+{ id:'kql', ch:'Segurança · 20–25%', title:'KQL para logs e métricas',
+  say:'KQL é a linguagem do Log Analytics. Comece pela tabela, filtre com where e o tempo com ago, agregue com summarize, como count, countif e percentile, agrupe em janelas com bin e desenhe com render timechart. Para seguir uma requisição de ponta a ponta, una as tabelas pelo OperationId. As tabelas workspace-based do Application Insights são AppRequests, AppDependencies, AppExceptions e AppTraces; Container Apps tem ContainerAppConsoleLogs; o AKS, KubePodInventory e ContainerLogV2.',
+  v:S('consultas.kql','consultas.kql','txt')},
+
+/* ---------- LABORATÓRIO ---------- */
+{ id:'lab', ch:'Laboratório', title:'Lab: RAG de ponta a ponta no Azure',
+  say:'O laboratório junta os quatro domínios. Um PDF chega no Blob; o Event Grid filtra ponto pdf e entrega numa fila do Service Bus; um worker no Container Apps, escalando de zero pelo KEDA, extrai, fatia, gera embeddings e grava no Cosmos DB ou no Postgres. A API de perguntas, também no Container Apps, busca com filtro de área, usa o Redis como cache e chama o modelo. Tudo com identidade gerenciada, configuração no App Configuration, segredos no Key Vault e traces no Application Insights.',
+  v:FLOW([
+    ['Blob + Event Grid','filtro .pdf','blue'],
+    ['Service Bus','fila ingestao + DLQ','amber'],
+    ['Worker','Container Apps, KEDA 0→N','green'],
+    ['Cosmos / Postgres','vetor + metadados','blue'],
+  ], {y:100, h:96, step:2.4, ch:190, cards:[
+    ['API de perguntas','Container Apps',['busca com filtro de área','Redis: cache semântico','modelo via identidade gerenciada'],'green'],
+    ['Transversal','os domínios 4',['identidade gerenciada + RBAC','App Configuration + Key Vault','OpenTelemetry → App Insights + KQL'],'amber'],
+  ]}) },
+
+{ id:'lab-run', ch:'Laboratório', title:'Lab: subir e testar com az',
+  say:'Use uma assinatura de avaliação ou o crédito de estudante e apague o grupo de recursos no fim. Crie o grupo, o ACR e faça o build remoto. Crie o ambiente do Container Apps e o worker com a regra de fila. Dê os papéis de dados à identidade do worker. Envie cem documentos e observe as réplicas subindo e voltando a zero. Depois, quebre de propósito: um documento inválido precisa cair na DLQ com o motivo. E confira no KQL que a requisição e o worker têm a mesma operation ID.',
+  v:T('c|az group create -n rg-ai -l eastus2',
+      'c|az acr build -r meuacr -t worker:1.0 ./worker',
+      'c|az containerapp env create -n cae-ai -g rg-ai -l eastus2',
+      'c|az containerapp create -n worker ... --min-replicas 0 --scale-rule-type azure-servicebus',
+      'c|az role assignment create --assignee $WORKER_MI --role "Azure Service Bus Data Receiver" \\',
+      'o|    --scope $SB_ID',
+      'c|python enviar.py --docs 100 && az containerapp replica list -n worker -g rg-ai -o table',
+      'ok|7 réplicas · 100 documentos indexados · 1 na DLQ (reason: invalido)',
+      'c|az monitor app-insights query --app ai-rag --analytics-query "AppRequests | take 5"',
+      'c|az group delete -n rg-ai --yes --no-wait        # não esqueça: custo')},
+
+/* ---------- RETA FINAL ---------- */
+{ id:'pegadinhas', ch:'Reta final', title:'Pegadinhas que mais confundem',
+  say:'Seis confusões frequentes. Mudar segredo no Container Apps não cria revisão. Owner não lê dados: o papel de plano de dados é que vale. No Cosmos, consistência forte custa o dobro na leitura e a chave de partição não muda depois. IVFFlat criado em tabela vazia fica ruim; crie depois de carregar. Event Grid sem dead letter configurado perde o evento ao esgotar as tentativas. E latest no manifesto quebra o rollback; use tag imutável.',
+  v:GRID(3, [
+    ['Container Apps','',['segredo novo ≠ revisão nova','reinicie a revisão'],'ext'],
+    ['RBAC','',['Owner não lê dados','papel de plano de dados'],'ext'],
+    ['Cosmos DB','',['forte e bounded: ~2× RU','chave de partição é definitiva'],'amber'],
+    ['pgvector','',['IVFFlat em tabela vazia: ruim','crie após a carga'],'amber'],
+    ['Event Grid','',['sem dead letter: perdido','configure o contêiner'],'blue'],
+    ['Imagens','',[':latest quebra o rollback','tag imutável'],'blue'],
+  ], {h:150, step:2.6}) },
+
+{ id:'estrategia', ch:'Reta final', title:'Estratégia de prova',
+  say:'Cento e vinte minutos: faça uma primeira passada respondendo o que é rápido e marque o resto para revisar. Estudos de caso: leia primeiro as perguntas, depois o cenário procurando os requisitos. Nas séries de mesma pergunta com soluções diferentes, não dá para voltar: decida cada uma isoladamente. Elimine alternativas com segredo no código, chave em vez de identidade e serviço que saiu do blueprint. A Microsoft tem permitido consultar o Microsoft Learn durante provas de função; confira as regras atuais, mas não conte com tempo para isso.',
+  v:GRID(2, [
+    ['Gestão do tempo','120 minutos',['1ª passada: o que é rápido','marque e volte depois','estudo de caso: perguntas primeiro','sem resposta em branco'],'blue'],
+    ['Eliminar alternativas','o padrão Microsoft',['segredo no código: errado','chave quando há identidade: errado','serviço fora do blueprint: suspeito','menor operação que atende'],'green'],
+  ], {h:250, step:5, rodape:'Séries "a solução atende ao objetivo?" não permitem voltar · Learn aberto na prova: confira as regras atuais'}) },
+
+{ id:'check', ch:'Reta final', title:'Checklist de prontidão',
+  say:'Antes de agendar: você constrói imagens com ACR Tasks, implanta no App Service, no Container Apps com revisões e KEDA e no AKS com manifestos, e diagnostica pelos eventos e logs. Cria busca vetorial no Cosmos e no Postgres, sabe RU, consistência e change feed, usa o Redis como cache. Processa filas com DLQ, assina eventos com filtro e dead letter, escreve Functions com bindings. E protege com Key Vault, App Configuration e identidade gerenciada, rastreando com OpenTelemetry e KQL.',
+  v:CK('az acr build e ACR Tasks', 'App settings + referência ao Key Vault', 'Revisões e tráfego por peso', 'KEDA: fila e escala a zero', 'kubectl describe, events, logs', 'Partição, RU e consistência', 'VectorDistance e diskANN', 'pgvector: HNSW × IVFFlat', 'DLQ e max delivery count', 'Event Grid: filtro e dead letter', 'Identidade + papel de dados', 'KQL com OperationId')},
+
+{ id:'outro', ch:'Reta final', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os domínios com onde estudar, os links para cenas das outras trilhas, o simulado com questões no estilo da prova, os links oficiais e o checklist. O plano que mais rende: faça o laboratório inteiro numa assinatura de avaliação, com o grupo de recursos apagado no fim, refaça o simulado até explicar por que cada alternativa errada está errada e só então agende. E confira a página oficial da prova antes, porque o blueprint muda.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Docker e o Dockerfile', 'v05', 'dockerfile', 'A imagem que o ACR constrói'],
+  ['Kubernetes em uma cena', 'v05', 'kubernetes', 'Pods, Deployments e Services'],
+  ['Azure no volume de Cloud', 'v05', 'azure', 'O mapa dos serviços do Azure'],
+  ['Deploy no AKS', 'aks', 'deploy', 'Manifestos e kubectl apply'],
+  ['Escala no AKS', 'aks', 'scale', 'HPA, KEDA e nós'],
+  ['Secrets Store CSI', 'aks', 'spc', 'Key Vault montado no pod'],
+  ['pgvector e busca semântica', 'ia', 'pgvector', 'Vetores dentro do Postgres'],
+  ['As duas metades do RAG', 'v15', 'rag', 'Ingestão e consulta'],
+  ['Embeddings, busca híbrida e rerank', 'v15', 'hibrida', 'Por que o filtro e o rerank importam'],
+  ['Ordem e DLQ', 'v01', 'ordem-dlq', 'A fila de mensagens mortas em qualquer broker'],
+  ['Idempotência', 'v01', 'idempotencia', 'Entrega ao menos uma vez exige consumidor idempotente'],
+  ['TTL e invalidação', 'v01', 'ttl', 'Cache com expiração'],
+  ['Índices B-tree', 'v03', 'btree', 'O índice do filtro ao lado do vetorial'],
+  ['Gestão de segredos', 'v14', 'segredos', 'Cofre, rotação e menor privilégio'],
+  ['OpenTelemetry', 'v13', 'otel', 'SDK, coletor e exportadores'],
+  ['Spans e propagação', 'v13', 'trace', 'O traceparent que liga API e worker'],
+  ['Observabilidade de LLM', 'v15', 'observabilidade', 'Tokens e custo em cada span'],
+  ['Eventos na AWS', 'naws', 'eventos', 'O equivalente do Event Grid na AWS'],
+];
+
+const MATRIZ = [
+  ['Desenvolver soluções em contêineres', '20–25%', 'ACR e ACR Tasks; App Service com variáveis e segredos; Container Apps com ambiente, revisões e KEDA; AKS com manifestos; troubleshooting por logs, eventos e conectividade', 'Vol 05 · docker, kubernetes · Trilha AKS · deploy, scale'],
+  ['Soluções de IA com serviços de dados', '25–30%', 'Cosmos DB NoSQL (SDK, RU, índice, consistência, vetores, change feed); PostgreSQL (schema, índices, pgvector, recursos, RAG com filtro, conexões); Managed Redis (cache, expiração, invalidação, índice vetorial)', 'Vol 15 · rag, hibrida · Trilha IA · pgvector · Vol 03 · btree'],
+  ['Conectar e consumir serviços do Azure', '20–25%', 'Service Bus (filas, tópicos, assinaturas, DLQ); Event Grid (filtros, eventos customizados, retry); Functions (gatilhos, bindings, configuração e deploy)', 'Vol 01 · ordem-dlq, idempotencia · Nova AWS · eventos'],
+  ['Proteger, monitorar e diagnosticar', '20–25%', 'Key Vault (rotação e leitura); App Configuration; rastreamento com SDKs OpenTelemetry; consultas KQL de logs e métricas', 'Vol 14 · segredos · Vol 13 · otel, trace · Vol 15 · observabilidade'],
+];
+
+const STUDY = [
+  ['Study guide da AI-200', 'Skills measured com os pesos de cada domínio', 'https://learn.microsoft.com/credentials/certifications/resources/study-guides/ai-200', 'mapa'],
+  ['Azure AI Cloud Developer Associate', 'Página oficial: formato, idiomas e agendamento', 'https://learn.microsoft.com/credentials/certifications/azure-ai-cloud-developer-associate/', 'intro'],
+  ['Exam sandbox', 'Experimente a interface da prova antes', 'https://aka.ms/examdemo', 'estrategia'],
+  ['Azure Container Apps', 'Revisões, escala com KEDA, segredos', 'https://learn.microsoft.com/azure/container-apps/', 'containerapps'],
+  ['Busca vetorial no Cosmos DB', 'Políticas de vetor e VectorDistance', 'https://learn.microsoft.com/azure/cosmos-db/nosql/vector-search', 'cosmos-vetor'],
+  ['pgvector no PostgreSQL flexível', 'Habilitar e usar a extensão vector', 'https://learn.microsoft.com/azure/postgresql/flexible-server/how-to-use-pgvector', 'pgvector'],
+  ['Azure Managed Redis', 'Tiers, Entra ID e busca vetorial', 'https://learn.microsoft.com/azure/redis/overview', 'redis'],
+  ['Dead-letter queues do Service Bus', 'Quando e como a mensagem vai para a DLQ', 'https://learn.microsoft.com/azure/service-bus-messaging/service-bus-dead-letter-queues', 'servicebus'],
+  ['Functions em Python', 'Modelo v2, gatilhos e bindings', 'https://learn.microsoft.com/azure/azure-functions/functions-reference-python', 'functions'],
+  ['OpenTelemetry com Azure Monitor', 'Distro do Azure Monitor para Python', 'https://learn.microsoft.com/azure/azure-monitor/app/opentelemetry-enable', 'otel'],
+  ['Conta gratuita do Azure', 'Crédito para o laboratório', 'https://azure.microsoft.com/free/', 'lab-run'],
+];
+
+const CHECK = [
+  ['Contêineres', 'Build remoto com az acr build e uma ACR Task por commit', 'acr'],
+  ['Contêineres', 'Web App em contêiner com referência ao Key Vault', 'appservice'],
+  ['Contêineres', 'Canário 80/20 entre duas revisões do Container Apps', 'containerapps'],
+  ['Contêineres', 'Worker com escala a zero pela fila do Service Bus', 'keda'],
+  ['Contêineres', 'Quebrar o seletor do Service e achar pelo get endpoints', 'troubleshoot'],
+  ['Dados', 'Contêiner vetorial no Cosmos e medir o RU de cada busca', 'cosmos-vetor'],
+  ['Dados', 'Tabela com pgvector, índice HNSW e EXPLAIN mostrando o uso', 'pgvector'],
+  ['Dados', 'Reembed automático pelo gatilho de change feed', 'changefeed'],
+  ['Serviços', 'Mensagem inválida na DLQ com motivo e reprocessamento', 'servicebus'],
+  ['Serviços', 'Assinatura do Event Grid com filtro .pdf e dead letter', 'eventgrid'],
+  ['Segurança', 'Zero connection strings: tudo com identidade gerenciada', 'identidade'],
+  ['Monitoramento', 'Seguir uma requisição por OperationId no KQL', 'kql'],
+  ['Prova', 'Refazer o simulado abaixo e explicar cada alternativa errada', 'estrategia'],
+  ['Prova', 'Fazer o simulado oficial quando for publicado e passar de 80%', 'intro'],
+];
+
+const FAQ = [
+ ['Contêineres','Sua equipe precisa rodar um worker em contêiner que processa mensagens de uma fila do Service Bus. Deve custar o mínimo quando não houver mensagens, e ninguém quer administrar Kubernetes. O que usar?',`<p>A) AKS com Cluster Autoscaler · B) Azure Container Apps com regra de escala azure-servicebus e min-replicas 0 · C) App Service com escala automática por CPU · D) Uma VM com Docker e cron</p><p><b>Resposta: B.</b> Container Apps escala por KEDA conforme o tamanho da fila e chega a zero. AKS exige operar o cluster; App Service não escala a zero nem pela fila; a VM paga o tempo todo.</p>`],
+ ['Contêineres','Você atualizou um segredo de um app no Azure Container Apps, mas a aplicação continua usando o valor antigo. O que fazer?',`<p>A) Criar um novo ambiente · B) Reiniciar a revisão ativa (ou criar uma nova revisão) · C) Mudar o modo de revisão para multiple · D) Aumentar o max-replicas</p><p><b>Resposta: B.</b> Mudança de segredo não cria revisão; os contêineres só leem o valor novo ao reiniciar. Ambiente novo e modo multiple não resolvem; réplicas a mais herdam o mesmo estado.</p>`],
+ ['Contêineres','Um pod no AKS fica em ImagePullBackOff logo após o deploy de uma imagem que está no ACR. Qual é a causa mais provável?',`<p>A) Falta de memória no nó · B) Readiness probe com caminho errado · C) O cluster não tem o papel AcrPull no registro ou a tag não existe · D) O Service com seletor errado</p><p><b>Resposta: C.</b> ImagePullBackOff é falha ao baixar a imagem. Memória gera Pending ou OOMKilled; probe errada deixa o pod não pronto; seletor errado deixa o Service sem endpoints.</p>`],
+ ['Contêineres','Você quer que um build de imagem rode automaticamente quando a imagem base do Dockerfile receber um patch de segurança. O que configurar?',`<p>A) Um pipeline agendado diariamente · B) Uma ACR Task com gatilho de atualização da imagem base · C) Geo-replicação no ACR Premium · D) Webhook do ACR para o AKS</p><p><b>Resposta: B.</b> ACR Tasks detectam a atualização da imagem base e reconstroem. Agendamento atrasa; geo-replicação só copia imagens; webhook notifica push, não reconstrói.</p>`],
+ ['Dados','Num contêiner do Cosmos DB for NoSQL com busca vetorial, as escritas estão consumindo RU demais. O vetor tem 1.536 dimensões. Qual ajuste reduz o custo de escrita sem perder a busca vetorial?',`<p>A) Mudar a consistência para forte · B) Excluir o caminho /embedding/* do índice comum, mantendo o vectorIndexes · C) Remover a política de embeddings · D) Usar consulta entre partições</p><p><b>Resposta: B.</b> Indexar cada posição do vetor no índice comum custa caro e não ajuda; o índice vetorial continua. Consistência forte encarece leituras; sem política de embeddings não há busca vetorial; consulta cruzada aumenta o RU.</p>`],
+ ['Dados','Um app global precisa que cada usuário leia sempre o que acabou de gravar, com o menor custo de RU possível. Qual nível de consistência?',`<p>A) Forte · B) Bounded staleness · C) Sessão · D) Eventual</p><p><b>Resposta: C.</b> Sessão garante ler as próprias escritas dentro da sessão e custa como os níveis fracos. Forte e bounded custam cerca do dobro na leitura; eventual não garante ler a própria escrita.</p>`],
+ ['Dados','Você precisa reagir a cada documento novo ou alterado no Cosmos DB para gerar o embedding de novo, numa aplicação Python. Qual a forma mais direta?',`<p>A) Consultar o contêiner a cada minuto por _ts · B) Gatilho do Cosmos DB no Azure Functions com contêiner de leases · C) Event Grid com BlobCreated · D) Trigger de banco dentro do Cosmos</p><p><b>Resposta: B.</b> O gatilho usa o change feed processor e guarda o progresso nos leases. Polling por _ts é caro e frágil; BlobCreated é do Storage; trigger do Cosmos roda na operação e não serve para chamar um modelo externo.</p>`],
+ ['Dados','No PostgreSQL flexível, CREATE EXTENSION vector falha com "extension is not allow-listed". O que fazer?',`<p>A) Instalar o pgvector pelo apt no servidor · B) Adicionar VECTOR ao parâmetro de servidor azure.extensions · C) Migrar para o Cosmos DB · D) Usar o PgBouncer</p><p><b>Resposta: B.</b> No serviço gerenciado não há acesso ao SO; extensões são liberadas pelo parâmetro azure.extensions. Migrar não é necessário; PgBouncer é pool de conexões.</p>`],
+ ['Dados','A busca com pgvector ficou com recall baixo depois que você criou um índice IVFFlat numa tabela recém-criada e só então carregou 2 milhões de linhas. O que explica?',`<p>A) IVFFlat não suporta cosseno · B) Os centróides foram calculados com a tabela vazia; recrie o índice após a carga · C) Falta um índice B-tree · D) ef_search está baixo</p><p><b>Resposta: B.</b> IVFFlat aprende as listas no momento da criação. Ele suporta cosseno; B-tree não ajuda na similaridade; ef_search é parâmetro do HNSW.</p>`],
+ ['Serviços','Mensagens com JSON inválido estão sendo reprocessadas várias vezes antes de cair na DLQ, atrasando a fila. Qual a melhor correção no consumidor?',`<p>A) Aumentar o MaxDeliveryCount · B) Chamar dead_letter_message com o motivo quando a validação falhar · C) Usar o modo ReceiveAndDelete · D) Abandonar a mensagem mais rápido</p><p><b>Resposta: B.</b> Erro permanente vai direto para a DLQ com motivo. Mais tentativas pioram; ReceiveAndDelete perde mensagens em falha; abandonar só repete o problema.</p>`],
+ ['Serviços','Uma Function deve ser disparada só quando um arquivo .pdf for criado no contêiner docs de uma conta de armazenamento, e eventos não entregues não podem se perder. O que configurar?',`<p>A) Gatilho de Blob com polling · B) Assinatura do Event Grid com BlobCreated, subject-begins-with docs, subject-ends-with .pdf e dead letter · C) Tópico do Service Bus com filtro SQL · D) Event Grid sem filtros, filtrando no código</p><p><b>Resposta: B.</b> Filtros na assinatura evitam execuções inúteis e o dead letter guarda o que esgotou as tentativas. Polling atrasa; o Storage não publica direto em tópico do Service Bus; filtrar no código paga cada evento.</p>`],
+ ['Serviços','Um pedido precisa ser processado por três sistemas independentes, cada um só com os pedidos da sua região, sem que um atrapalhe o ritmo do outro. Qual desenho?',`<p>A) Uma fila do Service Bus com três consumidores · B) Um tópico do Service Bus com três assinaturas e filtro SQL por região · C) Três chamadas HTTP síncronas · D) Uma fila do Storage</p><p><b>Resposta: B.</b> Cada assinatura recebe sua cópia filtrada e consome no próprio ritmo. Numa fila, consumidores competem pela mesma mensagem; HTTP síncrono acopla; a fila do Storage não tem tópicos nem filtros.</p>`],
+ ['Segurança','Um app no App Service lê uma chave de API de parceiro que é rotacionada todo mês. Você não quer o segredo em app settings nem mudar código a cada rotação. O que fazer?',`<p>A) Guardar no App Configuration em texto · B) Referência ao Key Vault no app setting, sem versão, com identidade gerenciada e Key Vault Secrets User · C) Variável de ambiente no Dockerfile · D) Dar Contributor ao app no cofre</p><p><b>Resposta: B.</b> A referência sem versão resolve para a versão atual após a rotação. Texto no App Configuration expõe o segredo; Dockerfile grava na imagem; Contributor é plano de controle e não lê segredos.</p>`],
+ ['Monitoramento','Você precisa ver, numa única consulta, todas as etapas de uma requisição lenta: a API, a chamada ao modelo e a exceção no worker. O que usar?',`<p>A) AppRequests filtrando por Name · B) union das tabelas App* filtrando pelo mesmo OperationId · C) Métricas de CPU do Container Apps · D) ContainerAppSystemLogs</p><p><b>Resposta: B.</b> O OperationId, propagado pelo OpenTelemetry, liga requisição, dependências, exceções e traces. As outras opções mostram só um pedaço.</p>`],
+ ['Monitoramento','Qual consulta KQL mostra o p95 de latência por rota na última hora?',`<p>A) AppRequests | where TimeGenerated > ago(1h) | summarize percentile(DurationMs, 95) by Name · B) AppRequests | take 95 · C) AppTraces | count · D) AppRequests | sort by DurationMs | take 1</p><p><b>Resposta: A.</b> summarize com percentile agrupado por Name. take traz linhas arbitrárias; count só conta; o maior valor não é o p95.</p>`],
+];
+
+const CMDS = [
+  ['az acr build -r <acr> -t app:{{.Run.ID}} .', 'Build remoto da imagem (quick task)'],
+  ['az acr task create ... --git-access-token $PAT', 'Build por commit e por imagem base'],
+  ['az containerapp create ... --scale-rule-type azure-servicebus', 'Worker com escala por fila (KEDA)'],
+  ['az containerapp ingress traffic set --revision-weight v1=80 v2=20', 'Canário entre revisões'],
+  ['kubectl get events --sort-by=.lastTimestamp', 'Por que o pod não sobe'],
+  ['kubectl logs <pod> --previous', 'Erro da execução anterior (CrashLoopBackOff)'],
+  ['az postgres flexible-server parameter set -n azure.extensions -v VECTOR', 'Liberar o pgvector'],
+  ['ORDER BY VectorDistance(c.embedding, @v)', 'Busca vetorial no Cosmos DB'],
+  ['ORDER BY embedding <=> $1 LIMIT 5', 'Busca por cosseno no pgvector'],
+  ['az eventgrid event-subscription create ... --deadletter-endpoint', 'Assinatura com dead letter'],
+  ['@Microsoft.KeyVault(SecretUri=...)', 'Referência ao Key Vault em app settings'],
+  ['union App* | where OperationId == "…"', 'Requisição de ponta a ponta no KQL'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

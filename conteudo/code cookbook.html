@@ -1,0 +1,1257 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Do Pleno ao Staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:392px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Squad · carreira</span>
+    <h1>Do pleno ao Staff e Tech Lead</h1>
+    <p class="lead">Roteiro em vídeo do que muda depois do sênior: escopo, escrita técnica, decisões e influência, estratégia, execução em ambiguidade, arquitetura entre times, operação, pessoas e como montar o caso de promoção. Inclui modelos prontos de design doc, ADR, update, estratégia, postmortem e documento de conquistas. Os temas técnicos já cobertos em outras trilhas têm link direto para a cena, logo abaixo do vídeo.</p>
+    <div class="meta">
+      <span class="pill">Sênior · Tech Lead · Staff</span><span class="pill">Escrita técnica</span><span class="pill">Estratégia</span><span class="pill">DDD estratégico</span><span class="pill">DORA e incidentes</span><span class="pill">Carreira</span>
+    </div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch">Estes temas técnicos sustentam o trabalho de staff e já foram explicados em detalhe. Cada link abre o vídeo correspondente direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow">Decisão</span><h2>O que cada nível espera</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch">Referência geral: cada empresa tem sua própria régua, então peça a da sua por escrito.</p>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nível</th><th>Escopo</th><th>O que se espera</th><th>Evidência típica</th><th>Armadilha</th></tr></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Leitura</span><h2>Trilha de leitura</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Livros, artigos e guias de referência. Os links levam a sites externos. A marcação fica salva só neste navegador.</p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Espelho</span><h2>Checklist do próximo nível</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Cada item vale quando foi aplicado em código, não só lido. O botão ao lado leva à cena do vídeo.</p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" placeholder="Buscar: escopo, discordar, promoção, código…" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Para usar em reunião</span><h2>Perguntas e frases de bolso</h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer>Material de estudo da AGX. Os modelos usam o projeto de pré-análise como exemplo, com nomes e números fictícios. Nomes de níveis e expectativas variam entre empresas.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const SNIP = {"adr.txt": "# ADR-007: Comunicação assíncrona da pré-análise via Event Hubs (protocolo Kafka)\n\nStatus: Aceita · Data: 2026-10-08 · Decisores: TL Squad .NET, Arquitetura Crefaz\nSubstitui: — · Substituída por: —\n\n## Contexto\nA pré-análise chama bureaus externos com latência de 2 a 40 s. Em campanhas,\no volume sobe 8×. A Crefaz já usa Kafka em parte dos serviços.\n\n## Decisão\nPublicar o evento PreAnaliseRecebida via outbox em um tópico do Event Hubs\n(endpoint Kafka), consumido por workers idempotentes. Service Bus foi descartado\npela vazão (ver Definição 01).\n\n## Consequências\n+ A API responde em < 200 ms e os picos ficam na fila.\n+ O mesmo código roda com Kafka local e Event Hubs.\n− Consistência eventual: a tela precisa mostrar \"em análise\".\n− Sem transações Kafka no plano Standard: outbox obrigatório.\n− Mais um componente para monitorar (lag, DLQ).\n\n## Como saber se foi uma boa decisão\nLag p95 < 30 s em campanha; zero perda de evento em 3 meses; custo < R$ X/mês.", "brag.txt": "# Documento de conquistas · <nome> · 2026\n(atualize toda sexta: 10 minutos agora poupam semanas na época de promoção)\n\n## Impacto em resultados\n- Liderei a pré-análise assíncrona: tempo de resposta de 2 dias para 48 s;\n  desistência caiu de 38% para 21% (fonte: painel de produto, set/2026)\n- Reduzi o custo de AKS em 32% (R$ 18 mil/mês) com right-sizing e autoscaler\n\n## Escopo além do meu time\n- Escrevi o ADR-007 e o template de serviço adotado por 4 squads\n- Conduzi a decisão Kafka × Service Bus com 3 times e arquitetura\n\n## Multiplicar pessoas\n- Mentorei 2 devs; um assumiu a dupla de Kubernetes\n- 14 entrevistas técnicas; criei a rubrica de design de sistemas\n\n## Operação e qualidade\n- IC em 3 incidentes SEV-2; postmortems com 100% das ações concluídas\n\n## Aprendizados e o que vem a seguir\n- Errei ao subestimar a integração com o bureau; agora começo pelos riscos externos\n- Próximo: estratégia técnica 2027 da plataforma de crédito", "design-doc.txt": "# Design doc: Pré-análise automática de crédito\nAutor: <nome> · Revisores: <tech leads afetados, segurança, dados> · Status: em revisão\nAtualizado: 2026-10-08 · Decisão até: 2026-10-22\n\n## 1. Contexto e problema (meia página)\nHoje 100% das pré-análises são manuais; o tempo médio é 2 dias e 38% das propostas\ndesistem antes da resposta. O que acontece se não fizermos nada?\n\n## 2. Objetivos e não objetivos\nObjetivos: resposta em até 2 min para 70% das propostas; custo por análise < R$ 0,40.\nNão objetivos: análise de garantias; mudança na política de crédito.\n\n## 3. Proposta\nDiagrama de alto nível, fluxo principal, contratos (API e eventos), dados e onde ficam.\n\n## 4. Alternativas consideradas\nA) Motor de regras síncrono na API      → simples; não escala nos picos de campanha\nB) Fluxo assíncrono com fila (escolhida) → absorve picos; exige outbox e idempotência\nC) Comprar solução de mercado           → rápido; custo por análise 5× maior\n\n## 5. Riscos, segurança e privacidade\nLGPD (CPF em eventos?), falha do bureau externo, fila crescendo, decisão errada automatizada.\n\n## 6. Operação\nSLO, métricas, alertas, runbook, plano de rollout (5% → 25% → 100%) e de rollback.\n\n## 7. Plano de entrega e custo\nMarcos com valor entregue em cada um, times envolvidos, estimativa em faixas.\n\n## 8. Perguntas em aberto\nQuem decide o limite de valor automático? Precisamos de revisão humana por amostragem?", "estrategia.txt": "# Estratégia técnica: plataforma de crédito 2027\n(diagnóstico → política → ações, no modelo de \"Good Strategy / Bad Strategy\")\n\n## Diagnóstico: o que está acontecendo de verdade\n- 4 squads publicam em AKS de formas diferentes; 30% do tempo de onboarding é infra\n- Incidentes: 60% começam em integrações externas sem timeout ou retry\n- Lead time médio de 9 dias; deploy só às quintas, com janela manual\n\n## Políticas: as escolhas que guiam as decisões\n1. Todo serviço novo nasce do template padrão (Minimal API, Helm, pipeline, OTel)\n2. Integração externa só através do cliente resiliente compartilhado\n3. Deploy contínuo com rollout gradual; janela manual só para mudanças de banco\n\n## Ações coordenadas (próximos 2 trimestres)\n- T1: template de serviço + pipeline padrão; migrar 2 serviços piloto\n- T1: biblioteca de integração resiliente; aplicar nos 5 bureaus\n- T2: rollout gradual no AKS; métricas DORA no painel das squads\n\n## O que NÃO vamos fazer\nReescrever o legado de cobrança; trocar de nuvem; adotar service mesh agora.\n\n## Como vamos medir\nLead time < 2 dias · incidentes por integração −50% · onboarding em 1 dia", "postmortem.txt": "# Postmortem: pré-análises paradas por 47 minutos · 2026-09-18 · SEV-2\nFormato sem culpados: descrevemos sistemas e decisões, não pessoas.\n\n## Impacto\n1.840 propostas sem resposta por 47 min; 212 clientes abandonaram; nenhum dado perdido.\n\n## Linha do tempo (horário de Brasília)\n14:02  Deploy da versão 1.9 do processador\n14:09  Alerta: lag do grupo processador-pre-analise > 5.000\n14:12  Incidente declarado; IC: Bruno · comunicação: Carla\n14:31  Causa identificada: novo campo obrigatório quebrou eventos v1\n14:41  Rollback para 1.8 · 14:49 lag zerado\n\n## Causas contribuintes\n- Contrato do evento mudou sem manter compatibilidade com a versão 1\n- Testes de contrato não cobriam eventos antigos ainda na fila\n- Alerta de lag disparou 7 min depois do problema (limite alto demais)\n\n## O que funcionou\nRollback em 10 min; outbox garantiu que nenhum evento se perdeu.\n\n## Ações (cada uma com dono e data)\n- [ ] Teste de contrato com amostra de eventos v1 no CI · Bruno · 30/09\n- [ ] Regra de evolução de contrato no guia da squad · Ana · 25/09\n- [ ] Alerta de lag por taxa de crescimento, não só valor absoluto · Carla · 27/09", "update.txt": "Assunto: Pré-análise automática · semana 6 de 12 · status: ATENÇÃO\n\nResumo (leia só isto se tiver 30 segundos)\nIntegração com o bureau está 1 semana atrasada; o lançamento de 15/11 continua\npossível se aprovarmos o plano B abaixo até sexta.\n\nEntregue nesta semana\n- Fluxo assíncrono em homologação, 2.300 análises de teste, 0 perdidas\n- p95 de resposta: 48 s (meta: 120 s)\n\nRiscos e decisões necessárias\n1. Bureau ainda sem ambiente de testes estável\n   Plano B: simulador com respostas gravadas; custo: 3 dias da dupla\n   Decisão necessária de: Ana (produto) · até: sexta, 17/10\n2. Custo do Event Hubs acima do previsto em 20% → revisaremos as TUs na semana 8\n\nPróxima semana\n- Teste de carga a 8× o volume normal\n- Revisão de segurança com o time de Crefaz"};
+// ===================== CENAS =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const VISTO = (txt, y = 470) => ({at:0, x:36,y,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const TITLE = {k:'Squad · carreira', h:'Do pleno ao Staff e Tech Lead',
+  p:'O que muda quando o trabalho deixa de ser só o seu código: escopo, escrita, decisões, estratégia, arquitetura entre times, operação, pessoas e como mostrar o impacto.',
+  chips:['design docs e ADRs','influência sem autoridade','estratégia técnica','DDD estratégico','DORA e incidentes','caso de promoção']};
+const OUTRO = {k:'Fim do roteiro', h:'O próximo nível começa antes do título',
+  p:'Abaixo do vídeo estão o mapa de níveis, os links para o que já foi coberto, a trilha de leitura, o checklist e as perguntas mais comuns sobre essa transição.',
+  chips:['escreva','assuma um problema maior','multiplique pessoas','mostre o impacto']};
+const T = (file, key) => ({type:'code', file, lang:'txt', code: SNIP[key]});
+
+const SCENES = [
+/* ---------- VISÃO GERAL ---------- */
+{ id:'intro', ch:'Visão geral', title:'O que muda depois do sênior',
+  say:'Esta trilha é sobre a transição de pleno para os níveis acima: sênior, tech lead, staff e principal. Até aqui, as trilhas foram técnicas. Daqui para frente, a técnica continua necessária, mas não basta: o que define esses níveis é o tamanho do problema que você assume, a qualidade das decisões que você conduz e quantas pessoas trabalham melhor por sua causa.',
+  v:{type:'title'} },
+
+{ id:'escada', ch:'Visão geral', title:'Os degraus e os caminhos',
+  say:'A escada técnica sobe pelo escopo: o pleno entrega tarefas e funcionalidades com autonomia; o sênior responde por uma parte do sistema e orienta o time; o staff resolve problemas que atravessam vários times; o principal define direções para a organização. Tech lead é um papel, que um sênior ou staff exerce num time. Engineering manager é outra trilha, focada em pessoas.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:400,w:200,h:100, html:B('Pleno','funcionalidade')+UL('entrega com autonomia')},
+    {at:3, x:256,y:310,w:200,h:190, cls:'blue', html:B('Sênior','parte do sistema')+UL('decide o como','orienta o time','antecipa problemas')},
+    {at:5.5, x:476,y:220,w:200,h:280, cls:'green', html:B('Staff','vários times')+UL('problemas sem dono','alinha decisões entre times','multiplica engenheiros','escreve o que todos seguem')},
+    {at:8, x:696,y:130,w:228,h:370, cls:'amber', html:B('Principal','organização')+UL('direção técnica de longo prazo','decisões caras de reverter','fala com a diretoria','poucos por empresa')},
+    {at:11, x:36,y:92,w:420,h:96, cls:'ext', html:B('Tech Lead é papel, não nível','sênior ou staff conduzindo a parte técnica de um time')},
+    {at:14, x:36,y:200,w:420,h:96, cls:'ext', html:B('Engineering Manager é outra trilha','pessoas, carreira, contratação, organização do time')},
+  ], lines:[
+    {at:3, d:'M136 400 L 136 380 L 256 380', cls:'dim'},
+    {at:5.5, d:'M356 310 L 356 290 L 476 290', cls:'dim'},
+    {at:8, d:'M576 220 L 576 200 L 696 200', cls:'dim'},
+  ]}},
+
+{ id:'mudanca', ch:'Visão geral', title:'A virada de chave',
+  say:'Três mudanças marcam a transição. Do como para o quê e por quê: você passa a escolher os problemas, não só a resolver os que chegam. Do código para as decisões: seu principal produto vira documentos, alinhamentos e escolhas que outros executam. E do seu resultado para o resultado do grupo: um staff que entrega muito sozinho, mas não melhora ninguém em volta, está no nível errado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:110,w:280,h:250, cls:'blue', html:B('Do como ao porquê','')+UL('pleno: "como implemento isto?"','staff: "este é o problema certo?"','procura problemas sem dono')},
+    {at:5, x:340,y:110,w:280,h:250, cls:'green', html:B('Do código às decisões','')+UL('design docs, ADRs, revisões','alinhar antes de construir','código onde tem mais alavanca')},
+    {at:9.5, x:644,y:110,w:280,h:250, cls:'amber', html:B('Do eu ao nós','')+UL('o time entrega mais com você','padrões que outros adotam','pessoas que crescem perto de você')},
+    {at:14, x:36,y:384,w:888,h:110, cls:'ext', html:B('Armadilha comum','virar o "herói" que resolve tudo sozinho: parece impacto, mas cria dependência e não escala. Staff mede-se pelo que acontece quando você não está na sala.')},
+  ]}},
+
+{ id:'arquetipos', ch:'Visão geral', title:'Os quatro arquétipos de Staff',
+  say:'Will Larson, no livro Staff Engineer, descreve quatro formas comuns do papel. O tech lead conduz um grupo de times numa área. O arquiteto responde pela direção técnica de um domínio. O solucionador é deslocado para os problemas mais difíceis da vez. E o braço direito amplia o alcance de um executivo. Descubra qual sua empresa precisa e qual combina com você.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:180, cls:'blue', html:B('Tech Lead','um time ou grupo de times')+UL('planejamento e execução técnica','escopo e qualidade','o arquétipo mais comum')},
+    {at:4.5, x:494,y:92,w:430,h:180, cls:'green', html:B('Arquiteto','um domínio ou área')+UL('direção técnica e padrões','decisões de longo prazo','profundidade no domínio')},
+    {at:8.5, x:36,y:292,w:430,h:180, cls:'amber', html:B('Solucionador','o problema mais difícil da vez')+UL('incidentes crônicos, migrações críticas','muda de área com frequência')},
+    {at:12, x:494,y:292,w:430,h:180, html:B('Braço direito','um executivo')+UL('amplia o alcance de um diretor ou CTO','temas da organização inteira')},
+    {at:16, x:36,y:484,w:888,h:22, html:'<small style="font:11px var(--f-mono);color:var(--st-dim)">Fonte: Will Larson, Staff Engineer: Leadership beyond the management track (staffeng.com)</small>'},
+  ]}},
+
+{ id:'techlead', ch:'Visão geral', title:'A semana de um Tech Lead',
+  say:'O tech lead ainda programa, mas menos: algo entre um terço e metade do tempo, de preferência em partes que destravam o time, não no caminho crítico sozinho. O resto vai para planejar e quebrar o trabalho, revisar desenhos e código, alinhar com produto e outros times, acompanhar riscos e ajudar as pessoas a crescer. A régua é a entrega do time inteiro.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, cls:'blue', html:B('Técnico','~40%')+UL('código que destrava','protótipos e spikes','revisão de desenho e de PR')},
+    {at:4, x:340,y:92,w:280,h:200, cls:'green', html:B('Entrega','~30%')+UL('quebrar e priorizar o trabalho','riscos e dependências','status claro para fora')},
+    {at:7.5, x:644,y:92,w:280,h:200, cls:'amber', html:B('Pessoas e alinhamento','~30%')+UL('produto, outros times, arquitetura','mentoria e pareamento','decisões registradas')},
+    {at:11, x:36,y:312,w:888,h:190, cls:'ext', html:B('Sinais de que está funcionando','')+UL('o time decide bem sem você em cada reunião','surpresas aparecem cedo, não no fim do prazo','mais pessoas conseguem mexer em cada parte do sistema','produto confia nas estimativas e entende os trade-offs')},
+  ]}},
+
+/* ---------- ESCRITA ---------- */
+{ id:'escrita', ch:'Escrita técnica', title:'Escrever é a ferramenta principal',
+  say:'Nos níveis acima de sênior, escrever bem é parte do trabalho, não um extra. Um documento alinha dez pessoas sem dez reuniões, sobrevive à sua ausência e força o pensamento a ficar claro. Os formatos mais usados são o design doc para propor, o ADR para registrar uma decisão, o update para comunicar andamento e a estratégia para dar direção.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:205,h:200, cls:'blue', html:B('Design doc','antes de construir')+UL('problema, proposta','alternativas','riscos')},
+    {at:3, x:257,y:92,w:205,h:200, cls:'green', html:B('ADR','depois de decidir')+UL('contexto','decisão','consequências')},
+    {at:5, x:478,y:92,w:205,h:200, cls:'amber', html:B('Update','durante a entrega')+UL('resumo no topo','riscos e decisões','próximos passos')},
+    {at:7, x:699,y:92,w:225,h:200, html:B('Estratégia','para os próximos trimestres')+UL('diagnóstico','políticas','ações')},
+    {at:10, x:36,y:312,w:888,h:190, cls:'ext', html:B('Regras de escrita','')+UL('a conclusão vem primeiro: quem lê só o topo já sabe o essencial','números em vez de adjetivos: "p95 de 48 s", não "bem mais rápido"','alternativas reais, com o motivo de terem perdido','curto: se passou de 6 páginas, provavelmente são dois documentos')},
+  ]}},
+
+{ id:'designdoc', ch:'Escrita técnica', title:'Modelo de design doc',
+  say:'Um design doc bom começa pelo problema e pelo custo de não fazer nada, separa objetivos de não objetivos, mostra a proposta e as alternativas com o motivo de cada uma ter perdido, e trata de riscos, segurança, operação e rollout. Termina com perguntas em aberto e um prazo de decisão. Revisores certos são parte do documento.',
+  v:T('docs/design/pre-analise-automatica.md','design-doc.txt')},
+
+{ id:'adr', ch:'Escrita técnica', title:'Modelo de ADR',
+  say:'O ADR, Architecture Decision Record, registra uma decisão importante em uma página: o contexto que levou a ela, o que foi decidido e as consequências, boas e ruins. Fica no repositório, numerado, e nunca é apagado: se a decisão mudar, um novo ADR a substitui. Daqui a dois anos, ele responde por que o sistema é assim.',
+  v:T('docs/adr/007-mensageria-event-hubs.md','adr.txt')},
+
+{ id:'revisao', ch:'Escrita técnica', title:'Como um documento vira decisão',
+  say:'Um documento só vale se levar a uma decisão. Converse antes com as pessoas mais afetadas, para não haver surpresa na revisão. Defina quem decide, quem precisa ser consultado e quem só será informado. Dê um prazo para comentários, responda cada um, registre a decisão final num ADR e comunique o resultado, inclusive para quem discordou.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:120,w:160,h:110, cls:'blue', html:B('Pré-alinhar','1:1 com os afetados')},
+    {at:2.5, x:204,y:120,w:160,h:110, cls:'blue', html:B('Rascunho','problema e opções')},
+    {at:4, x:384,y:120,w:160,h:110, cls:'green', html:B('Revisão','prazo para comentários')},
+    {at:5.5, x:564,y:120,w:160,h:110, cls:'green', html:B('Decisão','quem decide, decide')},
+    {at:7, x:744,y:120,w:192,h:110, cls:'amber', html:B('Registro','ADR + comunicado')},
+    {at:9.5, x:24,y:270,w:450,h:230, cls:'ext', html:B('Papéis claros (DACI)','')+UL('Driver: conduz o processo (muitas vezes você)','Approver: quem decide de fato','Contributors: consultados','Informed: avisados do resultado')},
+    {at:13, x:494,y:270,w:442,h:230, html:B('Quando não chegar a consenso','')+UL('explicite os critérios e o trade-off','separe fato de preferência','leve as opções a quem decide','discorde e se comprometa com a decisão')},
+  ], lines:[
+    {at:2.5, d:'M184 175 L 204 175', cls:'flow'}, {at:4, d:'M364 175 L 384 175', cls:'flow'},
+    {at:5.5, d:'M544 175 L 564 175', cls:'flow'}, {at:7, d:'M724 175 L 744 175', cls:'flow'},
+  ]}},
+
+/* ---------- INFLUÊNCIA ---------- */
+{ id:'influencia', ch:'Decisões e influência', title:'Influência sem autoridade',
+  say:'Staff raramente tem poder formal sobre os times com quem trabalha. A influência vem de outro lugar: entender o que cada time precisa e quais incentivos ele tem, trazer dados em vez de opinião, oferecer opções e ajuda concreta em vez de exigências, e construir confiança entregando o que promete. Quem escuta primeiro é ouvido depois.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, cls:'blue', html:B('Entender','')+UL('o que o outro time ganha ou perde','prazos e metas deles','1:1 antes da reunião')},
+    {at:4.5, x:340,y:92,w:280,h:200, cls:'green', html:B('Convencer','')+UL('dados do problema, não opinião','opções com trade-offs','começar por um piloto pequeno')},
+    {at:8.5, x:644,y:92,w:280,h:200, cls:'amber', html:B('Ajudar','')+UL('fazer a primeira parte junto','template, biblioteca, exemplo','tirar trabalho, não acrescentar')},
+    {at:12.5, x:36,y:312,w:888,h:190, cls:'ext', html:B('Capital de confiança','')+UL('entregar o que prometeu, sempre','dar crédito publicamente aos outros','admitir quando estava errado','escalar com o time junto, nunca pelas costas')},
+  ]}},
+
+{ id:'decisao', ch:'Decisões e influência', title:'Decidir bem e na velocidade certa',
+  say:'Nem toda decisão merece o mesmo cuidado. Decisões reversíveis, as portas de duas vias, devem ser rápidas e tomadas perto do problema. Decisões caras de desfazer, como modelo de dados, fornecedor ou contrato público de API, pedem análise, alternativas e registro. Para as difíceis, liste critérios, dê peso a cada um, compare as opções e deixe explícito o que se perde.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:170, cls:'green', html:B('Porta de duas vias','reversível')+UL('decidir rápido, perto do problema','experimentar e medir','ex.: biblioteca interna, layout de tela')},
+    {at:4.5, x:494,y:92,w:430,h:170, cls:'amber', html:B('Porta de uma via','cara de desfazer')+UL('design doc, alternativas, ADR','envolver quem herda a decisão','ex.: banco, fornecedor, API pública')},
+    {at:9, x:36,y:282,w:888,h:220, html:B('Matriz de decisão','')+'<pre class="kql">critério (peso)            Kafka/EH   Service Bus   RabbitMQ\nvazão em pico (3)              5            3             4\nreleitura por vários (3)       5            2             2\noperação pela squad (2)        4            5             3\nconhecimento atual (1)         3            4             3\ntotal ponderado               41           29            27</pre><small style="margin-top:6px">a matriz não decide sozinha: ela torna o trade-off discutível</small>'},
+  ]}},
+
+{ id:'negocio', ch:'Decisões e influência', title:'Falar a língua do negócio',
+  say:'Para conseguir investimento em algo técnico, traduza em impacto: tempo de entrega, custo, risco, receita ou experiência do cliente. Quem decide orçamento quer saber o problema, o custo de não fazer, a proposta e o prazo. Nos updates, a conclusão e as decisões necessárias vêm no topo; o detalhe fica para quem quiser ler.',
+  v:T('updates/semana-06.md','update.txt')},
+
+/* ---------- ESTRATÉGIA ---------- */
+{ id:'estrategia', ch:'Estratégia', title:'O que é estratégia técnica',
+  say:'Estratégia técnica não é uma lista de desejos nem um roadmap de tecnologias. No modelo de Richard Rumelt, ela tem três partes: um diagnóstico honesto do que está acontecendo, políticas que orientam as decisões e ações coordenadas que aplicam essas políticas. Uma boa estratégia diz também o que não será feito.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:230, cls:'blue', html:B('Diagnóstico','o que está acontecendo')+UL('dados, não impressões','causas, não sintomas','o problema mais importante')},
+    {at:4.5, x:340,y:92,w:280,h:230, cls:'green', html:B('Políticas','como vamos escolher')+UL('regras que guiam decisões','poucas e claras','aplicáveis sem você')},
+    {at:8.5, x:644,y:92,w:280,h:230, cls:'amber', html:B('Ações','o que faremos')+UL('coordenadas entre times','com prazo e dono','medidas por resultado')},
+    {at:12.5, x:36,y:342,w:888,h:160, cls:'ext', html:B('Sinais de estratégia ruim','')+UL('só objetivos ("ser escalável", "modernizar")','lista de tudo, sem escolhas nem renúncias','ignora o problema difícil de verdade')},
+  ], lines:[
+    {at:4.5, d:'M316 207 L 340 207', cls:'flow'}, {at:8.5, d:'M620 207 L 644 207', cls:'flow'},
+  ]}},
+
+{ id:'estrategia-doc', ch:'Estratégia', title:'Modelo de documento de estratégia',
+  say:'Um documento de estratégia cabe em duas páginas. O diagnóstico traz números. As políticas são poucas e aplicáveis por qualquer pessoa. As ações têm trimestre e pilotos. Há uma seção do que não será feito, que evita discussões repetidas. E métricas dizem se a estratégia está funcionando.',
+  v:T('docs/estrategia/plataforma-credito-2027.md','estrategia.txt')},
+
+{ id:'divida', ch:'Estratégia', title:'Dívida técnica com argumento de negócio',
+  say:'Dívida técnica vira prioridade quando é medida pelo juro que cobra: horas perdidas por sprint, incidentes, tempo de onboarding, risco de segurança. O quadrante de Martin Fowler separa dívida deliberada de acidental e prudente de imprudente. Negocie um investimento contínuo, como uma fração da capacidade, e projetos dedicados quando o juro for alto.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:200, cls:'region', html:'<span class="rl">quadrante da dívida (Fowler)</span>'+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;font-size:13px"><div class="pod" style="display:block">imprudente + deliberada<br><small>"não temos tempo para design"</small></div><div class="pod" style="display:block">prudente + deliberada<br><small>"lançamos e pagamos depois"</small></div><div class="pod" style="display:block">imprudente + acidental<br><small>"o que são camadas?"</small></div><div class="pod" style="display:block">prudente + acidental<br><small>"agora sabemos como deveria ser"</small></div></div>'},
+    {at:5, x:494,y:92,w:430,h:200, cls:'amber', html:B('Medir o juro','')+UL('horas por sprint contornando o problema','incidentes e tempo de recuperação','lead time de mudanças naquela área','risco: segurança, suporte, fim de vida')},
+    {at:10, x:36,y:312,w:888,h:190, cls:'ext', html:B('Como negociar','')+UL('mostre o custo atual em horas, reais ou incidentes','proponha investimento contínuo (ex.: 15–20% da capacidade)','para juro alto: projeto com objetivo, prazo e métrica','pague dívida junto com funcionalidades da mesma área')},
+  ]}},
+
+/* ---------- EXECUÇÃO ---------- */
+{ id:'ambiguidade', ch:'Execução', title:'Da ambiguidade a um plano',
+  say:'Problemas de staff chegam mal definidos: "a plataforma está lenta", "precisamos modernizar". O trabalho é dar forma: entender quem sofre e quanto, transformar em objetivos medíveis, investigar com spikes curtos o que é incerto, quebrar em marcos que entregam valor e começar pelos maiores riscos, não pelas partes mais fáceis.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:120,w:170,h:120, cls:'blue', html:B('Entender','quem sofre, quanto, desde quando')},
+    {at:3, x:212,y:120,w:170,h:120, cls:'blue', html:B('Definir','objetivo medível e não objetivos')},
+    {at:5, x:400,y:120,w:170,h:120, cls:'green', html:B('Investigar','spikes de 1–3 dias nos riscos')},
+    {at:7, x:588,y:120,w:170,h:120, cls:'green', html:B('Fatiar','marcos que entregam valor')},
+    {at:9, x:776,y:120,w:160,h:120, cls:'amber', html:B('Executar','riscos primeiro')},
+    {at:11.5, x:24,y:270,w:450,h:230, cls:'ext', html:B('Marcos bons','')+UL('cada um entrega algo usável ou aprende algo decisivo','fatias verticais, não "camada de dados pronta"','o primeiro em 2–4 semanas','critério de pronto combinado')},
+    {at:14.5, x:494,y:270,w:442,h:230, html:B('Prazos','')+UL('estime em faixas ("6 a 9 semanas")','a faixa estreita conforme se aprende','avise o risco no dia em que aparece','corte escopo antes de estourar prazo')},
+  ], lines:[
+    {at:3, d:'M194 180 L 212 180', cls:'flow'}, {at:5, d:'M382 180 L 400 180', cls:'flow'},
+    {at:7, d:'M570 180 L 588 180', cls:'flow'}, {at:9, d:'M758 180 L 776 180', cls:'flow'},
+  ]}},
+
+/* ---------- ARQUITETURA ---------- */
+{ id:'ddd', ch:'Arquitetura entre times', title:'DDD estratégico: contextos delimitados',
+  say:'Em sistemas grandes, a mesma palavra muda de significado: proposta para o comercial não é a proposta para o crédito. O DDD estratégico divide o domínio em contextos delimitados, cada um com sua linguagem e seu modelo, e um mapa diz como eles se relacionam. Uma camada anticorrupção protege seu modelo de um sistema externo ou legado.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:250,h:150, cls:'blue', html:B('Originação','comercial')+UL('proposta = intenção do cliente','canal, simulação')},
+    {at:3, x:356,y:92,w:250,h:150, cls:'green', html:B('Análise de crédito','núcleo do negócio')+UL('proposta = caso em análise','score, política, decisão')},
+    {at:5, x:676,y:92,w:250,h:150, cls:'amber', html:B('Contratos e pagamentos','')+UL('contrato, parcelas','razão contábil')},
+    {at:7, x:356,y:300,w:250,h:110, html:B('Bureau externo','legado/terceiro')},
+    {at:9, x:36,y:300,w:290,h:110, cls:'ext', html:B('Eventos publicados','linguagem pública e versionada entre contextos')},
+    {at:11, x:636,y:300,w:290,h:110, cls:'ext', html:B('Camada anticorrupção','traduz o modelo do bureau para o nosso')},
+    {at:13.5, x:36,y:430,w:890,h:72, html:B('Regra prática','um contexto, um dono, um banco · o núcleo do negócio recebe o melhor time · o genérico se compra')},
+  ], lines:[
+    {at:3, d:'M286 167 L 356 167', cls:'flow'},
+    {at:5, d:'M606 167 L 676 167', cls:'flow'},
+    {at:7, d:'M481 242 L 481 300', cls:'amber'},
+    {at:11, d:'M606 355 L 636 355', cls:'dim'},
+  ]}},
+
+{ id:'conway', ch:'Arquitetura entre times', title:'Lei de Conway e Team Topologies',
+  say:'A lei de Conway diz que sistemas copiam a estrutura de comunicação de quem os constrói. Use isso a favor: desenhe times junto com a arquitetura. O livro Team Topologies propõe quatro tipos: times alinhados a um fluxo de valor, times de plataforma que oferecem serviços internos, times habilitadores que ensinam, e times de subsistemas complicados para partes que exigem especialistas.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:140, cls:'blue', html:B('Alinhado ao fluxo (stream-aligned)','a maioria dos times')+UL('dono de uma parte do produto de ponta a ponta')},
+    {at:4.5, x:494,y:92,w:430,h:140, cls:'green', html:B('Plataforma','reduz a carga dos outros')+UL('templates, pipeline, AKS, observabilidade como produto')},
+    {at:8, x:36,y:252,w:430,h:140, cls:'amber', html:B('Habilitador (enabling)','ensina e sai')+UL('ajuda a adotar uma prática nova por um período')},
+    {at:11, x:494,y:252,w:430,h:140, html:B('Subsistema complicado','especialistas')+UL('ex.: motor de score, cálculo financeiro')},
+    {at:14, x:36,y:412,w:888,h:90, cls:'ext', html:B('Na prática','se dois times precisam conversar toda semana para mudar algo, ou o limite entre eles está errado ou a interface entre os sistemas está')},
+  ]}},
+
+{ id:'legado', ch:'Arquitetura entre times', title:'Migrar sem parar o negócio',
+  say:'Reescrever tudo de uma vez é o caminho mais arriscado. O padrão Strangler Fig substitui o sistema antigo por partes: uma camada na frente direciona cada rota para o novo quando ele estiver pronto. Branch by abstraction troca implementações atrás de uma interface. Rodar o antigo e o novo em paralelo compara resultados. E mudanças de banco seguem expandir, migrar e contrair.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:110,w:150,h:90, html:B('Clientes','')},
+    {at:2, x:216,y:100,w:180,h:110, cls:'blue', html:B('Roteador / fachada','decide rota a rota')},
+    {at:4, x:440,y:84,w:220,h:64, cls:'amber', html:B('Legado','cada vez menos rotas')},
+    {at:5, x:440,y:162,w:220,h:64, cls:'green', html:B('Novo serviço','cada vez mais rotas')},
+    {at:7, x:690,y:84,w:234,h:142, cls:'ext', html:B('Execução em paralelo','novo calcula junto, compara, só loga diferenças')},
+    {at:10, x:36,y:250,w:280,h:250, cls:'blue', html:B('Strangler Fig','')+UL('rota por rota','rollback por feature flag','o legado morre por inanição')},
+    {at:12.5, x:340,y:250,w:280,h:250, cls:'green', html:B('Branch by abstraction','')+UL('interface na frente do antigo','nova implementação atrás','troca sem branch longo')},
+    {at:15, x:644,y:250,w:280,h:250, cls:'amber', html:B('Banco: expandir e contrair','')+UL('1. adiciona coluna/tabela nova','2. grava nas duas, migra dados','3. lê da nova','4. remove a antiga')},
+  ], lines:[
+    {at:2, d:'M186 155 L 216 155', cls:'flow'},
+    {at:4, d:'M396 140 C 418 140, 418 116, 440 116', cls:'amber'},
+    {at:5, d:'M396 170 C 418 170, 418 194, 440 194', cls:'green'},
+    {at:7, d:'M660 194 L 690 194', cls:'dim'},
+  ]}},
+
+/* ---------- OPERAÇÃO ---------- */
+{ id:'dora', ch:'Operação e qualidade', title:'Métricas DORA',
+  say:'As métricas DORA medem a capacidade de entrega de um time. Duas medem velocidade: frequência de deploy e lead time de mudança, do commit até produção. Duas medem estabilidade: taxa de falha das mudanças e tempo para restaurar o serviço. A pesquisa mostra que velocidade e estabilidade andam juntas. Use as métricas para melhorar o sistema de trabalho, nunca para comparar pessoas.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:150, cls:'blue', html:B('Frequência de deploy','quantas vezes vai para produção')+UL('alvo: sob demanda, várias por dia')},
+    {at:3.5, x:494,y:92,w:430,h:150, cls:'blue', html:B('Lead time de mudança','do commit à produção')+UL('alvo: menos de um dia')},
+    {at:6.5, x:36,y:262,w:430,h:150, cls:'amber', html:B('Taxa de falha de mudança','deploys que causam incidente ou rollback')+UL('alvo: baixa e caindo')},
+    {at:9.5, x:494,y:262,w:430,h:150, cls:'amber', html:B('Tempo para restaurar','do problema ao serviço normal')+UL('alvo: menos de uma hora')},
+    {at:13, x:36,y:432,w:888,h:30, cls:'ext', html:'<small style="font:12px var(--f-mono);color:var(--st-ink)">Alavancas: lotes pequenos, testes automatizados, deploy automatizado, rollout gradual, observabilidade</small>'},
+    VISTO('SLOs, deploy seguro e incidentes no Preparatório Big Tech · pipeline com aprovação nas trilhas de AKS e Terraform', 470),
+  ]}},
+
+{ id:'incidente', ch:'Operação e qualidade', title:'Liderar um incidente',
+  say:'Num incidente, o mais importante é coordenação. Alguém declara o incidente e assume como comandante: não conserta, coordena. Outra pessoa cuida da comunicação com o negócio, em intervalos combinados. Os especialistas investigam. A prioridade é restaurar o serviço, com rollback quando possível; a causa raiz vem depois, no postmortem.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:190, cls:'amber', html:B('Comandante (IC)','coordena, não conserta')+UL('declara severidade','distribui tarefas','decide rollback')},
+    {at:4, x:340,y:92,w:280,h:190, cls:'blue', html:B('Comunicação','')+UL('atualiza o negócio a cada 15–30 min','um canal só para o incidente','registra a linha do tempo')},
+    {at:7, x:644,y:92,w:280,h:190, cls:'green', html:B('Operações','especialistas')+UL('investigam hipóteses','reportam ao IC','mitigam antes de entender tudo')},
+    {at:10.5, x:36,y:302,w:888,h:200, cls:'ext', html:B('Ordem de prioridades','')+UL('1. parar o sangramento: rollback, desligar a feature, escalar','2. comunicar impacto e próxima atualização','3. entender a causa com calma, depois','4. postmortem sem culpados, com ações que têm dono e data')},
+  ]}},
+
+{ id:'postmortem', ch:'Operação e qualidade', title:'Modelo de postmortem sem culpados',
+  say:'Um postmortem sem culpados descreve o sistema e as decisões, nunca culpa pessoas, porque quem tem medo esconde informação. Ele registra impacto em números, a linha do tempo, as causas contribuintes, o que funcionou e ações com dono e data. O valor está em executar as ações; postmortem sem acompanhamento é só um relato.',
+  v:T('docs/postmortems/2026-09-18-pre-analise.md','postmortem.txt')},
+
+{ id:'seguranca', ch:'Operação e qualidade', title:'Modelagem de ameaças',
+  say:'Em níveis mais altos, segurança é parte do desenho, não uma revisão no fim. A modelagem de ameaças pergunta o que estamos construindo, o que pode dar errado, o que faremos a respeito e se fizemos um bom trabalho. O STRIDE organiza o que pode dar errado em seis categorias. Faça em uma hora, com o diagrama do sistema na frente.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:120, cls:'amber', html:B('S · Spoofing','se passar por outro')+UL('autenticação forte')},
+    {at:2.5, x:340,y:92,w:280,h:120, cls:'amber', html:B('T · Tampering','alterar dados')+UL('integridade, assinatura')},
+    {at:4, x:644,y:92,w:280,h:120, cls:'amber', html:B('R · Repudiation','negar que fez')+UL('auditoria')},
+    {at:5.5, x:36,y:228,w:280,h:120, cls:'blue', html:B('I · Information disclosure','vazar dados')+UL('criptografia, mínimo acesso')},
+    {at:7, x:340,y:228,w:280,h:120, cls:'blue', html:B('D · Denial of service','derrubar o serviço')+UL('limites, filas, autoscaling')},
+    {at:8.5, x:644,y:228,w:280,h:120, cls:'blue', html:B('E · Elevation of privilege','ganhar poder indevido')+UL('autorização por recurso')},
+    {at:11, x:36,y:368,w:888,h:136, cls:'ext', html:B('Quatro perguntas','o que estamos construindo? · o que pode dar errado? · o que vamos fazer a respeito? · fizemos um bom trabalho?')},
+  ]}},
+
+{ id:'plataforma', ch:'Operação e qualidade', title:'Plataforma, experiência do dev e custo',
+  say:'Staff muitas vezes melhora o trabalho de muitos times de uma vez. Caminhos dourados, como um template de serviço com pipeline, Helm e observabilidade prontos, reduzem decisões repetidas. Medir a experiência dos desenvolvedores mostra onde está o atrito. E FinOps traz o custo de nuvem para as decisões técnicas, com dono e métrica por serviço.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:230, cls:'blue', html:B('Caminho dourado','o jeito fácil é o certo')+UL('template de serviço','pipeline e Helm prontos','OTel e alertas de fábrica','opcional, mas atraente')},
+    {at:4.5, x:340,y:92,w:280,h:230, cls:'green', html:B('Experiência do dev','')+UL('tempo de onboarding','tempo de build e de CI','pesquisa periódica com os times','eliminar esperas')},
+    {at:8.5, x:644,y:92,w:280,h:230, cls:'amber', html:B('FinOps','')+UL('custo por serviço e por cliente','tags e dono em todo recurso','right-sizing e autoscaler','custo como requisito do design')},
+    {at:12.5, x:36,y:342,w:888,h:120, cls:'ext', html:B('Plataforma é produto','os times internos são clientes: entreviste, meça adoção, documente, dê suporte. Plataforma obrigatória e ruim gera atalhos.')},
+    VISTO('template, Helm, pipeline e custo nas trilhas de AKS e Terraform', 470),
+  ]}},
+
+/* ---------- PESSOAS ---------- */
+{ id:'multiplicar', ch:'Pessoas', title:'Multiplicar o time',
+  say:'O impacto de um staff aparece nas pessoas em volta. Revisão de código que ensina o porquê, pareamento nas partes difíceis, delegar problemas inteiros com escopo crescente em vez de tarefas soltas, e dar visibilidade ao trabalho dos outros. Participar de contratações, com entrevistas bem conduzidas e rubricas claras, também é multiplicar.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, cls:'blue', html:B('Ensinar','')+UL('review que explica o porquê','pareamento no difícil','sessões curtas sobre decisões')},
+    {at:4.5, x:340,y:92,w:280,h:200, cls:'green', html:B('Delegar','')+UL('o problema, não a tarefa','escopo crescente','apoio sem tomar de volta')},
+    {at:8.5, x:644,y:92,w:280,h:200, cls:'amber', html:B('Dar palco','')+UL('crédito público','quem fez apresenta','indicar para projetos visíveis')},
+    {at:12.5, x:36,y:312,w:888,h:190, cls:'ext', html:B('Contratação','')+UL('entrevistar com regularidade e rubrica escrita','avaliar sinais, não afinidade','dar feedback útil ao comitê','ajudar a definir o que o time precisa')},
+  ]}},
+
+/* ---------- CARREIRA ---------- */
+{ id:'brag', ch:'Carreira', title:'Documento de conquistas',
+  say:'Promoção a esses níveis depende de evidência, e ninguém lembra do que você fez há dez meses, nem você. Um documento de conquistas, atualizado toda semana, registra impacto com números e fonte, escopo além do time, pessoas que cresceram, operação e aprendizados. Ele vira a base do caso de promoção e das conversas com o gestor.',
+  v:T('carreira/conquistas-2026.md','brag.txt')},
+
+{ id:'plano', ch:'Carreira', title:'Plano de 12 meses',
+  say:'Um plano possível para sair de pleno. Converse com o gestor sobre o próximo nível e peça a régua por escrito. Assuma um problema que ninguém está resolvendo, maior que uma tarefa. Escreva o design doc e conduza a decisão. Entregue com marcos, comunique bem e lidere um incidente. Mentore alguém. E a cada trimestre revise a evidência com o gestor.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:205,h:300, cls:'blue', html:B('Meses 1–3','alinhar')+UL('régua do próximo nível por escrito','lacunas com o gestor','documento de conquistas','escolher um problema sem dono')},
+    {at:4.5, x:257,y:92,w:205,h:300, cls:'blue', html:B('Meses 4–6','propor')+UL('design doc e revisão','ADRs das decisões','primeiro marco entregue','updates semanais')},
+    {at:8.5, x:478,y:92,w:205,h:300, cls:'green', html:B('Meses 7–9','ampliar')+UL('envolver outro time','padrão ou template adotado','mentorar alguém','IC em incidente')},
+    {at:12.5, x:699,y:92,w:225,h:300, cls:'amber', html:B('Meses 10–12','consolidar')+UL('resultado medido','caso de promoção','próximo problema maior','estratégia para o ano')},
+    {at:16, x:36,y:412,w:888,h:90, cls:'ext', html:B('Promoção interna ou mudar de empresa','as duas funcionam; mudar costuma ser mais rápido para o título, ficar costuma ser mais rápido para o escopo real. Em ambos, a evidência é a mesma.')},
+  ]}},
+
+{ id:'check', ch:'Fechamento', title:'Checklist do próximo nível',
+  say:'Use esta lista como espelho. Cada item precisa ter acontecido de verdade, com alguém além de você podendo confirmar. O checklist completo, com atalho para cada cena, está abaixo do vídeo.',
+  v:{type:'check', items:[
+    'Régua do próximo nível combinada com o gestor',
+    'Um problema maior que o time, assumido',
+    'Design doc revisado e decisão tomada',
+    'ADRs registrando as decisões importantes',
+    'Alinhamento com pelo menos outro time',
+    'Updates claros, com riscos cedo',
+    'Dívida técnica negociada com números',
+    'Marcos entregues e medidos',
+    'Incidente coordenado e postmortem fechado',
+    'Pessoa mentorada que cresceu',
+    'Padrão ou template adotado por outros',
+    'Documento de conquistas em dia',
+  ]}},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão o mapa de níveis com o que se espera de cada um, os links para os temas técnicos já cobertos nas outras trilhas, a leitura recomendada, o checklist e as perguntas mais comuns sobre essa transição. O próximo nível começa quando você passa a fazer o trabalho dele, antes do título.',
+  v:{type:'outro'} },
+];
+// ===================== LINKS, NÍVEIS, LEITURA, CHECKLIST, FAQ, FRASES =====================
+const TR = {
+  aks: ['Trilha AKS', 'https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt'],
+  kafka: ['Trilha Kafka e Event Hubs', 'https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd'],
+  tf: ['Trilha Terraform', 'https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5'],
+  cs: ['Trilha C# e ASP.NET Core', 'https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h'],
+  node: ['Trilha Node e TypeScript', 'https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr'],
+  bt: ['Preparatório Big Tech', 'https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd'],
+  ia: ['Trilha de IA Aplicada', 'https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S'],
+};
+const JA_VISTO = [
+  ['Método de design de sistemas', 'bt', 'ds-metodo', 'Requisitos, estimativas, API, alto nível e aprofundamento'],
+  ['Estimativas e blocos de construção', 'bt', 'blocos', 'Cache, filas, réplicas, particionamento'],
+  ['Consistência e CAP', 'bt', 'consistencia', 'Replicação, quóruns e entrega pelo menos uma vez'],
+  ['SLOs, deploy seguro e incidentes', 'bt', 'confiabilidade', 'Orçamento de erro, canário, postmortem'],
+  ['Histórias STAR e valores', 'bt', 'star', 'Como contar impacto em entrevistas e promoções'],
+  ['Estilos de arquitetura', 'cs', 'estilos', 'Camadas, Clean, Vertical Slice e monólito modular'],
+  ['Domínio com regras dentro', 'cs', 'dominio', 'Entidades, value objects e eventos de domínio'],
+  ['Consistência entre serviços', 'cs', 'consistencia', 'Outbox, idempotência, concorrência otimista e sagas'],
+  ['Roteiro para conversa de design', 'cs', 'roteiro', 'As decisões que o cliente cobra'],
+  ['Outbox e eventos versionados', 'kafka', 'outbox', 'Banco e evento sem divergência'],
+  ['Contrato de evento com versão', 'kafka', 'contrato', 'Evoluir sem quebrar consumidores'],
+  ['Pipeline com aprovação', 'tf', 'pipeline', 'Plan em todo commit, apply com aprovação'],
+  ['Atualizar sem indisponibilidade', 'aks', 'rolling', 'Rolling update e rollback'],
+  ['IA no dia a dia do time', 'ia', 'dev', 'Política de uso de assistentes de código'],
+  ['Do protótipo à produção com IA', 'ia', 'producao', 'Checklist para recursos de IA'],
+];
+
+const MATRIZ = [
+  ['Pleno','Funcionalidade','Entrega com autonomia e qualidade; pede ajuda na hora certa; conhece bem a parte do sistema em que trabalha.','Entregas próprias com poucos retrabalhos; boas revisões de código.','Esperar que tragam o problema pronto.'],
+  ['Sênior','Parte do sistema / o time','Decide o como em sua área; antecipa problemas; orienta plenos; conduz projetos do time do início ao fim.','Design docs do time; projeto entregue; pessoas que melhoraram com sua ajuda.','Ser o melhor programador e parar aí.'],
+  ['Tech Lead (papel)','Um time','Planejamento técnico, quebra do trabalho, qualidade, alinhamento com produto, riscos e crescimento do time.','Entregas previsíveis do time; decisões registradas; time que decide bem sem ele.','Pegar o caminho crítico sozinho; virar gargalo.'],
+  ['Staff','Vários times','Resolve problemas sem dono que atravessam times; alinha decisões; cria padrões adotados; multiplica engenheiros.','Projeto entre times; estratégia ou padrão adotado; ADRs e docs citados por outros.','Fazer trabalho de sênior com mais horas.'],
+  ['Principal','Organização','Direção técnica de longo prazo; decisões caras de reverter; parceria com diretoria; desenvolve staffs.','Estratégia da área; mudanças de arquitetura em escala; impacto no negócio.','Ficar distante da realidade dos times.'],
+  ['Engineering Manager','Pessoas e time','Contratação, carreira, desempenho, organização e saúde do time; parceria com produto.','Time estável que entrega; pessoas promovidas; contratações boas.','Achar que é o próximo degrau técnico.'],
+];
+
+const STUDY = [
+  ['StaffEng (Will Larson)','Arquétipos, histórias e guias do papel de Staff','https://staffeng.com/','arquetipos'],
+  ["The Staff Engineer's Path (Tanya Reilly)",'Livro: big picture, execução e nivelar o time','https://www.oreilly.com/library/view/the-staff-engineers/9781098118723/','mudanca'],
+  ["The Manager's Path (Camille Fournier)",'Livro: de tech lead a gestão e o que cada papel faz','https://www.oreilly.com/library/view/the-managers-path/9781491973882/','techlead'],
+  ['Design docs at Google','Como e por que o Google escreve design docs','https://www.industrialempathy.com/posts/design-docs-at-google/','designdoc'],
+  ['Documenting Architecture Decisions (Michael Nygard)','O texto que originou os ADRs','https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions','adr'],
+  ['ADR GitHub organization','Modelos e ferramentas para ADRs','https://adr.github.io/','adr'],
+  ['Technical Writing (Google)','Cursos gratuitos de escrita técnica','https://developers.google.com/tech-writing','escrita'],
+  ['Technical Debt Quadrant (Martin Fowler)','Os quatro tipos de dívida','https://martinfowler.com/bliki/TechnicalDebtQuadrant.html','divida'],
+  ['Strangler Fig Application (Martin Fowler)','Migração incremental de legado','https://martinfowler.com/bliki/StranglerFigApplication.html','legado'],
+  ['Branch By Abstraction (Martin Fowler)','Trocar implementações sem branch longo','https://martinfowler.com/bliki/BranchByAbstraction.html','legado'],
+  ['DDD Reference (Eric Evans)','Resumo oficial dos padrões do DDD','https://www.domainlanguage.com/ddd/reference/','ddd'],
+  ['Team Topologies','Tipos de times e modos de interação','https://teamtopologies.com/','conway'],
+  ['DORA','Pesquisa e métricas de entrega de software','https://dora.dev/','dora'],
+  ['Postmortem Culture (Google SRE)','Postmortems sem culpados','https://sre.google/sre-book/postmortem-culture/','postmortem'],
+  ['Incident Response (PagerDuty)','Papéis e processo de resposta a incidentes','https://response.pagerduty.com/','incidente'],
+  ['Ameaças STRIDE (Microsoft)','Categorias de ameaça na modelagem','https://learn.microsoft.com/pt-br/azure/security/develop/threat-modeling-tool-threats','seguranca'],
+  ['O que é FinOps','FinOps Foundation','https://www.finops.org/introduction/what-is-finops/','plataforma'],
+  ['Get your work recognized: write a brag document (Julia Evans)','O documento de conquistas','https://jvns.ca/blog/brag-documents/','brag'],
+  ['Progression.fyi','Coleção de matrizes de carreira de empresas reais','https://progression.fyi/','escada'],
+];
+
+const CHECK = [
+  ['Clareza','Saber qual caminho quer: Tech Lead, Staff ou gestão','escada'],
+  ['Clareza','Régua do próximo nível por escrito, combinada com o gestor','plano'],
+  ['Clareza','Saber qual arquétipo sua empresa precisa','arquetipos'],
+  ['Escrita','Design doc escrito, revisado e com decisão','designdoc'],
+  ['Escrita','ADRs para decisões importantes no repositório','adr'],
+  ['Escrita','Updates semanais com conclusão e riscos no topo','negocio'],
+  ['Decisão','Conduzir uma decisão com papéis claros (DACI)','revisao'],
+  ['Decisão','Usar matriz de decisão em escolha difícil','decisao'],
+  ['Influência','Alinhar uma mudança com outro time sem autoridade formal','influencia'],
+  ['Estratégia','Escrever diagnóstico, políticas e ações para uma área','estrategia-doc'],
+  ['Estratégia','Negociar investimento em dívida técnica com números','divida'],
+  ['Execução','Transformar um problema ambíguo em marcos entregues','ambiguidade'],
+  ['Arquitetura','Desenhar contextos delimitados de um domínio','ddd'],
+  ['Arquitetura','Relacionar arquitetura e estrutura de times','conway'],
+  ['Arquitetura','Planejar uma migração incremental de legado','legado'],
+  ['Operação','Acompanhar as métricas DORA do time','dora'],
+  ['Operação','Coordenar um incidente como IC','incidente'],
+  ['Operação','Postmortem sem culpados com ações concluídas','postmortem'],
+  ['Operação','Modelagem de ameaças em um design novo','seguranca'],
+  ['Plataforma','Criar um caminho dourado adotado por outros times','plataforma'],
+  ['Pessoas','Mentorar alguém até assumir algo maior','multiplicar'],
+  ['Pessoas','Entrevistar com rubrica escrita','multiplicar'],
+  ['Carreira','Documento de conquistas atualizado toda semana','brag'],
+];
+
+const FAQ = [
+ ['Caminho','Staff, Tech Lead ou gestão: como escolher?',`<p>Pergunte o que te dá energia. Se é resolver problemas técnicos difíceis e influenciar decisões, trilha técnica (sênior, staff). Se é conduzir a entrega e a técnica de um time, o papel de tech lead. Se é desenvolver pessoas, contratar e organizar times, gestão. É possível alternar; muitos fazem um período como gestor e voltam à trilha técnica.</p>`],
+ ['Caminho','Com 6 anos de pleno, dá para ir direto para Staff?',`<p>Em geral, o passo seguinte é sênior; staff costuma exigir evidência de impacto entre times que sênior ainda não exige. O tempo pesa menos que o escopo: quem já age como sênior por um ano costuma ser promovido. Comece fazendo o trabalho do próximo nível no seu time.</p>`],
+ ['Caminho','Minha empresa não tem cargo de Staff. E agora?',`<p>Em empresas menores, o trabalho de staff aparece como "especialista", "arquiteto" ou "tech lead". Olhe para o escopo, não para o nome. Se não existe trilha técnica além de sênior, converse com a liderança sobre criar uma ou considere empresas que já têm.</p>`],
+ ['Caminho','Staff ainda programa?',`<p>Sim, mas escolhe onde. Protótipos, partes críticas, revisões e ferramentas que destravam vários times têm mais alavanca que tarefas comuns do backlog. Ficar longe do código por muito tempo enfraquece as decisões técnicas.</p>`],
+ ['Escopo','Como conseguir escopo maior sem o título?',`<p>Procure problemas sem dono que doem para mais de um time, como builds lentos, incidentes recorrentes ou integrações frágeis. Proponha com um documento curto, combine com o gestor e entregue um primeiro marco pequeno. Escopo raramente é dado; ele é assumido e depois reconhecido.</p>`],
+ ['Escopo','E se eu assumir algo e não der certo?',`<p>Combine expectativas e marcos curtos desde o início, comunique riscos cedo e registre o que aprendeu. Um projeto difícil bem conduzido, mesmo que reduzido no caminho, mostra mais maturidade que uma entrega fácil.</p>`],
+ ['Influência','Como lidar quando outro time não quer mudar?',`<p>Entenda o custo para eles, traga dados do problema, ofereça ajuda concreta e comece com um piloto que reduza o risco. Se ainda assim travar e for importante, leve as opções aos líderes dos dois lados, junto com o outro time, não pelas costas.</p>`],
+ ['Influência','E quando discordo do meu gestor ou da arquitetura?',`<p>Discorde por escrito, com argumentos e alternativas, uma vez e bem. Se a decisão for mantida, apoie a execução e registre no ADR os riscos que apontou. Repetir a mesma discussão depois de decidida desgasta a confiança.</p>`],
+ ['Influência','Como dizer não sem parecer bloqueador?',`<p>Diga o que você faria em vez disso e o custo de cada caminho: "Se fizermos isso agora, o projeto X atrasa duas semanas. Posso fazer uma versão menor até sexta." Um não com alternativa é uma contribuição.</p>`],
+ ['Impacto','Como medir impacto técnico?',`<p>Ligue a mudança a algo que o negócio acompanha: tempo de entrega, custo, incidentes, conversão, tempo de onboarding. Meça antes e depois, cite a fonte e registre no documento de conquistas na mesma semana.</p>`],
+ ['Impacto','Como sair do papel de herói dos incidentes?',`<p>Transforme cada incidente em ação permanente: alerta melhor, runbook, teste, correção de causa. Treine outras pessoas como IC e passe o plantão. O sinal de sucesso é o time resolver sem você.</p>`],
+ ['Escrita','Não gosto de escrever. Tem jeito?',`<p>Tem: use modelos, escreva a conclusão primeiro, frases curtas e números. Peça revisão a alguém que escreve bem e leia bons design docs de outros times. Escrita melhora rápido com prática semanal, como nos updates.</p>`],
+ ['Carreira','Promoção interna ou mudar de empresa?',`<p>Mudar costuma levar o título mais rápido; ficar costuma dar escopo real mais rápido, porque você já conhece o sistema e as pessoas. Em processos externos para staff, espere entrevistas de design de sistemas, de liderança e de histórias com impacto.</p>`],
+ ['Carreira','Certificações ajudam?',`<p>Ajudam a estudar e a abrir conversas, principalmente em nuvem. Para níveis altos, pesam menos que evidência de impacto, decisões conduzidas e pessoas desenvolvidas.</p>`],
+ ['Carreira','O inglês faz diferença?',`<p>Faz muita diferença para empresas internacionais e para ler e participar das discussões técnicas mais atuais. Escrever bem em inglês (design docs, updates) é tão importante quanto falar.</p>`],
+ ['Carreira','Quanto tempo leva?',`<p>Varia muito por empresa e contexto. Como referência comum, de 1 a 3 anos entre degraus acima de sênior. O que acelera é assumir problemas maiores, ter um gestor que patrocina e evidência organizada.</p>`],
+];
+
+const CMDS = [
+  ['"Qual problema estamos resolvendo, e como saberemos que deu certo?"','Abrir qualquer discussão de projeto'],
+  ['"O que acontece se não fizermos nada?"','Medir a urgência real'],
+  ['"Essa decisão é fácil de desfazer?"','Calibrar quanto cuidado ela merece'],
+  ['"Quem decide, e até quando?"','Destravar discussões que não terminam'],
+  ['"Quais alternativas consideramos, e por que perderam?"','Revisar um design doc'],
+  ['"O que você precisa de mim para isso andar?"','Influenciar ajudando, não exigindo'],
+  ['"Qual o menor passo que já entrega valor?"','Quebrar projetos grandes'],
+  ['"Qual é o risco que mais me assusta aqui?"','Começar pelo mais incerto'],
+  ['"Discordo pelos motivos X e Y; se decidirmos assim, me comprometo."','Discordar e seguir em frente'],
+  ['"O que mudou no sistema para isso não se repetir?"','Fechar um postmortem'],
+];
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED'.split(' '));
+function findComment(line, lang){
+  let q = null;
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === q) q = null; continue; }
+    if (ch === '"') { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'txt') continue;
+    if (lang !== 'cs' && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if (lang === 'cs' && ch === '/' && line[i+1] === '/') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : ((lang === 'cs' || lang === 'py') && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>bash · ~/agx-assistente</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Prompt', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>
+      <button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button></div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+renderList('studyList', 'progStudy', 'staff-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', 'staff-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+
+$('matrizBody').innerHTML = MATRIZ.map(r => `<tr><td>${esc(r[0])}</td><td><span class="ent">${esc(r[1])}</span></td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td></tr>`).join('');
+
+
+/* já visto em outras trilhas */
+$('jaVisto').innerHTML = JA_VISTO.map(([tema, t, cena, oque]) => {
+  const [nome, url] = TR[t];
+  return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${url}#${cena}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${url}#${cena}" target="_blank" rel="noopener">abrir cena ↗</a></div>`;
+}).join('');
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+</script>
+
+</body></html>

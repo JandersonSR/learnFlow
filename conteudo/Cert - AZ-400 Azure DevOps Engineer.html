@@ -1,0 +1,1310 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha AZ-400</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"azure-pipelines.yml": "# azure-pipelines.yml · CI no PR, CD por estágios; aprovação e checks ficam no ambiente\nname: $(Date:yyyy.MM.dd)$(Rev:.r)       # CalVer no número do build\ntrigger:\n  branches: { include: [main, release/*] }\n  paths: { exclude: [docs/*, '*.md'] }\npr: { branches: { include: [main] } }\n\nvariables:\n  - group: api-comum                    # variable group (pode vir do Key Vault)\n  - { name: tag, value: $(Build.BuildNumber) }   # $( ) = macro, resolvida na execução\n\nstages:\n  - stage: Build\n    jobs:\n      - job: testar\n        pool: { vmImage: ubuntu-latest }\n        strategy:\n          matrix: { node20: { v: '20.x' }, node22: { v: '22.x' } }   # 2 jobs em paralelo\n        steps:\n          - task: NodeTool@0\n            inputs: { versionSpec: $(v) }\n          - task: Cache@2\n            inputs:\n              key: 'npm | \"$(Agent.OS)\" | package-lock.json'\n              path: $(npm_config_cache)\n          - script: npm ci && npm test -- --reporters=jest-junit --coverage\n          - task: PublishTestResults@2\n            condition: succeededOrFailed()    # publica mesmo com teste falhando\n            inputs: { testResultsFormat: JUnit, testResultsFiles: '**/junit.xml' }\n          - task: PublishCodeCoverageResults@2\n            inputs: { summaryFileLocation: coverage/cobertura-coverage.xml }\n      - job: empacotar\n        dependsOn: testar\n        steps:\n          - template: templates/docker-build.yml     # template de steps reutilizável\n            parameters: { imagem: api-loja, tag: $(tag) }\n\n  - stage: Homolog                        # sem dependsOn: depende do estágio anterior\n    jobs:\n      - deployment: hml\n        environment: api-homolog\n        strategy:\n          runOnce:\n            deploy:\n              steps:\n                - template: templates/deploy-app.yml\n                  parameters: { conexao: azure-hml-oidc, slot: staging }\n\n  - stage: Producao\n    dependsOn: Homolog\n    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))\n    jobs:\n      - deployment: prd\n        environment: api-producao       # aprovadores, horário, branch control, lock\n        strategy:\n          runOnce:\n            deploy:\n              steps:\n                - template: templates/deploy-app.yml   # slot staging → smoke → swap\n                  parameters: { conexao: azure-prd-oidc, slot: staging, swap: true }", "consultas.kql": "// 1) p95 e taxa de falha por operação na última hora (Application Insights)\nrequests\n| where timestamp > ago(1h)\n| summarize p95 = percentile(duration, 95), falhas = countif(success == false),\n            total = count() by name\n| extend taxa = round(100.0 * falhas / total, 2)\n| order by p95 desc\n\n// 2) as exceções que mais aparecem nas últimas 24 horas\nexceptions\n| where timestamp > ago(24h)\n| summarize n = count() by type, outerMessage\n| top 5 by n\n\n// 3) dependência lenta ou falhando (SQL, HTTP, Redis) em janelas de 5 minutos\ndependencies\n| where timestamp > ago(1h) and success == false\n| summarize falhas = count() by target, resultCode, bin(timestamp, 5m)\n| render timechart\n\n// 4) trace distribuído: tudo de uma requisição pelo operation_Id\nunion requests, dependencies, exceptions, traces\n| where operation_Id == \"4bf92f3577b34da6a3ce929d0e0e4736\"\n| project timestamp, itemType, name, duration, success\n| order by timestamp asc\n\n// 5) CPU das VMs (VM insights), média em 5 minutos\nInsightsMetrics\n| where Namespace == \"Processor\" and Name == \"UtilizationPercentage\"\n| summarize cpu = avg(Val) by Computer, bin(TimeGenerated, 5m)", "deploy.yml": "# .github/workflows/deploy.yml · reaproveita o CI e publica no Azure com OIDC, sem segredo\nname: deploy\non:\n  push:\n    branches: [main]\n    paths-ignore: ['docs/**', '**.md']\n  workflow_dispatch:                 # botão manual (hotfix, reexecução)\n\npermissions: { contents: read }      # GITHUB_TOKEN mínimo por padrão\nconcurrency: { group: producao, cancel-in-progress: false }\n\njobs:\n  ci:\n    uses: minha-org/workflows/.github/workflows/node-ci.yml@v3   # reusable workflow\n    with: { node-versions: '[\"20\",\"22\"]' }                      # matrix lá dentro\n\n  publicar:\n    needs: ci\n    runs-on: ubuntu-latest\n    environment:\n      name: producao                 # revisores obrigatórios + branches permitidas\n      url: https://api-loja.azurewebsites.net\n    permissions:\n      id-token: write                # deixa o job pedir o token OIDC\n      contents: read\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/download-artifact@v4\n        with: { name: pacote, path: dist }\n      - uses: azure/login@v2         # federated credential: sub = ...:environment:producao\n        with:\n          client-id: ${{ vars.AZURE_CLIENT_ID }}          # IDs não são segredo\n          tenant-id: ${{ vars.AZURE_TENANT_ID }}\n          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}\n      - uses: azure/webapps-deploy@v3\n        with: { app-name: api-loja, slot-name: staging, package: dist }\n      - name: Smoke test no slot\n        run: curl -fsS --retry 5 https://api-loja-staging.azurewebsites.net/saude\n      - name: Swap para produção (rollback = swap de volta)\n        run: |\n          az webapp deployment slot swap -g rg-loja -n api-loja \\\n            --slot staging --target-slot production\n# node-ci.yml (o chamado): on: workflow_call + inputs, matrix de versões,\n# actions/setup-node com cache, testes, cobertura e upload-artifact \"pacote\"", "main.bicep": "// infra/main.bicep · App Service com slot, identidade gerenciada e App Insights\n@allowed(['hml', 'prd'])\nparam ambiente string\nparam location string = resourceGroup().location\n@description('Slots exigem plano Standard ou superior')\nparam sku string = ambiente == 'prd' ? 'P1v3' : 'S1'\n\nvar nome = 'api-loja-${ambiente}'\n\nresource logs 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {\n  name: 'log-${nome}'\n  location: location\n  properties: { sku: { name: 'PerGB2018' }, retentionInDays: 30 }\n}\n\nresource insights 'Microsoft.Insights/components@2020-02-02' = {\n  name: 'appi-${nome}'\n  location: location\n  kind: 'web'\n  properties: { Application_Type: 'web', WorkspaceResourceId: logs.id }\n}\n\nresource plano 'Microsoft.Web/serverfarms@2023-12-01' = {\n  name: 'plan-${nome}'\n  location: location\n  sku: { name: sku }\n  kind: 'linux'\n  properties: { reserved: true }\n}\n\nresource app 'Microsoft.Web/sites@2023-12-01' = {\n  name: nome\n  location: location\n  identity: { type: 'SystemAssigned' }   // managed identity: sem senha no Key Vault\n  properties: {\n    serverFarmId: plano.id\n    httpsOnly: true\n    siteConfig: {\n      linuxFxVersion: 'NODE|22-lts'\n      healthCheckPath: '/saude'\n      appSettings: [\n        { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'\n          value: insights.properties.ConnectionString }\n      ]\n    }\n  }\n}\n\nresource staging 'Microsoft.Web/sites/slots@2023-12-01' = {\n  parent: app\n  name: 'staging'\n  location: location\n  properties: { serverFarmId: plano.id }\n}\n\noutput principalId string = app.identity.principalId", "seguranca.yml": "# .github/workflows/seguranca.yml · CodeQL, revisão de dependências e imagem\nname: seguranca\non:\n  pull_request: { branches: [main] }\n  push: { branches: [main] }\n  schedule: [{ cron: '23 4 * * 1' }]     # semanal: pega CVE novo em código parado\n\npermissions: { contents: read }\n\njobs:\n  codeql:\n    runs-on: ubuntu-latest\n    permissions: { security-events: write, contents: read }\n    container: mcr.microsoft.com/dotnet/sdk:8.0   # CodeQL rodando dentro de um contêiner\n    strategy:\n      matrix: { language: [javascript-typescript, csharp] }\n    steps:\n      - uses: actions/checkout@v4\n      - uses: github/codeql-action/init@v4\n        with: { languages: '${{ matrix.language }}', queries: security-extended }\n      - uses: github/codeql-action/autobuild@v4\n      - uses: github/codeql-action/analyze@v4   # alertas em Security > Code scanning\n\n  dependencias:\n    if: github.event_name == 'pull_request'\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/dependency-review-action@v4   # barra CVE alta e licença fora da lista\n        with:\n          fail-on-severity: high\n          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, ISC\n\n  imagem:\n    runs-on: ubuntu-latest\n    permissions: { security-events: write, contents: read }\n    steps:\n      - uses: actions/checkout@v4\n      - run: docker build -t api-loja:${{ github.sha }} .\n      - uses: aquasecurity/trivy-action@0.28.0     # em produção: fixe pelo SHA\n        with:\n          image-ref: api-loja:${{ github.sha }}\n          format: sarif\n          output: trivy.sarif\n          severity: CRITICAL,HIGH\n      - uses: github/codeql-action/upload-sarif@v4\n        with: { sarif_file: trivy.sarif }\n\n# .github/dependabot.yml → updates semanais de npm, nuget, docker e github-actions\n# Repositório: secret scanning + push protection ligados (Settings > Advanced Security)"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Cert · AZ-400 Azure DevOps Engineer Expert =====================
+const CONF = {
+  title: 'Trilha AZ-400', file: 'Cert - AZ-400 Azure DevOps Engineer', key: 'c400',
+  eyebrow: 'Certificação · Microsoft', h1: 'AZ-400: DevOps com Azure Pipelines e GitHub Actions',
+  lead: 'Roteiro em vídeo para a prova AZ-400 (Designing and Implementing Microsoft DevOps Solutions), que dá o título Microsoft Certified: DevOps Engineer Expert. Segue o skills measured de 27 de julho de 2026 (referência: outubro de 2026): processos e métricas, estratégia de branch, pipelines YAML no Azure Pipelines e no GitHub Actions, pacotes, testes, deploy progressivo, IaC com Bicep, segurança e segredos sem senha, varredura com GitHub Advanced Security e instrumentação com Application Insights e KQL. Fecha com pegadinhas, estratégia de prova, laboratório e simulado.',
+  pills: ['Azure Pipelines YAML', 'GitHub Actions', 'Branch policies', 'Deploy progressivo', 'Bicep', 'OIDC e Key Vault', 'GHAS e Dependabot', 'KQL'],
+  term: 'bash · ~/api-loja',
+  faqPlaceholder: 'Buscar: environment, template, slot, OIDC, Dependabot, KQL…',
+  matriz: {title: 'Domínios da AZ-400', desc: 'Os cinco grupos do skills measured (27/07/2026), com o peso oficial, o que mais cai e onde estudar nas trilhas. Os pesos são faixas: confira a página oficial antes de agendar.', cols: ['Domínio', 'Peso', 'O que cai', 'Onde estudar']},
+};
+const TITLE = {k: 'Certificação · Microsoft · AZ-400', h: 'DevOps Engineer Expert sem decoreba',
+  p: 'Metade da prova é pipeline. Domine YAML, ambientes, deploy progressivo e identidade sem segredo, e o resto vira detalhe.',
+  chips: ['processos 10–15%', 'source control 10–15%', 'pipelines 50–55%', 'segurança 10–15%', 'instrumentação 5–10%']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Pipeline é produto: versionado, seguro e medido',
+  p: 'Abaixo do vídeo estão a matriz de domínios, os links para as trilhas de cloud, Terraform, segurança e observabilidade, a trilha de estudo oficial, o checklist de prontidão e o simulado.',
+  chips: ['YAML em tudo', 'aprovação no ambiente', 'OIDC, não senha', 'medir o fluxo']};
+
+const SCENES = [
+/* ---------- A PROVA ---------- */
+{ id:'intro', ch:'A prova', title:'O que a AZ-400 valida',
+  say:'A AZ-400 é a prova do título DevOps Engineer Expert da Microsoft. Valida quem desenha e implementa entrega contínua com GitHub e Azure DevOps: fluxo de trabalho, controle de versão, pipelines, segurança e monitoramento. Para receber o título, você precisa antes do Azure Administrator ou do Azure Developer Associate. Nota mínima setecentos, renovação anual gratuita por avaliação online no Microsoft Learn, e há versão em português do Brasil. Referência: o skills measured de vinte e sete de julho de dois mil e vinte e seis. Duração e número de questões: confira a página oficial.',
+  v:{type:'title'} },
+
+{ id:'pesos', ch:'A prova', title:'Os cinco domínios e os pesos',
+  say:'O skills measured tem cinco grupos. Processos e comunicação, de dez a quinze por cento. Estratégia de controle de versão, de dez a quinze. Pipelines de build e release, de cinquenta a cinquenta e cinco por cento: mais da metade da prova. Plano de segurança e compliance, de dez a quinze. E instrumentação, de cinco a dez. A conclusão é direta: se o tempo é curto, invista em pipelines YAML, ambientes, estratégias de deploy, pacotes, testes e IaC. A prova cobre GitHub e Azure DevOps lado a lado, então estude os dois.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:90, cls:'green', html:B('Pipelines de build e release · 50–55%','pacotes · testes · YAML · agentes · ambientes · deploy · IaC · manutenção')},
+    {at:3, x:36,y:202,w:280,h:140, cls:'blue', html:B('Processos e comunicação','10–15%')+UL('fluxo e rastreabilidade','métricas, wiki, Teams')},
+    {at:4.5, x:340,y:202,w:280,h:140, cls:'blue', html:B('Source control','10–15%')+UL('branches e políticas','LFS, Scalar, reflog')},
+    {at:6, x:644,y:202,w:280,h:140, cls:'amber', html:B('Segurança e compliance','10–15%')+UL('identidade e segredos','GHAS, Defender, Dependabot')},
+    {at:7.5, x:36,y:362,w:280,h:140, cls:'', html:B('Instrumentação','5–10%')+UL('Monitor, App Insights','KQL básico')},
+    {at:9.5, x:340,y:362,w:584,h:140, cls:'ext', html:B('Leitura do blueprint','')+UL('GitHub e Azure DevOps lado a lado','recursos GA; preview só se muito usado','inglês atualiza primeiro; local ~8 semanas depois')},
+  ]}},
+
+/* ---------- PROCESSOS (10–15%) ---------- */
+{ id:'fluxo', ch:'Processos 10–15%', title:'Fluxo de trabalho e rastreabilidade',
+  say:'O primeiro domínio começa pelo fluxo. GitHub Flow: branch curta a partir da main, pull request, revisão, merge e deploy. O trabalho é rastreado em GitHub Issues e Projects ou no Azure Boards, e a prova cobra a ligação: no commit ou no PR do GitHub, escreva A B hashtag e o número do work item, com o app Azure Boards instalado no repositório, e o item mostra commits, PRs e builds. Rastreabilidade completa liga requisito, código, bug, teste e release. Feedback chega por notificações, issues e integração com o Teams.',
+  v:FLOW([['Issue / work item','Boards ou Projects',''],['Branch curta','feature/123-checkout','blue'],['Pull request','revisão + build','amber'],['Merge e deploy','main sempre publicável','green']],
+    {y:96, h:96, step:1.8, cards:[
+      ['Boards + GitHub','',['app Azure Boards no repositório','AB#123 no commit ou PR','Fixes AB#123 fecha o item'],'blue'],
+      ['Rastreabilidade','',['requisito → código → teste','bug ligado ao commit','release notes por work item'],'green'],
+    ]}) },
+
+{ id:'metricas', ch:'Processos 10–15%', title:'Métricas, painéis e documentação',
+  say:'A prova pede métricas por área. Fluxo: lead time, do pedido à produção, e cycle time, do início do trabalho à entrega; tempo de recuperação; frequência de deploy e taxa de falha de mudança, as métricas DORA. Teste: taxa de aprovação e cobertura; segurança: alertas abertos e tempo de correção; operação: disponibilidade. No Azure DevOps, use widgets de dashboard, consultas de work items e o Analytics; no GitHub, os gráficos de Insights do Projects. Documentação: wiki com Markdown e diagramas Mermaid, release notes geradas do histórico Git, webhooks e o app do Teams.',
+  v:GRID(3, [
+    ['Fluxo e entrega','DORA',['lead time · cycle time','frequência de deploy','falha de mudança · recuperação','WIP e vazão'],'blue'],
+    ['Qualidade e segurança','',['testes aprovados, flaky','cobertura de código','alertas abertos, tempo de fix','falhas de build por motivo'],'amber'],
+    ['Documentação','',['wiki: Markdown + Mermaid','release notes do Git','docs de API no build','webhooks · Teams'],'green'],
+  ], {h:230, step:4, rodape:'Azure DevOps: dashboards, widgets e Analytics · GitHub: Insights do Projects com gráficos configuráveis'}) },
+
+/* ---------- SOURCE CONTROL (10–15%) ---------- */
+{ id:'branches', ch:'Source control 10–15%', title:'Trunk, feature e release branch',
+  say:'Três estratégias aparecem nas questões. Trunk-based: todos integram na main pelo menos uma vez por dia, com branches de horas e feature flags escondendo o que não está pronto; é o que habilita entrega contínua. Feature branch: uma branch por funcionalidade, revisada por pull request; funciona se for curta. Release branch: corta-se release barra dois ponto quatro para estabilizar e dar suporte, e as correções voltam para a main. O caminho do hotfix: branch da tag em produção, correção, deploy e cherry-pick de volta para a main. Long-lived branches e merge hell são a resposta errada.',
+  v:GRID(3, [
+    ['Trunk-based','',['commits pequenos na main','branches de horas','feature flags no inacabado','habilita entrega contínua'],'green'],
+    ['Feature branch','',['uma por funcionalidade','PR com revisão e build','curta, ou vira merge hell','rebase ou squash no merge'],'blue'],
+    ['Release branch','release/2.4',['estabilizar e dar suporte','fix na release e na main','versões em paralelo','tag por versão publicada'],'amber'],
+  ], {h:230, step:4, rodape:'Hotfix: branch a partir da tag em produção → fix → deploy → cherry-pick para a main · nada de branch eterna'}) },
+
+{ id:'politicas', ch:'Source control 10–15%', title:'Branch policies e proteção no GitHub',
+  say:'No Azure Repos, as branch policies protegem a main: número mínimo de revisores, work item vinculado, comentários resolvidos, tipos de merge permitidos, como squash, e validação de build, que roda o pipeline no PR. Revisores automáticos por caminho cumprem o papel do CODEOWNERS. No GitHub, rulesets e regras de proteção exigem PR, aprovações, status checks, histórico linear e commits assinados, e o CODEOWNERS exige o dono do código. Políticas também bloqueiam push direto, inclusive de administradores, se você marcar. Tudo isso dá para criar pela CLI.',
+  v:T('c|az repos policy approver-count create --branch main --repository-id $REPO \\',
+      'c|  --blocking true --enabled true --minimum-approver-count 2 \\',
+      'c|  --creator-vote-counts false --allow-downvotes false --reset-on-source-push true',
+      'ok|"type": { "displayName": "Minimum number of reviewers" }',
+      'c|az repos policy work-item-linking create --branch main --repository-id $REPO \\',
+      'c|  --blocking true --enabled true',
+      'c|az repos policy merge-strategy create --branch main --repository-id $REPO \\',
+      'c|  --blocking true --enabled true --allow-squash true --allow-no-fast-forward false',
+      'c|gh api -X POST repos/minha-org/api-loja/rulesets --input regras-main.json',
+      'ok|"enforcement": "active"   # PR obrigatório, 2 aprovações, checks "ci" e CODEOWNERS',
+      'o|# build validation: az repos policy build create … --build-definition-id 12')},
+
+{ id:'repos', ch:'Source control 10–15%', title:'Repositórios grandes e dados sensíveis',
+  say:'Arquivos grandes não vão para o Git comum: use Git L F S, que guarda um ponteiro no repositório e o binário à parte; git-fat é a alternativa citada. Monorepo gigante no Windows ou Mac: Scalar, que liga clone parcial, sparse checkout e manutenção em segundo plano. Compartilhar entre repositórios: pacotes ou submódulos. Tags anotadas marcam releases. Para recuperar algo perdido, o reflog mostra para onde a HEAD já apontou. Para remover um segredo do histórico, git filter-repo ou BFG, e push forçado. Mas a resposta completa da prova inclui revogar e rotacionar o segredo: o que vazou já está vazado.',
+  v:T('c|git lfs install && git lfs track "*.psd" "*.zip" && git add .gitattributes',
+      'o|Tracking "*.psd"',
+      'c|git lfs migrate import --include="*.zip" --everything   # reescreve o histórico',
+      'c|scalar clone https://dev.azure.com/org/loja/_git/monorepo',
+      'c|git tag -a v2.4.0 -m "release 2.4.0" && git push origin v2.4.0',
+      'c|git reflog -3',
+      'o|a1b2c3d HEAD@{0}: reset: moving to HEAD~3',
+      'o|9f8e7d6 HEAD@{1}: commit: checkout com cupom',
+      'c|git branch resgate 9f8e7d6                     # o commit "perdido" de volta',
+      'c|git filter-repo --path config/segredos.env --invert-paths',
+      'c|git push origin --force --all',
+      'err|e agora: revogue e rotacione o segredo · histórico limpo não desvaza nada')},
+
+/* ---------- PIPELINES (50–55%) ---------- */
+{ id:'pacotes', ch:'Pipelines 50–55%', title:'Pacotes: Artifacts e GitHub Packages',
+  say:'Pacotes são o elo entre build e release. Azure Artifacts guarda npm, NuGet, Maven, Python e pacotes universais; GitHub Packages faz o mesmo junto do repositório, com o contêiner no ghcr. No Artifacts, upstream sources puxam e guardam em cache pacotes públicos, como o npmjs, e as views promovem versões: arroba Local, arroba Prerelease e arroba Release, e cada consumidor aponta para a view de que precisa. Versionamento: SemVer, maior ponto menor ponto patch, para bibliotecas; CalVer, baseado na data, para produtos de release contínua. E o artefato do pipeline leva a versão no nome.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:250,h:180, cls:'ext', html:B('Upstream','npmjs, nuget.org')+UL('cache dos públicos','sobrevive a remoção')},
+    {at:3, x:316,y:92,w:340,h:180, cls:'region', html:'<span class="rl">feed loja · Azure Artifacts</span>'+'<div class="pods" style="margin-top:14px"><span class="pod">@Local</span><span class="pod">@Prerelease</span><span class="pod">@Release</span></div>'},
+    {at:6, x:686,y:92,w:238,h:180, cls:'green', html:B('Consumidores','apontam para a view')+UL('times: @Release','QA: @Prerelease')},
+    {at:9, x:36,y:292,w:430,h:210, cls:'blue', html:B('SemVer × CalVer','')+UL('SemVer 2.4.1: quebra, recurso, fix','CalVer 2026.10.3: data da release','bibliotecas → SemVer','produto contínuo → CalVer')},
+    {at:13, x:494,y:292,w:430,h:210, cls:'amber', html:B('Qual ferramenta','')+UL('Azure Artifacts: feeds, views, upstream','GitHub Packages: junto do repo, ghcr','artefato do pipeline com versão','retenção para não pagar lixo')},
+  ], lines:[
+    {at:3, d:'M286 182 L 316 182', cls:'flow'}, {at:6, d:'M656 182 L 686 182', cls:'flow'},
+  ]}},
+
+{ id:'testes', ch:'Pipelines 50–55%', title:'Estratégia de testes e quality gates',
+  say:'A estratégia de testes vai do local ao pipeline: testes de unidade em todo PR, integração com dependências reais em contêiner, e carga antes de releases grandes, com o Azure Load Testing ou k6. No pipeline, publique os resultados em JUnit e a cobertura em Cobertura, para aparecerem nas abas de testes e de cobertura do build. Quality gates barram o PR: build validation, cobertura mínima, nenhum alerta crítico de segurança. Release gates, nos checks do ambiente, consultam alertas do Azure Monitor, work items abertos ou uma função antes de seguir. Teste instável se mede e se isola, não se ignora.',
+  v:GRID(3, [
+    ['Pirâmide no pipeline','',['local: antes do push','unidade: todo PR','integração: contêineres','carga: Azure Load Testing'],'blue'],
+    ['Publicar resultados','',['PublishTestResults (JUnit)','PublishCodeCoverageResults','succeededOrFailed()','abas Testes e Cobertura'],'green'],
+    ['Gates','',['PR: build + cobertura','ambiente: alertas, função','release: work items abertos','segurança: sem crítico'],'amber'],
+  ], {h:230, step:4, rodape:'Flaky test: o Azure Pipelines detecta e marca · isole, conserte e meça a taxa em vez de reexecutar até passar'}) },
+
+{ id:'agentes', ch:'Pipelines 50–55%', title:'Actions ou Pipelines, e onde roda',
+  say:'Quando escolher: GitHub Actions se o código e o time estão no GitHub; Azure Pipelines se a empresa vive no Azure DevOps, com Boards, Test Plans e pipelines clássicos, e ele também constrói repositórios do GitHub pelo app Azure Pipelines. Onde roda: agentes e runners hospedados pela Microsoft ou GitHub são limpos a cada job e sem manutenção. Self-hosted entra quando você precisa de rede privada, ferramentas pesadas, cache local ou hardware especial; aí você paga a máquina e a manutenção. Managed DevOps Pools e scale set agents escalam agentes próprios no Azure. Custo: jobs paralelos.',
+  v:GRID(2, [
+    ['Hospedado (Microsoft / GitHub)','',['VM limpa a cada job','zero manutenção','sem acesso à rede privada','minutos ou jobs paralelos'],'green'],
+    ['Self-hosted','agente ou runner próprio',['VNet, on-premises, GPU','ferramentas e cache locais','patch e segurança são seus','Managed DevOps Pools, scale set'],'amber'],
+  ], {h:250, step:5, rodape:'Híbrido: nuvem + agente on-premises · VM template (imagem pronta) para agentes · app Azure Pipelines no GitHub'}) },
+
+{ id:'yaml-azp', ch:'Pipelines 50–55%', title:'Um pipeline YAML multiestágio',
+  say:'Este é o formato que a prova espera ler. O trigger dispara na main e nas releases, ignorando documentação; o pr valida pull requests. Variáveis vêm de um variable group. O estágio Build roda uma matriz com duas versões do Node em paralelo, usa cache, publica testes e cobertura. O job empacotar depende de testar e chama um template de steps. Homolog e Produção são deployment jobs ligados a environments: a aprovação não está no YAML, está no ambiente. E a condição garante que só a main chega à produção, com deploy no slot e swap.',
+  v:S('azure-pipelines.yml','azure-pipelines.yml','yaml')},
+
+{ id:'templates', ch:'Pipelines 50–55%', title:'Gatilhos, templates e variáveis',
+  say:'Gatilhos: trigger para CI, pr para validação, schedules com cron, e resources pipelines para disparar quando outro pipeline termina; filtros de branch e de caminho. Ordem: dependsOn e condition entre estágios e jobs, matrix e parallel para paralelismo. Reaproveitamento: templates de step, job, estágio e variáveis, e o extends, que obriga todos a herdar um template aprovado. Task groups são o equivalente nos clássicos. As três sintaxes caem: dólar chave dupla é resolvido na compilação; dólar colchete, em tempo de execução, para condições; e dólar parêntese é a macro, logo antes da task.',
+  v:GRID(3, [
+    ['Gatilhos','',['trigger · pr · schedules','resources: pipelines','filtros de branch e path','batch: agrupa commits'],'blue'],
+    ['Reaproveitar','',['templates de step a estágio','extends: template obrigatório','parâmetros tipados','variable groups · task groups'],'green'],
+    ['Sintaxes','',['${{ }} compilação','$[ ] execução (condições)','$( ) macro, antes da task','setvariable entre steps'],'amber'],
+  ], {h:230, step:4, rodape:'Ordem e paralelismo: dependsOn + condition · strategy matrix / parallel · jobs paralelos custam licença'}) },
+
+{ id:'actions', ch:'Pipelines 50–55%', title:'O mesmo deploy no GitHub Actions',
+  say:'No GitHub Actions, a reutilização é o reusable workflow, chamado com uses no nível do job, e as composite actions, no nível do step. Aqui, o job ci chama um workflow central da organização. O job publicar roda no environment produção, que exige revisores e só aceita a main. A permissão id token write deixa pedir o token OIDC, e o azure login troca esse token por acesso, sem segredo guardado: os IDs ficam em variáveis. Publica no slot de staging, roda o teste de fumaça e faz o swap. A concorrência impede dois deploys de produção ao mesmo tempo.',
+  v:S('.github/workflows/deploy.yml','deploy.yml','yaml')},
+
+{ id:'ambientes', ch:'Pipelines 50–55%', title:'Environments, checks e aprovações',
+  say:'No Azure Pipelines, o environment é um recurso protegido: aprovações de pessoas ou grupos, branch control, que só aceita refs heads main, horário comercial, lock exclusivo para um deploy por vez, invocar uma Azure Function ou API REST, consultar alertas do Azure Monitor e exigir um template. Service connections e variable groups também recebem checks. No GitHub, o environment tem revisores obrigatórios, timer de espera, branches permitidas e segredos próprios, que só o job daquele ambiente enxerga. Pegadinha: aprovação de produção se configura no ambiente, não em um step do YAML.',
+  v:GRID(2, [
+    ['Azure Pipelines · environment','checks do recurso',['aprovação · branch control','horário comercial · lock exclusivo','Azure Function, REST, alertas','template obrigatório'],'blue'],
+    ['GitHub · environment','regras de proteção',['revisores obrigatórios','wait timer','branches e tags permitidas','segredos do ambiente'],'green'],
+  ], {h:250, step:5, rodape:'Checks também valem para service connections, variable groups, agent pools e secure files'}) },
+
+{ id:'estrategias', ch:'Pipelines 50–55%', title:'Blue-green, canary, anéis e flags',
+  say:'Cada estratégia responde a uma pergunta. Blue-green: dois ambientes idênticos e a troca é instantânea, com volta igualmente rápida. Canary: uma fração do tráfego vê a versão nova, e você amplia se as métricas ficarem boas. Anéis: grupos de usuários em ordem, primeiro o time interno, depois os primeiros clientes, depois todos; exposição progressiva é o nome geral. Feature flags separam deploy de lançamento: o código vai desligado e liga por usuário. A B testing mede qual variante converte melhor, é experimento de produto. Dependências: publique na ordem banco, API, front.',
+  v:GRID(3, [
+    ['Blue-green','',['dois ambientes iguais','troca e volta instantâneas','custo dobrado no swap'],'blue'],
+    ['Canary','',['fração do tráfego','amplia se métrica boa','Traffic Manager, slots'],'green'],
+    ['Anéis','exposição progressiva',['interno → early → todos','um anel por vez','gate entre anéis'],'amber'],
+    ['Feature flags','',['deploy ≠ lançamento','liga por usuário','dívida: remova depois'],'green'],
+    ['A/B testing','',['experimento de produto','mede conversão','não é estratégia de risco'],''],
+    ['Ordem e resiliência','',['banco → API → front','health check + rollback','contêiner, binário ou script'],'ext'],
+  ], {step:2.6}) },
+
+{ id:'slots', ch:'Pipelines 50–55%', title:'Slots, swap e zero downtime',
+  say:'Para minimizar indisponibilidade no App Service, publique no slot de staging, aqueça e teste, e faça o swap: a troca é de roteamento, sem cold start, e o rollback é outro swap. Configurações marcadas como do slot não trocam junto. O swap com preview aplica a configuração de produção no staging antes de concluir. Testing in production manda uma porcentagem do tráfego ao slot, um canary simples. Fora do App Service: rolling update atrás do balanceador, tirando uma instância por vez. Banco de dados no deploy: DACPAC ou migrações em passos compatíveis, nunca quebrando a versão anterior.',
+  v:T('c|az webapp deployment slot create -g rg-loja -n api-loja --slot staging',
+      'c|az webapp deploy -g rg-loja -n api-loja --slot staging --src-path dist.zip',
+      'ok|Deployment has completed successfully',
+      'c|az webapp traffic-routing set -g rg-loja -n api-loja --distribution staging=10',
+      'o|# canary: 10% do tráfego no slot staging; observe erros e latência',
+      'c|az webapp deployment slot swap -g rg-loja -n api-loja --slot staging \\',
+      'c|  --target-slot production --action preview      # aplica a config de produção',
+      'c|az webapp deployment slot swap -g rg-loja -n api-loja --slot staging \\',
+      'c|  --target-slot production --action swap',
+      'ok|production ← build 2026.10.10.3 · rollback = swap de volta',
+      'o|# banco: SqlAzureDacpacDeployment@1 ou migração em passos compatíveis (expandir/contrair)')},
+
+{ id:'flags', ch:'Pipelines 50–55%', title:'Feature flags com App Configuration',
+  say:'O blueprint cita o Feature Manager do Azure App Configuration. A flag mora no App Configuration, com rótulo por ambiente, e a aplicação lê pela biblioteca de feature management, no .NET ou em JavaScript. Filtros decidem quem vê: porcentagem dos usuários, janela de tempo ou targeting por usuário e grupo, que é como se faz um anel. Ligar ou desligar não exige deploy, e é o kill switch de uma funcionalidade com problema. Combine com o pipeline: o deploy entrega o código desligado, e o lançamento vira uma decisão de produto, auditável.',
+  v:T('c|az appconfig create -g rg-loja -n appcs-loja -l brazilsouth --sku Standard',
+      'c|az appconfig feature set -n appcs-loja --feature novo-checkout --label prd --yes',
+      'c|az appconfig feature filter add -n appcs-loja --feature novo-checkout --label prd \\',
+      'c|  --filter-name Microsoft.Percentage --filter-parameters Value=10 --yes',
+      'c|az appconfig feature enable -n appcs-loja --feature novo-checkout --label prd --yes',
+      'ok|"state": "conditional"   # ligado para 10% dos usuários',
+      'o|// .NET: if (await featureManager.IsEnabledAsync("novo-checkout")) { ... }',
+      'o|// filtros: Microsoft.Percentage · Microsoft.TimeWindow · Microsoft.Targeting',
+      'c|az appconfig feature disable -n appcs-loja --feature novo-checkout --label prd --yes',
+      'err|kill switch: desligado em segundos, sem novo deploy')},
+
+{ id:'iac', ch:'Pipelines 50–55%', title:'IaC e configuração desejada',
+  say:'IaC é infraestrutura no Git, revisada em PR, testada e aplicada pelo pipeline. No Azure, a resposta nativa é Bicep, que compila para ARM; what-if mostra a mudança antes de aplicar. Terraform aparece como alternativa multinuvem. Configuração desejada dentro das máquinas: Azure Machine Configuration, sucessor do Automation State Configuration, que tem aposentadoria anunciada; Ansible, Chef e Puppet também. Azure Deployment Environments dá ao desenvolvedor ambientes sob demanda a partir de modelos aprovados pela plataforma, com custo e prazo controlados. Drift se detecta comparando o estado real com o código.',
+  v:GRID(3, [
+    ['Provisionar','declarativo',['Bicep → ARM · what-if','Terraform: multinuvem','deployment stacks','lint no PR: bicep build'],'blue'],
+    ['Configurar','estado desejado',['Azure Machine Configuration','Automation State Config (legado)','Ansible, Chef, Puppet','drift: real × código'],'green'],
+    ['Autoatendimento','',['Azure Deployment Environments','catálogo de modelos aprovados','custo e expiração','dev se serve sozinho'],'amber'],
+  ], {h:230, step:4, rodape:'Estratégia: IaC no Git → PR com what-if/plan → lint e teste → apply pelo pipeline com aprovação'}) },
+
+{ id:'bicep', ch:'Pipelines 50–55%', title:'Bicep: o App Service da trilha',
+  say:'O arquivo cria o workspace de logs e o Application Insights ligado a ele, o plano Linux e o App Service com Node vinte e dois, health check e só HTTPS. A identidade gerenciada atribuída pelo sistema permite ler o Key Vault sem senha nenhuma. A connection string do Application Insights entra como configuração. O slot de staging exige plano Standard ou superior, por isso o parâmetro escolhe o SKU por ambiente. A saída devolve o principal ID da identidade, usado para dar permissão no cofre. No pipeline: what-if no PR e create depois da aprovação.',
+  v:S('infra/main.bicep','main.bicep','bicep')},
+
+{ id:'manter', ch:'Pipelines 50–55%', title:'Saúde, custo e retenção do pipeline',
+  say:'Pipeline também se mantém. Saúde: taxa de falha, duração e testes instáveis, vistos no relatório de análise do pipeline. Tempo e custo: cache de dependências, shallow fetch, jobs em paralelo só onde compensa, e agentes self-hosted quando os minutos hospedados saem caros. Concorrência: limite deploys simultâneos e cancele execuções antigas de PR. Retenção: regras por quantidade e dias para builds e artefatos, e lease para guardar o que foi a produção. E a migração do clássico para YAML: exporte o YAML, transforme release pipelines em estágios com environments e desative os clássicos.',
+  v:GRID(2, [
+    ['Saúde e velocidade','',['falha, duração, flaky','Cache@2 · actions/cache','fetchDepth raso','paralelo onde compensa'],'blue'],
+    ['Custo, retenção, migração','',['cancelar PRs antigos','retenção por dias e quantidade','lease para releases','clássico → YAML + environments'],'green'],
+  ], {h:250, step:5, rodape:'GitHub: concurrency com cancel-in-progress em PR · retenção de artefatos e logs nas configurações'}) },
+
+/* ---------- SEGURANÇA (10–15%) ---------- */
+{ id:'identidade', ch:'Segurança 10–15%', title:'Identidades, tokens e permissões',
+  say:'Para o Azure: managed identity quando o código roda no Azure, system assigned presa ao recurso, user assigned compartilhável; service principal quando roda fora, de preferência com credencial federada. No GitHub: GITHUB TOKEN é efêmero e por job, com permissões declaradas; GitHub App para integrações da organização, com permissão fina e token curto; PAT fine-grained só para uso pessoal. No Azure DevOps: service connections, de preferência com workload identity federation. Acesso: Stakeholder para quem só acompanha Boards, colaborador externo no GitHub, e grupos como Contributors e Readers.',
+  v:GRID(3, [
+    ['Azure','',['managed identity: no Azure','system × user assigned','SP federado: fora do Azure','RBAC no menor escopo'],'blue'],
+    ['GitHub','',['GITHUB_TOKEN: por job','permissions: mínimas','GitHub App: integração','PAT fine-grained: pessoal'],'green'],
+    ['Azure DevOps','',['service connection (WIF)','PAT: escopo e prazo curtos','grupos: Contributors…','Stakeholder: só Boards'],'amber'],
+  ], {h:230, step:4, rodape:'GitHub: read · triage · write · maintain · admin · outside collaborator · Azure DevOps: projetos, times e security groups'}) },
+
+{ id:'segredos', ch:'Segurança 10–15%', title:'Segredos sem senha e sem vazamento',
+  say:'Segredos ficam no Key Vault: variable group ligado ao cofre ou a task AzureKeyVault, com a service connection lendo só o necessário. Melhor ainda é não ter segredo: workload identity federation, ou OIDC, para o pipeline entrar no Azure. Certificados e arquivos sensíveis, como um keystore, vão em secure files, baixados na hora pela task DownloadSecureFile. Evitar vazamento: variáveis secretas são mascaradas no log, mas não as imprima; pull requests de fork não recebem segredos; e permissões mínimas no token. O comando abaixo cria a credencial federada do GitHub.',
+  v:T('c|az ad app create --display-name gh-deploy-api-loja --query appId -o tsv',
+      'o|5f0c9a1e-2b7d-4c1e-9a33-7d2e8b6c1f40',
+      'c|az ad sp create --id $APP_ID',
+      'c|cat fic.json',
+      'o|{ "name": "gh-producao", "issuer": "https://token.actions.githubusercontent.com",',
+      'o|  "subject": "repo:minha-org/api-loja:environment:producao",',
+      'o|  "audiences": ["api://AzureADTokenExchange"] }',
+      'c|az ad app federated-credential create --id $APP_ID --parameters fic.json',
+      'c|az role assignment create --assignee $APP_ID --role "Website Contributor" --scope $RG_ID',
+      'c|az keyvault secret set --vault-name kv-loja --name db-senha --value "$(openssl rand -hex 24)"',
+      'ok|nenhum client secret criado: o token OIDC vale minutos')},
+
+{ id:'scan', ch:'Segurança 10–15%', title:'GHAS, Defender e Dependabot',
+  say:'A estratégia de varredura cobre quatro alvos: dependências, código, segredos e licenças. GitHub Advanced Security traz code scanning com CodeQL, secret scanning com push protection e dependency review; existe também para Azure DevOps. Dependabot alerta sobre componentes vulneráveis e abre PRs de atualização. Contêineres: varra a imagem no pipeline e no registro, e o CodeQL pode rodar dentro de um contêiner. O Microsoft Defender for Cloud, com DevOps Security, conecta GitHub, Azure DevOps e GitLab e junta os achados de código à postura da nuvem, inclusive os do GHAS.',
+  v:GRID(2, [
+    ['GitHub Advanced Security','GitHub e Azure DevOps',['CodeQL: code scanning','secret scanning + push protection','dependency review no PR','Dependabot alerts e updates'],'green'],
+    ['Defender for Cloud','DevOps Security',['conecta GitHub, ADO, GitLab','postura do código à nuvem','integra os achados do GHAS','imagens: Defender for Containers'],'blue'],
+  ], {h:250, step:5, rodape:'Licenças: dependency review com allow-licenses · varredura agendada pega CVE novo em código parado'}) },
+
+{ id:'codeql', ch:'Segurança 10–15%', title:'O workflow de segurança',
+  say:'Um workflow com três jobs. CodeQL em matriz de linguagens, com a suíte security extended, roda em PR, em push e toda semana, porque vulnerabilidade nova aparece em código que não mudou. A permissão security events write deixa publicar os alertas. Dependency review, só em pull request, barra dependência com CVE alta ou licença fora da lista permitida. O terceiro job constrói a imagem e varre com Trivy, enviando o resultado em SARIF para a mesma aba de code scanning. O Dependabot e o push protection são configurações do repositório.',
+  v:S('.github/workflows/seguranca.yml','seguranca.yml','yaml')},
+
+/* ---------- INSTRUMENTAÇÃO (5–10%) ---------- */
+{ id:'monitor', ch:'Instrumentação 5–10%', title:'Azure Monitor e Application Insights',
+  say:'O último domínio é pequeno, mas cai. Azure Monitor coleta métricas e logs num workspace do Log Analytics. Application Insights instrumenta a aplicação, com OpenTelemetry: requisições, dependências, exceções e trace distribuído pelo mapa de aplicação. VM insights, Container insights e os insights de storage e rede cobrem a infraestrutura: CPU, memória, disco e rede. Alertas de pipeline: notificações do Azure DevOps, falha de workflow no GitHub e alertas do Monitor ligados a grupos de ação. E no GitHub, os gráficos de Insights do Projects.',
+  v:GRID(3, [
+    ['Aplicação','Application Insights',['requisições, dependências','exceções, mapa de aplicação','trace distribuído (OTel)','testes de disponibilidade'],'blue'],
+    ['Infraestrutura','',['VM insights','Container insights','storage e rede','CPU, memória, disco, rede'],'green'],
+    ['Alertas','',['grupos de ação do Monitor','alerta de log em KQL','notificações do Azure DevOps','falha de workflow no GitHub'],'amber'],
+  ], {h:230, step:4, rodape:'Tudo cai num workspace do Log Analytics · consultas em KQL · alertas de log e de métrica'}) },
+
+{ id:'kql', ch:'Instrumentação 5–10%', title:'KQL básico que a prova pede',
+  say:'KQL é encadear operadores com a barra vertical. Comece pela tabela, filtre com where e ago, agregue com summarize, percentile e count, e ordene. A primeira consulta dá o p noventa e cinco e a taxa de falha por operação. A segunda lista as exceções mais frequentes. A terceira mostra dependências falhando em janelas de cinco minutos com bin, num gráfico. A quarta segue um trace distribuído pelo operation Id, juntando requisições, dependências e exceções com union. E a última lê a CPU das VMs coletada pelo VM insights.',
+  v:S('consultas.kql','consultas.kql','kql')},
+
+/* ---------- ESTRATÉGIA ---------- */
+{ id:'pegadinhas', ch:'Estratégia de prova', title:'Pegadinhas da AZ-400',
+  say:'As confusões mais comuns. Aprovação de produção vai no environment, não num step. Managed identity não serve para o GitHub hospedado, que roda fora do Azure: use credencial federada. Variável de compilação, com chaves duplas, não enxerga valores definidos em tempo de execução. Stakeholder é de graça e só para Boards. Task group é dos clássicos; no YAML, template. Git LFS para binários, filter-repo para limpar histórico, e rotação para o segredo. Canary é tráfego; anel é grupo de usuários; A B é experimento. Slot exige plano Standard.',
+  v:GRID(2, [
+    ['Pipelines','',['aprovação: no environment','${{ }} não vê valor de runtime','task group → template no YAML','slot exige plano Standard+'],'ext'],
+    ['Identidade e repositório','',['GitHub hospedado: OIDC, não MI','Stakeholder: Boards, sem código','LFS ≠ filter-repo ≠ rotação','canary = tráfego · anel = grupo'],'amber'],
+  ], {h:250, step:5, rodape:'A resposta certa costuma ser a mais segura, automatizada e com menos esforço manual contínuo'}) },
+
+{ id:'estrategia', ch:'Estratégia de prova', title:'Gestão de tempo e eliminação',
+  say:'Leia o fim da pergunta primeiro: o que pedem, menor custo, menor esforço administrativo ou maior segurança. Elimine as alternativas que usam a ferramenta errada, como recurso de clássico num pipeline YAML. Em estudos de caso, leia os requisitos e anote restrições, como um repositório no GitHub e deploy no Azure. Questões de sim ou não em sequência não deixam voltar: decida e siga. Marque as dúvidas para revisão. A Microsoft passou a permitir consultar o Microsoft Learn em provas por função, mas o tempo é curto: confira as regras atuais e use só para detalhe de sintaxe.',
+  v:FLOW([['Ler o pedido','custo, esforço, segurança',''],['Achar a restrição','GitHub? clássico? Azure?','blue'],['Eliminar','ferramenta errada','amber'],['Escolher','mais automatizado','green']],
+    {y:96, h:96, step:1.8, cards:[
+      ['Na prova','',['estudo de caso: requisitos antes','sim/não em série: sem volta','marque e revise no fim'],'amber'],
+      ['Antes da prova','',['avaliação prática gratuita','sandbox do Microsoft Learn','ver a demonstração da prova'],'green'],
+    ]}) },
+
+{ id:'lab', ch:'Laboratório', title:'Lab: do Bicep ao swap com OIDC',
+  say:'O laboratório junta tudo numa assinatura de teste. Crie o grupo de recursos, rode o what-if do Bicep e aplique. Crie o app registration com a credencial federada presa ao ambiente produção do repositório, dê o papel só no grupo e grave os IDs como variáveis do GitHub. Faça push na main: o CI roda a matriz, o environment pede sua aprovação, o deploy cai no slot de staging, o teste de fumaça passa e o swap publica. Desafios: rode o mesmo fluxo no Azure Pipelines com uma service connection federada e apague tudo no fim.',
+  v:T('c|az group create -n rg-loja -l brazilsouth',
+      'c|az deployment group what-if -g rg-loja -f infra/main.bicep -p ambiente=prd',
+      'o|Resource changes: 5 to create.',
+      'c|az deployment group create -g rg-loja -f infra/main.bicep -p ambiente=prd',
+      'ok|"provisioningState": "Succeeded"',
+      'c|gh variable set AZURE_CLIENT_ID --body "$APP_ID"',
+      'c|gh variable set AZURE_TENANT_ID --body "$(az account show --query tenantId -o tsv)"',
+      'c|git push origin main && gh run watch',
+      'o|ci (20) ✓   ci (22) ✓   publicar ⏳ aguardando revisão do ambiente producao',
+      'ok|publicar ✓ smoke test no slot · swap para produção',
+      'c|az group delete -n rg-loja --yes --no-wait        # fim do lab, fim do custo')},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Prontidão para a AZ-400',
+  say:'Você está pronto quando escreve um pipeline multiestágio de cabeça, sabe onde ficam aprovações e checks, distingue as três sintaxes de variável, escolhe entre agente hospedado e self-hosted, explica blue-green, canary, anéis e flags, usa slots e swap, escreve Bicep com what-if, autentica sem segredo por OIDC, liga GHAS e Dependabot, consulta o Application Insights em KQL e passa com folga na avaliação prática gratuita.',
+  v:CK('Pipeline YAML multiestágio', 'Aprovação no environment', '${{ }} × $[ ] × $( )', 'Hospedado × self-hosted', 'Branch policies e rulesets', 'Feeds, views e upstream', 'Canary × anel × flag', 'Slot, swap e rollback', 'Bicep com what-if', 'OIDC sem client secret', 'CodeQL, Dependabot, push protection', 'KQL e avaliação prática > 80%')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a matriz dos domínios com os pesos, os links para as cenas das trilhas de cloud, Terraform, segurança e observabilidade, a trilha de estudo oficial, o checklist e um simulado com questões originais no estilo da prova. Faça o laboratório duas vezes, uma no GitHub Actions e outra no Azure Pipelines, e depois a avaliação prática do Microsoft Learn. Antes de agendar, confira na página oficial a versão do skills measured, a duração e o preço.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['CI/CD e estratégias de deploy', 'v05', 'cicd', 'A base de pipeline e deploy que a prova aprofunda'],
+  ['Infraestrutura como código', 'v05', 'iac', 'Por que IaC, antes de Bicep e Terraform'],
+  ['Terraform no pipeline', 'tf', 'pipeline', 'Plan no PR, apply aprovado: o mesmo de what-if'],
+  ['Estratégias de branch', 'v16', 'branches', 'Trunk-based, feature e release na prática'],
+  ['Comandos de quem domina o Git', 'v16', 'git', 'Reflog, rebase e recuperação'],
+  ['Pirâmide, troféu e os tipos', 'v16', 'testes-tipos', 'A estratégia de testes do domínio 3'],
+  ['Cobertura mente; mutantes não', 'v16', 'mutation', 'Por que cobertura sozinha não é gate'],
+  ['Deploy não é lançamento', 'v12', 'flags', 'Feature flags antes do App Configuration'],
+  ['Testes A/B e dívida de flags', 'v12', 'ab', 'A/B é experimento, não estratégia de risco'],
+  ['Expandir e contrair', 'v03', 'migracoes', 'Deploy com banco sem quebrar a versão anterior'],
+  ['Cadeia de suprimentos', 'v14', 'supply', 'Dependências, SBOM e actions fixadas'],
+  ['O pipeline de segurança', 'v14', 'pipeline', 'SAST, SCA e segredos no CI'],
+  ['Onde segredos moram e o vazamento', 'v14', 'segredos', 'Por que rotacionar o que vazou'],
+  ['GitHub Actions sem chave guardada', 'naws', 'oidc', 'O mesmo OIDC, do lado da AWS'],
+  ['Segredos e identidade sem chave no Azure', 'aks', 'spc', 'Key Vault e Workload Identity'],
+  ['Métricas DORA', 'staff', 'dora', 'As métricas de fluxo do domínio 1'],
+  ['Métricas, logs e traces', 'v13', 'sinais', 'Os sinais que o Application Insights coleta'],
+  ['SLI, SLO, error budget e SLA', 'v13', 'slo', 'Gate de release por métrica de produção'],
+  ['Quality gate que ajuda', 'v22', 'gate', 'Gates que o time respeita'],
+];
+
+const MATRIZ = [
+  ['Processos e comunicação', '10–15%', 'GitHub Flow, Boards + GitHub (AB#), métricas DORA e dashboards, wiki com Mermaid, release notes, webhooks, Teams', 'Vol 05 · cicd · staff · dora · Vol 22 · metodo-ci'],
+  ['Source control', '10–15%', 'Trunk, feature e release branch; branch policies e rulesets; LFS, Scalar, reflog, filter-repo; permissões e tags', 'Vol 16 · branches e git'],
+  ['Build e release: pacotes e testes', '50–55% (todo o grupo)', 'Azure Artifacts × GitHub Packages, views e upstream, SemVer × CalVer; testes, cobertura, quality e release gates', 'Vol 16 · testes-tipos · esta trilha · pacotes'],
+  ['Build e release: pipelines', '(idem)', 'Actions × Pipelines, agentes e runners, triggers, YAML multiestágio, templates, variable groups, environments e checks', 'Vol 05 · lab-ci · esta trilha · yaml-azp'],
+  ['Build e release: deploy e IaC', '(idem)', 'Blue-green, canary, anéis, flags (App Configuration), slots e swap, hotfix, banco; Bicep, Machine Configuration, Deployment Environments', 'Vol 12 · flags · tf · pipeline · Vol 03 · migracoes'],
+  ['Build e release: manutenção', '(idem)', 'Falha, duração e flaky; cache e concorrência; retenção; migrar clássico para YAML', 'esta trilha · manter'],
+  ['Segurança e compliance', '10–15%', 'MI × SP, GITHUB_TOKEN × App × PAT, service connections WIF, Key Vault, secure files, GHAS, Defender for Cloud, Dependabot', 'Vol 14 · supply e pipeline · naws · oidc'],
+  ['Instrumentação', '5–10%', 'Azure Monitor, Application Insights, VM e Container insights, alertas de pipeline, KQL básico', 'Vol 13 · sinais e slo'],
+];
+
+const STUDY = [
+  ['Página da certificação DevOps Engineer Expert', 'Pré-requisitos, idiomas, agendamento e avaliação prática', 'https://learn.microsoft.com/en-us/credentials/certifications/devops-engineer/', 'intro'],
+  ['Guia de estudo da AZ-400', 'Skills measured oficial e change log', 'https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/az-400', 'pesos'],
+  ['Azure Pipelines: esquema YAML', 'Referência de stages, jobs, triggers e templates', 'https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/', 'yaml-azp'],
+  ['Environments e checks', 'Aprovações e verificações em recursos protegidos', 'https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals', 'ambientes'],
+  ['Templates do Azure Pipelines', 'Includes, extends e parâmetros', 'https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates', 'templates'],
+  ['GitHub Actions: reusable workflows', 'workflow_call, inputs e secrets', 'https://docs.github.com/en/actions/sharing-automations/reusing-workflows', 'actions'],
+  ['GitHub Actions: OIDC no Azure', 'Credencial federada para o azure/login', 'https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-azure', 'segredos'],
+  ['Slots do App Service', 'Staging, swap, preview e roteamento de tráfego', 'https://learn.microsoft.com/en-us/azure/app-service/deploy-staging-slots', 'slots'],
+  ['Feature management no App Configuration', 'Flags, filtros e targeting', 'https://learn.microsoft.com/en-us/azure/azure-app-configuration/concept-feature-management', 'flags'],
+  ['Documentação do Bicep', 'Sintaxe, módulos e what-if', 'https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/', 'bicep'],
+  ['GitHub Advanced Security', 'Code scanning, secret scanning e dependency review', 'https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security', 'scan'],
+  ['KQL: visão geral', 'Operadores e exemplos de consulta', 'https://learn.microsoft.com/en-us/kusto/query/', 'kql'],
+];
+
+const CHECK = [
+  ['Prova', 'Ler o skills measured e o change log de 27/07/2026', 'pesos'],
+  ['Prova', 'Ter o AZ-104 ou o AZ-204 (pré-requisito do título)', 'intro'],
+  ['Processos', 'Ligar Azure Boards a um repo GitHub e fechar item com AB#', 'fluxo'],
+  ['Source control', 'Criar branch policy com 2 revisores e build validation', 'politicas'],
+  ['Source control', 'Recuperar um commit pelo reflog e limpar um arquivo com filter-repo', 'repos'],
+  ['Pipelines', 'Escrever um YAML multiestágio com matriz, cache e testes publicados', 'yaml-azp'],
+  ['Pipelines', 'Configurar aprovação e branch control num environment', 'ambientes'],
+  ['Pipelines', 'Extrair um template e obrigar o uso com extends', 'templates'],
+  ['Pipelines', 'Publicar num slot, testar e fazer swap com rollback', 'slots'],
+  ['Pipelines', 'Criar flag com filtro de porcentagem no App Configuration', 'flags'],
+  ['IaC', 'Rodar what-if e deploy do Bicep pelo pipeline', 'bicep'],
+  ['Segurança', 'Deploy por OIDC sem client secret', 'segredos'],
+  ['Segurança', 'Ligar CodeQL, Dependabot e push protection', 'codeql'],
+  ['Instrumentação', 'Escrever 3 consultas KQL no Application Insights', 'kql'],
+  ['Prova', 'Passar de 80% na avaliação prática do Microsoft Learn', 'estrategia'],
+];
+
+const FAQ = [
+ ['Processos','Simulado 1 · Sua equipe usa Azure Boards e o código está no GitHub. Os desenvolvedores querem que commits e PRs apareçam automaticamente nos work items. O que fazer?',`<p>A) Criar um webhook do GitHub para o Azure Boards em cada repositório. B) Instalar o app Azure Boards no GitHub, conectar os repositórios ao projeto e usar AB#ID nas mensagens. C) Migrar o código para o Azure Repos. D) Criar um pipeline que copia os commits para os work items.</p><p><b>Resposta: B.</b> O app Azure Boards faz a integração nativa e o AB#ID cria o vínculo. A e D são esforço manual sem necessidade; C resolve, mas com custo enorme e sem pedido para migrar.</p>`],
+ ['Processos','Simulado 2 · A diretoria quer um painel que mostre quanto tempo um item leva desde que alguém começa a trabalhar nele até ser entregue. Qual métrica?',`<p>A) Lead time. B) Cycle time. C) Velocity. D) Burndown.</p><p><b>Resposta: B.</b> Cycle time mede do início do trabalho à entrega. Lead time começa na criação do pedido. Velocity soma pontos por sprint e burndown mostra o restante de trabalho, nenhum mede o tempo de um item.</p>`],
+ ['Source control','Simulado 3 · Um designer versiona arquivos PSD de 300 MB e o clone ficou lento. Você quer manter os arquivos no repositório sem pesar o histórico. O que usar?',`<p>A) git filter-repo. B) Git LFS. C) Shallow clone em todos os pipelines. D) Um submódulo.</p><p><b>Resposta: B.</b> O LFS guarda ponteiros no Git e o binário em armazenamento à parte. filter-repo remove do histórico, o que não é o pedido; shallow clone ajuda só o pipeline; submódulo continua carregando os binários.</p>`],
+ ['Source control','Simulado 4 · Uma senha de banco foi commitada há três semanas na main. Qual é a ação mais completa?',`<p>A) Fazer um commit removendo o arquivo. B) Reescrever o histórico com git filter-repo e forçar o push. C) Revogar e rotacionar a senha, depois limpar o histórico e ativar push protection. D) Tornar o repositório privado.</p><p><b>Resposta: C.</b> A senha já vazou: só rotacionar resolve o risco. A deixa a senha no histórico; B limpa mas não invalida a senha; D não desfaz clones e forks existentes.</p>`],
+ ['Pipelines','Simulado 5 · O deploy de produção no Azure Pipelines YAML deve exigir aprovação do time de operações e só aceitar a branch main. Onde configurar?',`<p>A) Num step ManualValidation no final do estágio. B) Nos checks do environment de produção: aprovação e branch control. C) Numa branch policy da main. D) Numa variável condicional no YAML.</p><p><b>Resposta: B.</b> Aprovações e branch control são checks do recurso protegido, que o autor do YAML não consegue remover. A depende do YAML, que qualquer um edita; C protege o merge, não o deploy; D é contornável.</p>`],
+ ['Pipelines','Simulado 6 · Uma condição precisa usar uma variável que um step anterior define com setvariable durante a execução. Qual sintaxe?',`<p>A) Chaves duplas com cifrão. B) Cifrão com colchetes, $[ ], numa condition. C) A macro $( ) no nome do job. D) Um parâmetro de template.</p><p><b>Resposta: B.</b> A sintaxe de execução avalia em runtime. Chaves duplas resolvem na compilação, antes de o step rodar; parâmetros de template também são de compilação; a macro serve para entradas de task, não para condições.</p>`],
+ ['Pipelines','Simulado 7 · Builds precisam acessar um SQL Server numa rede on-premises sem exposição pública. O que usar?',`<p>A) Agentes hospedados pela Microsoft com IP liberado no firewall. B) Agentes self-hosted (ou Managed DevOps Pools ligados à rede) com acesso à rede privada. C) Aumentar os jobs paralelos. D) GitHub-hosted runners maiores.</p><p><b>Resposta: B.</b> Só um agente dentro da rede alcança o recurso privado. A expõe o banco a faixas amplas e mutáveis; C e D não resolvem conectividade.</p>`],
+ ['Pipelines','Simulado 8 · Vinte times copiam o mesmo YAML e a segurança exige que todos rodem a varredura de segredos antes do build. Qual a melhor solução?',`<p>A) Um task group com a varredura. B) Um template central e um check de template obrigatório (extends) nos recursos protegidos. C) Uma wiki explicando o passo. D) Uma branch policy que exige revisão do time de segurança.</p><p><b>Resposta: B.</b> Extends obriga a herança e o check impede deploy sem ela. Task group é dos clássicos; wiki e revisão manual não garantem nada em escala.</p>`],
+ ['Pipelines','Simulado 9 · Uma nova versão deve ir primeiro para funcionários, depois para clientes beta e por fim para todos, com validação entre cada grupo. Qual estratégia?',`<p>A) Blue-green. B) Implantação em anéis. C) Teste A/B. D) Rolling update.</p><p><b>Resposta: B.</b> Anéis expõem grupos de usuários em sequência com gate entre eles. Blue-green troca tudo de uma vez; A/B compara variantes para medir conversão; rolling troca instâncias, não grupos de usuários.</p>`],
+ ['Pipelines','Simulado 10 · Você precisa publicar no App Service sem indisponibilidade e voltar em segundos se algo der errado. Qual opção?',`<p>A) Publicar direto em produção fora do horário. B) Slot de staging, aquecer, testar e fazer swap; rollback com novo swap. C) Recriar o App Service a cada release. D) Dois App Services e mudar o DNS manualmente.</p><p><b>Resposta: B.</b> O swap troca o roteamento já aquecido e é reversível. A tem downtime; C é lento e arriscado; D funciona, mas com propagação de DNS e esforço manual.</p>`],
+ ['Pipelines','Simulado 11 · O time quer separar deploy de lançamento e desligar uma funcionalidade em produção sem novo deploy. O que usar no Azure?',`<p>A) Variáveis do pipeline. B) Feature flags no Azure App Configuration com a biblioteca Feature Management. C) Um novo slot por funcionalidade. D) Release branch por funcionalidade.</p><p><b>Resposta: B.</b> A flag muda em tempo de execução e aceita filtros por porcentagem e usuário. Variáveis exigem novo deploy; slots e branches multiplicam ambientes e merge.</p>`],
+ ['Pipelines','Simulado 12 · Antes de aplicar um Bicep em produção, o revisor quer ver exatamente o que será criado, alterado ou removido. Qual comando?',`<p>A) az bicep build. B) az deployment group what-if. C) az deployment group validate. D) az group export.</p><p><b>Resposta: B.</b> What-if mostra as mudanças previstas. Build só compila para ARM; validate checa sintaxe e regras sem listar mudanças; export gera um modelo do estado atual.</p>`],
+ ['Segurança','Simulado 13 · Um workflow do GitHub Actions em runners hospedados precisa publicar no Azure sem guardar segredos. Qual identidade?',`<p>A) Managed identity atribuída pelo sistema. B) App registration com credencial federada (OIDC) presa ao repositório e ao ambiente. C) Service principal com client secret em GitHub Secrets. D) PAT do Azure DevOps.</p><p><b>Resposta: B.</b> O runner hospedado está fora do Azure, então não tem managed identity; OIDC dá token curto sem segredo. C funciona, mas guarda segredo; D não autentica no Azure Resource Manager.</p>`],
+ ['Segurança','Simulado 14 · Um product owner precisa ver e editar work items, sem acesso a código e sem custo de licença. Qual nível de acesso?',`<p>A) Basic. B) Stakeholder. C) Basic + Test Plans. D) Project Administrator.</p><p><b>Resposta: B.</b> Stakeholder é gratuito e cobre Boards. Basic e Basic + Test Plans são pagos e dão acesso a código; administrador é privilégio demais.</p>`],
+ ['Segurança','Simulado 15 · Você quer bloquear no PR dependências com vulnerabilidade alta ou licença não aprovada. O que configurar?',`<p>A) Dependabot version updates. B) Dependency review action com fail-on-severity e allow-licenses. C) Secret scanning. D) CodeQL com a suíte padrão.</p><p><b>Resposta: B.</b> Dependency review compara o diff de dependências no PR. Version updates abrem PRs de atualização, não bloqueiam; secret scanning busca segredos; CodeQL analisa o seu código, não licenças.</p>`],
+ ['Instrumentação','Simulado 16 · Usuários reclamam de lentidão. No Application Insights, você quer o percentil 95 de duração por operação na última hora. Qual consulta?',`<p>A) requests | where timestamp > ago(1h) | summarize percentile(duration, 95) by name. B) traces | take 95. C) requests | top 95 by duration. D) exceptions | summarize count() by name.</p><p><b>Resposta: A.</b> summarize com percentile por name entrega o p95 por operação. take e top pegam linhas, não percentis; exceptions conta erros, não latência.</p>`],
+];
+
+const CMDS = [
+  ['az repos policy approver-count create --branch main --repository-id ID …', 'Mínimo de revisores na main'],
+  ['az pipelines run --name api-loja --branch main', 'Disparar um pipeline pela CLI'],
+  ['az deployment group what-if -g RG -f main.bicep', 'Ver o que o Bicep vai mudar'],
+  ['az webapp deployment slot swap -g RG -n APP --slot staging --target-slot production', 'Swap de slot (e rollback)'],
+  ['az webapp traffic-routing set -g RG -n APP --distribution staging=10', 'Canary pelo slot'],
+  ['az appconfig feature enable -n APPCS --feature NOME --label prd', 'Ligar uma feature flag'],
+  ['az ad app federated-credential create --id APP_ID --parameters fic.json', 'Credencial federada (OIDC)'],
+  ['gh run watch · gh workflow run deploy.yml', 'Acompanhar e disparar workflows'],
+  ['git lfs track "*.psd" · git filter-repo --path X --invert-paths', 'Binários grandes · limpar histórico'],
+  ['requests | summarize percentile(duration, 95) by name', 'KQL: p95 por operação'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

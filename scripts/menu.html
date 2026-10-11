@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>learnFlow</title>
+<meta name="description" content="Trilhas de estudo: guia técnico, trilhas avançadas, certificações e tecnologias.">
+<meta name="theme-color" content="#0E1A2B">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --ok:#16855A; --ok-soft:#DDF3E8; --amber:#B86E00;
+  --hero:#0A1324; --hero-ink:#E8EEF8; --hero-dim:#8798B4; --hero-line:#25385A; --hero-blue:#5B95FF; --hero-green:#3CCB8E;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:14px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA7FF; --accent-soft:#1A2A4A; --ok:#3CCB8E; --ok-soft:#123528; --amber:#F2B544;
+  color-scheme:dark;
+}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+[hidden]{display:none!important}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:max(16px,env(safe-area-inset-left))}
+
+/* ---------- topo ---------- */
+.hero{background:var(--hero);color:var(--hero-ink);padding-block:calc(28px + env(safe-area-inset-top)) 30px;border-bottom:1px solid var(--hero-line)}
+.marca{display:flex;align-items:center;gap:10px;font:800 15px/1 var(--f-display);letter-spacing:.02em;color:var(--hero-dim);text-transform:uppercase}
+.marca svg{flex:none}
+.hero h1{font:800 clamp(30px,5vw,46px)/1.05 var(--f-display);letter-spacing:-.02em;margin:18px 0 10px;max-width:18ch}
+.hero p{color:var(--hero-dim);margin:0;max-width:62ch}
+.painel{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:24px}
+.num{border:1px solid var(--hero-line);border-radius:12px;padding:12px 14px}
+.num b{display:block;font:700 26px/1.1 var(--f-display);color:#fff}
+.num span{font-size:13px;color:var(--hero-dim)}
+.barra{height:6px;border-radius:99px;background:var(--hero-line);overflow:hidden;margin-top:10px}
+.barra i{display:block;height:100%;background:var(--hero-green);width:0;transition:width .4s}
+
+.continuar{display:flex;align-items:center;gap:14px;margin-top:18px;padding:12px 14px;border-radius:12px;background:#111E36;border:1px solid var(--hero-line);text-decoration:none;max-width:560px}
+.continuar:hover{border-color:var(--hero-blue)}
+.continuar .play{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--hero-blue);color:#071022}
+.continuar small{display:block;color:var(--hero-dim);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.continuar strong{font:700 16px/1.3 var(--f-display)}
+
+/* ---------- filtros ---------- */
+.barra-filtros{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-block:12px}
+.busca{flex:1 1 260px;position:relative}
+.busca input{width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px 10px 38px}
+.busca input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.busca svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:500 13px/1 var(--f-body);color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:9px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .q{font-family:var(--f-mono);font-size:11px;opacity:.7;margin-left:4px}
+
+/* ---------- seções e cartões ---------- */
+main{padding-block:8px 80px}
+.secao{margin-top:34px}
+.secao-topo{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.secao h2{font:800 22px/1.2 var(--f-display);margin:0;letter-spacing:-.01em}
+.secao-topo p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.secao-topo .cont{font:500 13px var(--f-mono);color:var(--muted)}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.cartao{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px;text-decoration:none;transition:border-color .15s,transform .15s,box-shadow .15s;min-width:0}
+.cartao:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 22px rgba(14,26,43,.08)}
+.cartao:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cartao .selo{font:600 11px/1.3 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:flex;gap:8px;align-items:center}
+.cartao .selo .vol{font-family:var(--f-mono);background:var(--accent-soft);padding:3px 6px;border-radius:6px;letter-spacing:0}
+.cartao h3{font:700 18px/1.25 var(--f-display);margin:8px 0 6px}
+.cartao .resumo{color:var(--muted);font-size:14px;line-height:1.5;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.temas{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.temas span{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:2px 8px}
+.rodape{margin-top:auto;padding-top:14px;display:flex;align-items:center;gap:10px;font:500 12px var(--f-mono);color:var(--muted)}
+.rodape .mini{flex:1;height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.rodape .mini i{display:block;height:100%;background:var(--ok);width:0}
+.cartao.feita{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.cartao.feita .selo::after{content:"✓ concluída";color:var(--ok);margin-left:auto;letter-spacing:.04em}
+
+.guia{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;text-decoration:none;max-width:640px}
+.guia:hover{border-color:var(--accent)}
+.guia .ic{flex:none;width:42px;height:42px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 12px var(--f-mono)}
+.guia strong{font:700 16px/1.3 var(--f-display);display:block}
+.guia span{font-size:13px;color:var(--muted)}
+
+.vazio{padding:40px 0;color:var(--muted);text-align:center}
+.vazio button{font:inherit;color:var(--accent);background:none;border:0;cursor:pointer;text-decoration:underline}
+
+/* ---------- progresso (exportar/importar) ---------- */
+.dados{margin-top:48px;padding:18px;border:1px dashed var(--line);border-radius:var(--r);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.dados p{margin:0;color:var(--muted);font-size:14px;max-width:60ch}
+.dados .acoes{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:600 14px/1 var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.aviso{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;transition:.25s;pointer-events:none;max-width:calc(100vw - 32px)}
+.aviso.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:520px){
+  .hero{padding-bottom:22px}
+  .grade{grid-template-columns:1fr}
+  .chip{padding:8px 10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="marca">
+      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1F55C9"/><path d="M9 21c4-1 5-10 9-10s3 6 5 6" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="9" cy="21" r="2.5" fill="#3CCB8E"/></svg>
+      learnFlow
+    </div>
+    <h1>Trilhas de estudo</h1>
+    <p id="subtitulo"></p>
+    <div class="painel">
+      <div class="num"><b id="nTrilhas">0</b><span>trilhas</span></div>
+      <div class="num"><b id="nAndamento">0</b><span>em andamento</span></div>
+      <div class="num"><b id="nConcluidas">0</b><span>concluídas</span></div>
+      <div class="num"><b id="nPct">0%</b><span id="nItens">itens concluídos</span><div class="barra"><i id="barraGeral"></i></div></div>
+    </div>
+    <a class="continuar" id="continuar" hidden>
+      <span class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+      <span><small>Continuar de onde parei</small><strong id="continuarNome"></strong></span>
+    </a>
+  </div>
+</header>
+
+<div class="barra-filtros">
+  <div class="wrap filtros">
+    <label class="busca">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="busca" type="search" placeholder="Buscar trilha ou tema (ex.: Kafka, AZ-104, Redis)" autocomplete="off" aria-label="Buscar trilha ou tema">
+    </label>
+    <div class="chips" id="chips" role="group" aria-label="Filtrar por categoria"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="lista"></div>
+  <div class="vazio" id="vazio" hidden>Nenhuma trilha encontrada. <button id="limpar" type="button">Limpar a busca</button></div>
+
+  <section class="secao" id="secGuias" hidden>
+    <div class="secao-topo"><div><h2>Guias em PDF</h2><p>Material de apoio para ler ou baixar.</p></div></div>
+    <div class="grade" id="guias"></div>
+  </section>
+
+  <section class="dados" aria-label="Progresso">
+    <p>O progresso (itens marcados em cada trilha) fica salvo <strong>neste navegador</strong>. Para levar para outro aparelho, exporte aqui e importe lá.</p>
+    <div class="acoes">
+      <button class="btn" id="exportar" type="button">Exportar progresso</button>
+      <button class="btn" id="importar" type="button">Importar progresso</button>
+      <input type="file" id="arquivo" accept="application/json,.json" hidden>
+    </div>
+  </section>
+</main>
+
+<div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+<script>
+const DADOS = /*__DADOS__*/null;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const norm = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+function ler(chave) {
+  try { const v = JSON.parse(localStorage.getItem(chave) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
+}
+function progresso(t) {
+  if (!t.chave || !t.total) return { feitos: 0, total: t.total || 0 };
+  const feitos = ler(t.chave + "-study").length + ler(t.chave + "-check").length;
+  return { feitos: Math.min(feitos, t.total), total: t.total };
+}
+
+let filtro = "todas";
+let termo = "";
+try { filtro = sessionStorage.getItem("lf:filtro") || "todas"; } catch {}
+
+const indiceBusca = new Map(DADOS.trilhas.map((t) => [t.slug, norm([t.nome, t.selo, t.resumo, ...(t.temas || [])].join(" "))]));
+
+function cartao(t) {
+  const p = progresso(t);
+  const pct = p.total ? Math.round((100 * p.feitos) / p.total) : 0;
+  const feita = p.total && p.feitos >= p.total;
+  return `<a class="cartao${feita ? " feita" : ""}" href="trilhas/${t.slug}.html">
+    <span class="selo">${t.volume ? `<span class="vol">VOL ${String(t.volume).padStart(2, "0")}</span>` : ""}${esc(t.selo || "")}</span>
+    <h3>${esc(t.nome)}</h3>
+    <p class="resumo">${esc(t.resumo)}</p>
+    ${t.temas?.length ? `<div class="temas">${t.temas.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
+    <div class="rodape">
+      <span>${t.cenas} cenas</span>
+      <span class="mini" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span>
+      <span>${p.feitos}/${p.total}</span>
+    </div>
+  </a>`;
+}
+
+function render() {
+  const t0 = norm(termo).trim().split(/\s+/).filter(Boolean);
+  const passa = (t) => {
+    if (filtro === "andamento") { const p = progresso(t); if (!(p.feitos > 0 && p.feitos < p.total)) return false; }
+    else if (filtro !== "todas" && t.categoria !== filtro) return false;
+    const idx = indiceBusca.get(t.slug);
+    return t0.every((w) => idx.includes(w));
+  };
+
+  let html = "", total = 0;
+  for (const c of DADOS.categorias) {
+    const ts = DADOS.trilhas.filter((t) => t.categoria === c.id && passa(t));
+    if (!ts.length) continue;
+    total += ts.length;
+    html += `<section class="secao" id="cat-${c.id}">
+      <div class="secao-topo"><div><h2>${esc(c.nome)}</h2><p>${esc(c.descricao)}</p></div><span class="cont">${ts.length} trilha${ts.length > 1 ? "s" : ""}</span></div>
+      <div class="grade">${ts.map(cartao).join("")}</div></section>`;
+  }
+  $("lista").innerHTML = html;
+  $("vazio").hidden = total > 0;
+  const mostrarGuias = DADOS.guias.length && (filtro === "todas") && (!t0.length || DADOS.guias.some((g) => t0.every((w) => norm(g.nome).includes(w))));
+  $("secGuias").hidden = !mostrarGuias;
+}
+
+function chips() {
+  const conta = (id) => DADOS.trilhas.filter((t) => t.categoria === id).length;
+  const andamento = DADOS.trilhas.filter((t) => { const p = progresso(t); return p.feitos > 0 && p.feitos < p.total; }).length;
+  const opcoes = [["todas", "Todas", DADOS.trilhas.length], ...DADOS.categorias.map((c) => [c.id, c.nome, conta(c.id)]), ["andamento", "Em andamento", andamento]];
+  if (!opcoes.some(([id]) => id === filtro)) filtro = "todas";
+  $("chips").innerHTML = opcoes
+    .map(([id, nome, n]) => `<button class="chip" type="button" data-f="${id}" aria-pressed="${id === filtro}">${esc(nome)}<span class="q">${n}</span></button>`)
+    .join("");
+}
+
+function painel() {
+  let feitos = 0, total = 0, andamento = 0, concluidas = 0;
+  for (const t of DADOS.trilhas) {
+    const p = progresso(t);
+    feitos += p.feitos; total += p.total;
+    if (p.total && p.feitos >= p.total) concluidas++;
+    else if (p.feitos > 0) andamento++;
+  }
+  const pct = total ? Math.round((100 * feitos) / total) : 0;
+  $("nTrilhas").textContent = DADOS.trilhas.length;
+  $("nAndamento").textContent = andamento;
+  $("nConcluidas").textContent = concluidas;
+  $("nPct").textContent = pct + "%";
+  $("nItens").textContent = `${feitos} de ${total} itens concluídos`;
+  $("barraGeral").style.width = pct + "%";
+  const cenas = DADOS.trilhas.reduce((a, t) => a + t.cenas, 0);
+  $("subtitulo").textContent = `${DADOS.trilhas.length} trilhas em vídeo com ${cenas} cenas, checklists e referências. Escolha uma trilha, assista às cenas e marque o que já aplicou.`;
+
+  let ultima = null;
+  try { ultima = localStorage.getItem("lf:ultima"); } catch {}
+  const t = ultima && DADOS.trilhas.find((x) => `${x.slug}.html` === ultima);
+  $("continuar").hidden = !t;
+  if (t) { $("continuar").href = `trilhas/${t.slug}.html`; $("continuarNome").textContent = t.nome; }
+}
+
+function tudo() { painel(); chips(); render(); }
+
+$("chips").addEventListener("click", (e) => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  filtro = b.dataset.f;
+  try { sessionStorage.setItem("lf:filtro", filtro); } catch {}
+  chips(); render();
+});
+$("busca").addEventListener("input", (e) => { termo = e.target.value; render(); });
+$("limpar").addEventListener("click", () => { termo = ""; $("busca").value = ""; filtro = "todas"; chips(); render(); $("busca").focus(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "/" && document.activeElement !== $("busca")) { e.preventDefault(); $("busca").focus(); }
+});
+// ao voltar de uma trilha (botão Voltar ou outra aba), atualiza o progresso
+addEventListener("pageshow", tudo);
+addEventListener("storage", tudo);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) tudo(); });
+
+// guias em PDF
+$("guias").innerHTML = DADOS.guias.map((g) => `<a class="guia" href="${esc(g.arquivo)}" target="_blank" rel="noopener">
+  <span class="ic">PDF</span><span><strong>${esc(g.nome)}</strong><span>${(g.tamanho / 1048576).toFixed(1).replace(".", ",")} MB · abrir em nova aba</span></span></a>`).join("");
+
+// ---------- exportar / importar progresso ----------
+function aviso(msg) { const a = $("aviso"); a.textContent = msg; a.classList.add("on"); clearTimeout(aviso.t); aviso.t = setTimeout(() => a.classList.remove("on"), 2600); }
+const CHAVES = () => DADOS.trilhas.filter((t) => t.chave).flatMap((t) => [t.chave + "-study", t.chave + "-check"]);
+
+$("exportar").addEventListener("click", () => {
+  const dados = {};
+  for (const k of CHAVES()) { const v = ler(k); if (v.length) dados[k] = v; }
+  const blob = new Blob([JSON.stringify({ app: "learnFlow", versao: 1, exportado: new Date().toISOString(), dados }, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `learnflow-progresso-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  aviso("Progresso exportado.");
+});
+$("importar").addEventListener("click", () => $("arquivo").click());
+$("arquivo").addEventListener("change", async (e) => {
+  const f = e.target.files?.[0]; e.target.value = "";
+  if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    if (j?.app !== "learnFlow" || typeof j.dados !== "object") throw new Error();
+    const validas = new Set(CHAVES());
+    let n = 0;
+    for (const [k, v] of Object.entries(j.dados)) {
+      if (!validas.has(k) || !Array.isArray(v)) continue;
+      // junta com o que já existe neste aparelho (não apaga nada)
+      const junto = [...new Set([...ler(k), ...v.filter(Number.isInteger)])];
+      localStorage.setItem(k, JSON.stringify(junto)); n++;
+    }
+    tudo();
+    aviso(n ? `Progresso importado (${n} listas).` : "O arquivo não tinha progresso para importar.");
+  } catch { aviso("Arquivo inválido. Use um arquivo exportado pelo learnFlow."); }
+});
+
+tudo();
+</script>
+</body>
+</html>

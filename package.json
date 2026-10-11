@@ -1,0 +1,14 @@
+{
+  "name": "learnflow",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Menu online das trilhas de estudo",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && npx --yes serve dist"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

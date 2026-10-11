@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha de Asterisk e Telefonia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"app-ari.mjs": "// app-ari.mjs · Node 22+ (WebSocket e fetch nativos, sem dependências)\nconst BASE = 'http://127.0.0.1:8088/ari';\nconst USUARIO = 'minha-app', SENHA = 'SenhaForteDoARI', APP = 'atendente-virtual';\nconst auth = 'Basic ' + Buffer.from(`${USUARIO}:${SENHA}`).toString('base64');\n\nasync function ari(metodo, caminho) {\n  const res = await fetch(`${BASE}${caminho}`, {\n    method: metodo, headers: { Authorization: auth },\n  });\n  if (!res.ok) throw new Error(`ARI ${metodo} ${caminho}: ${res.status}`);\n  return res.status === 204 ? null : res.json();\n}\n\nconst url = `ws://127.0.0.1:8088/ari/events?app=${APP}&api_key=${USUARIO}:${SENHA}`;\nconst ws = new WebSocket(url);\nws.onopen = () => console.log('conectado ao ARI');\n\nws.onmessage = async (mensagem) => {\n  const evento = JSON.parse(mensagem.data);\n  try {\n    if (evento.type === 'StasisStart') {                 // o dialplan entregou o canal\n      const canal = evento.channel;\n      console.log(`ligação de ${canal.caller.number}`);\n      await ari('POST', `/channels/${canal.id}/answer`);\n      await ari('POST', `/channels/${canal.id}/play?media=sound:hello-world`);\n    }\n    if (evento.type === 'ChannelDtmfReceived') {\n      console.log(`cliente digitou ${evento.digit}`);\n      if (evento.digit === '0') await ari('DELETE', `/channels/${evento.channel.id}`);\n    }\n    if (evento.type === 'StasisEnd') console.log('ligação saiu da aplicação');\n  } catch (erro) {\n    console.error(erro.message);\n  }\n};\nws.onclose = () => console.log('desconectado: em produção, reconecte com backoff');", "dialplan.conf": "; extensions.conf · contexto → extensão → prioridade → aplicação\n[interno]\n; ligar para outro ramal\nexten => _1XXX,1,NoOp(Chamando o ramal ${EXTEN})\n same => n,Dial(PJSIP/${EXTEN},20)\n same => n,GotoIf($[\"${DIALSTATUS}\" = \"BUSY\"]?ocupado)\n same => n,VoiceMail(${EXTEN}@default,u)\n same => n,Hangup()\n same => n(ocupado),Playback(vm-isonphone)\n same => n,Hangup()\n\n; teste de eco: fala e ouve de volta\nexten => 600,1,Answer()\n same => n,Playback(demo-echotest)\n same => n,Echo()\n same => n,Hangup()\n\n; padrões: X = 0-9 · Z = 1-9 · N = 2-9 · [1-5] · . = um ou mais\n; variáveis: ${EXTEN} ${CALLERID(num)} ${UNIQUEID} ${DIALSTATUS}", "pjsip.conf": "; pjsip.conf · um ramal = endpoint + auth + aor\n[transport-udp]\ntype=transport\nprotocol=udp\nbind=0.0.0.0:5060\n; atrás de NAT: anuncie o IP público, senão a ligação fica muda\n; external_media_address=203.0.113.10\n; external_signaling_address=203.0.113.10\n\n[1000]\ntype=endpoint\ncontext=interno            ; o contexto é a fronteira de segurança\ndisallow=all\nallow=alaw,opus            ; mesmo codec na cadeia = sem transcodificação\nauth=1000\naors=1000\nrtp_symmetric=yes          ; para clientes atrás de NAT\nforce_rport=yes\n\n[1000]\ntype=auth\nauth_type=userpass\nusername=1000\npassword=TroqueEstaSenhaForte   ; nunca igual ao número do ramal\n\n[1000]\ntype=aor\nmax_contacts=1", "seguro.conf": "; Dialplan seguro contra fraude de pedágio (toll fraud)\n[da-operadora]                 ; o que chega do tronco\nexten => _X.,1,Goto(ura-principal,s,1)    ; só alcança a URA\n\n[ramais]                       ; ramais autenticados\ninclude => interno\nexten => _0XXXXXXXXXX,1,Dial(PJSIP/${EXTEN:1}@operadora,60)   ; nacional\n; nenhum padrão para internacional: bloqueado por padrão\n\n; da-operadora NÃO inclui ramais: quem vem de fora jamais disca para fora\n\n; AGI no meio do fluxo: prefira FastAGI (um servidor seu já rodando)\n[entrada-crm]\nexten => s,1,Answer()\n same => n,AGI(agi://127.0.0.1:4573/consultar-cliente)\n same => n,Goto(${DESTINO},s,1)       ; variável definida pelo script\n\n; ARI: o canal inteiro passa a ser controlado pela sua aplicação\n[interno-ari]\nexten => 5000,1,Stasis(atendente-virtual)\n same => n,Hangup()", "ura.conf": "; URA: Background toca E escuta dígitos (Playback não escuta)\n[ura-principal]\nexten => s,1,Answer()\n same => n,Set(TIMEOUT(digit)=3)\n same => n,Set(TIMEOUT(response)=6)\n same => n(menu),Background(menu-principal)\n same => n,WaitExten()\nexten => 1,1,Goto(fila-vendas,s,1)\nexten => 2,1,Goto(fila-suporte,s,1)\nexten => i,1,Playback(opcao-invalida)      ; dígito inválido\n same => n,Goto(s,menu)\nexten => t,1,Goto(fila-suporte,s,1)        ; não digitou nada\n\n[fila-suporte]\nexten => s,1,Answer()\n same => n,Queue(suporte,,,,300)           ; espera no máximo 5 minutos\n same => n,VoiceMail(suporte@default,u)    ; ninguém atendeu: recado\n same => n,Hangup()\n\n; queues.conf\n; [suporte]\n; strategy=leastrecent   ; quem atendeu há mais tempo recebe a próxima\n; timeout=20             ; tempo tocando em cada atendente\n; wrapuptime=15          ; pausa após cada atendimento\n; member => PJSIP/2001\n; member => PJSIP/2002"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Vol 8 · Asterisk e Telefonia =====================
+const CONF = {
+  title: 'Trilha de Asterisk e Telefonia', file: 'Vol 08 - Asterisk e Telefonia', key: 'v08',
+  eyebrow: 'Guia Técnico · Volume 8', h1: 'Asterisk e telefonia, do SIP ao agente de voz com IA',
+  lead: 'Roteiro em vídeo que organiza a telefonia do zero ao nível de arquiteto: sinalização e mídia, NAT, canais e dialplan, URA e filas, AMI, AGI e ARI, integração com CRM, fraude de ligações, escala e gravação com LGPD, e a arquitetura de um agente de voz com IA. Fecha com como vender isso como serviço e três laboratórios.',
+  pills: ['SIP · RTP', 'PJSIP', 'Dialplan', 'URA e filas', 'AMI · AGI · ARI', 'Agente de voz', 'Fraude'],
+  term: 'bash · ~/lab-asterisk',
+  faqPlaceholder: 'Buscar: áudio mudo, ARI, fraude, latência, gravação…',
+  matriz: {title: 'AMI, AGI ou ARI', desc: 'Confundir as três é o erro mais comum de quem integra telefonia. Sistemas maduros combinam: dialplan simples, ARI para aplicações e AMI para monitoramento.', cols: ['Interface', 'O que é', 'Como funciona', 'Use para', 'Cuidado']},
+};
+const TITLE = {k: 'Guia Técnico · Volume 8', h: 'Asterisk e telefonia',
+  p: 'Poucos desenvolvedores entendem telefonia, e quase nenhum combina isso com IA. Do SIP ao agente de voz, um conhecimento raro que vira serviço com muita demanda.',
+  chips: ['sinalização × mídia', 'dialplan', 'URA e filas', 'ARI', 'toll fraud', 'agente de voz']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Telefonia + IA é nicho raro',
+  p: 'Abaixo do vídeo estão AMI, AGI e ARI lado a lado, a trilha de estudo, o checklist, as perguntas e os comandos do console que você vai usar todo dia.',
+  chips: ['separe SIP de RTP', 'contexto é segurança', 'latência < 1 s', 'piloto com um fluxo']};
+
+const SCENES = [
+/* ---------- CONCEITOS ---------- */
+{ id:'intro', ch:'Telefonia em conceitos', title:'Um conhecimento raro',
+  say:'Poucos desenvolvedores entendem telefonia, e quase nenhum combina isso com IA. Você já trabalhou com Asterisk; este roteiro organiza os conceitos do zero ao nível de arquiteto e mostra como transformar esse conhecimento raro em agentes de voz com IA, um serviço com muita demanda. No final, três laboratórios: dois ramais, uma URA com fila e uma aplicação ARI em Node.',
+  v:{type:'title'} },
+
+{ id:'sip-rtp', ch:'Telefonia em conceitos', title:'Sinalização e mídia viajam separadas',
+  say:'Toda ligação tem duas partes. A sinalização combina quem liga para quem, toca e desliga: é o SIP, textual e parecido com HTTP, com REGISTER, INVITE, cento e oitenta Ringing, duzentos OK, ACK e BYE, na porta cinco mil e sessenta. Dentro dele, o SDP informa o IP, a porta e os codecs do áudio. A mídia, o áudio, segue por RTP em pacotes UDP pelo caminho combinado, que pode ser diferente do da sinalização. SRTP é a versão cifrada.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:100,w:180,h:80, cls:'blue', html:B('Telefone A','ramal 1000')},
+    {at:.8, x:744,y:100,w:180,h:80, cls:'blue', html:B('Telefone B','ramal 1001')},
+    {at:2, x:380,y:92,w:200,h:96, cls:'amber', html:B('Asterisk','SIP :5060')},
+    {at:3.5, x:236,y:200,w:488,h:30, html:NOTE('INVITE → 180 Ringing → 200 OK (com SDP) → ACK … BYE', 'amber')},
+    {at:6, x:36,y:250,w:888,h:40, cls:'green', html:NOTE('RTP · áudio em UDP pelo IP e porta que o SDP combinou (pode nem passar pelo Asterisk)', 'green')},
+    {at:9, x:36,y:312,w:280,h:190, cls:'blue', html:B('SIP','sinalização')+UL('textual, parecido com HTTP','5060 UDP/TCP · 5061 TLS','REGISTER, INVITE, BYE')},
+    {at:11, x:340,y:312,w:280,h:190, cls:'amber', html:B('SDP','dentro do SIP')+UL('IP e porta do áudio','codecs aceitos')},
+    {at:13, x:644,y:312,w:280,h:190, cls:'green', html:B('RTP · SRTP','mídia')+UL('pacotes UDP','SRTP: cifrado')},
+  ], lines:[
+    {at:2, d:'M216 140 L 380 140', cls:'amber'}, {at:2, d:'M580 140 L 744 140', cls:'amber'},
+    {at:6, d:'M126 180 L 126 250', cls:'green'}, {at:6, d:'M834 180 L 834 250', cls:'green'},
+  ]}},
+
+{ id:'termos', ch:'Telefonia em conceitos', title:'Os termos que você precisa dominar',
+  say:'PSTN é a rede pública tradicional; VoIP, voz em pacotes IP. O tronco SIP liga seu servidor a uma operadora, e o DID é um número que chega por ele direto ao seu sistema. Ramal é um destino interno, e o PBX é a central; o Asterisk é um PBX em software. E os codecs: G ponto setecentos e onze, com a-law no Brasil, tem qualidade de telefone e sessenta e quatro kbps; G ponto setecentos e vinte e nove usa menos banda; Opus é moderno e adaptativo. Codecs diferentes nas pontas exigem transcodificação, que gasta CPU.',
+  v:{type:'boxes', defs:[
+    ['PSTN · VoIP','rede pública · voz em pacotes IP', .8],
+    ['Tronco SIP','seu servidor ↔ operadora', 2.5],
+    ['DID','número que chega pelo tronco', 4],
+    ['Ramal','destino interno: telefone, softphone', 5.5],
+    ['PBX','a central; Asterisk é PBX em software', 7],
+  ], items:[
+    {at:9, x:470,y:92,w:454,h:410, cls:'region', html:'<span class="rl">codecs</span>'+UL('G.711: qualidade de telefone, ~64 kbps · a-law no Brasil e Europa, µ-law nos EUA','G.729: muito menos banda','Opus: moderno, adaptativo, qualidade alta','codecs diferentes nas pontas = transcodificação = CPU','padronize o codec na cadeia inteira')},
+  ]}},
+
+{ id:'nat', ch:'Telefonia em conceitos', title:'NAT, o vilão, e a qualidade em números',
+  say:'O SDP carrega endereços IP dentro da mensagem. Se o servidor está atrás de NAT e anuncia o IP privado, a outra ponta manda o áudio para um endereço inalcançável: a ligação conecta e fica muda, ou só um lado ouve. Configure o endereço externo no Asterisk, libere a faixa de portas RTP no firewall e use rtp symmetric e force rport. E a qualidade: latência acima de cento e cinquenta milissegundos num sentido trunca a conversa; jitter pede buffer; alguns por cento de perda já picotam.',
+  v:GRID(2, [
+    ['O sintoma','ligação conecta e fica muda',['ou só um lado ouve','o SDP anunciou um IP privado'],'ext'],
+    ['A correção','',['external_media_address no transporte','liberar a faixa de portas RTP','rtp_symmetric e force_rport'],'green'],
+    ['Latência','',['> 150 ms num sentido: conversa truncada','decisivo no agente de voz'],'amber'],
+    ['Jitter e perda','',['buffer de jitter troca por latência','alguns % de perda: voz picotada'],'amber'],
+  ], {step:3.6}) },
+
+/* ---------- ASTERISK ---------- */
+{ id:'canais', ch:'Asterisk por dentro', title:'Canais, dialplan e bridges',
+  say:'O Asterisk recebe ligações por canais, decide o que fazer com cada uma seguindo o dialplan e conecta as partes por bridges. Cada perna de uma ligação é um canal, como PJSIP barra mil traço um a. Uma chamada entre dois telefones são dois canais numa bridge. O PJSIP é o driver SIP moderno; o antigo chan sip foi removido nas versões recentes, e encontrá-lo em legado pede plano de migração. Um ramal no PJSIP são três objetos: endpoint, auth e aor.',
+  v:S('pjsip.conf','pjsip.conf','conf')},
+
+{ id:'dialplan', ch:'Asterisk por dentro', title:'Dialplan: o programa da central',
+  say:'O dialplan diz o que acontece com cada ligação. Contexto é um bloco entre colchetes, e um canal só alcança as extensões do contexto em que entrou: é a principal fronteira de segurança. Extensão é o número ou padrão discado; o sublinhado marca padrão, e um X X X casa de mil a mil novecentos e noventa e nove. Prioridade é a ordem, um e depois n. Aplicação é a ação: Answer, Dial, Playback, Queue, VoiceMail, Hangup. DIALSTATUS diz como o Dial terminou.',
+  v:S('extensions.conf','dialplan.conf','conf')},
+
+{ id:'cli', ch:'Asterisk por dentro', title:'A CLI: sua principal ferramenta de depuração',
+  say:'asterisk traço r v v v abre o console. pjsip show endpoints mostra quem está registrado; core show channels, as ligações ativas; dialplan show, o que foi carregado. E pjsip set logger on mostra cada mensagem SIP trocada, com o SDP: resolve a maioria dos mistérios de registro e de áudio mudo. Lógica complexa fica melhor fora do Asterisk, via AGI ou ARI; funções de banco no dialplan existem, mas não exagere.',
+  v:T('c|asterisk -rvvv', 'o|Connected to Asterisk 22.x currently running on lab (pid = 812)', 'c|pjsip show endpoints', 'o| Endpoint:  1000/1000      Not in use    0 of inf', 'o| Endpoint:  1001/1001      Unavailable   0 of inf', 'c|pjsip set logger on', 'o|<--- Received SIP request (968 bytes) from UDP:192.168.0.20:5062 --->', 'o|INVITE sip:1001@192.168.0.10 SIP/2.0', 'o|c=IN IP4 192.168.0.20', 'o|m=audio 4000 RTP/AVP 8 111', 'c|core show channels', 'ok|PJSIP/1000-0000001a   1001@interno:2   Up   Dial(PJSIP/1001,20)', 'o|1 active call')},
+
+/* ---------- URA E FILAS ---------- */
+{ id:'ura', ch:'URA e filas', title:'URA e filas no dialplan',
+  say:'A URA descobre o que o cliente quer; a fila o coloca em espera e entrega ao atendente certo. No Asterisk, a URA é dialplan puro: Background toca a mensagem e já escuta os dígitos, ao contrário do Playback. As extensões especiais i, de inválido, e t, de tempo esgotado, tratam os erros: trate sempre as duas. A fila usa a aplicação Queue com tempo máximo e, se ninguém atender, cai no correio de voz. Boa URA: até quatro opções, dois níveis e sempre um caminho para uma pessoa.',
+  v:S('ura.conf','ura.conf','conf')},
+
+{ id:'filas', ch:'URA e filas', title:'Estratégias e operação de call center',
+  say:'As estratégias de distribuição: ringall toca em todos, para equipes pequenas; leastrecent entrega para quem atendeu há mais tempo, a distribuição justa; fewestcalls equilibra volume; random serve a testes; rrmemory é rodízio. Na operação: membros dinâmicos que entram, saem e pausam com motivo; as métricas clássicas de nível de serviço, espera, atendimento e abandono, alimentadas pelos eventos e pelo queue log; e o callback, que reduz abandono e é ótima funcionalidade para vender.',
+  v:GRID(3, [
+    ['ringall','toca em todos',['equipes pequenas'],'blue'],
+    ['leastrecent','atendeu há mais tempo',['distribuição justa'],'green'],
+    ['fewestcalls','atendeu menos',['equilibra volume'],'green'],
+    ['Membros dinâmicos','',['login, logout, pausa','pausa com motivo'],'amber'],
+    ['Métricas','',['nível de serviço, espera','atendimento, abandono','queue_log e eventos'],'amber'],
+    ['Callback','',['chamar de volta','reduz abandono, vende bem'],''],
+  ], {step:2.6}) },
+
+/* ---------- AMI AGI ARI ---------- */
+{ id:'interfaces', ch:'AMI, AGI e ARI', title:'Três interfaces, três usos',
+  say:'AMI é o painel de controle: uma conexão TCP que recebe eventos de todas as ligações e envia comandos, como o Originate do click-to-call. Filtre os eventos e nunca exponha a porta. AGI é um script chamado pelo dialplan no meio do fluxo; o canal espera enquanto ele roda, então use FastAGI, um servidor seu já rodando, e timeouts. ARI é a API moderna: o dialplan entrega o canal com Stasis e sua aplicação controla tudo por REST e WebSocket. É o caminho para conectar o áudio à IA.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:300, cls:'blue', html:B('AMI','observar e comandar')+UL('TCP com eventos de todas as ligações','Originate: click-to-call','painéis em tempo real','filtre eventos · nunca na internet')},
+    {at:4.5, x:340,y:92,w:280,h:300, cls:'amber', html:B('AGI','decisão no meio do fluxo')+UL('o dialplan chama AGI()','canal espera: use timeouts','sempre FastAGI (servidor já rodando)','consultar CRM, validar CPF')},
+    {at:8.5, x:644,y:92,w:280,h:300, cls:'green', html:B('ARI','aplicação de voz completa')+UL('Stasis() entrega o canal','REST para comandos','WebSocket para eventos','mídia externa → IA')},
+    {at:12, x:36,y:412,w:888,h:90, cls:'region', html:'<span class="rl">regra de decisão</span>'+UL('observar ou disparar ligações → AMI · decisão pontual → FastAGI · controlar a chamada inteira → ARI')},
+  ]}},
+
+{ id:'seguro-agi', ch:'AMI, AGI e ARI', title:'FastAGI, Stasis e o contexto seguro',
+  say:'No dialplan, o FastAGI aponta para um servidor seu na rede e devolve variáveis, como o destino calculado a partir do CRM. O Stasis entrega o canal à aplicação ARI. E veja o desenho seguro: o tráfego que chega da operadora entra num contexto que só alcança a URA. Só ramais autenticados têm discagem externa, e não existe padrão para internacional: bloqueado por padrão. Como o contexto da operadora não inclui o dos ramais, quem vem de fora jamais disca para fora.',
+  v:S('extensions.conf','seguro.conf','conf')},
+
+/* ---------- INTEGRAÇÃO ---------- */
+{ id:'integracoes', ch:'Integração', title:'As integrações que todo cliente pede',
+  say:'O valor da central aparece quando conversa com os outros sistemas. Screen pop: ao tocar, buscar o número no CRM e mostrar na tela do atendente por WebSocket. Click-to-call: o botão no CRM toca primeiro o ramal e depois disca para o cliente. Roteamento inteligente: VIP para a fila prioritária, inadimplente para cobrança. Histórico de cada chamada no CRM, com CDR e CEL. E painéis com métricas de fila em tempo real.',
+  v:GRID(3, [
+    ['Screen pop','',['evento de chamada → CRM','tela do atendente por WebSocket'],'blue'],
+    ['Click-to-call','',['AMI Originate ou ARI','toca o ramal, depois o cliente'],'blue'],
+    ['Roteamento','',['FastAGI ou ARI','VIP · cobrança · geral'],'green'],
+    ['Histórico','',['CDR: um registro por chamada','CEL: eventos com transferências'],'green'],
+    ['Painéis','',['eventos de fila e queue_log'],'amber'],
+    ['Correlação','',['UNIQUEID por canal','LINKEDID agrupa a conversa'],'amber'],
+  ], {step:2.6}) },
+
+{ id:'arquitetura-integ', ch:'Integração', title:'A arquitetura que escala',
+  say:'Evite o Asterisk conversando com dez sistemas. Um serviço de integração seu conecta-se ao AMI e ao ARI, traduz eventos de telefonia em eventos de negócio, como chamada atendida pelo atendente X para o cliente Y, e publica numa fila como o RabbitMQ. CRM, painéis e relatórios consomem no seu ritmo. Comandos chegam por uma API própria, autenticada e auditada. O Asterisk não fica exposto, trocar de CRM não mexe na telefonia e um CRM lento nunca trava ligações.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:150,w:160,h:120, cls:'amber', html:B('Asterisk','AMI + ARI')+NOTE('só rede interna', 'dim')},
+    {at:2.5, x:240,y:130,w:220,h:160, cls:'blue', html:B('Serviço de integração','seu, em Node')+UL('eventos → negócio','API de comandos','reconecta com backoff')},
+    {at:4.5, x:504,y:170,w:150,h:80, cls:'green', html:B('Fila','RabbitMQ')},
+    {at:6, x:700,y:92,w:224,h:66, html:B('CRM','histórico, screen pop')},
+    {at:6.8, x:700,y:176,w:224,h:66, html:B('Painéis','tempo real')},
+    {at:7.6, x:700,y:260,w:224,h:66, html:B('Relatórios','analytics')},
+    {at:10, x:36,y:352,w:888,h:150, cls:'region', html:'<span class="rl">cuidados de produção</span>'+UL('reconexão automática ao AMI e ao WebSocket do ARI, com backoff','eventos idempotentes: a mesma notificação chega duas vezes após reconectar','nunca bloqueie a ligação esperando o CRM: timeout curto e caminho padrão (fila geral)')},
+  ], lines:[
+    {at:2.5, d:'M196 210 L 240 210', cls:'flow'}, {at:4.5, d:'M460 210 L 504 210', cls:'flow'},
+    {at:6, d:'M654 200 C 680 200, 680 125, 700 125', cls:'green'}, {at:6.8, d:'M654 209 L 700 209', cls:'green'}, {at:7.6, d:'M654 220 C 680 220, 680 293, 700 293', cls:'green'},
+  ]}},
+
+/* ---------- SEGURANÇA ---------- */
+{ id:'fraude', ch:'Segurança e fraude', title:'Fraude de pedágio: como acontece',
+  say:'Um servidor SIP exposto recebe tentativas de invasão em minutos. O objetivo quase sempre é o mesmo: fazer ligações internacionais caras pela sua conta, a fraude de pedágio. Uma noite pode gerar uma conta enorme, e quem paga é o cliente. Os caminhos: robôs testando ramais e senhas comuns, dialplan permissivo em que o contexto de entrada alcança a discagem externa, AMI ou ARI expostos na internet e credenciais vazadas ou padrão em aparelhos.',
+  v:GRID(2, [
+    ['Força bruta','robôs sem parar',['ramal 1000, senha 1000','em minutos após expor'],'ext'],
+    ['Dialplan permissivo','',['entrada alcança discagem externa','seu tronco usado por estranhos'],'ext'],
+    ['Interfaces expostas','',['AMI ou ARI na internet','controle total da central'],'ext'],
+    ['Credenciais','',['senhas padrão em aparelhos e painéis','vazamentos'],'ext'],
+  ], {step:3.6, rodape:'Lição de arquiteto: "protejo sua conta telefônica de uma fatura inesperada" é proposta de valor fácil de vender'}) },
+
+{ id:'protecao', ch:'Segurança e fraude', title:'O checklist de proteção',
+  say:'Senhas longas e aleatórias, nunca iguais ao ramal. Contextos separados e mínimos: o tráfego da operadora só alcança destinos internos. Internacional e tarifas especiais bloqueados por padrão. SIP aceito só de IPs conhecidos, com ACLs. Fail2ban bloqueando IPs com muitas falhas. AMI e ARI só na rede interna ou por VPN. TLS e SRTP na internet. Teto de gastos na operadora como segunda camada. Alertas de uso anormal. E atualizações em dia.',
+  v:CK('Senhas longas e aleatórias', 'Contextos separados e mínimos', 'Internacional bloqueado por padrão', 'SIP só de IPs conhecidos (ACL)', 'Fail2ban contra força bruta', 'AMI e ARI só na rede interna', 'TLS e SRTP pela internet', 'Teto de gastos na operadora', 'Alertas: simultâneas, destinos, horário', 'Asterisk e sistema atualizados')},
+
+/* ---------- ESCALA ---------- */
+{ id:'escala', ch:'Escala e gravação', title:'Escala e alta disponibilidade',
+  say:'A capacidade se mede em chamadas simultâneas. A transcodificação é o maior consumidor de CPU; gravação consome disco; conferência e reconhecimento de fala, CPU. Meça com SIPp. Para escalar, um proxy SIP como Kamailio ou OpenSIPS na frente distribui entre vários Asterisk sem estado relevante; um proxy de mídia como RTPEngine trata NAT e criptografia; configuração em banco e gravações no storage. Alta disponibilidade: dois de cada, troncos de duas operadoras. E seja honesto: a chamada em andamento cai se o servidor cair.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:150,w:160,h:100, cls:'blue', html:B('Operadoras','2 troncos')},
+    {at:2.5, x:240,y:130,w:200,h:140, cls:'amber', html:B('Kamailio / OpenSIPS','proxy SIP em par')+UL('autentica, balanceia','leve: muito volume')},
+    {at:4.5, x:484,y:96,w:200,h:96, cls:'green', html:B('Asterisk 1','sem estado relevante')},
+    {at:5, x:484,y:208,w:200,h:96, cls:'green', html:B('Asterisk 2','')},
+    {at:6.5, x:728,y:96,w:196,h:96, html:B('RTPEngine','mídia, NAT, SRTP')},
+    {at:7.5, x:728,y:208,w:196,h:96, html:B('Banco + storage','config e gravações')},
+    {at:10, x:36,y:330,w:430,h:172, cls:'ext', html:B('O que consome','')+UL('chamadas simultâneas, não por dia','transcodificação: o maior','meça com SIPp')},
+    {at:13, x:494,y:330,w:430,h:172, cls:'amber', html:B('Limite honesto','')+UL('chamada em andamento cai com o servidor','HA garante as novas chamadas','diga isso ao cliente')},
+  ], lines:[
+    {at:2.5, d:'M196 200 L 240 200', cls:'flow'}, {at:4.5, d:'M440 190 C 460 190, 460 144, 484 144', cls:'flow'}, {at:5, d:'M440 210 C 460 210, 460 256, 484 256', cls:'flow'},
+    {at:6.5, d:'M684 144 L 728 144', cls:'dim'}, {at:7.5, d:'M684 256 L 728 256', cls:'dim'},
+  ]}},
+
+{ id:'gravacao', ch:'Escala e gravação', title:'Gravação, privacidade e regras do setor',
+  say:'MixMonitor grava as duas vozes, mixadas ou separadas, o que ajuda transcrição e IA, sem interromper a chamada. Grave localmente e envie ao storage de objetos com metadados como UNIQUEID e atendente, usando classes mais baratas para o antigo. Avise no início que a ligação pode ser gravada e para quê. Gravações e transcrições são dados pessoais pela LGPD: finalidade, retenção, acesso e registro de quem ouviu. Pause na hora do cartão ou use DTMF. E confirme as regras do setor com o jurídico do cliente.',
+  v:GRID(3, [
+    ['Gravar','MixMonitor',['vozes mixadas ou separadas','separadas: melhor para IA','sem interromper'],'blue'],
+    ['Guardar','',['storage de objetos + metadados','classes frias para antigas','WAV para processar'],'green'],
+    ['Conformidade','',['aviso de gravação','LGPD: finalidade, retenção, acesso','pausar no cartão ou DTMF','regras do setor: jurídico'],'amber'],
+  ], {step:4}) },
+
+/* ---------- AGENTE DE VOZ ---------- */
+{ id:'agente', ch:'Agente de voz com IA', title:'A arquitetura em cascata',
+  say:'O agente atende, entende, consulta sistemas e responde com voz natural, transferindo para um humano quando precisa: substitui a URA de menus. Na cascata, a ligação entra no Asterisk e vai para a sua aplicação ARI, que cria um canal de mídia externa ou usa o AudioSocket para enviar o áudio ao seu servidor. O reconhecimento de fala em streaming detecta o fim da fala; o LLM usa ferramentas do negócio; a síntese de voz em streaming fala enquanto gera; e o áudio volta pelo mesmo canal.',
+  v:FLOW([['Asterisk','ligação','amber'],['ARI','mídia externa','amber'],['STT','streaming + fim de fala','blue'],['LLM','instruções + ferramentas','green'],['TTS','streaming','blue'],['De volta','mesmo canal','amber']],
+    {y:96, h:86, step:1.6, cards:[
+      ['Cascata','',['fácil de depurar e de trocar peças','controle em cada etapa','o caminho para começar'],'blue'],
+      ['Voz para voz em tempo real','',['áudio entra, áudio sai','latência menor, entonação natural','menos controle por etapa: avalie por cliente'],'green'],
+    ]}) },
+
+{ id:'latencia', ch:'Agente de voz com IA', title:'Latência, barge-in e áudio de telefone',
+  say:'Numa conversa humana, a resposta vem em menos de um segundo; passou disso, o cliente acha que caiu. O tempo soma fim de fala, transcrição, primeira palavra do modelo, primeiro áudio e rede. Use streaming em tudo, modelos rápidos, a mesma região, ajuste a detecção de fim de fala e diga um instante, estou verificando, nas consultas lentas. Barge-in: se o cliente fala, pare o áudio e cancele a geração na hora, com cancelamento de eco. E o áudio de telefone é de oito quilohertz: teste com ligações reais e confirme números repetindo.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:30, html:NOTE('fim de fala  +  transcrição final  +  1ª palavra do LLM  +  1º áudio do TTS  +  rede   <  ~1 s', 'amber')},
+    {at:2.5, x:36,y:136,w:280,h:220, cls:'green', html:B('Cortar latência','')+UL('streaming em todas as etapas','modelos rápidos na conversa','mesma região','"um instante, estou verificando"')},
+    {at:6, x:340,y:136,w:280,h:220, cls:'blue', html:B('Barge-in','deixar interromper')+UL('cliente fala → para o áudio','cancela a geração','cancelamento de eco')},
+    {at:9.5, x:644,y:136,w:280,h:220, cls:'amber', html:B('Áudio de telefone','8 kHz, G.711')+UL('modelos bons em telefonia','ruído e sotaques reais','CPF e placas: repita ou DTMF')},
+    {at:13, x:36,y:376,w:888,h:126, cls:'region', html:'<span class="rl">segurança e métricas</span>'+UL('escopo claro, ações críticas com confirmação, avise que é virtual e ofereça um humano','métricas: contenção, tempo médio, transferências e motivos, satisfação, custo por minuto')},
+  ]}},
+
+/* ---------- VENDER ---------- */
+{ id:'vender', ch:'Como vender', title:'Quem compra e os pacotes',
+  say:'Asterisk com IA é um nicho com muita demanda e pouca gente que entende as duas pontas. Compram empresas que já têm Asterisk e querem modernizar a URA sem trocar tudo, clínicas com agenda, varejo com status de pedido, cobrança com regras claras, e integradores sem time de IA, ótimos parceiros. Os pacotes: diagnóstico e segurança, venda rápida e de baixo risco; integração com CRM; agente de voz piloto num fluxo; e operação mensal, a receita recorrente.',
+  v:GRID(4, [
+    ['Diagnóstico e segurança','',['revisão, fraude, monitoramento','venda rápida, baixo risco'],'blue'],
+    ['Integração com CRM','',['screen pop, click-to-call','produtividade imediata'],'blue'],
+    ['Agente de voz piloto','',['um fluxo, com métricas','prazo e escopo fechados'],'green'],
+    ['Operação mensal','',['monitorar, ajustar, evoluir','receita recorrente'],'amber'],
+  ], {h:200, step:2.5, rodape:'Quem compra: quem já tem Asterisk · clínicas · varejo · cobrança · integradores de telefonia como parceiros'}) },
+
+{ id:'proposta', ch:'Como vender', title:'A proposta e o seu portfólio',
+  say:'Comece pelo número do cliente: ligações por mês, tempo médio, custo de cada atendimento humano e quantas ligações são sobre o mesmo assunto. Escolha um fluxo só para o piloto, o mais repetitivo e de menor risco. Defina o sucesso em números antes de começar. Preço por resultado e escopo, nunca por hora, e mostre o custo por minuto de cada componente. Para o portfólio: um vídeo de dois minutos de uma ligação real, um artigo da arquitetura e uma palestra curta. Sua oratória vende sozinha.',
+  v:FLOW([['Números do cliente','ligações, tempo, custo','blue'],['Um fluxo','repetitivo, baixo risco','blue'],['Sucesso em números','antes de começar','amber'],['Preço por resultado','nunca por hora','green']],
+    {y:96, h:86, step:2, cards:[
+      ['Custos para não ter surpresa','',['operadora + STT + LLM + TTS por minuto','sua margem em cada volume','implantação fechada + mensalidade'],'amber'],
+      ['Portfólio','',['vídeo de 2 min: agente consulta pedido e transfere','artigo da arquitetura em PT e EN','palestra: "trocar a URA por um agente de voz"'],'green'],
+    ]}) },
+
+/* ---------- LABORATÓRIOS ---------- */
+{ id:'lab-ramais', ch:'Laboratórios', title:'Lab 1 e 2: ramais, eco, URA e fila',
+  say:'O laboratório é uma máquina virtual Linux com o Asterisk e softphones gratuitos, como Linphone ou Zoiper. Na nuvem, libere SIP e RTP só para o seu IP e apague ao terminar. Crie dois ramais, mil e mil e um, e o teste de eco no seiscentos. Recarregue, registre os softphones e confira os endpoints. Ligue com o logger ligado e observe o INVITE e o SDP: ver isso uma vez vale mais que dez artigos. Depois, a URA no setecentos com a fila suporte, testando cada opção, um dígito inválido e o silêncio.',
+  v:T('c|asterisk -rx "core reload"', 'c|asterisk -rx "pjsip show endpoints"', 'ok| Endpoint:  1000/1000   Not in use', 'ok| Endpoint:  1001/1001   Not in use', 'c|asterisk -rvvv', 'o|  == Using SIP RTP CoS mark 5', 'o|    -- Executing [600@interno:1] Answer("PJSIP/1000-00000003", "")', 'o|    -- Executing [600@interno:3] Echo("PJSIP/1000-00000003", "")', 'o|    -- Executing [700@interno:1] Goto("PJSIP/1000-00000004", "ura-principal,s,1")', 'o|    -- PJSIP/1000-00000004 joined suporte (pos 1)', 'c|queue show suporte', 'ok|suporte has 1 calls (max unlimited) strategy leastrecent')},
+
+{ id:'lab-ari', ch:'Laboratórios', title:'Lab 3: uma aplicação ARI em Node',
+  say:'Ative o HTTP e o ARI só em cento e vinte e sete ponto zero ponto zero ponto um, crie o usuário no ari ponto conf e entregue o número cinco mil à aplicação com Stasis. A aplicação usa o WebSocket e o fetch nativos do Node vinte e dois, sem dependências: ao receber StasisStart, atende e toca uma mensagem; no DTMF zero, desliga. Desafios: mensagem diferente para clientes cadastrados, devolver à fila em vez de desligar e, rumo ao agente, receber o áudio por mídia externa num servidor seu.',
+  v:S('app-ari.mjs','app-ari.mjs','js')},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de telefonia',
+  say:'Antes de dizer que domina: você separa sinalização e mídia, resolve áudio mudo por NAT, configura ramais no PJSIP e um dialplan com contextos seguros, monta URA e fila, escolhe entre AMI, AGI e ARI, integra a um CRM por um serviço próprio, protege contra fraude, escala com proxy SIP, grava respeitando a LGPD e desenha um agente de voz com latência abaixo de um segundo.',
+  v:CK('SIP × RTP e o SDP', 'Áudio mudo por NAT', 'Ramal PJSIP: endpoint, auth, aor', 'Contextos como segurança', 'URA com i e t tratados', 'Fila com estratégia certa', 'AMI, FastAGI ou ARI', 'Serviço de integração + fila', 'Checklist anti-fraude', 'Kamailio + vários Asterisk', 'Gravação com LGPD', 'Agente de voz < 1 s')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão AMI, AGI e ARI lado a lado, os links para as trilhas de mensageria e IA que se conectam a este volume, a trilha de estudo, o checklist, as perguntas de arquiteto e os comandos do console. Quando o laboratório três estiver recebendo o áudio da ligação, plugar reconhecimento de fala e um LLM é a próxima etapa: me peça e montamos juntos.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['RabbitMQ: exchanges, filas e bindings', 'node', 'rabbit-conceitos', 'A fila entre a telefonia e o CRM'],
+  ['Consumidor com ack, retry e idempotência', 'node', 'rabbit-consumidor', 'Processar eventos de chamada sem duplicar'],
+  ['Ferramentas e agentes', 'ia', 'agentes', 'O LLM consultando sistemas do cliente'],
+  ['Streaming com Server-Sent Events', 'ia', 'streaming', 'Por que streaming muda a latência percebida'],
+  ['Segurança: OWASP Top 10 para LLMs', 'ia', 'seguranca', 'Riscos do agente de voz'],
+  ['Privacidade e LGPD desde o desenho', 'sec', 'lgpd', 'Gravações e transcrições como dados pessoais'],
+  ['Segredos', 'sec', 'segredos', 'Senhas de ramais, AMI e ARI fora do código'],
+];
+
+const MATRIZ = [
+  ['AMI', 'Painel de controle e fluxo de eventos', 'TCP com mensagens de texto; eventos de todas as ligações e comandos', 'Monitorar, click-to-call (Originate), painéis, relatórios', 'Volume alto de eventos; nunca na internet'],
+  ['AGI', 'Script chamado pelo dialplan', 'O dialplan executa AGI(); o canal espera o programa', 'Decisão pontual: consultar CRM, validar CPF, destino', 'Síncrono: use FastAGI e timeouts'],
+  ['ARI', 'API para construir aplicações de voz', 'Stasis() entrega o canal; REST para comandos, WebSocket para eventos', 'URAs dinâmicas, conferências, agentes de voz com IA', 'Reconexão com backoff; só rede interna'],
+];
+
+const STUDY = [
+  ['Documentação do Asterisk', 'Configuração, aplicações e interfaces', 'https://docs.asterisk.org/', 'canais'],
+  ['PJSIP: configuração', 'Endpoints, auth, aor e transportes', 'https://docs.asterisk.org/Configuration/Channel-Drivers/SIP/Configuring-res_pjsip/', 'canais'],
+  ['Dialplan', 'Contextos, extensões e padrões', 'https://docs.asterisk.org/Configuration/Dialplan/', 'dialplan'],
+  ['ARI: introdução', 'Stasis, REST e WebSocket', 'https://docs.asterisk.org/Configuration/Interfaces/Asterisk-REST-Interface-ARI/', 'interfaces'],
+  ['AMI', 'Asterisk Manager Interface', 'https://docs.asterisk.org/Configuration/Interfaces/Asterisk-Manager-Interface-AMI/', 'interfaces'],
+  ['RFC 3261 · SIP', 'A especificação do protocolo', 'https://datatracker.ietf.org/doc/html/rfc3261', 'sip-rtp'],
+  ['RFC 3550 · RTP', 'Transporte de mídia em tempo real', 'https://datatracker.ietf.org/doc/html/rfc3550', 'sip-rtp'],
+  ['Kamailio', 'Proxy SIP de alta performance', 'https://www.kamailio.org/docs/', 'escala'],
+  ['RTPEngine', 'Proxy de mídia', 'https://github.com/sipwise/rtpengine', 'escala'],
+  ['SIPp', 'Gerador de tráfego SIP para teste de carga', 'https://sipp.sourceforge.net/', 'escala'],
+  ['Fail2ban', 'Bloqueio de IPs por falhas de autenticação', 'https://github.com/fail2ban/fail2ban', 'protecao'],
+];
+
+const CHECK = [
+  ['Conceitos', 'Explicar SIP, SDP e RTP numa ligação', 'sip-rtp'],
+  ['Conceitos', 'Diagnosticar áudio mudo por NAT', 'nat'],
+  ['Asterisk', 'Configurar dois ramais no PJSIP', 'canais'],
+  ['Asterisk', 'Dialplan com Dial, DIALSTATUS e VoiceMail', 'dialplan'],
+  ['Asterisk', 'Depurar com pjsip set logger on', 'cli'],
+  ['URA e filas', 'URA com Background, i e t', 'ura'],
+  ['URA e filas', 'Fila com leastrecent e métricas', 'filas'],
+  ['Interfaces', 'Escolher AMI, AGI ou ARI para um caso', 'interfaces'],
+  ['Interfaces', 'FastAGI devolvendo o destino', 'seguro-agi'],
+  ['Integração', 'Screen pop e click-to-call', 'integracoes'],
+  ['Integração', 'Serviço de integração publicando em fila', 'arquitetura-integ'],
+  ['Segurança', 'Aplicar o checklist anti-fraude', 'protecao'],
+  ['Escala', 'Desenhar Kamailio + vários Asterisk', 'escala'],
+  ['Gravação', 'MixMonitor com metadados e LGPD', 'gravacao'],
+  ['Agente de voz', 'Desenhar a cascata STT → LLM → TTS', 'agente'],
+  ['Agente de voz', 'Orçamento de latência e barge-in', 'latencia'],
+  ['Negócio', 'Montar a proposta de um piloto', 'proposta'],
+  ['Laboratório', 'Aplicação ARI respondendo a DTMF', 'lab-ari'],
+];
+
+const FAQ = [
+ ['Diagnóstico','A ligação completa, mas fica sem áudio ou com áudio de um lado só. O que investiga?',`<p>RTP bloqueado ou mal endereçado. Verifico com o logger do PJSIP se o SDP anuncia um IP privado (NAT), se o endereço externo está configurado, se a faixa de portas RTP está liberada no firewall, e se <code>rtp_symmetric</code> e <code>force_rport</code> estão ativos para clientes atrás de NAT.</p>`],
+ ['Conceitos','Qual a diferença entre SIP e RTP?',`<p>SIP é a sinalização: convida, toca, atende, transfere e encerra, e negocia endereços e codecs pelo SDP. RTP transporta o áudio em pacotes UDP pelo caminho combinado.</p>`],
+ ['Interfaces','Quando usar AMI, AGI ou ARI?',`<p>AMI para monitorar e originar ligações; AGI (de preferência FastAGI) para uma decisão pontual dentro do dialplan; ARI para aplicações que controlam a chamada inteira, como URAs dinâmicas e agentes de voz.</p>`],
+ ['Segurança','Como proteger uma central contra fraude de ligações?',`<p>Senhas fortes, contextos separados (o tráfego da operadora não alcança discagem externa), internacional bloqueado por padrão, firewall e ACLs, fail2ban, AMI e ARI fora da internet, limites de gasto na operadora e alertas de uso anormal.</p>`],
+ ['Escala','O que é transcodificação e por que importa?',`<p>Converter o áudio entre codecs diferentes. Consome muita CPU e piora a qualidade; padronizar o codec em toda a cadeia aumenta a capacidade do servidor.</p>`],
+ ['Escala','Como escalar para milhares de chamadas simultâneas?',`<p>Proxy SIP (Kamailio ou OpenSIPS) distribuindo entre vários Asterisk sem estado relevante, proxy de mídia quando necessário, configuração em banco, gravações em storage, troncos de mais de uma operadora e testes de carga com SIPp.</p>`],
+ ['Integração','Como integrar a central a um CRM sem acoplar os dois?',`<p>Um serviço de integração conectado ao AMI e ao ARI traduz eventos de telefonia em eventos de negócio, publica numa fila, e o CRM consome. Comandos do CRM chegam por uma API própria desse serviço.</p>`],
+ ['IA','Como projetaria um agente de voz com IA sobre o Asterisk?',`<p>ARI entrega o canal à aplicação, que envia o áudio por mídia externa a um serviço de voz. STT em streaming, LLM com ferramentas, TTS em streaming e devolução do áudio. Latência total abaixo de cerca de um segundo, barge-in, áudio de banda estreita, transferência para humano com contexto, avaliação contínua e LGPD.</p>`],
+ ['Escala','O que acontece com as chamadas em andamento se um Asterisk cair?',`<p>Normalmente caem. Alta disponibilidade garante que novas chamadas sejam atendidas por outros servidores. Preservar chamadas em andamento exige soluções bem mais complexas e raramente compensa.</p>`],
+ ['Gravação','Como gravar chamadas respeitando a privacidade?',`<p>Aviso no início, <code>MixMonitor</code> com metadados, armazenamento cifrado com retenção definida, controle e registro de acesso, pausa da gravação em dados sensíveis como cartão, e regras do setor confirmadas com o jurídico do cliente.</p>`],
+];
+
+const CMDS = [
+  ['asterisk -rvvv', 'Abrir o console'],
+  ['pjsip show endpoints', 'Quem está registrado'],
+  ['pjsip set logger on', 'Ver cada mensagem SIP e o SDP'],
+  ['core show channels', 'Ligações ativas'],
+  ['dialplan show interno · dialplan reload', 'Ver e recarregar o dialplan'],
+  ['queue show suporte', 'Fila em tempo real'],
+  ['asterisk -rx "core reload"', 'Recarregar sem entrar no console'],
+  ['sipp -sn uac -r 10 -l 200 IP', 'Teste de carga: 10 chamadas/s, até 200 simultâneas'],
+  ['latência < 150 ms num sentido', 'Conversa sem atropelo'],
+  ['fim de fala + STT + LLM + TTS + rede < ~1 s', 'Orçamento do agente de voz'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

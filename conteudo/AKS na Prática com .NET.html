@@ -1,0 +1,1534 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>AKS na Prática com .NET</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:392px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Squad .NET · formação da dupla de Kubernetes</span>
+    <h1>AKS na prática: da API de CEP ao cluster no Azure</h1>
+    <p class="lead">Roteiro em vídeo para criar, publicar e operar uma API ASP.NET Core no Azure Kubernetes Service com Terraform, Azure Container Registry, Key Vault, Helm e Azure DevOps. Abaixo do vídeo estão a trilha de estudo, o checklist técnico e as perguntas que o cliente costuma fazer.</p>
+    <div class="meta">
+      <span class="pill">ASP.NET Core · .NET 10</span><span class="pill">AKS · plano Free</span><span class="pill">Terraform azurerm 4.x</span><span class="pill">Helm</span><span class="pill">Azure DevOps</span>
+    </div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Parte 1</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Documentação oficial da Microsoft e do Kubernetes, na ordem sugerida. A marcação fica salva só neste navegador.</p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Parte 3</span><h2>Checklist de experiência técnica</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Cada item precisa ser feito no projeto da Parte 2. O botão ao lado leva à cena do vídeo que mostra como.</p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas que o cliente vai fazer</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" placeholder="Buscar: OOMKilled, custo, rollback, segredo…" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2>Comandos de bolso</h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer>Material de estudo da AGX. Nomes de recursos, domínio e saídas de terminal são exemplos; confira versões e limites atuais na documentação oficial antes de aplicar em produção.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+// ===================== CENAS =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+
+const SCENES = [
+/* ---------- VISÃO GERAL ---------- */
+{ id:'intro', ch:'Visão geral', title:'API de CEP no AKS',
+  say:'Este vídeo é o roteiro da dupla de Kubernetes da squad .NET. Vamos sair do zero e chegar a uma API ASP.NET Core de CEP rodando num cluster AKS da AGX, criado com os mesmos recursos que a Crefaz usa: Terraform, Azure Container Registry e Azure DevOps.',
+  v:{type:'title'} },
+
+{ id:'arq', ch:'Visão geral', title:'A arquitetura alvo',
+  say:'O Terraform cria tudo no Azure: registro, cluster, Key Vault e banco. O pipeline do Azure DevOps gera a imagem, publica no registro e atualiza o cluster. Dentro do AKS, um ingress com HTTPS recebe as chamadas e o Service distribui entre as réplicas da API, que consulta o ViaCEP, grava no Azure SQL e lê a string de conexão do Key Vault.',
+  v:{type:'boxes', items:[
+    {at:.5, x:24,y:96,w:160,h:64, html:B('Cliente','HTTPS · /cep/{cep}')},
+    {at:1.5, x:24,y:206,w:160,h:64, cls:'amber', html:B('Azure DevOps','main → aprovação')},
+    {at:2.5, x:24,y:316,w:160,h:64, cls:'amber', html:B('Container Registry','cep-api:{BuildId}')},
+    {at:3.5, x:24,y:426,w:160,h:64, cls:'amber', html:B('Terraform','estado no Storage')},
+    {at:4.5, x:214,y:84,w:504,h:436, cls:'region', html:'<span class="rl">AKS · aks-agx-cep · plano Free · Brazil South</span>'},
+    {at:5.5, x:234,y:126,w:172,h:62, cls:'blue', html:B('Ingress HTTPS','app routing · cert do KV')},
+    {at:6.5, x:234,y:236,w:172,h:62, cls:'blue', html:B('Service','cep-api :80 → 8080')},
+    {at:7.5, x:438,y:116,w:260,h:182, cls:'ns', html:'<span class="rl">namespace: cep</span><div class="pods"><span class="pod">cep-api-…h2xkq</span><span class="pod">cep-api-…p7rzn</span></div><small style="font:12px var(--f-mono);color:var(--st-dim);margin-top:10px">ConfigMap → env · segredos → /mnt/secrets</small>'},
+    {at:9, x:234,y:346,w:172,h:62, cls:'green', html:B('CSI Secrets Store','driver do Key Vault')},
+    {at:10, x:438,y:316,w:124,h:56, html:B('HPA','mín 2 · máx 8')},
+    {at:10.6, x:574,y:316,w:124,h:56, html:B('ConfigMap','config comum')},
+    {at:11.2, x:438,y:392,w:260,h:56, html:B('Container Insights','stdout → Log Analytics')},
+    {at:12.5, x:746,y:96,w:190,h:62, cls:'ext', html:B('ViaCEP','API pública externa')},
+    {at:13.3, x:746,y:196,w:190,h:62, cls:'ext', html:B('Azure SQL','banco cep · Basic')},
+    {at:14.1, x:746,y:296,w:190,h:62, cls:'ext', html:B('Key Vault','conexão + certificado')},
+    {at:14.9, x:746,y:396,w:190,h:62, cls:'ext', html:B('Log Analytics','logs e alertas')},
+  ], lines:[
+    {at:5.5, d:'M184 128 C 210 128, 210 157, 234 157', cls:'flow'},
+    {at:2.5, d:'M104 270 L 104 316', cls:'amber'},
+    {at:6.5, d:'M320 188 L 320 236', cls:'flow'},
+    {at:7.5, d:'M406 267 C 422 267, 422 220, 438 220', cls:'flow'},
+    {at:7.6, d:'M184 348 C 205 348, 205 318, 230 318 L 420 318 C 430 318, 430 290, 438 286', cls:'dim'},
+    {at:4.6, d:'M184 458 L 214 458', cls:'amber'},
+    {at:12.5, d:'M698 160 C 722 160, 722 127, 746 127', cls:'flow'},
+    {at:13.3, d:'M698 240 C 722 240, 722 227, 746 227', cls:'flow'},
+    {at:14.1, d:'M406 377 C 560 377, 640 327, 746 327', cls:'green'},
+    {at:14.9, d:'M698 420 C 722 420, 722 427, 746 427', cls:'dim'},
+  ]}},
+
+/* ---------- CONCEITOS ---------- */
+{ id:'conceitos', ch:'Conceitos (Parte 1)', title:'Os oito conceitos básicos',
+  say:'Antes de qualquer comando, os conceitos. O cluster é o conjunto de máquinas, os nós. O pod é a menor unidade, onde roda o contêiner. O Deployment mantém o número de réplicas desejado. O Service dá um endereço fixo a essas réplicas. O namespace isola os recursos da API. ConfigMap guarda configuração comum, e Secret guarda dados sensíveis.',
+  v:{type:'boxes', defs:[
+    ['Cluster','conjunto de nós gerido por um control plane',1],
+    ['Nó','máquina virtual que roda os pods',3],
+    ['Pod','menor unidade; um ou mais contêineres',5],
+    ['Deployment','mantém N réplicas e faz rolling update',7.5],
+    ['Service','IP e DNS estáveis na frente dos pods',10],
+    ['Namespace','isola e organiza os recursos da API',12.5],
+    ['ConfigMap','configuração comum, sem segredo',15],
+    ['Secret','dado sensível entregue ao pod',17],
+  ], items:[
+    {at:1, x:452,y:84,w:478,h:436, cls:'region', html:'<span class="rl">cluster</span>'},
+    {at:3, x:470,y:150,w:212,h:200, cls:'blue', html:B('nó 1','Standard_B2s')},
+    {at:3.4, x:700,y:150,w:212,h:200, cls:'blue', html:B('nó 2','Standard_B2s')},
+    {at:5, x:486,y:212,w:180,h:40, html:'<span class="pod">pod cep-api</span>'},
+    {at:5.4, x:716,y:212,w:180,h:40, html:'<span class="pod">pod cep-api</span>'},
+    {at:7.5, x:486,y:290,w:410,h:52, cls:'amber', html:B('Deployment cep-api','replicas: 2 · image cep-api:1287')},
+    {at:10, x:560,y:372,w:262,h:50, cls:'green', html:B('Service cep-api','cep-api.cep.svc.cluster.local')},
+    {at:12.5, x:462,y:118,w:458,h:316, cls:'ns', html:'<span class="rl">namespace: cep</span>'},
+    {at:15, x:470,y:446,w:212,h:56, html:B('ConfigMap','cep-api-config')},
+    {at:17, x:700,y:446,w:212,h:56, html:B('Secret','via Key Vault (CSI)')},
+  ], lines:[
+    {at:10, d:'M600 372 L 576 252', cls:'green'},
+    {at:10, d:'M780 372 L 806 252', cls:'green'},
+  ]}},
+
+{ id:'responsa', ch:'Conceitos (Parte 1)', title:'O que o Azure gerencia',
+  say:'No AKS, o Azure cuida do control plane: API server, etcd e scheduler. Ficam com a squad os nós e seus tamanhos, as aplicações, a rede, os segredos e as atualizações de versão. No plano Free, que usaremos no protótipo, o control plane não tem SLA financeiro; para produção, o recomendado é o plano Standard.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:84,w:430,h:300, cls:'blue', html:B('O Azure gerencia','')+'<ul class="ul"><li>Control plane: API server, etcd, scheduler</li><li>Disponibilidade e patches do control plane</li><li>Imagens de SO dos nós (você escolhe quando aplicar)</li><li>Integração com Entra ID, Monitor e ACR</li><li>Add-ons: app routing, CSI do Key Vault, KEDA</li></ul>'},
+    {at:4, x:494,y:84,w:430,h:300, cls:'amber', html:B('A squad gerencia','')+'<ul class="ul"><li>Tamanho e quantidade de nós, autoscaler</li><li>Imagens, manifestos, Helm e namespaces</li><li>Requests, limits, sondas e réplicas</li><li>Segredos, identidades e permissões</li><li>Upgrade de versão e janela de manutenção</li><li>Custos: desligar o que não usa</li></ul>'},
+    {at:8.5, x:36,y:404,w:284,h:110, cls:'green', html:B('Free','control plane sem custo, sem SLA financeiro','protótipo AGX','gr')},
+    {at:9.5, x:338,y:404,w:284,h:110, html:B('Standard','SLA de uptime da API do Kubernetes','produção')},
+    {at:10.5, x:640,y:404,w:284,h:110, html:B('Premium','Standard + suporte LTS de versões','LTS','am')},
+  ]}},
+
+/* ---------- API E IMAGEM ---------- */
+{ id:'program', ch:'API e imagem', title:'Program.cs pronto para o cluster',
+  say:'A API de CEP já nasce preparada para o Kubernetes. Lê os segredos montados em arquivo pelo driver do Key Vault, com recarga automática. Escreve logs em JSON na saída padrão. Expõe health checks separados para liveness e readiness, e espera as requisições em andamento terminarem antes de desligar.',
+  v:{type:'code', file:'src/Agx.Cep.Api/Program.cs', lang:'cs', code:
+`var builder = WebApplication.CreateBuilder(args);
+
+// Segredos montados pelo CSI driver: /mnt/secrets/ConnectionStrings__Cep
+builder.Configuration.AddKeyPerFile("/mnt/secrets", optional: true, reloadOnChange: true);
+builder.Logging.ClearProviders().AddJsonConsole();      // stdout -> Container Insights
+
+builder.Services.AddDbContext<CepDb>((sp, o) =>          // lê a conexão a cada escopo
+    o.UseSqlServer(sp.GetRequiredService<IConfiguration>().GetConnectionString("Cep")));
+builder.Services.AddHttpClient<ViaCepClient>(c =>
+    c.BaseAddress = new Uri(builder.Configuration["ViaCep:BaseUrl"]!));
+builder.Services.AddScoped<CepService>();
+
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+    .AddDbContextCheck<CepDb>(tags: ["ready"]);
+builder.Services.Configure<HostOptions>(o => o.ShutdownTimeout = TimeSpan.FromSeconds(25));
+
+var app = builder.Build();
+app.MapHealthChecks("/healthz/live",  new() { Predicate = c => c.Tags.Contains("live") });
+app.MapHealthChecks("/healthz/ready", new() { Predicate = c => c.Tags.Contains("ready") });
+app.MapGet("/cep/{cep}", async (string cep, CepService svc) =>
+    await svc.BuscarAsync(cep) is { } r ? Results.Ok(r) : Results.NotFound());
+app.Run();`}},
+
+{ id:'dockerfile', ch:'API e imagem', title:'Dockerfile em dois estágios',
+  say:'O Dockerfile usa dois estágios. O primeiro, com a imagem do SDK, restaura e publica. O segundo copia só o resultado para a imagem chiseled do ASP.NET: mínima, sem shell e com um usuário sem privilégios. Copiar o csproj antes do código aproveita o cache do restore. Um arquivo dockerignore evita mandar bin e obj para o build. No Dockerfile, comentários ficam sempre em linhas próprias.',
+  v:{type:'code', file:'Dockerfile', lang:'docker', code:
+`# syntax=docker/dockerfile:1
+# ---------- estágio 1: build com o SDK ----------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY src/Agx.Cep.Api/*.csproj ./
+RUN dotnet restore
+COPY src/Agx.Cep.Api/ ./
+RUN dotnet publish -c Release -o /app --no-restore
+
+# ---------- estágio 2: só o runtime ----------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
+WORKDIR /app
+COPY --from=build /app .
+# usuário não-root (UID 1654) já definido na imagem
+USER $APP_UID
+# porta padrão do ASP.NET Core desde o .NET 8
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "Agx.Cep.Api.dll"]`}},
+
+{ id:'local', ch:'API e imagem', title:'Testar a imagem localmente',
+  say:'Teste a imagem localmente antes de levar ao cluster. Confira que ela responde na porta 8080, que o usuário configurado não é root e que o tamanho final ficou pequeno.',
+  v:{type:'term', lines:[
+    'c|docker build -t cep-api:dev .',
+    'o| => [build 6/6] RUN dotnet publish -c Release -o /app --no-restore',
+    'ok| => naming to docker.io/library/cep-api:dev',
+    'c|docker run -d -p 8080:8080 --name cep cep-api:dev',
+    'c|curl -s localhost:8080/healthz/live',
+    'ok|Healthy',
+    "c|docker inspect -f '{{.Config.User}}' cep-api:dev",
+    'ok|1654',
+    "c|docker images cep-api:dev --format '{{.Size}}'",
+    'ok|128MB',
+  ]}},
+
+/* ---------- TERRAFORM ---------- */
+{ id:'tf-state', ch:'Infra com Terraform', title:'Estado remoto e registro',
+  say:'Toda a infraestrutura vem do Terraform. O primeiro cuidado é o estado: ele fica num container de um Storage Account do Azure, com bloqueio automático, e não na máquina de quem rodou. Esse storage é criado uma única vez, fora do ambiente que vamos criar e destruir. O registro nasce sem usuário administrador.',
+  v:{type:'code', file:'infra/main.tf', lang:'hcl', code:
+`terraform {
+  required_providers {
+    azurerm = { source = "hashicorp/azurerm", version = "~> 4.0" }
+  }
+  backend "azurerm" {                      # estado fora da máquina local
+    resource_group_name  = "rg-agx-tfstate"
+    storage_account_name = "stagxtfstate"
+    container_name       = "tfstate"
+    key                  = "cep-api.tfstate"
+    use_azuread_auth     = true
+  }
+}
+
+provider "azurerm" {
+  subscription_id = var.subscription_id
+  features {
+    key_vault { purge_soft_delete_on_destroy = true }   # permite recriar o KV
+  }
+}
+
+resource "azurerm_resource_group" "rg" {
+  name     = "rg-agx-cep"
+  location = "brazilsouth"
+}
+
+resource "azurerm_container_registry" "acr" {
+  name                = "acragxcep"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  sku                 = "Basic"
+  admin_enabled       = false              # sem usuário e senha
+}`}},
+
+{ id:'tf-aks', ch:'Infra com Terraform', title:'O cluster AKS',
+  say:'O cluster usa o plano Free e o menor nó que atende ao protótipo, com autoscaler de dois a quatro nós. Ligamos o emissor OIDC e a identidade de carga de trabalho, o driver de segredos do Key Vault com rotação, o roteamento de aplicativos para o ingress e o Container Insights. Por fim, o cluster recebe AcrPull no registro: leitura sem usuário e senha.',
+  v:{type:'code', file:'infra/aks.tf', lang:'hcl', code:
+`resource "azurerm_kubernetes_cluster" "aks" {
+  name                      = "aks-agx-cep"
+  resource_group_name       = azurerm_resource_group.rg.name
+  location                  = azurerm_resource_group.rg.location
+  dns_prefix                = "agxcep"
+  sku_tier                  = "Free"
+  oidc_issuer_enabled       = true
+  workload_identity_enabled = true
+
+  default_node_pool {
+    name                 = "system"
+    vm_size              = "Standard_B2s"   # menor que atende ao protótipo
+    auto_scaling_enabled = true
+    min_count            = 2
+    max_count            = 4
+  }
+
+  identity { type = "SystemAssigned" }
+
+  network_profile {
+    network_plugin      = "azure"
+    network_plugin_mode = "overlay"
+  }
+
+  key_vault_secrets_provider { secret_rotation_enabled = true }
+  web_app_routing { dns_zone_ids = [] }
+  oms_agent { log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id }
+}
+
+resource "azurerm_role_assignment" "aks_acr_pull" {
+  scope                = azurerm_container_registry.acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
+}`}},
+
+{ id:'tf-id', ch:'Infra com Terraform', title:'Identidade e segredo',
+  say:'A identidade de carga de trabalho liga uma identidade gerenciada do Entra ID à ServiceAccount do pod, por uma credencial federada. Essa identidade recebe apenas leitura de segredos no Key Vault. A string de conexão também é gravada pelo Terraform, com uma senha gerada por ele, nunca digitada.',
+  v:{type:'code', file:'infra/identity.tf', lang:'hcl', code:
+`resource "azurerm_user_assigned_identity" "api" {
+  name                = "id-cep-api"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+}
+
+resource "azurerm_federated_identity_credential" "api" {
+  name                = "cep-api"
+  resource_group_name = azurerm_resource_group.rg.name
+  parent_id           = azurerm_user_assigned_identity.api.id
+  issuer              = azurerm_kubernetes_cluster.aks.oidc_issuer_url
+  subject             = "system:serviceaccount:cep:cep-api"   # namespace:serviceaccount
+  audience            = ["api://AzureADTokenExchange"]
+}
+
+resource "azurerm_role_assignment" "api_kv" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.api.principal_id
+}
+
+resource "random_password" "sql" { length = 32 }
+
+resource "azurerm_key_vault_secret" "cep_db" {
+  name         = "ConnectionStrings--Cep"
+  key_vault_id = azurerm_key_vault.kv.id
+  value        = "Server=tcp:\${azurerm_mssql_server.sql.fully_qualified_domain_name};Database=cep;User ID=cepadmin;Password=\${random_password.sql.result};Encrypt=True;"
+}`}},
+
+{ id:'tf-apply', ch:'Infra com Terraform', title:'init, plan, apply',
+  say:'Com os arquivos prontos: init configura o backend remoto, plan mostra o que vai mudar e apply cria o ambiente. Em cerca de dez minutos o cluster está no ar. As credenciais do kubectl vêm do próprio Azure CLI.',
+  v:{type:'term', lines:[
+    'c|cd infra && terraform init',
+    'o|Initializing the backend...',
+    'ok|Successfully configured the backend "azurerm"!',
+    'c|terraform plan -out tfplan',
+    'o|Plan: 18 to add, 0 to change, 0 to destroy.',
+    'c|terraform apply tfplan',
+    'o|azurerm_kubernetes_cluster.aks: Still creating... [6m10s elapsed]',
+    'ok|Apply complete! Resources: 18 added, 0 changed, 0 destroyed.',
+    'c|az aks get-credentials -g rg-agx-cep -n aks-agx-cep',
+    'c|kubectl get nodes',
+    'o|NAME                             STATUS   ROLES    AGE',
+    'o|aks-system-31415926-vmss000000   Ready    <none>   4m',
+    'o|aks-system-31415926-vmss000001   Ready    <none>   4m',
+  ]}},
+
+/* ---------- HELM ---------- */
+{ id:'helm-chart', ch:'Publicar com Helm', title:'O chart da API',
+  say:'Os manifestos da API ficam num chart do Helm. Depois de limpar o modelo gerado pelo helm create, cada recurso vira um template, e o values.yaml concentra o que muda entre ambientes: tag da imagem, réplicas, nome do Key Vault e client ID da identidade.',
+  v:{type:'term', lines:[
+    'c|helm create charts/cep-api   # depois, limpe o modelo',
+    'c|tree charts/cep-api',
+    'o|charts/cep-api',
+    'o|├── Chart.yaml',
+    'o|├── values.yaml            # image.tag, replicas, keyVault, workloadIdentity',
+    'o|└── templates',
+    'o|    ├── configmap.yaml',
+    'o|    ├── deployment.yaml',
+    'o|    ├── hpa.yaml',
+    'o|    ├── ingress.yaml',
+    'o|    ├── secretproviderclass.yaml',
+    'o|    ├── service.yaml',
+    'o|    └── serviceaccount.yaml',
+    'c|helm lint charts/cep-api',
+    'ok|1 chart(s) linted, 0 chart(s) failed',
+  ]}},
+
+{ id:'deploy', ch:'Publicar com Helm', title:'Deployment: réplicas, recursos e sondas',
+  say:'O Deployment roda duas réplicas no namespace cep. A ServiceAccount liga o pod à identidade de carga de trabalho, o ConfigMap entra como variáveis de ambiente, e o volume CSI monta os segredos do Key Vault. Requests e limits dizem quanto cada pod reserva e quanto pode usar. As sondas apontam para os health checks, e o preStop segura o encerramento até o tráfego parar.',
+  v:{type:'code', file:'charts/cep-api/templates/deployment.yaml', lang:'yaml', code:
+`apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cep-api
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicas }}               # 2
+  strategy:
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  selector:
+    matchLabels: { app: cep-api }
+  template:
+    metadata:
+      labels: { app: cep-api, azure.workload.identity/use: "true" }
+    spec:
+      serviceAccountName: cep-api
+      terminationGracePeriodSeconds: 40
+      containers:
+      - name: api
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports: [{ containerPort: 8080 }]
+        envFrom: [{ configMapRef: { name: cep-api-config } }]
+        resources:
+          requests: { cpu: 100m, memory: 128Mi }
+          limits:   { cpu: 500m, memory: 256Mi }
+        readinessProbe:
+          httpGet: { path: /healthz/ready, port: 8080 }
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: { path: /healthz/live, port: 8080 }
+          periodSeconds: 10
+        lifecycle:
+          preStop: { sleep: { seconds: 10 } }    # imagem chiseled não tem shell
+        volumeMounts: [{ name: kv, mountPath: /mnt/secrets, readOnly: true }]
+      volumes:
+      - name: kv
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes: { secretProviderClass: cep-api-kv }`}},
+
+{ id:'spc', ch:'Publicar com Helm', title:'Segredos, identidade e ConfigMap',
+  say:'O SecretProviderClass diz ao driver qual Key Vault ler, com qual identidade e com que nome gravar o arquivo de cada segredo. A ServiceAccount carrega o client ID da identidade gerenciada. Configuração que não é sensível, como o ambiente e a URL do ViaCEP, vai para o ConfigMap.',
+  v:{type:'code', file:'charts/cep-api/templates/*.yaml', lang:'yaml', code:
+`apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata: { name: cep-api-kv }
+spec:
+  provider: azure
+  parameters:
+    clientID: "{{ .Values.workloadIdentity.clientId }}"
+    keyvaultName: "{{ .Values.keyVault.name }}"
+    tenantId: "{{ .Values.keyVault.tenantId }}"
+    objects: |
+      array:
+        - |
+          objectName: ConnectionStrings--Cep
+          objectType: secret
+          objectAlias: ConnectionStrings__Cep     # vira ConnectionStrings:Cep
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cep-api
+  annotations:
+    azure.workload.identity/client-id: "{{ .Values.workloadIdentity.clientId }}"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: cep-api-config }
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+  DOTNET_USE_POLLING_FILE_WATCHER: "true"
+  ViaCep__BaseUrl: https://viacep.com.br/ws/`}},
+
+{ id:'ingress', ch:'Publicar com Helm', title:'Service e ingress com HTTPS',
+  say:'Para HTTPS, o complemento de roteamento de aplicativos busca o certificado direto no Key Vault pela anotação. O DNS do domínio aponta para o IP público do ingress, e o tráfego chega ao Service na porta 80, que encaminha para a porta 8080 dos pods.',
+  v:{type:'code', file:'charts/cep-api/templates/service.yaml + ingress.yaml', lang:'yaml', code:
+`apiVersion: v1
+kind: Service
+metadata: { name: cep-api }
+spec:
+  selector: { app: cep-api }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cep-api
+  annotations:
+    kubernetes.azure.com/tls-cert-keyvault-uri: https://kv-agx-cep.vault.azure.net/certificates/cep-api
+spec:
+  ingressClassName: webapprouting.kubernetes.azure.com
+  tls:
+  - hosts: [cep-aks.agxsoftware.com]
+    secretName: keyvault-cep-api
+  rules:
+  - host: cep-aks.agxsoftware.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend: { service: { name: cep-api, port: { number: 80 } } }`}},
+
+{ id:'helm-up', ch:'Publicar com Helm', title:'Publicar e chamar de fora',
+  say:'O deploy é um único comando do Helm. Depois, confira os pods, o Service e o endereço do ingress, e chame a API por HTTPS de fora do cluster. A primeira consulta vai ao ViaCEP; as seguintes já saem do banco.',
+  v:{type:'term', lines:[
+    'c|helm upgrade --install cep-api charts/cep-api -n cep --create-namespace \\',
+    'k|    -f values-dev.yaml --set image.tag=1287 --wait',
+    'o|Release "cep-api" does not exist. Installing it now.',
+    'ok|STATUS: deployed   REVISION: 1',
+    'c|kubectl get pods,svc,ingress -n cep',
+    'o|NAME                          READY   STATUS    RESTARTS   AGE',
+    'o|pod/cep-api-6d9f7b8c5-h2xkq   1/1     Running   0          42s',
+    'o|pod/cep-api-6d9f7b8c5-p7rzn   1/1     Running   0          42s',
+    'o|NAME              TYPE        CLUSTER-IP    PORT(S)',
+    'o|service/cep-api   ClusterIP   10.0.148.21   80/TCP',
+    'o|NAME              CLASS                                ADDRESS',
+    'o|ingress/cep-api   webapprouting.kubernetes.azure.com   20.201.x.x',
+    'c|curl -s https://cep-aks.agxsoftware.com/cep/01001000',
+    'ok|{"cep":"01001-000","logradouro":"Praça da Sé","localidade":"São Paulo","uf":"SP"}',
+  ]}},
+
+/* ---------- OPERAR ---------- */
+{ id:'rolling', ch:'Operar', title:'Atualizar sem indisponibilidade',
+  say:'Na troca de versão, o Kubernetes sobe um pod novo por vez. Ele só recebe tráfego quando a readiness passa; então um pod antigo sai do Service, espera o preStop e termina as requisições em andamento. Se a versão nova der problema, helm rollback volta para a anterior com o mesmo cuidado.',
+  v:{type:'rolling'} },
+
+{ id:'hpa', ch:'Operar', title:'HPA: réplicas sob demanda',
+  say:'O HPA ajusta as réplicas entre duas e oito conforme a CPU média em relação ao request. Por isso os requests precisam estar definidos. A janela de estabilização evita que as réplicas oscilem quando a carga cai. Para testar, gere carga com uma ferramenta como o hey e acompanhe com kubectl get hpa.',
+  v:{type:'code', file:'charts/cep-api/templates/hpa.yaml', lang:'yaml', code:
+`apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: cep-api }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: cep-api }
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: { type: Utilization, averageUtilization: 70 }   # % do request
+  behavior:
+    scaleDown: { stabilizationWindowSeconds: 300 }
+
+# teste de carga:
+#   hey -z 3m -c 80 https://cep-aks.agxsoftware.com/cep/01001000
+#   kubectl get hpa,pods -n cep -w`}},
+
+{ id:'scale', ch:'Operar', title:'HPA e Cluster Autoscaler juntos',
+  say:'Assim se comporta o teste de carga. A CPU sobe e o HPA cria réplicas em segundos. Quando os nós lotam, os pods novos ficam em Pending e o Cluster Autoscaler adiciona um nó, o que leva alguns minutos. Quando a carga para, as réplicas voltam ao mínimo e o nó extra é removido.',
+  v:{type:'scale', min:26} },
+
+{ id:'heal', ch:'Operar', title:'Autocura e rotação de segredo',
+  say:'Teste a resiliência. Apague um pod e veja o Deployment criar outro em segundos. Depois troque o valor do segredo no Key Vault: o driver atualiza o arquivo montado em cerca de dois minutos, e a API, que lê a configuração com recarga, passa a usar o valor novo sem reiniciar.',
+  v:{type:'term', lines:[
+    'c|kubectl delete pod cep-api-6d9f7b8c5-h2xkq -n cep',
+    'o|pod "cep-api-6d9f7b8c5-h2xkq" deleted',
+    'c|kubectl get pods -n cep',
+    'o|cep-api-6d9f7b8c5-p7rzn   1/1   Running             0   31m',
+    'ok|cep-api-6d9f7b8c5-x4vbd   0/1   ContainerCreating   0   2s',
+    'c|az keyvault secret set --vault-name kv-agx-cep \\',
+    'k|    -n ConnectionStrings--Cep --file nova-conexao.txt -o none',
+    'c|kubectl get events -n cep --field-selector reason=SecretRotationComplete',
+    'ok|Normal  SecretRotationComplete  pod/cep-api-…-p7rzn  successfully rotated mounted contents',
+  ]}},
+
+{ id:'logs', ch:'Operar', title:'Logs no Container Insights',
+  say:'Como a API escreve logs em JSON na saída padrão, o Container Insights recolhe tudo sem configuração extra. No Log Analytics, a tabela ContainerLogV2 permite filtrar pelo namespace e pelo pod, e a consulta pode virar alerta. No portal, a aba Insights do cluster mostra CPU, memória e reinícios de cada pod.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:96,w:420,h:118, cls:'blue', html:B('stdout do pod','JSON escrito pelo AddJsonConsole')+'<pre class="kql" style="color:var(--st-dim);white-space:pre-wrap">{"LogLevel":"Information","Category":"CepService",\n "Message":"CEP 01001000 servido do cache SQL"}</pre>'},
+    {at:2.6, x:36,y:236,w:200,h:64, cls:'green', html:B('ama-logs','agente do Container Insights')},
+    {at:4.2, x:256,y:236,w:200,h:64, html:B('Log Analytics','law-agx-cep')},
+    {at:6, x:484,y:96,w:440,h:204, cls:'amber', html:B('Consulta KQL','')+`<pre class="kql">ContainerLogV2
+| where PodNamespace == "cep"
+| where LogLevel in ("error", "critical")
+| project TimeGenerated, PodName, LogMessage
+| order by TimeGenerated desc</pre>`},
+    {at:9.5, x:36,y:324,w:430,h:180, html:B('Insights do cluster','CPU, memória, nós e reinícios')+'<svg width="400" height="96" viewBox="0 0 400 96" style="margin-top:8px"><path class="spark" pathLength="100" d="M0 70 L40 66 L80 68 L120 60 L160 40 L200 22 L240 26 L280 30 L320 58 L360 64 L400 66" fill="none" stroke="#5B95FF" stroke-width="2.5"/><line x1="0" y1="30" x2="400" y2="30" stroke="#FF6B5E" stroke-dasharray="4 5"/><text x="4" y="24" fill="#FF6B5E" font-size="11" font-family="IBM Plex Mono, monospace">alerta: CPU &gt; 80%</text></svg>'},
+    {at:12, x:494,y:324,w:430,h:180, cls:'green', html:B('Alertas que valem a pena','')+'<ul class="ul"><li>Pod reiniciando mais de 3 vezes em 10 min</li><li>Erros 5xx acima do normal</li><li>HPA no máximo de réplicas</li><li>Nó com pressão de memória</li></ul>'},
+  ], lines:[
+    {at:2.6, d:'M136 214 L 136 236', cls:'flow'},
+    {at:4.2, d:'M236 268 L 256 268', cls:'flow'},
+    {at:6, d:'M456 268 C 470 268, 470 200, 484 200', cls:'flow'},
+  ]}},
+
+{ id:'debug', ch:'Operar', title:'Investigar um pod com erro',
+  say:'Para investigar um pod com erro, siga sempre a mesma ordem: o status dos pods, os eventos do namespace, a descrição do pod com o motivo do último término e os logs do contêiner anterior. Aqui a causa aparece no log: o firewall do Azure SQL não libera a saída do cluster. A correção vai para o Terraform, não para o portal.',
+  v:{type:'term', lines:[
+    'c|kubectl get pods -n cep',
+    'o|cep-api-7f4c9d6b8-m2kdl   0/1   Running            0   3m',
+    'err|cep-api-7f4c9d6b8-z8wqt   0/1   CrashLoopBackOff   4   3m',
+    'c|kubectl get events -n cep --sort-by=.lastTimestamp | tail -2',
+    'err|Warning  Unhealthy  pod/…-m2kdl  Readiness probe failed: HTTP probe failed with statuscode: 503',
+    'err|Warning  BackOff    pod/…-z8wqt  Back-off restarting failed container api',
+    'c|kubectl describe pod cep-api-7f4c9d6b8-z8wqt -n cep | grep -A3 "Last State"',
+    'o|    Last State:  Terminated',
+    'o|      Reason:    Error',
+    'o|      Exit Code: 134',
+    'c|kubectl logs cep-api-7f4c9d6b8-z8wqt -n cep --previous | tail -1',
+    "err|{\"LogLevel\":\"Critical\",\"Message\":\"SqlException: Client with IP address '20.201.x.x' is not allowed to access the server.\"}",
+  ]}},
+
+/* ---------- PIPELINE ---------- */
+{ id:'pipe-flow', ch:'Pipeline', title:'O fluxo no Azure DevOps',
+  say:'O pipeline do Azure DevOps fecha o ciclo. Cada commit na main compila, testa e gera a imagem com uma tag única, o número do build. A imagem vai para o ACR. O estágio de deploy usa um Environment com aprovação: só depois do aceite o Helm atualiza o cluster e espera o rollout terminar.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:170,w:130,h:100, html:B('commit','branch main')},
+    {at:2.4, x:186,y:170,w:130,h:100, cls:'blue', html:B('Build','dotnet test · docker build')},
+    {at:4, x:336,y:170,w:130,h:100, cls:'amber', html:B('ACR','cep-api:1288','tag única','am')},
+    {at:6, x:486,y:170,w:130,h:100, cls:'amber', html:B('Aprovação','Environment cep-aks','gate','am')},
+    {at:8, x:636,y:170,w:130,h:100, cls:'blue', html:B('Deploy','helm upgrade --wait')},
+    {at:9.6, x:786,y:170,w:140,h:100, cls:'green', html:B('AKS','rolling update','sem downtime','gr')},
+    {at:11.5, x:36,y:320,w:440,h:150, html:B('Service connections','')+'<ul class="ul"><li>sc-acr-agx: Docker Registry → ACR</li><li>sc-azure-agx: Azure Resource Manager</li><li>Ambas com federação de identidade, sem senha</li></ul>'},
+    {at:13, x:494,y:320,w:430,h:150, cls:'green', html:B('Se o deploy falhar','')+'<ul class="ul"><li>--wait falha o estágio se o rollout não fica pronto</li><li>helm rollback cep-api volta à revisão anterior</li><li>A imagem antiga continua no ACR</li></ul>'},
+  ], lines:[
+    {at:2.4, d:'M166 220 L 186 220', cls:'flow'},
+    {at:4, d:'M316 220 L 336 220', cls:'flow'},
+    {at:6, d:'M466 220 L 486 220', cls:'flow'},
+    {at:8, d:'M616 220 L 636 220', cls:'flow'},
+    {at:9.6, d:'M766 220 L 786 220', cls:'flow'},
+  ]}},
+
+{ id:'pipe-yaml', ch:'Pipeline', title:'azure-pipelines.yml',
+  say:'No YAML, a tarefa Docker faz build e push pela service connection do ACR. O job de deployment aponta para o Environment cep-aks, onde fica a aprovação. O passo final obtém as credenciais do cluster e roda o mesmo helm upgrade que usamos à mão, agora com a tag do build.',
+  v:{type:'code', file:'azure-pipelines.yml', lang:'yaml', code:
+`trigger:
+  branches: { include: [ main ] }
+
+variables:
+  tag: $(Build.BuildId)                      # tag única por build
+
+stages:
+- stage: Build
+  jobs:
+  - job: Imagem
+    pool: { vmImage: ubuntu-latest }
+    steps:
+    - script: dotnet test --configuration Release
+    - task: Docker@2
+      inputs:
+        command: buildAndPush
+        containerRegistry: sc-acr-agx
+        repository: cep-api
+        tags: $(tag)
+
+- stage: Deploy
+  dependsOn: Build
+  jobs:
+  - deployment: AKS
+    environment: cep-aks                     # aprovação configurada no Environment
+    pool: { vmImage: ubuntu-latest }
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: sc-azure-agx
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az aks get-credentials -g rg-agx-cep -n aks-agx-cep
+                helm upgrade --install cep-api charts/cep-api -n cep \\
+                  -f values-dev.yaml --set image.tag=$(tag) --wait --timeout 5m`}},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'destroy', ch:'Fechamento', title:'Destruir o ambiente',
+  say:'Ambiente de estudo parado também custa. Com o plano Free e nós B2s o custo já é baixo, mas o combinado é destruir tudo pelo Terraform ao fim de cada ciclo de uso e recriar quando precisar. O storage do estado permanece, porque fica fora deste ambiente.',
+  v:{type:'term', lines:[
+    'c|terraform destroy',
+    'o|Plan: 0 to add, 0 to change, 18 to destroy.',
+    'o|  Enter a value: yes',
+    'ok|Destroy complete! Resources: 18 destroyed.',
+    "c|az group list --query \"[?starts_with(name,'rg-agx')].name\" -o tsv",
+    'o|rg-agx-tfstate',
+  ]}},
+
+{ id:'check', ch:'Fechamento', title:'Checklist antes de dar como pronto',
+  say:'Antes de dar o protótipo como pronto, revise esta lista. Cada item precisa ter sido feito no projeto, não apenas lido. O checklist completo, com o atalho para a cena correspondente, está logo abaixo do vídeo.',
+  v:{type:'check', items:[
+    'Dockerfile multi-stage, imagem chiseled, sem root',
+    'Tag única por build, nada de latest',
+    'ACR com AcrPull para o cluster, sem senha',
+    'Estado do Terraform no Storage do Azure',
+    'Ambiente criado e destruído só pelo Terraform',
+    'Namespace próprio, 2+ réplicas, chart Helm',
+    'ConfigMap para config, Key Vault + CSI + Workload Identity',
+    'Ingress com HTTPS fora do cluster',
+    'Sondas, requests/limits e desligamento gracioso',
+    'HPA testado com carga, rollout e rollback',
+    'Logs no Container Insights e pod investigado',
+    'Pipeline com aprovação e README de criar/destruir',
+  ]}},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a trilha de estudo da Parte 1, com os links oficiais, o checklist da Parte 3 ligado a cada cena e as perguntas que o cliente costuma fazer sobre rodar, escalar, investigar e acompanhar uma aplicação grande no Kubernetes.',
+  v:{type:'outro'} },
+];
+// ===================== TRILHA, CHECKLIST, FAQ, COMANDOS =====================
+const STUDY = [
+  ['Conceitos do Kubernetes','Cluster, nó, pod, deployment, service, namespace, ConfigMap e Secret','https://kubernetes.io/pt-br/docs/concepts/','conceitos'],
+  ['Conceitos principais do AKS','O que o Azure gerencia e o que fica com quem usa o cluster','https://learn.microsoft.com/pt-br/azure/aks/core-aks-concepts','responsa'],
+  ['Tutorial oficial do AKS','Do preparo da aplicação até a atualização da versão no cluster','https://learn.microsoft.com/pt-br/azure/aks/tutorial-kubernetes-prepare-app','arq'],
+  ['Integração do AKS com o ACR','Permissão AcrPull para o cluster, sem usuário e senha','https://learn.microsoft.com/pt-br/azure/aks/cluster-container-registry-integration','tf-aks'],
+  ['Segredos com o Azure Key Vault (CSI driver)','SecretProviderClass, montagem em volume e rotação','https://learn.microsoft.com/pt-br/azure/aks/csi-secrets-store-driver','spc'],
+  ['Identidade de carga de trabalho do Microsoft Entra','Credencial federada entre ServiceAccount e identidade gerenciada','https://learn.microsoft.com/pt-br/azure/aks/workload-identity-overview','tf-id'],
+  ['Ingress pelo roteamento de aplicativos','Add-on gerenciado, certificado do Key Vault','https://learn.microsoft.com/pt-br/azure/aks/app-routing','ingress'],
+  ['Escalabilidade do AKS','Foco no HPA e no Cluster Autoscaler','https://learn.microsoft.com/pt-br/azure/aks/concepts-scale','scale'],
+  ['Sondas de liveness, readiness e startup','Quando cada uma é usada e o que acontece quando falha','https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/','deploy'],
+  ['Health checks do ASP.NET Core','AddHealthChecks, tags e MapHealthChecks','https://learn.microsoft.com/pt-br/aspnet/core/host-and-deploy/health-checks','program'],
+  ['Helm no AKS','Charts, releases, upgrade e rollback','https://learn.microsoft.com/pt-br/azure/aks/kubernetes-helm','helm-chart'],
+  ['Container Insights do Azure Monitor','Coleta de logs e métricas dos contêineres','https://learn.microsoft.com/pt-br/azure/azure-monitor/containers/container-insights-overview','logs'],
+  ['Deploy no AKS com o Azure Pipelines','Build, push e deploy a partir do Azure DevOps','https://learn.microsoft.com/pt-br/azure/aks/devops-pipeline','pipe-flow'],
+  ['Criação do cluster AKS com Terraform','Provider azurerm e recurso azurerm_kubernetes_cluster','https://learn.microsoft.com/pt-br/azure/aks/learn/quick-kubernetes-deploy-terraform','tf-aks'],
+  ['Container de uma aplicação .NET','Dockerfile oficial para .NET','https://learn.microsoft.com/pt-br/dotnet/core/docker/build-container','dockerfile'],
+  ['Boas práticas de Dockerfile','Multi-stage, cache de camadas, .dockerignore','https://docs.docker.com/build/building/best-practices/','dockerfile'],
+  ['Práticas recomendadas do AKS','Operação, segurança, rede e confiabilidade','https://learn.microsoft.com/pt-br/azure/aks/best-practices','check'],
+  ['Planos de preço do AKS','Free, Standard e Premium','https://learn.microsoft.com/pt-br/azure/aks/free-standard-pricing-tiers','responsa'],
+];
+
+const CHECK = [
+  ['Imagem', 'Dockerfile com build em múltiplos estágios a partir das imagens oficiais do .NET','dockerfile'],
+  ['Imagem', 'Container rodando sem o usuário root','local'],
+  ['Imagem', 'Tag única por build, sem depender de latest','pipe-yaml'],
+  ['Imagem', 'Imagem no ACR e cluster com permissão de leitura, sem usuário e senha','tf-aks'],
+  ['Terraform', 'Estado do Terraform em um storage do Azure','tf-state'],
+  ['Terraform', 'Ambiente inteiro criado e destruído pelo Terraform, sem passos no portal','destroy'],
+  ['Kubernetes', 'Recursos da API em um namespace próprio','helm-up'],
+  ['Kubernetes', 'Deployment e Service com pelo menos duas réplicas','deploy'],
+  ['Kubernetes', 'Manifestos empacotados em um chart do Helm','helm-chart'],
+  ['Kubernetes', 'Configuração comum separada em ConfigMap','spc'],
+  ['Segredos', 'String de conexão no Key Vault, entregue pelo driver de segredos com identidade de carga de trabalho','spc'],
+  ['Segredos', 'Valor de um segredo trocado no Key Vault e a API usando o valor novo','heal'],
+  ['Rede', 'API exposta fora do cluster por ingress com HTTPS','ingress'],
+  ['Saúde', 'Sondas de liveness e readiness ligadas aos health checks','deploy'],
+  ['Saúde', 'Requests e limits de CPU e memória definidos','deploy'],
+  ['Saúde', 'Encerramento gracioso sem perder requisições em andamento','rolling'],
+  ['Saúde', 'Pod removido manualmente e recriado pelo Kubernetes','heal'],
+  ['Escala', 'HPA ganhando réplicas sob carga e voltando ao normal','scale'],
+  ['Deploy', 'Versão atualizada sem indisponibilidade e rollback para a anterior','rolling'],
+  ['Observação', 'Logs na saída padrão consultados no Container Insights','logs'],
+  ['Observação', 'Pod com erro investigado por eventos, descrição e logs','debug'],
+  ['Deploy', 'Pipeline do Azure DevOps: imagem, registro e cluster a cada mudança na main, com aprovação','pipe-flow'],
+  ['Custo', 'Plano Free, menor nó que atende e ambiente destruído quando parado','tf-aks'],
+  ['Custo', 'README no repositório: criar o ambiente, publicar a API e destruir tudo','destroy'],
+];
+
+const FAQ = [
+ // Rodar
+ ['Rodar','Por que AKS e não App Service ou Container Apps?',`<p>O AKS dá controle total sobre rede, nós, add-ons e políticas, e permite rodar dezenas de APIs no mesmo cluster com regras próprias de escala. É também o padrão da Crefaz. O custo é operacional: a squad passa a cuidar de versões, nós e manifestos.</p><p>Container Apps esconde o Kubernetes e atende bem poucas APIs; App Service serve aplicações web simples. Para muitos serviços com requisitos diferentes, o AKS é o mais flexível.</p>`],
+ ['Rodar','Quantos clusters precisamos?',`<p>No mínimo, produção separada de não-produção. Dentro do cluster, um namespace por sistema ou squad, com <code>ResourceQuota</code> e <code>LimitRange</code>. Uma segunda região só se o tempo de recuperação exigido pelo negócio não couber em recriar o ambiente.</p>`],
+ ['Rodar','Que tamanho de nó escolher?',`<p>Some os requests das réplicas previstas, acrescente uma folga de 20 a 30% e o consumo dos pods de sistema. Nós maiores desperdiçam menos com overhead. Em produção, separe um node pool de sistema (2 a 3 nós) de um pool de aplicação. Séries B são para protótipo: a CPU é "burstable" e pode ser limitada em carga contínua.</p>`],
+ ['Rodar','O banco deve rodar dentro do cluster?',`<p>Quase nunca. Banco no cluster exige volumes persistentes, backup, failover e upgrades sob responsabilidade da squad. Use serviços gerenciados (Azure SQL, Redis, Service Bus) e acesse por Private Endpoint em produção.</p>`],
+ ['Rodar','A API precisa mudar para rodar no Kubernetes?',`<p>Precisa seguir algumas regras: não guardar estado em memória ou disco local, ler configuração de variáveis ou arquivos, escrever logs na saída padrão, expor health checks, encerrar de forma graciosa e usar cache e sessão distribuídos. A rota de CEP deste projeto já segue todas.</p>`],
+ ['Rodar','Qual ingress usar?',`<p>No protótipo usamos o complemento de roteamento de aplicativos, gerenciado pela Microsoft. O projeto comunitário ingress-nginx anunciou o fim da manutenção em 2026, então acompanhe o roadmap do add-on e avalie a Gateway API (por exemplo, Application Gateway for Containers) para projetos novos. Confirme com a Crefaz qual padrão eles adotam.</p>`],
+ // .NET
+ ['.NET','Por que a Data Protection precisa de configuração extra?',`<p>Cookies, antiforgery e tokens do ASP.NET Core são criptografados com chaves que, por padrão, ficam em cada pod. Com duas réplicas, uma requisição pode chegar ao pod que não conhece a chave e falhar. Guarde as chaves num local compartilhado: <code>PersistKeysToAzureBlobStorage</code> + <code>ProtectKeysWithAzureKeyVault</code>.</p>`],
+ ['.NET','Como o .NET se comporta com limits de CPU e memória?',`<p>O GC respeita o limite de memória do contêiner (por padrão o heap fica em até 75% do limit) e <code>Environment.ProcessorCount</code> reflete o limite de CPU. Desde o .NET 9 o Server GC usa DATAS, que ajusta o heap à carga. Se aparecer OOMKilled, compare o uso real com o limit antes de mexer em <code>DOTNET_GCHeapHardLimitPercent</code>.</p>`],
+ ['.NET','Quando rodar as migrations do EF Core?',`<p>Não no startup: várias réplicas subindo juntas disputam a mesma migration. Gere um bundle com <code>dotnet ef migrations bundle</code> e rode como etapa do pipeline antes do <code>helm upgrade</code>, ou como Job/hook <code>pre-upgrade</code> do Helm. Escreva migrations compatíveis com a versão anterior para permitir rollback.</p>`],
+ ['.NET','Por que a API vê HTTP e o IP do ingress em vez do cliente?',`<p>O TLS termina no ingress, que repassa a chamada em HTTP com os cabeçalhos <code>X-Forwarded-*</code>. Ative o processamento com <code>ASPNETCORE_FORWARDEDHEADERS_ENABLED=true</code> (já está no ConfigMap). Sem isso, redirecionamentos e links gerados saem com <code>http://</code>.</p>`],
+ // Escalar
+ ['Escalar','Qual a diferença entre HPA, Cluster Autoscaler, KEDA e VPA?',`<p><b>HPA</b> muda o número de réplicas por métrica (CPU, memória ou customizada). <b>Cluster Autoscaler</b> adiciona nós quando há pods em Pending e remove nós ociosos. <b>KEDA</b> escala por eventos, como o tamanho de uma fila do Service Bus, inclusive até zero. <b>VPA</b> recomenda ou ajusta requests. O Node Auto Provisioning do AKS escolhe também o tamanho da VM.</p>`],
+ ['Escalar','Quanto tempo leva para escalar?',`<p>Um pod novo leva segundos: baixar a imagem (se não estiver em cache), iniciar e passar na readiness. Um nó novo leva alguns minutos. Para picos previsíveis, aumente <code>minReplicas</code> antes do horário ou use o scaler cron do KEDA, e mantenha folga nos nós.</p>`],
+ ['Escalar','Como definir requests e limits?',`<p>Meça com teste de carga. Request de CPU próximo do uso típico; limit de memória com margem para o pico, porque passar dele mata o pod. Limit de CPU baixo causa throttling e latência; muitos times usam limit generoso ou nenhum em produção. Revise os valores depois de cada mudança relevante.</p>`],
+ ['Escalar','Até onde o AKS escala?',`<p>O tier Standard suporta milhares de nós por cluster; confira os limites atuais na documentação. Na prática, o gargalo aparece antes: cota de vCPU da assinatura, conexões do banco e dependências externas, como o próprio ViaCEP, que não escala junto com a API.</p>`],
+ ['Escalar','O replicas do Helm briga com o HPA?',`<p>Sim. Se o template fixa <code>spec.replicas</code>, cada <code>helm upgrade</code> volta ao valor do chart e desfaz o que o HPA fez. Com HPA ativo, omita <code>replicas</code> do Deployment (um <code>if</code> no template resolve).</p>`],
+ ['Escalar','Como provar que a aplicação aguenta?',`<p>Teste de carga com metas claras (requisições por segundo, latência p95, taxa de erro) usando Azure Load Testing, k6 ou hey. Observe HPA, nós, banco e dependências durante o teste, e repita após mudanças grandes.</p>`],
+ // Investigar
+ ['Investigar','Pod em CrashLoopBackOff: por onde começar?',`<p><code>kubectl describe pod</code> mostra o <i>Last State</i> e o <i>Exit Code</i>; <code>kubectl logs --previous</code> mostra o log do contêiner que caiu; <code>kubectl get events</code> mostra o contexto. Códigos comuns: 137 (morto por OOM ou SIGKILL), 134 (exceção não tratada no .NET), 1 (erro da aplicação).</p>`],
+ ['Investigar','O pod foi OOMKilled. E agora?',`<p>Compare o uso real (<code>kubectl top pod</code>, Insights) com o limit. Se o uso cresce sem parar, é vazamento: colete métricas com dotnet-counters e um dump com dotnet-dump. Se o uso é estável e só o pico passa, aumente o limit e revise o request.</p>`],
+ ['Investigar','Pod parado em Pending',`<p>O <code>describe</code> mostra <i>FailedScheduling</i> com o motivo: falta de CPU ou memória, taint sem toleration, nodeSelector impossível ou volume indisponível. Se for falta de recursos, o Cluster Autoscaler deve criar um nó; se não criar, verifique o <code>max_count</code> e a cota de vCPU.</p>`],
+ ['Investigar','ImagePullBackOff',`<p>Tag inexistente ou o cluster sem permissão no registro. <code>az aks check-acr -g rg-agx-cep -n aks-agx-cep --acr acragxcep.azurecr.io</code> valida a integração. Confira também se o pipeline publicou a tag que o Helm está usando.</p>`],
+ ['Investigar','A API está lenta, mas a CPU está baixa',`<p>Suspeite de espera: dependências lentas (SQL, ViaCEP), pool de conexões esgotado ou thread pool starvation por código síncrono bloqueando chamadas assíncronas. Veja os traces no Application Insights e rode <code>dotnet-counters</code> (fila do ThreadPool) num contêiner de depuração.</p>`],
+ ['Investigar','Como depurar um contêiner sem shell?',`<p>A imagem chiseled não tem shell, então <code>kubectl exec</code> não ajuda. Use um contêiner efêmero que compartilha os processos: <code>kubectl debug -it &lt;pod&gt; -n cep --image=mcr.microsoft.com/dotnet/sdk:10.0 --target=api</code> e, dentro dele, instale dotnet-counters, dotnet-trace ou dotnet-dump.</p>`],
+ // Acompanhar
+ ['Acompanhar','Que métricas e alertas configurar?',`<p>Os quatro sinais: latência (p95/p99), tráfego, erros e saturação. Some reinícios de pod, HPA no máximo, nós NotReady e uso de memória perto do limit. Cada alerta precisa de um runbook curto dizendo o que olhar primeiro.</p>`],
+ ['Acompanhar','Os logs vão ficar caros?',`<p>O Log Analytics cobra por GB ingerido. Use o esquema ContainerLogV2, níveis de log adequados em produção (Information ou Warning), exclua namespaces barulhentos na configuração do agente e ajuste a retenção. Logs de alto volume e pouca consulta podem ir para o plano Basic.</p>`],
+ ['Acompanhar','Como seguir uma requisição entre serviços?',`<p>Com OpenTelemetry. O pacote Azure Monitor OpenTelemetry (<code>UseAzureMonitor()</code>) envia traces, métricas e logs ao Application Insights, e o HttpClient propaga o cabeçalho W3C <code>traceparent</code> automaticamente entre as APIs.</p>`],
+ ['Acompanhar','Onde ver painéis do cluster?',`<p>A aba Insights do cluster no portal cobre CPU, memória, nós e pods. Para painéis próprios, use o Managed Prometheus com o Managed Grafana, que já trazem dashboards prontos de Kubernetes.</p>`],
+ // Deploy
+ ['Deploy','Como garantir deploy sem indisponibilidade?',`<p>Combine: pelo menos duas réplicas, readiness correta, <code>maxUnavailable: 0</code>, <code>preStop</code> com alguns segundos, <code>ShutdownTimeout</code> no host e <code>terminationGracePeriodSeconds</code> maior que a soma dos dois, e um PodDisruptionBudget para manutenções de nó.</p>`],
+ ['Deploy','Como voltar uma versão?',`<p><code>helm history cep-api -n cep</code> lista as revisões e <code>helm rollback cep-api &lt;revisão&gt; -n cep</code> volta. Pelo pipeline, reexecute o build anterior. O rollback só é seguro se as migrations forem compatíveis com a versão anterior.</p>`],
+ ['Deploy','Dá para fazer canary ou blue-green?',`<p>O Deployment só faz rolling update. Para canary, use Argo Rollouts, Flagger ou divisão de tráfego por peso na Gateway API. Para começar, rolling update com feature flags resolve a maior parte dos casos.</p>`],
+ ['Deploy','Como ficam os upgrades do Kubernetes?',`<p>O AKS mantém suporte a três versões menores GA. Configure o canal de upgrade automático (patch) e uma janela de manutenção, teste primeiro em não-produção e verifique APIs depreciadas nos manifestos antes de subir de versão. O tier Premium oferece suporte de longo prazo (LTS).</p>`],
+ // Segurança
+ ['Segurança','Onde ficam os segredos?',`<p>No Key Vault, lidos pelo driver CSI com identidade de carga de trabalho. Nunca no repositório, na imagem ou em variáveis do pipeline em texto puro. Um Secret do Kubernetes é só base64, não criptografia: se usar, ative a criptografia do etcd com KMS.</p>`],
+ ['Segurança','Quem pode acessar o cluster?',`<p>Integre com o Entra ID e use Azure RBAC para Kubernetes, desabilite contas locais e dê acesso por grupo e por namespace. O pipeline usa uma service connection com o mínimo de permissão necessário.</p>`],
+ ['Segurança','Como proteger a rede?',`<p>Cluster privado ou faixas de IP autorizadas para a API do Kubernetes, Network Policies entre namespaces, WAF na frente do ingress e Private Endpoints para SQL, Key Vault e ACR.</p>`],
+ ['Segurança','Como garantir imagens seguras?',`<p>Imagens chiseled, usuário não-root, sistema de arquivos somente leitura quando possível, varredura de vulnerabilidades no Defender for Containers e Azure Policy bloqueando contêineres privilegiados e a tag latest.</p>`],
+ // Custos
+ ['Custos','Quanto custa um cluster AKS?',`<p>No plano Free o control plane não é cobrado; no Standard há cobrança por cluster/hora. O grosso do custo vem das VMs dos nós, discos, IPs públicos, Load Balancer e ingestão do Log Analytics. Use a calculadora de preços do Azure com o tamanho real dos pools.</p>`],
+ ['Custos','Como reduzir o custo?',`<p>Ajuste requests ao uso real, deixe o autoscaler trabalhar, use node pools spot para cargas tolerantes a interrupção, reservas ou savings plan para a base fixa, desligue ambientes parados (<code>az aks stop</code> ou <code>terraform destroy</code>) e ative a análise de custo do AKS.</p>`],
+ // Resiliência
+ ['Resiliência','Qual é o SLA?',`<p>No Standard, o Azure oferece SLA de uptime da API do Kubernetes (maior quando o cluster usa zonas de disponibilidade). O Free não tem SLA financeiro. A disponibilidade da aplicação depende também de réplicas, zonas e das dependências.</p>`],
+ ['Resiliência','E se uma zona do Azure cair?',`<p>Distribua os nós em três zonas e as réplicas com <code>topologySpreadConstraints</code>, use PodDisruptionBudget e serviços de dados com redundância de zona.</p>`],
+ ['Resiliência','Como fica backup e recuperação de desastre?',`<p>O Terraform recria o cluster, e o Helm recria a aplicação. Os dados ficam nos serviços gerenciados, com backup próprio. O Azure Backup para AKS cobre recursos e volumes do cluster. Uma segunda região com Front Door só se o RTO do negócio exigir.</p>`],
+];
+
+const CMDS = [
+  ['kubectl get pods -n cep -o wide','Status das réplicas e em que nó cada uma roda'],
+  ['kubectl describe pod <pod> -n cep','Eventos, sondas e motivo do último término'],
+  ['kubectl logs <pod> -n cep --previous','Log do contêiner que caiu'],
+  ['kubectl logs -l app=cep-api -n cep --tail=50 -f','Logs de todas as réplicas'],
+  ['kubectl get events -n cep --sort-by=.lastTimestamp','Linha do tempo do namespace'],
+  ['kubectl top pods -n cep\nkubectl top nodes','Consumo real de CPU e memória'],
+  ['kubectl get hpa -n cep -w','Acompanhar o HPA durante o teste de carga'],
+  ['kubectl rollout status deploy/cep-api -n cep','Esperar uma atualização terminar'],
+  ['helm history cep-api -n cep\nhelm rollback cep-api <rev> -n cep','Revisões e volta de versão'],
+  ['kubectl port-forward svc/cep-api 8080:80 -n cep','Chamar a API sem passar pelo ingress'],
+  ['kubectl debug -it <pod> -n cep \\\n  --image=mcr.microsoft.com/dotnet/sdk:10.0 --target=api','Contêiner de depuração numa imagem sem shell'],
+  ['az aks check-acr -g rg-agx-cep -n aks-agx-cep \\\n  --acr acragxcep.azurecr.io','Validar a leitura do registro pelo cluster'],
+];
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG resource terraform provider backend variable output data features'.split(' '));
+function findComment(line, lang){
+  let q = null;
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === q) q = null; continue; }
+    if (ch === '"') { q = ch; continue; }
+    if (lang !== 'cs' && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if (lang === 'cs' && ch === '/' && line[i+1] === '/') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (lang === 'cs' && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+V.title = { build(root){
+  root.innerHTML = `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>
+  <div class="title-card"><span class="k">Squad .NET · AGX</span><h2>Kubernetes na AKS, do Dockerfile ao segredo</h2>
+  <p>Uma API ASP.NET Core de CEP publicada num cluster AKS com Terraform, Azure Container Registry, Helm e Azure DevOps.</p>
+  <div class="chips"><span>ViaCEP → Azure SQL</span><span>Key Vault + Workload Identity</span><span>HPA</span><span>Container Insights</span></div></div>`;
+  return {update(){}};
+}};
+
+V.outro = { build(root){
+  root.innerHTML = `<div class="title-card" style="top:150px"><span class="k">Fim do roteiro</span><h2>Agora, faça no projeto</h2>
+  <p>Trilha de estudo, checklist da Parte 3 com atalhos para cada cena e as perguntas do cliente estão logo abaixo do vídeo.</p>
+  <div class="chips"><span>terraform apply</span><span>helm upgrade --install</span><span>kubectl describe</span><span>terraform destroy</span></div></div>`;
+  return {update(){}};
+}};
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>bash · ~/agx-cep-api</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rolling = { build(root){
+  const N = 3, S0 = 2.5, STEP = 3.4;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">`;
+  for (let i = 0; i < N; i++){
+    const cx = 170 + i*240 + 75;
+    h += `<path class="ln flow" data-r="v1-${i}" d="M480 150 C 480 190, ${cx} 180, ${cx} 222"/>`;
+    h += `<path class="ln green" data-r="v2-${i}" d="M480 150 C 480 300, ${cx} 300, ${cx} 340" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite"/>`;
+  }
+  h += `</svg><div class="bx blue on" style="left:370px;top:90px;width:220px;height:60px;z-index:2">${B('Service cep-api','só envia a pods Ready')}</div>`;
+  for (let i = 0; i < N; i++){
+    const x = 170 + i*240;
+    h += `<div class="rp v1" data-p="v1-${i}" style="left:${x}px;top:222px;z-index:2"><b>v1287</b><span class="st">Running</span></div>`;
+    h += `<div class="rp v2" data-p="v2-${i}" style="left:${x}px;top:340px;z-index:2"><b>v1288</b><span class="st">Iniciando…</span></div>`;
+  }
+  h += `<div class="note" style="left:36px;top:430px;right:36px">maxSurge: 1 · maxUnavailable: 0 · readiness ok → entra no Service · preStop 10s → SIGTERM → ShutdownTimeout 25s</div>`;
+  h += `<div class="done">Rollout concluído: v1287 → v1288 · rollback: helm rollback cep-api 1 -n cep</div>`;
+  root.innerHTML = h;
+  const P = {}, L = {};
+  root.querySelectorAll('[data-p]').forEach(e => P[e.dataset.p] = e);
+  root.querySelectorAll('[data-r]').forEach(e => L[e.dataset.r] = e);
+  const done = root.querySelector('.done');
+  const end = S0 + (N-1)*STEP + 3;
+  return { end: end + 1, update(t){
+    for (let i = 0; i < N; i++){
+      const s = S0 + i*STEP, v1 = P['v1-'+i], v2 = P['v2-'+i];
+      const st2 = t < s ? 'none' : t < s + 1.5 ? 'start' : 'ready';
+      const st1 = t < s + 1.5 ? 'run' : t < s + 3 ? 'term' : 'gone';
+      v2.classList.toggle('start', st2 === 'start'); v2.classList.toggle('ready', st2 === 'ready');
+      v2.lastChild.textContent = st2 === 'ready' ? 'Ready · recebendo tráfego' : 'Iniciando · readiness…';
+      v1.classList.toggle('term', st1 === 'term'); v1.classList.toggle('gone', st1 === 'gone');
+      v1.lastChild.textContent = st1 === 'run' ? 'Running' : st1 === 'term' ? 'Terminating · preStop' : 'Removido';
+      L['v1-'+i].classList.toggle('on', st1 === 'run');
+      L['v2-'+i].classList.toggle('on', st2 === 'ready');
+    }
+    done.classList.toggle('on', t >= end);
+  }};
+}};
+
+V.scale = { build(root){
+  // simulação ilustrativa: 3 pods da API por nó, HPA 2..8, nós 2..4
+  const CAP = 3, MINR = 2, MAXR = 8, SIM = 22;
+  const demand = x => { // réplicas necessárias para manter 70% de CPU
+    if (x < 3) return 1.4;
+    if (x < 8) return 1.4 + (x-3)/5 * 6.4;
+    if (x < 14) return 7.8 + Math.sin((x-8)*1.4)*.25;
+    if (x < 18) return 7.8 - (x-14)/4 * 6.6;
+    return 1.2;
+  };
+  const raw = x => clamp(Math.ceil(demand(Math.max(0, x - 1))), MINR, MAXR);
+  const desired = x => Math.max(raw(x), raw(x-1), raw(x-2), raw(x-3));
+  const nodesReady = x => clamp(Math.max(Math.ceil(desired(Math.max(0,x-3.5))/CAP), Math.ceil(desired(Math.max(0,x-6))/CAP)), 2, 4);
+  const sim = x => { const d = desired(x), n = nodesReady(x), run = Math.min(d, n*CAP), need = clamp(Math.ceil(d/CAP), 2, 4);
+    return {d, n, run, pend: d - run, prov: Math.max(0, need - n), cpu: clamp(demand(x) / run * 70, 8, 99)}; };
+
+  let h = `<div class="sc-panel" style="left:36px;top:84px;width:430px;height:350px"><span class="ph">CPU média (% do request) · réplicas prontas</span>
+    <svg width="430" height="350" viewBox="0 0 430 350" style="position:absolute;inset:0">
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="44" y1="300" x2="410" y2="300" stroke="#25385A"/><line x1="44" y1="40" x2="44" y2="300" stroke="#25385A"/>
+        <line x1="44" y1="118" x2="410" y2="118" stroke="#F2B544" stroke-dasharray="4 5" opacity=".7"/>
+        <text x="8" y="304">0%</text><text x="4" y="122">70%</text><text x="2" y="44">100%</text>
+        <text x="350" y="112" fill="#F2B544">alvo HPA</text>
+        <text x="44" y="320">0 s</text><text x="380" y="320">${SIM} s</text>
+      </g>
+      <polyline class="cpu" fill="none" stroke="#5B95FF" stroke-width="2.5" points=""/>
+      <polyline class="rep" fill="none" stroke="#3CCB8E" stroke-width="2" points=""/>
+    </svg></div>
+    <div class="sc-panel" style="left:494px;top:84px;width:430px;height:350px"><span class="ph">node pool system · autoscaler 2–4 nós</span></div>`;
+  for (let i = 0; i < 4; i++){
+    const x = 494 + 18 + (i%3)*138, y = 84 + 40 + Math.floor(i/3)*150;
+    h += `<div class="node" data-n="${i}" style="left:${x}px;top:${y}px"><span class="nl">aks-system-${i}</span><div class="slots"><div class="slot sys">sys</div>${'<div class="slot"></div>'.repeat(CAP)}</div></div>`;
+  }
+  h += `<div class="pend" style="left:650px;top:290px;width:260px;flex-wrap:wrap"></div>`;
+  h += `<div class="stat" style="left:36px;top:452px">CPU <b class="s-cpu">0%</b> · réplicas <b class="s-rep">2</b> · nós <b class="s-node">2</b> · Pending <b class="s-pend">0</b></div>`;
+  h += `<div class="note" style="left:36px;top:482px;right:36px">Simulação ilustrativa (3 réplicas por nó). Pod novo: segundos. Nó novo: alguns minutos, aqui comprimidos.</div>`;
+  root.innerHTML = h;
+  const cpuL = root.querySelector('.cpu'), repL = root.querySelector('.rep');
+  const nodes = [...root.querySelectorAll('.node')], pend = root.querySelector('.pend');
+  const sCpu = root.querySelector('.s-cpu'), sRep = root.querySelector('.s-rep'), sNode = root.querySelector('.s-node'), sPend = root.querySelector('.s-pend');
+  const X = x => 44 + x/SIM*366, Yc = c => 300 - c/100*260, Yr = r => 300 - r/MAXR*240;
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10);
+    if (k === lastK) return; lastK = k;
+    let pc = [], pr = [];
+    for (let s = 0; s <= x + 1e-6; s += .2){ const q = sim(s); pc.push(X(s).toFixed(1)+','+Yc(q.cpu).toFixed(1)); pr.push(X(s).toFixed(1)+','+Yr(q.run).toFixed(1)); }
+    cpuL.setAttribute('points', pc.join(' ')); repL.setAttribute('points', pr.join(' '));
+    const q = sim(x);
+    nodes.forEach((nd, i) => {
+      const ready = i < q.n, prov = !ready && i < q.n + q.prov;
+      nd.classList.toggle('off', !ready && !prov); nd.classList.toggle('prov', prov);
+      nd.querySelector('.nl').textContent = prov ? 'provisionando…' : 'aks-system-' + i;
+      [...nd.querySelectorAll('.slot:not(.sys)')].forEach((sl, j) => {
+        const run = ready && (i*CAP + j) < q.run; sl.classList.toggle('run', run); sl.textContent = run ? 'api' : '';
+      });
+    });
+    pend.innerHTML = q.pend ? `<span>Pending:</span>` + '<i></i>'.repeat(q.pend) : '';
+    sCpu.textContent = Math.round(q.cpu) + '%'; sRep.textContent = q.run; sNode.textContent = q.n; sPend.textContent = q.pend;
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rolling') end = 2.5 + 2*3.4 + 4;
+  else if (t === 'scale') end = 23.5;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>
+      <button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button></div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+renderList('studyList', 'progStudy', 'aks-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', 'aks-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* início: primeira cena visível e parada */
+load(0); syncPlayBtn(); requestAnimationFrame(frame);
+</script>
+
+</body></html>

@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha de Redes, SO e Concorrência</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"async-corrida.mjs": "// async-corrida.mjs: uma thread só, e mesmo assim condição de corrida\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst banco = { saldo: 100 };\nconst lerSaldo = async () => { await sleep(10); return banco.saldo; };   // \"I/O\"\nconst gravarSaldo = async (v) => { await sleep(10); banco.saldo = v; };\n\n// check-then-act com await no meio: o event loop intercala as duas chamadas\nasync function sacar(valor) {\n  const saldo = await lerSaldo();            // as duas leem 100\n  if (saldo < valor) return 'recusado';\n  await gravarSaldo(saldo - valor);          // as duas gravam 100 - 80\n  return 'ok';\n}\n\n// correção 1: mutex assíncrono (fila de promessas) — vale dentro de UM processo\nfunction criarMutex() {\n  let fila = Promise.resolve();\n  return (fn) => {\n    const vez = fila.then(fn);\n    fila = vez.catch(() => {});              // erro de um não trava os próximos\n    return vez;\n  };\n}\nconst exclusivo = criarMutex();\n\nbanco.saldo = 100;\nconsole.log('sem trava:', await Promise.all([sacar(80), sacar(80)]), 'saldo', banco.saldo);\n\nbanco.saldo = 100;\nconst r = await Promise.all([exclusivo(() => sacar(80)), exclusivo(() => sacar(80))]);\nconsole.log('com mutex:', r, 'saldo', banco.saldo);\n\n// correção 2, a que vale com vários processos e réplicas: a operação atômica no banco\n//   UPDATE contas SET saldo = saldo - 80 WHERE id = 1 AND saldo >= 80;  -- 1 linha ou 0\n// ou versão otimista: ... WHERE id = 1 AND versao = 7  (0 linhas → releia e tente)\n// $ node async-corrida.mjs\n// sem trava: [ 'ok', 'ok' ] saldo 20        ← dois saques de 80 com saldo 100\n// com mutex: [ 'ok', 'recusado' ] saldo 20", "corrida.mjs": "// corrida.mjs: 4 threads somando no mesmo contador (Node 22, sem dependências)\nimport { Worker, isMainThread, workerData } from 'node:worker_threads';\n\nconst THREADS = 4, VOLTAS = 1_000_000;\nconst SEM = 0, ATOM = 1, MUTEX = 2, TRAVA = 3;   // posições na memória compartilhada\n\n// mutex mínimo: CAS para pegar, Atomics.wait (futex) para dormir sem gastar CPU\nfunction lock(m) {\n  while (Atomics.compareExchange(m, TRAVA, 0, 1) !== 0) Atomics.wait(m, TRAVA, 1);\n}\nfunction unlock(m) {\n  Atomics.store(m, TRAVA, 0);\n  Atomics.notify(m, TRAVA, 1);                   // acorda no máximo uma thread\n}\n\nif (isMainThread) {\n  const m = new Int32Array(new SharedArrayBuffer(4 * 4)); // 4 inteiros de 32 bits\n  const t0 = performance.now();\n  await Promise.all(Array.from({ length: THREADS }, () => new Promise((ok) =>\n    new Worker(new URL(import.meta.url), { workerData: m }).on('exit', ok))));\n  const esperado = THREADS * VOLTAS;\n  console.log(`esperado      ${esperado}`);\n  console.log(`sem proteção  ${m[SEM]}  (perdeu ${esperado - m[SEM]})`);\n  console.log(`Atomics.add   ${m[ATOM]}`);\n  console.log(`com mutex     ${m[MUTEX]}`);\n  console.log(`tempo         ${Math.round(performance.now() - t0)} ms`);\n} else {\n  const m = workerData;                          // a MESMA memória, não uma cópia\n  for (let i = 0; i < VOLTAS; i++) {\n    m[SEM]++;                    // lê, soma, escreve: outra thread entra no meio\n    Atomics.add(m, ATOM, 1);     // uma operação indivisível (lock xadd no x86)\n    lock(m);                     // seção crítica: uma thread por vez\n    m[MUTEX] = m[MUTEX] + 1;\n    unlock(m);\n  }\n}\n// $ node corrida.mjs\n// esperado      4000000\n// sem proteção  3852901  (perdeu 147099)   ← muda a cada execução\n// Atomics.add   4000000\n// com mutex     4000000", "pool.mjs": "// pool.mjs: o que roda no event loop e o que vai para o pool de threads da libuv\nimport { pbkdf2, pbkdf2Sync } from 'node:crypto';\n\nconst t0 = performance.now();\nconst agora = () => `${String(Math.round(performance.now() - t0)).padStart(5)} ms`;\n\n// 1) um timer a cada 100 ms: prova de que o event loop está livre\nlet ticks = 0;\nconst timer = setInterval(() => ticks++, 100);\n\n// 2) oito hashes assíncronos: vão para o pool (padrão: 4 threads)\nconst hash = (i) => new Promise((ok) =>\n  pbkdf2('senha', 'sal', 300_000, 64, 'sha512', () => {\n    console.log(`${agora()}  hash ${i} pronto · ticks do timer: ${ticks}`);\n    ok();\n  }));\nawait Promise.all([1, 2, 3, 4, 5, 6, 7, 8].map(hash));\n// as 4 primeiras terminam juntas, as 4 seguintes esperam thread livre,\n// e o timer continuou rodando o tempo todo\n\n// 3) a mesma conta síncrona: roda NA thread do event loop e congela tudo\nconst antes = ticks;\npbkdf2Sync('senha', 'sal', 300_000, 64, 'sha512');\nconsole.log(`${agora()}  pbkdf2Sync · ticks durante a conta: ${ticks - antes}`);\nsetTimeout(() => {\n  console.log(`${agora()}  depois do Sync, o timer volta: ${ticks - antes} tick(s)`);\n  clearInterval(timer);\n}, 150);\n// UV_THREADPOOL_SIZE=8 node pool.mjs  → as 8 terminam juntas (se houver núcleos)\n// sockets NÃO usam o pool: são não bloqueantes e vigiados pelo epoll", "rtp-udp.mjs": "// rtp-udp.mjs: pacotes de voz G.711 (20 ms) sobre UDP, com perda e jitter simulados\nimport dgram from 'node:dgram';\n\nconst PACOTES = 100, PERDA = 0.05, JITTER_MAX = 30;      // 5% perdidos, até 30 ms de atraso\nlet semente = 42; const rnd = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);\n\nconst rx = dgram.createSocket('udp4'), tx = dgram.createSocket('udp4');\nlet esperado = 0, recebidos = 0, foraDeOrdem = 0, jitter = 0, anterior = null;\n\nrx.on('message', (pkt) => {\n  const seq = pkt.readUInt16BE(2), ts = pkt.readUInt32BE(4);   // cabeçalho RTP: 12 bytes\n  const chegada = performance.now() * 8;                        // relógio de 8 kHz\n  recebidos++;\n  if (seq < esperado) foraDeOrdem++; else esperado = seq + 1;\n  if (anterior) {                                               // jitter da RFC 3550\n    const d = (chegada - anterior.chegada) - (ts - anterior.ts);\n    jitter += (Math.abs(d) - jitter) / 16;\n  }\n  anterior = { chegada, ts };\n});\n\nrx.bind(0, () => {\n  const porta = rx.address().port;\n  for (let seq = 0; seq < PACOTES; seq++) {\n    setTimeout(() => {                                          // um pacote a cada 20 ms\n      const pkt = Buffer.alloc(12 + 160);                       // 160 B = 20 ms de G.711\n      pkt.writeUInt8(0x80, 0);                                  // versão 2\n      pkt.writeUInt8(0, 1);                                     // payload type 0 = PCMU\n      pkt.writeUInt16BE(seq, 2);\n      pkt.writeUInt32BE(seq * 160, 4);                          // timestamp em amostras\n      pkt.writeUInt32BE(0x1234abcd, 8);                         // SSRC: quem fala\n      if (rnd() < PERDA) return;                                // perdido: ninguém reenvia\n      setTimeout(() => tx.send(pkt, porta, '127.0.0.1'), rnd() * JITTER_MAX);\n    }, seq * 20);\n  }\n  setTimeout(() => {\n    const perdidos = PACOTES - recebidos;\n    console.log(`enviados ${PACOTES} · recebidos ${recebidos} · perdidos ${perdidos}`);\n    console.log(`fora de ordem ${foraDeOrdem} · jitter ${(jitter / 8).toFixed(1)} ms`);\n    console.log('em TCP, um pacote perdido seguraria todos os seguintes até a retransmissão');\n    rx.close(); tx.close();\n  }, PACOTES * 20 + 200);\n});\n// $ node rtp-udp.mjs\n// enviados 100 · recebidos 94 · perdidos 6\n// fora de ordem 6 · jitter 10.8 ms"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Nova · Redes, SO e Concorrência =====================
+const CONF = {
+  title: 'Trilha de Redes, SO e Concorrência', file: 'Nova - Redes, SO e Concorrência', key: 'nso',
+  eyebrow: 'Trilha nova · Fundamentos', h1: 'O que acontece por baixo do seu código: kernel, threads e rede',
+  lead: 'Roteiro em vídeo com a base que as entrevistas de sênior e staff cobram por baixo do framework: processos e threads, escalonamento, memória virtual, syscalls e descritores, I/O bloqueante e não bloqueante, epoll e io_uring sob o event loop do Node, condições de corrida, travas, deadlock e atomics, TCP, UDP e o porquê do RTP, DNS, TLS 1.3, HTTP/2 e HTTP/3, load balancer e NAT, e as ferramentas Linux para diagnosticar.',
+  pills: ['Processos e threads', 'Memória virtual', 'epoll e io_uring', 'Event loop do Node', 'Corrida e deadlock', 'Atomics', 'TCP, UDP e QUIC', 'Diagnóstico Linux'],
+  term: 'bash · ~/nso-lab',
+  faqPlaceholder: 'Buscar: deadlock, epoll, TIME_WAIT, Nagle, HTTP/3…',
+  matriz: {title: 'Modelos de I/O e concorrência', desc: 'Toda plataforma de servidor é uma destas formas de esperar I/O. Saber qual é a sua diz onde ela trava.', cols: ['Modelo', 'Como espera I/O', 'Bom para', 'Armadilha', 'Onde aparece']},
+};
+const TITLE = {k: 'Trilha nova · Fundamentos', h: 'Redes, SO e concorrência',
+  p: 'O nível abaixo do framework: por que o Node aguenta dez mil conexões numa thread, de onde vem uma condição de corrida e o que acontece entre o Enter e a resposta.',
+  chips: ['threads', 'memória virtual', 'epoll', 'event loop', 'mutex e atomics', 'TCP e UDP', 'TLS e HTTP/3', 'strace e ss']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Desça um nível antes de chutar',
+  p: 'Abaixo do vídeo estão os modelos de I/O lado a lado, os links para as cenas relacionadas, a trilha de estudo, o checklist e as perguntas de entrevista.',
+  chips: ['meça com strace e ss', 'nunca CPU no loop', 'trave em ordem', 'UDP para voz', 'keep-alive > idle do LB']};
+
+const SCENES = [
+/* ---------- PROCESSOS E MEMÓRIA ---------- */
+{ id:'intro', ch:'Processos e memória', title:'O nível abaixo do framework',
+  say:'Entrevista de big tech para sênior e staff costuma descer um nível abaixo do framework: por que o Node aguenta dez mil conexões numa thread, o que é uma condição de corrida, o que acontece quando você digita uma URL. Esta trilha dá essa base: processos e threads, memória virtual, syscalls e descritores, epoll e io uring por baixo do event loop, travas e atomics, TCP, UDP e o porquê do RTP, DNS, TLS, HTTP três e as ferramentas Linux para diagnosticar.',
+  v:{type:'title'} },
+
+{ id:'proc-thread', ch:'Processos e memória', title:'Processos × threads',
+  say:'Processo é um programa em execução com o próprio espaço de endereço, os próprios descritores de arquivo e ao menos uma thread. Thread é uma linha de execução dentro do processo: compartilha memória e arquivos, mas tem a própria pilha e os próprios registradores. Por isso criar e trocar thread é mais barato, e um bug numa thread corrompe todas. No Linux, os dois são tarefas para o escalonador; muda o que compartilham. O fork copia o processo sob demanda, com copy-on-write.',
+  v:GRID(3, [
+    ['Processo','isolamento',['espaço de endereço próprio','falha não contamina os outros','fork com copy-on-write','IPC: pipe, socket, shm'],'blue'],
+    ['Thread','compartilhamento',['mesma memória e arquivos','pilha e registradores próprios','criar e trocar é mais barato','bug de uma afeta todas'],'amber'],
+    ['Na sua stack','',['Node: 1 thread JS + pool libuv','cluster e PM2: processos','.NET: pool de threads + async','PostgreSQL: processo por conexão'],'green'],
+  ], {h:250, step:4, rodape:'No Linux, processo e thread são tarefas (clone) com mais ou menos coisas compartilhadas'}) },
+
+{ id:'escalonamento', ch:'Processos e memória', title:'Escalonamento e troca de contexto',
+  say:'O escalonador decide qual tarefa roda em cada núcleo. O Linux é preemptivo: cada tarefa recebe uma fatia de tempo e o timer a interrompe; desde o kernel seis ponto seis o algoritmo padrão é o EEVDF, sucessor do CFS. Trocar de contexto custa microssegundos, mais o cache e a TLB que esfriam. Tarefa limitada por I/O passa quase todo o tempo dormindo; limitada por CPU disputa núcleos. Mais threads que núcleos em trabalho de CPU só aumenta a troca de contexto.',
+  v:{type:'boxes', defs:[
+    ['Preempção','o timer interrompe a fatia', .8],
+    ['EEVDF','padrão desde o Linux 6.6 (antes CFS)', 3],
+    ['Troca de contexto','µs + cache e TLB frios', 5.4],
+    ['nice','prioridade de -20 a 19', 7.4],
+    ['I/O-bound','dorme esperando o dispositivo', 9.4],
+    ['CPU-bound','disputa núcleos', 11.4],
+  ], items:[
+    {at:13, x:470,y:92,w:454,h:220, cls:'region', html:'<span class="rl">regras de bolso</span>'+UL('CPU-bound: threads ≈ núcleos','I/O-bound: muita espera, poucas threads','load average no Linux conta R e D','vmstat 1: coluna cs = trocas por segundo','estado D: preso em I/O, nem kill -9 tira')},
+    {at:16, x:470,y:332,w:454,h:170, cls:'green', html:B('Medir','')+UL('pidstat -w: trocas por processo','perf sched latency: espera na fila','taskset e cgroups: fixar e limitar')},
+  ]}},
+
+{ id:'memoria-virtual', ch:'Processos e memória', title:'Memória virtual e paginação',
+  say:'Cada processo enxerga um espaço de endereço só seu: a memória virtual. A MMU traduz endereço virtual em físico usando tabelas de páginas, em geral de quatro kilobytes, e a TLB guarda as traduções recentes. Página ainda não mapeada gera page fault: menor, quando só falta mapear, ou maior, quando precisa ler do disco. Por isso o VSZ, o virtual reservado, é muito maior que o RSS, o que está de fato na RAM. Faltou memória? O swap deixa tudo lento e o OOM killer mata um processo.',
+  v:FLOW([
+    ['Endereço virtual','0x7f3a…','blue'],
+    ['TLB','acertou: nanossegundos','green'],
+    ['Tabela de páginas','páginas de 4 KiB','blue'],
+    ['RAM física','ou page fault','amber'],
+  ], {y:100, h:96, step:1.8, cards:[
+    ['Page fault','',['menor: só falta mapear','maior: lê do disco (lento)','fork: copia a página só na escrita'],'amber'],
+    ['Leia os números','',['VSZ: reservado, pode ser enorme','RSS: o que ocupa RAM agora','swap: tudo fica lento','OOM killer: dmesg conta quem morreu'],'green'],
+  ]}) },
+
+{ id:'stack-heap', ch:'Processos e memória', title:'Stack × heap',
+  say:'A pilha guarda os quadros de chamada: variáveis locais, parâmetros e endereço de retorno. É uma por thread, alocar é só mover um ponteiro e o tamanho é fixo, em geral oito megabytes por thread no Linux; recursão sem fim estoura a pilha. O heap guarda o que vive além da função: objetos, arrays, buffers. Alocar custa mais, fragmenta e exige liberar, à mão em C ou pelo coletor de lixo em Node, C# e Java. Vazamento em linguagem com GC é referência esquecida, como um Map que só cresce.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'blue', html:B('Pilha (stack)','uma por thread')+UL('um quadro por chamada','locais, parâmetros, retorno','alocar = mover ponteiro','tamanho fixo: ~8 MB no Linux','recursão sem fim: estouro')},
+    {at:6, x:494,y:92,w:430,h:250, cls:'amber', html:B('Heap','compartilhado pelo processo')+UL('vive além da função','objetos, arrays, buffers','alocação mais cara, fragmenta','GC em Node, C# e Java','vazamento: referência esquecida')},
+    {at:12, x:36,y:362,w:888,h:140, cls:'region', html:'<span class="rl">no Node</span>'+UL('RangeError: Maximum call stack size exceeded = pilha','heap do V8: --max-old-space-size=4096 · conteúdo de Buffer fica fora desse heap','process.memoryUsage(): rss, heapUsed, external')},
+  ]}},
+
+/* ---------- KERNEL E I/O ---------- */
+{ id:'syscalls', ch:'Kernel e I/O', title:'Syscalls: pedir ao kernel',
+  say:'Seu código roda em modo usuário e não toca em disco, rede ou outro processo diretamente. Para isso pede ao kernel com uma chamada de sistema: read, write, open, socket, accept, mmap, futex. Cruzar para o modo kernel tem custo, por isso bibliotecas juntam escritas em buffer, e chamadas como clock gettime nem entram no kernel, graças ao vDSO. O strace mostra cada syscall de um processo, e é a forma mais rápida de ver em que um programa travado está esperando.',
+  v:T('c|strace -f -e trace=socket,accept4,read,write,epoll_pwait node servidor.js',
+      'o|socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_IP) = 21',
+      'o|epoll_pwait(15, [{events=EPOLLIN, data={u32=21}}], 1024, 0, NULL, 8) = 1',
+      'o|accept4(21, NULL, NULL, SOCK_CLOEXEC|SOCK_NONBLOCK) = 23',
+      'o|write(23, "oi\\n", 3)              = 3',
+      'c|# resumo: quais syscalls e quanto tempo',
+      'c|strace -c -f node -e "require(\'fs\').readFileSync(\'/etc/hostname\')"',
+      'o|% time     seconds  usecs/call     calls    errors syscall',
+      'o| 76.92    0.062846         938        67         9 futex',
+      'o| 19.54    0.015965        3991         4           epoll_pwait',
+      'c|# processo travado: em que syscall ele está?',
+      'c|strace -tt -T -p 4242',
+      'err|14:02:11.532081 read(17,    ← parado: esperando resposta no socket 17')},
+
+{ id:'fds', ch:'Kernel e I/O', title:'File descriptors: tudo é arquivo',
+  say:'Para o kernel, arquivo, socket, pipe, terminal e até o próprio epoll são descritores: um número inteiro na tabela do processo. Zero é a entrada, um a saída, dois o erro; o resto vem de open, socket e accept. Cada conexão TCP aberta consome um descritor, e o limite padrão em muitas distribuições é mil e vinte e quatro: o erro EMFILE, too many open files, aparece no pico de tráfego ou num vazamento de conexões. Suba o limite com ulimit ou no systemd e conte os abertos em barra proc.',
+  v:{type:'boxes', defs:[
+    ['0 · 1 · 2','stdin, stdout, stderr', .8],
+    ['3, 4, 5…','open, socket, accept, pipe', 3],
+    ['Tudo é arquivo','read e write servem para todos', 5.4],
+    ['EMFILE','too many open files', 8],
+    ['ulimit -n','limite por processo (comum: 1024)', 10.5],
+  ], items:[
+    {at:12.5, x:470,y:92,w:454,h:190, cls:'ext', html:B('Sintomas','')+UL('EMFILE no pico de tráfego','número de fds só cresce: vazamento','accept falha, conexões recusadas')},
+    {at:15, x:470,y:302,w:454,h:200, cls:'green', html:B('O que fazer','')+UL('ls /proc/PID/fd | wc -l','lsof -p PID: quem são','systemd: LimitNOFILE=65535','feche sockets e streams no erro')},
+  ]}},
+
+{ id:'io-modelos', ch:'Kernel e I/O', title:'Quatro formas de esperar I/O',
+  say:'Há quatro formas de esperar I/O. Bloqueante: a thread chama read e dorme até chegar dado; simples, mas dez mil conexões pedem dez mil threads. Não bloqueante: read volta na hora com EAGAIN e você tenta de novo, gastando CPU. Multiplexado: uma thread pergunta ao kernel quais dos dez mil sockets estão prontos e só lê esses; é o select, o poll e o epoll. E por conclusão: você entrega o pedido e o kernel avisa quando terminou; é o io uring e o IOCP do Windows.',
+  v:FLOW([
+    ['Bloqueante','1 thread por conexão','ext'],
+    ['Não bloqueante','EAGAIN, tenta de novo','amber'],
+    ['Multiplexado','epoll: quem está pronto?','blue'],
+    ['Por conclusão','io_uring · IOCP','green'],
+  ], {y:100, h:96, step:2.4, cards:[
+    ['Prontidão (readiness)','',['"o socket 21 pode ser lido"','você ainda faz o read','select, poll, epoll, kqueue'],'blue'],
+    ['Conclusão (completion)','',['"li 4 KB no seu buffer"','o kernel faz a operação','io_uring no Linux, IOCP no Windows'],'green'],
+  ]}) },
+
+{ id:'epoll', ch:'Kernel e I/O', title:'epoll, kqueue e io_uring',
+  say:'select e poll recebem a lista inteira de descritores a cada chamada, com custo proporcional ao total, não aos prontos. O epoll guarda o interesse no kernel: epoll ctl registra uma vez e epoll wait devolve só os prontos. Pode avisar por nível, enquanto houver dado, ou por borda, só na mudança. O kqueue faz o mesmo no macOS e nos BSDs. O io uring, desde o Linux cinco ponto um, usa duas filas em memória compartilhada: você submete pedidos e colhe conclusões com poucas syscalls, inclusive para disco.',
+  v:GRID(3, [
+    ['select · poll','o jeito antigo',['lista inteira a cada chamada','custo O(total)','select: máx. 1024 fds'],'ext'],
+    ['epoll · kqueue','prontidão',['interesse registrado no kernel','devolve só os prontos','nível ou borda','Node, Nginx, Redis'],'blue'],
+    ['io_uring','conclusão',['fila de submissão + conclusão','memória compartilhada','disco e rede assíncronos','alguns ambientes bloqueiam'],'green'],
+  ], {h:250, step:4, rodape:'Redis atende dezenas de milhares de clientes com um laço de eventos sobre epoll numa thread'}) },
+
+{ id:'libuv', ch:'Kernel e I/O', title:'Como o event loop do Node usa isso',
+  say:'O Node é V8 mais libuv. A libuv roda o event loop e, na fase de poll, dorme no epoll, no kqueue ou no IOCP até um socket ficar pronto ou o próximo timer vencer. Sockets, pipes e timers não usam threads extras. O que o sistema não oferece de forma assíncrona e portável vai para um pool de quatro threads: sistema de arquivos, dns lookup, que usa getaddrinfo, zlib e criptografia como pbkdf2 e scrypt. Se o pool enche, essas operações esperam na fila, mesmo com CPU sobrando.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'blue', html:B('Event loop','uma thread, fases da libuv')+UL('timers: setTimeout, setInterval','pending callbacks','poll: dorme no epoll','check: setImmediate','close callbacks')},
+    {at:7, x:494,y:92,w:430,h:250, cls:'amber', html:B('Pool de threads','UV_THREADPOOL_SIZE = 4')+UL('fs.* (readFile, stat…)','dns.lookup (getaddrinfo)','zlib assíncrono','crypto: pbkdf2, scrypt, randomBytes')},
+    {at:13, x:36,y:362,w:888,h:140, cls:'region', html:'<span class="rl">sem thread extra</span>'+UL('sockets TCP e UDP, pipes, timers, dns.resolve (c-ares): direto no epoll, kqueue ou IOCP','Promises e process.nextTick: microtarefas, rodam logo após cada callback','callback longo atrasa todos: meça com perf_hooks.monitorEventLoopDelay()')},
+  ]}},
+
+{ id:'lab-pool', ch:'Kernel e I/O', title:'Lab: o loop livre e o pool cheio',
+  say:'O laboratório mostra a fronteira. Um timer marca o event loop a cada cem milissegundos. Oito hashes pbkdf2 assíncronos vão para o pool: os quatro primeiros terminam juntos, os quatro seguintes esperam thread livre, e o timer continua contando, porque o loop está livre. Depois, a mesma conta síncrona roda na thread do loop, e o timer não anda. Com UV threadpool size oito, os oito terminam juntos, se houver núcleos. É o mesmo efeito de muitos readFile atrasando o dns lookup.',
+  v:S('pool.mjs','pool.mjs','js')},
+
+/* ---------- CONCORRÊNCIA ---------- */
+{ id:'corrida', ch:'Concorrência', title:'Condição de corrida',
+  say:'Condição de corrida é quando o resultado depende da ordem em que as threads se intercalam. O x mais mais parece uma operação, mas são três: ler, somar e gravar. As duas threads leem cinco, as duas gravam seis, e uma soma some. O trecho que mexe em dado compartilhado é a seção crítica. Concorrência é lidar com muitas coisas ao mesmo tempo; paralelismo é executar ao mesmo tempo, em núcleos diferentes. O Node é concorrente numa thread e ainda assim tem corrida entre awaits.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:300,h:56, cls:'blue', html:B('A lê x','5')},
+    {at:2.4, x:360,y:160,w:300,h:56, cls:'amber', html:B('B lê x','5')},
+    {at:4, x:36,y:228,w:300,h:56, cls:'blue', html:B('A grava x + 1','6')},
+    {at:5.6, x:360,y:296,w:300,h:56, cls:'amber', html:B('B grava x + 1','6, e não 7')},
+    {at:7.2, x:684,y:92,w:240,h:260, cls:'ext', html:B('Memória','x')+UL('5','5','6','6 ✗ (perdeu uma soma)')},
+    {at:10, x:36,y:372,w:430,h:130, cls:'green', html:B('Seção crítica','')+UL('ler-modificar-gravar compartilhado','proteja com trava ou atômico')},
+    {at:13, x:494,y:372,w:430,h:130, cls:'region', html:'<span class="rl">não confunda</span>'+UL('concorrência: lidar com muitas','paralelismo: executar ao mesmo tempo')},
+  ]}},
+
+{ id:'lab-corrida', ch:'Concorrência', title:'Lab: corrida e correção com Atomics',
+  say:'Quatro worker threads somam um milhão de vezes no mesmo SharedArrayBuffer, memória compartilhada de verdade, não cópia por mensagem. O contador sem proteção muda a cada execução e perde centenas de milhares de somas. Atomics add faz a soma numa operação indivisível e acerta sempre. O mutex mínimo usa compare exchange para pegar a trava e Atomics wait para dormir sem queimar CPU, que é o futex do Linux por baixo. Também acerta, e custa mais tempo: trava é contenção.',
+  v:S('corrida.mjs','corrida.mjs','js')},
+
+{ id:'mutex-semaforo', ch:'Concorrência', title:'Mutex, semáforo e condição',
+  say:'Mutex é exclusão mútua: uma thread por vez na seção crítica, e só quem trancou destranca. Semáforo é um contador de permissões: com dez, até dez entram; serve para limitar conexões ao banco ou chamadas a uma API. Variável de condição faz uma thread dormir até outra avisar que algo mudou, como fila não vazia. Read-write lock deixa muitos leitores ou um escritor. Spinlock gira em vez de dormir, só para esperas curtíssimas. Segure a trava pelo menor tempo e nunca faça I/O dentro dela.',
+  v:GRID(2, [
+    ['Mutex','um por vez',['só o dono destranca','proteja o menor trecho','nunca I/O com a trava na mão'],'blue'],
+    ['Semáforo','N permissões',['limita concorrência','pool de conexões, rate de API','qualquer um pode liberar'],'green'],
+    ['Variável de condição','dormir até mudar',['"a fila não está vazia"','esperar solta a trava e dorme','sempre em laço: while (!cond)'],'amber'],
+    ['RW lock · spinlock','',['muitos leitores ou um escritor','escritor pode passar fome','spin: só espera curtíssima'],'ext'],
+  ], {h:170, step:3, rodape:'C#: lock, SemaphoreSlim, ReaderWriterLockSlim · Node: Atomics.wait/notify · SQL: SELECT … FOR UPDATE'}) },
+
+{ id:'deadlock', ch:'Concorrência', title:'Deadlock: as quatro condições',
+  say:'Deadlock é quando threads esperam umas pelas outras para sempre. Exige as quatro condições de Coffman ao mesmo tempo: exclusão mútua, segurar e esperar, sem preempção e espera circular. Quebre qualquer uma e ele não acontece. A mais prática é a ordem global: numa transferência, trave sempre a conta de menor ID primeiro. Outras saídas: pegar tudo de uma vez ou try lock com timeout e recuo. O banco detecta o ciclo e aborta uma transação; seu código tenta de novo. Livelock é todos cedendo e ninguém andando.',
+  v:{type:'boxes', defs:[
+    ['Exclusão mútua','um dono por recurso', .8],
+    ['Segurar e esperar','tem um, pede outro', 2.8],
+    ['Sem preempção','ninguém toma à força', 4.8],
+    ['Espera circular','T1 → T2 → T1', 6.8],
+  ], items:[
+    {at:8.5, x:470,y:92,w:454,h:150, cls:'ext', html:B('O ciclo','transferências cruzadas')+UL('T1 trava conta 1, quer a 2','T2 trava conta 2, quer a 1')},
+    {at:11, x:470,y:262,w:454,h:240, cls:'green', html:B('Quebre uma condição','')+UL('ordem global: menor ID primeiro','pegar todas as travas de uma vez','tryLock com timeout e recuo','banco aborta uma: refaça a transação')},
+  ]}},
+
+{ id:'atomics', ch:'Concorrência', title:'Atomics, CAS e lock-free',
+  say:'Operação atômica é indivisível para as outras threads: add, exchange e o compare and swap, que troca o valor só se ele ainda for o esperado. Com CAS se constroem estruturas lock-free, em que alguma thread sempre progride mesmo que outra pare no meio: ler, calcular, tentar o CAS e repetir se alguém mudou antes. Cuidados: o problema ABA, quando o valor volta ao antigo, e a ordem de memória, porque CPU e compilador reordenam acessos. Na prática, use as filas prontas da plataforma.',
+  v:GRID(3, [
+    ['CAS','compare-and-swap',['troca só se ainda for o esperado','ler → calcular → tentar → repetir','base de mutex e contadores'],'blue'],
+    ['Lock-free','progresso garantido',['alguma thread sempre avança','wait-free: todas avançam','fila de Michael-Scott','ring buffer SPSC'],'green'],
+    ['Cuidados','',['ABA: o valor voltou, o resto não','ordem de memória: acquire/release','CAS falhando em laço = contenção','false sharing na linha de cache'],'amber'],
+  ], {h:250, step:4, rodape:'Use o pronto: ConcurrentQueue (.NET), java.util.concurrent, LMAX Disruptor · Atomics do JS são seq. consistentes'}) },
+
+{ id:'async-corrida', ch:'Concorrência', title:'Corrida sem threads no Node',
+  say:'Uma thread não salva você. A função sacar lê o saldo, espera um await e grava. Duas chamadas simultâneas leem cem, as duas aprovam oitenta e o saldo fica vinte: dinheiro criado do nada. A primeira correção é um mutex assíncrono, uma fila de promessas, que vale só dentro de um processo. Com várias réplicas da API, a correção de verdade é no banco: um update condicional atômico, que afeta uma linha ou nenhuma, ou trava otimista por versão. Async é concorrência e pede o mesmo cuidado.',
+  v:S('async-corrida.mjs','async-corrida.mjs','js')},
+
+/* ---------- TRANSPORTE ---------- */
+{ id:'camadas', ch:'Transporte', title:'O modelo TCP/IP',
+  say:'O modelo TCP IP tem quatro camadas. Enlace entrega quadros na rede local, com endereço MAC: Ethernet, Wi-Fi. Internet roteia pacotes entre redes por endereço IP, sem garantia de entrega. Transporte liga processos por porta: TCP com conexão, ordem e retransmissão; UDP só com o datagrama. Aplicação é HTTP, DNS, SIP e TLS. Cada camada encapsula a de cima. O MTU da Ethernet é mil e quinhentos bytes; tirando vinte de IP e vinte de TCP, sobram mil quatrocentos e sessenta por segmento.',
+  v:FLOW([
+    ['Aplicação','HTTP · DNS · SIP · TLS','green'],
+    ['Transporte','TCP · UDP · portas','blue'],
+    ['Internet','IP · roteamento','blue'],
+    ['Enlace','Ethernet · Wi-Fi · MAC','amber'],
+  ], {y:100, h:96, step:1.8, cards:[
+    ['Encapsulamento','',['dados → segmento → pacote → quadro','cada camada põe seu cabeçalho','MTU 1500 − 20 IP − 20 TCP = MSS 1460'],'blue'],
+    ['Quem enxerga o quê','',['switch: MAC (L2)','roteador e NAT: IP (L3)','balanceador L4: IP e porta','balanceador L7 e proxy: HTTP'],'green'],
+  ]}) },
+
+{ id:'tcp-handshake', ch:'Transporte', title:'TCP: abrir, fechar e TIME_WAIT',
+  say:'O TCP abre em três passos: SYN, SYN ACK e ACK, um RTT inteiro antes do primeiro byte útil. No servidor, a conexão espera na fila SYN e depois na fila de accept, limitada pelo backlog; se o app demora a chamar accept, conexões são descartadas. Fechar leva FIN e ACK em cada sentido. Quem fecha primeiro fica em TIME WAIT por duas vezes o tempo de vida máximo do segmento, sessenta segundos no Linux, para pacotes atrasados não caírem numa conexão nova. Muitas conexões curtas de saída esgotam as portas efêmeras.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:170,h:56, cls:'blue', html:B('Cliente','porta efêmera')},
+    {at:.8, x:754,y:92,w:170,h:56, cls:'green', html:B('Servidor',':443 em LISTEN')},
+    {at:2, x:380,y:150,w:200,h:36, cls:'ns', html:NOTE('SYN  →', 'blue')},
+    {at:3.2, x:380,y:200,w:200,h:36, cls:'ns', html:NOTE('←  SYN-ACK', 'green')},
+    {at:4.4, x:380,y:250,w:200,h:36, cls:'ns', html:NOTE('ACK  →  (1 RTT)', 'blue')},
+    {at:6.5, x:36,y:318,w:430,h:184, cls:'amber', html:B('Filas do servidor','')+UL('fila SYN: handshake pela metade','fila de accept: pronta, esperando o app','backlog: Node usa 511 por padrão','cheia: SYN descartado')},
+    {at:11, x:494,y:318,w:430,h:184, cls:'ext', html:B('TIME_WAIT','em quem fecha primeiro')+UL('2 × MSL: 60 s no Linux','protege de pacote atrasado','cliente com muitas conexões curtas:','esgota portas → keep-alive e pool')},
+  ], lines:[
+    {at:2, d:'M206 190 L 754 190', cls:'flow'},
+    {at:3.2, d:'M754 240 L 206 240', cls:'flow'},
+    {at:4.4, d:'M206 290 L 754 290', cls:'flow'},
+  ]}},
+
+{ id:'tcp-fluxo', ch:'Transporte', title:'Fluxo, congestionamento e Nagle',
+  say:'Controle de fluxo protege o receptor: ele anuncia a janela, quantos bytes ainda cabem no buffer, e o emissor não passa disso. Controle de congestionamento protege a rede: a janela começa com cerca de dez segmentos, dobra a cada RTT no slow start e é cortada quando há perda. O padrão do Linux é o CUBIC; o BBR, do Google, mede banda e RTT em vez de esperar perda. E o Nagle segura pacotes pequenos enquanto há dado sem ACK; junto com o ACK atrasado do outro lado, vira dezenas de milissegundos de espera.',
+  v:GRID(3, [
+    ['Controle de fluxo','protege o receptor',['janela anunciada (rwnd)','buffer cheio → janela zero','window scaling: até 1 GiB'],'blue'],
+    ['Congestionamento','protege a rede',['cwnd inicial ≈ 10 segmentos','slow start: dobra por RTT','perda → corta · CUBIC, BBR'],'green'],
+    ['Nagle','junta pacotes pequenos',['+ ACK atrasado = espera','TCP_NODELAY desliga','net: socket.setNoDelay()','http do Node: já vem desligado'],'amber'],
+  ], {h:250, step:4, rodape:'Vazão máxima ≈ janela ÷ RTT: 64 KB com RTT de 100 ms ≈ 5 Mbit/s, por isso existe window scaling'}) },
+
+{ id:'udp-voip', ch:'Transporte', title:'UDP e por que VoIP usa',
+  say:'UDP manda datagramas sem conexão, sem ordem e sem retransmissão. Para voz, isso é vantagem: um pacote de vinte milissegundos que chega tarde já não serve, e esperar a retransmissão, como o TCP faria, congela todos os seguintes. O RTP leva o áudio sobre UDP com sequência e timestamp, e o jitter buffer do receptor reordena e absorve a variação. O SIP sinaliza, em geral na porta cinco zero seis zero, e o Asterisk usa portas RTP de dez mil a vinte mil. Atrás de NAT, o SDP anuncia o IP privado e o áudio some.',
+  v:{type:'boxes', defs:[
+    ['UDP','sem conexão, ordem ou reenvio', .8],
+    ['RTP','sequência + timestamp + SSRC', 3.5],
+    ['RTCP','relata perda e jitter', 6],
+    ['Jitter buffer','reordena, absorve variação', 8],
+    ['G.711','160 bytes a cada 20 ms', 10],
+  ], items:[
+    {at:12, x:470,y:92,w:454,h:170, cls:'ext', html:B('Por que não TCP','')+UL('uma perda segura todos os seguintes','o reenvio chega tarde demais','perda pequena: o codec disfarça')},
+    {at:16, x:470,y:282,w:454,h:220, cls:'blue', html:B('No Asterisk','')+UL('SIP: 5060 UDP/TCP, 5061 TLS','RTP: 10000–20000 (rtp.conf)','pjsip: rtp_symmetric, force_rport','NAT: external_media_address','rtp set debug on · pjsip show channelstats')},
+  ]}},
+
+{ id:'lab-rtp', ch:'Transporte', title:'Lab: RTP sobre UDP em Node',
+  say:'O laboratório monta pacotes RTP de verdade: cabeçalho de doze bytes com versão, tipo de payload zero para G setecentos e onze, sequência, timestamp em amostras e SSRC, mais cento e sessenta bytes de áudio a cada vinte milissegundos. A rede simulada perde cinco por cento e atrasa até trinta milissegundos. O receptor conta perdas, pacotes fora de ordem e calcula o jitter pela fórmula da RFC três cinco cinco zero. Ninguém retransmite: é o que o Asterisk mostra no rtp set debug.',
+  v:S('rtp-udp.mjs','rtp-udp.mjs','js')},
+
+/* ---------- DNS, TLS E HTTP ---------- */
+{ id:'dns', ch:'DNS, TLS e HTTP', title:'DNS: do nome ao IP',
+  say:'Para resolver api ponto exemplo ponto com, o sistema pergunta a um resolvedor recursivo, como o do provedor ou o um ponto um ponto um ponto um. Sem cache, ele vai à raiz, que indica os servidores do ponto com, que indicam o autoritativo do domínio, que responde o registro com um TTL. Tudo em UDP na porta cinquenta e três, com TCP para respostas grandes. TTL longo atrasa migrações. No Node, dns lookup usa getaddrinfo no pool de threads e lê o etc hosts; dns resolve vai direto à rede. E o Node não guarda cache de DNS.',
+  v:FLOW([
+    ['App','getaddrinfo','blue'],
+    ['Recursivo','1.1.1.1 · cache','green'],
+    ['Raiz → .com','referências','amber'],
+    ['Autoritativo','A 203.0.113.10 · TTL 300','green'],
+  ], {y:100, h:96, step:2, cards:[
+    ['Registros','',['A / AAAA: IPv4 / IPv6','CNAME: apelido','MX, TXT · SRV (o SIP usa)','NS: quem é o autoritativo'],'blue'],
+    ['Armadilhas','',['TTL alto atrasa a migração','Node não cacheia: resolvedor local','dns.lookup ocupa o pool','DNS caiu = tudo caiu'],'amber'],
+  ]}) },
+
+{ id:'tls', ch:'DNS, TLS e HTTP', title:'O handshake do TLS 1.3',
+  say:'No TLS um ponto três, o handshake leva um RTT. O cliente manda o ClientHello com versões, cifras, o nome do servidor no SNI, os protocolos no ALPN e já a sua parte da troca de chaves Diffie-Hellman efêmera. O servidor responde com a parte dele e, já cifrados, o certificado, a assinatura que prova a posse da chave e o Finished. O cliente valida cadeia e nome, manda o Finished e os dados. O um ponto dois precisava de dois RTTs. Retomada com zero RTT existe, mas os dados iniciais podem ser repetidos: só para requisições idempotentes.',
+  v:FLOW([
+    ['ClientHello','key_share · SNI · ALPN','blue'],
+    ['ServerHello','key_share do servidor','green'],
+    ['Certificado','cifrado + assinatura','green'],
+    ['Finished','+ dados, 1 RTT depois','blue'],
+  ], {y:100, h:96, step:2.2, cards:[
+    ['O que mudou do 1.2','',['1 RTT em vez de 2','sempre forward secrecy (ECDHE)','sem troca de chave RSA, sem CBC','certificado já vai cifrado'],'green'],
+    ['Na prática','',['SNI: vários sites num IP','ALPN: h2 ou http/1.1','0-RTT: pode repetir → só idempotente','curl -v mostra cada passo'],'amber'],
+  ]}) },
+
+{ id:'http-versoes', ch:'DNS, TLS e HTTP', title:'HTTP/1.1 × HTTP/2 × HTTP/3',
+  say:'HTTP um ponto um reusa a conexão com keep-alive, mas atende uma requisição por vez em cada uma; por isso navegadores abrem cerca de seis por host. HTTP dois multiplexa streams numa só conexão TCP, com quadros binários e cabeçalhos comprimidos pelo HPACK, mas um pacote perdido trava todos os streams, porque o TCP entrega em ordem. HTTP três roda sobre QUIC, em UDP: cada stream se recupera sozinho, o handshake já inclui o TLS um ponto três e a conexão sobrevive à troca de Wi-Fi para 4G.',
+  v:GRID(3, [
+    ['HTTP/1.1','texto',['keep-alive: reusa a conexão','uma requisição por vez','~6 conexões por host'],'amber'],
+    ['HTTP/2','binário sobre TCP',['streams multiplexados','HPACK nos cabeçalhos','perda trava todos (TCP)'],'blue'],
+    ['HTTP/3','sobre QUIC (UDP)',['stream perde sozinho','TLS 1.3 embutido','connection ID: troca de rede'],'green'],
+  ], {h:230, step:4, rodape:'Node atrás de LB: keepAliveTimeout do servidor (padrão 5 s) maior que o idle do LB (ALB: 60 s), senão 502 esporádico'}) },
+
+{ id:'lb-nat', ch:'DNS, TLS e HTTP', title:'Load balancer L4 × L7 e NAT',
+  say:'Balanceador de camada quatro olha IP e porta e repassa conexões TCP ou UDP: rápido e sem abrir o TLS. Mas balanceia conexões, não requisições: o gRPC, que mantém uma conexão HTTP dois longa, pode cair inteiro num só backend. Camada sete entende HTTP: roteia por caminho e cabeçalho, termina TLS, faz retry e balanceia cada requisição. NAT troca IP e porta privados por públicos e guarda o mapeamento na tabela conntrack; cheia ou sem portas livres, conexões novas falham. SIP sofre porque leva IPs dentro da mensagem.',
+  v:GRID(3, [
+    ['Balanceador L4','IP + porta',['TCP e UDP','não abre o TLS','balanceia conexões','NLB, IPVS, HAProxy tcp'],'blue'],
+    ['Balanceador L7','entende HTTP',['caminho, cabeçalho, cookie','termina TLS, faz retry','gRPC por requisição','ALB, Nginx, Envoy'],'green'],
+    ['NAT','privado → público',['tabela conntrack','esgotamento de portas','SIP leva o IP no corpo','STUN, ICE, rtp_symmetric'],'amber'],
+  ], {h:250, step:4, rodape:'dmesg: "nf_conntrack: table full, dropping packet" · saída demais para o mesmo destino: pool e keep-alive'}) },
+
+/* ---------- DIAGNÓSTICO ---------- */
+{ id:'diag-cpu', ch:'Diagnóstico Linux', title:'top, vmstat, ss e lsof',
+  say:'Um roteiro para quando algo está lento. top ou htop: carga, CPU por processo e duas colunas que importam, wa, espera de I/O, e st, CPU roubada pela nuvem. vmstat um mostra a fila de execução e as trocas de contexto por segundo. ss substitui o netstat: numa porta em escuta, Recv Q é a fila de accept atual. ss s resume os estados: milhares em TIME WAIT pedem keep-alive; CLOSE WAIT acumulando é o seu código sem fechar o socket. E lsof mostra os descritores de um processo.',
+  v:T('c|top -b -n1 | head -3',
+      'o|load average: 3.92, 2.10, 1.05   %Cpu(s): 12.0 us, 3.1 sy, 41.2 id, 43.5 wa, 0.2 st',
+      'err|43.5 wa: CPU ociosa esperando disco · carga alta sem CPU alta = tarefas em D',
+      'c|vmstat 1 3          # r = fila de execução · cs = trocas de contexto/s',
+      'c|ss -ltn             # escuta: Recv-Q = fila de accept agora, Send-Q = backlog',
+      'o|State    Recv-Q   Send-Q    Local Address:Port',
+      'o|LISTEN   0        511             0.0.0.0:3000',
+      'c|ss -s',
+      'o|TCP:   4127 (estab 812, closed 3020, orphaned 0, timewait 3018)',
+      'c|ss -tnp state close-wait',
+      'err|0  0  10.0.1.5:3000  10.0.2.9:51234  users:(("node",pid=4242,fd=87))',
+      'c|ls /proc/4242/fd | wc -l',
+      'ok|1019     ← perto do limite de 1024: EMFILE a caminho')},
+
+{ id:'diag-rede', ch:'Diagnóstico Linux', title:'tcpdump, dig, curl, strace e perf',
+  say:'Para rede e código. tcpdump captura pacotes: na interface any, só SIP e RTP, gravando um arquivo para abrir no Wireshark, que decodifica o SIP e toca o RTP. dig mais trace refaz a resolução desde a raiz; dig arroba testa um resolvedor específico. curl v mostra DNS, conexão, TLS e cabeçalhos, e o w com tempos separa onde foi a demora. strace p mostra em que syscall um processo parou. E perf record com flame graph mostra a função que queima CPU; no Node, rode com perf basic prof.',
+  v:T('c|tcpdump -i any -nn -s0 port 5060 or portrange 10000-20000 -w chamada.pcap',
+      'o|# Wireshark: Telephony → VoIP Calls → Play Streams',
+      'c|dig +trace api.exemplo.com ; dig @1.1.1.1 api.exemplo.com +short',
+      'c|curl -sv -o /dev/null https://api.exemplo.com/saude',
+      'o|* Connected to api.exemplo.com (203.0.113.10) port 443',
+      'o|* SSL connection using TLSv1.3 / TLS_AES_128_GCM_SHA256',
+      'o|* ALPN: server accepted h2',
+      'c|curl -so /dev/null -w "%{time_namelookup} %{time_connect} %{time_appconnect} %{time_starttransfer}\\n" URL',
+      'err|0.004 0.021 0.058 0.912     ← DNS, TCP e TLS ok; ~850 ms dentro do servidor',
+      'c|node --perf-basic-prof server.js &  perf record -F 99 -g -p $! -- sleep 30',
+      'ok|flame graph: 62% em JSON.parse dentro de carregarCatalogo()')},
+
+{ id:'check', ch:'Diagnóstico Linux', title:'Checklist de SO, rede e concorrência',
+  say:'Antes de dizer que domina: você explica processo e thread, memória virtual e page fault, lê um strace, sabe por que o Node aguenta milhares de conexões e o que vai para o pool, demonstra e corrige uma condição de corrida, quebra um deadlock, explica o handshake TCP, o TIME WAIT e o Nagle, sabe por que voz vai em UDP, descreve DNS, TLS um ponto três e HTTP três, e usa ss, strace, tcpdump e curl para achar o gargalo.',
+  v:CK('Processo × thread e copy-on-write', 'VSZ × RSS e page fault', 'strace num processo travado', 'EMFILE e ulimit -n', 'epoll × io_uring', 'O que vai para o pool da libuv', 'Corrida corrigida com Atomics', 'As 4 condições do deadlock', 'Handshake TCP e TIME_WAIT', 'Nagle e TCP_NODELAY', 'UDP e RTP para voz', 'TLS 1.3 em 1 RTT e HTTP/3')},
+
+{ id:'outro', ch:'Diagnóstico Linux', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os modelos de I/O lado a lado, os links para as cenas relacionadas nas outras trilhas, a trilha de estudo, o checklist e as perguntas de entrevista. O exercício que mais rende: pegue um serviço seu em produção, rode ss s, conte os descritores e meça com curl w onde está o tempo de uma requisição. Depois responda em voz alta, em cinco minutos, o que acontece quando você digita uma URL e aperta Enter.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Event loop do Node', 'node', 'eventloop', 'As fases com exemplos de código'],
+  ['V8 + libuv', 'v04', 'node-dentro', 'O runtime do Node visto de cima'],
+  ['Travando e destravando o event loop', 'v04', 'lab-loop', 'CPU no loop e worker threads'],
+  ['Modelos de concorrência', 'v04', 'modelos', 'Threads, event loop, atores e goroutines'],
+  ['Memória e coleta de lixo', 'v04', 'memoria', 'GC nas linguagens'],
+  ['Condição de corrida no código de negócio', 'v16', 'corrida', 'O mesmo problema numa API'],
+  ['Deadlocks no banco', 'v03', 'deadlock', 'As regras de ouro em SQL'],
+  ['Travas pessimista, otimista e atômica', 'v03', 'travas', 'SELECT FOR UPDATE e versão'],
+  ['SIP e RTP viajam separados', 'v08', 'sip-rtp', 'Sinalização e mídia no Asterisk'],
+  ['NAT na telefonia', 'v08', 'nat', 'O vilão do áudio mudo'],
+  ['Por que o Redis é rápido', 'v01', 'redis-estruturas', 'Uma thread e um laço de eventos'],
+  ['Blocos de construção', 'v06', 'blocos', 'Load balancer e o preço de cada bloco'],
+];
+
+const MATRIZ = [
+  ['Thread por conexão', 'Bloqueia a thread no read', 'Poucas conexões, código simples', 'Memória e troca de contexto com milhares de conexões', 'Servidores clássicos, JDBC, canais do Asterisk'],
+  ['Event loop (epoll, kqueue)', 'Uma thread multiplexa milhares de sockets', 'Muito I/O e pouca CPU por requisição', 'CPU no loop congela todos os clientes', 'Node, Nginx, Redis'],
+  ['Pool de threads + async/await', 'Continuações retomadas no pool', 'Mistura de I/O e CPU', 'Sync-over-async (.Result, .Wait()) esgota o pool', 'ASP.NET Core, Tokio'],
+  ['Threads virtuais e goroutines', 'O runtime estaciona a tarefa barata', 'Milhões de tarefas com código sequencial', 'Corrida continua possível; pinning em trava nativa', 'Go, Java 21+'],
+  ['io_uring', 'Filas de submissão e conclusão no kernel', 'Disco e rede com poucas syscalls', 'Suporte e política de segurança variam por ambiente', 'TigerBeetle, ScyllaDB (Seastar), liburing'],
+  ['Vários processos', 'Cada um com seu loop ou suas threads', 'Usar todos os núcleos e isolar falhas', 'Sem memória compartilhada: estado vai para Redis ou banco', 'Node cluster, PM2, Gunicorn, PostgreSQL'],
+];
+
+const STUDY = [
+  ['Operating Systems: Three Easy Pieces', 'Livro grátis: processos, memória e concorrência', 'https://pages.cs.wisc.edu/~remzi/OSTEP/', 'proc-thread'],
+  ['man epoll(7)', 'Nível × borda, direto da fonte', 'https://man7.org/linux/man-pages/man7/epoll.7.html', 'epoll'],
+  ['Efficient IO with io_uring', 'O documento de Jens Axboe', 'https://kernel.dk/io_uring.pdf', 'epoll'],
+  ['Design da libuv', 'Event loop e pool de threads por dentro', 'https://docs.libuv.org/en/v1.x/design.html', 'libuv'],
+  ['Event loop do Node', 'Fases, timers e nextTick', 'https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick', 'libuv'],
+  ['worker_threads', 'Workers e SharedArrayBuffer', 'https://nodejs.org/api/worker_threads.html', 'lab-corrida'],
+  ['Atomics (MDN)', 'add, compareExchange, wait e notify', 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics', 'atomics'],
+  ['High Performance Browser Networking', 'TCP, UDP, TLS e HTTP/2 a fundo (grátis)', 'https://hpbn.co/', 'tcp-fluxo'],
+  ['RFC 9293 · TCP', 'A especificação atual do TCP', 'https://www.rfc-editor.org/rfc/rfc9293', 'tcp-handshake'],
+  ['RFC 8446 · TLS 1.3', 'O handshake de 1 RTT', 'https://www.rfc-editor.org/rfc/rfc8446', 'tls'],
+  ['RFC 3550 · RTP', 'Cabeçalho, RTCP e cálculo de jitter', 'https://www.rfc-editor.org/rfc/rfc3550', 'lab-rtp'],
+  ['Linux Performance (Brendan Gregg)', 'Ferramentas e o mapa de observabilidade', 'https://www.brendangregg.com/linuxperf.html', 'diag-cpu'],
+];
+
+const CHECK = [
+  ['SO', 'Explicar processo × thread e copy-on-write', 'proc-thread'],
+  ['SO', 'Ler VSZ, RSS e page faults de um processo (ps -o)', 'memoria-virtual'],
+  ['SO', 'Rodar strace num servidor Node e achar o epoll_pwait', 'syscalls'],
+  ['SO', 'Provocar EMFILE com ulimit -n 64 e corrigir', 'fds'],
+  ['I/O', 'Rodar pool.mjs com UV_THREADPOOL_SIZE 4 e 8', 'lab-pool'],
+  ['I/O', 'Explicar prontidão × conclusão (epoll × io_uring)', 'io-modelos'],
+  ['Concorrência', 'Rodar corrida.mjs e explicar os três números', 'lab-corrida'],
+  ['Concorrência', 'Quebrar uma das 4 condições num deadlock de transferência', 'deadlock'],
+  ['Concorrência', 'Corrigir sacar() com UPDATE condicional', 'async-corrida'],
+  ['Rede', 'Desenhar o handshake TCP e explicar TIME_WAIT', 'tcp-handshake'],
+  ['Rede', 'Rodar rtp-udp.mjs mudando PERDA e JITTER_MAX', 'lab-rtp'],
+  ['Rede', 'dig +trace num domínio seu', 'dns'],
+  ['Rede', 'curl -w com os quatro tempos numa API real', 'diag-rede'],
+  ['Rede', 'Ajustar keepAliveTimeout do Node atrás do LB', 'http-versoes'],
+];
+
+const FAQ = [
+ ['Rede','O que acontece quando você digita uma URL e aperta Enter?',`<p>O navegador resolve o nome por DNS (cache local, resolvedor recursivo, raiz, TLD, autoritativo), abre TCP com o handshake de três passos (ou QUIC em UDP), negocia TLS 1.3 em 1 RTT com SNI e ALPN, envia a requisição HTTP, passa por CDN e load balancer até a aplicação, recebe a resposta e renderiza, buscando os recursos em conexões reaproveitadas. Em entrevista, aprofunde onde o entrevistador puxar.</p>`],
+ ['SO','Qual a diferença entre processo e thread?',`<p>Processo tem espaço de endereço e descritores próprios; threads de um processo compartilham memória e arquivos, cada uma com pilha e registradores. Thread é mais barata de criar e trocar, mas um bug corrompe o processo inteiro. Processos isolam falhas e exigem IPC para conversar.</p>`],
+ ['SO','Explique memória virtual e page fault.',`<p>Cada processo vê um espaço de endereço próprio, traduzido para RAM física pela MMU com tabelas de páginas (em geral 4 KiB) e a TLB como cache. Acessar uma página não mapeada gera page fault: menor se só falta mapear, maior se precisa ler do disco. Isso permite copy-on-write no fork, arquivos mapeados e reservar mais do que existe (VSZ ≫ RSS).</p>`],
+ ['I/O','Como o Node atende milhares de conexões com uma thread?',`<p>Sockets são não bloqueantes e registrados no epoll (kqueue no macOS, IOCP no Windows). A libuv dorme no epoll_wait até algum ficar pronto e roda os callbacks. Nenhuma thread fica parada por conexão. O que não tem API assíncrona portável (fs, dns.lookup, crypto, zlib) vai para o pool de 4 threads. O limite é a CPU por requisição: trabalho pesado no loop congela todos.</p>`],
+ ['Concorrência','Concorrência e paralelismo são a mesma coisa?',`<p>Não. Concorrência é estruturar o programa para lidar com várias tarefas ao mesmo tempo, intercaladas; paralelismo é executar ao mesmo tempo em núcleos diferentes. O Node é concorrente numa thread; worker_threads e cluster dão paralelismo. Ambos podem ter condição de corrida.</p>`],
+ ['Concorrência','O que é deadlock e como evitar?',`<p>Threads esperando umas pelas outras para sempre. Exige as quatro condições de Coffman: exclusão mútua, segurar e esperar, sem preempção e espera circular. Evite quebrando uma: ordem global de travas (menor ID primeiro), adquirir tudo de uma vez, tryLock com timeout. Bancos detectam o ciclo e abortam uma transação: trate com retry.</p>`],
+ ['Concorrência','Mutex ou semáforo?',`<p>Mutex garante um dono por vez e só o dono libera: protege seção crítica. Semáforo conta permissões e qualquer um pode liberar: limita concorrência (N conexões, N chamadas a uma API). Semáforo binário parece mutex, mas sem a noção de dono.</p>`],
+ ['Concorrência','Como corrigir uma condição de corrida num contador compartilhado?',`<p>Torne o ler-modificar-gravar indivisível: operação atômica (Atomics.add, Interlocked.Increment), trava ao redor da seção crítica ou, entre processos, a operação no banco (<code>UPDATE … SET n = n + 1</code> ou UPDATE condicional). Em Node puro a corrida aparece entre awaits; a correção que vale com várias réplicas é sempre no armazenamento compartilhado.</p>`],
+ ['Rede','Por que VoIP usa UDP e não TCP?',`<p>Voz é tempo real: um pacote de 20 ms que chega tarde é inútil. O TCP retransmitiria e, por entregar em ordem, seguraria todos os seguintes (head-of-line blocking). Com RTP sobre UDP, a perda vira um pequeno corte que o codec disfarça, e o jitter buffer reordena e absorve a variação. A sinalização SIP pode ir em UDP, TCP ou TLS.</p>`],
+ ['Rede','O que é TIME_WAIT e por que acumula?',`<p>Estado de quem fecha a conexão primeiro, mantido por 2 × MSL (60 s no Linux) para que segmentos atrasados não sejam aceitos por uma conexão nova com a mesma quádrupla. Acumula quando um cliente abre e fecha muitas conexões curtas, e pode esgotar portas efêmeras. A solução é reaproveitar conexões: keep-alive e pool.</p>`],
+ ['Rede','O que é o algoritmo de Nagle e quando desligar?',`<p>Ele segura segmentos pequenos enquanto há dado sem ACK, para juntar em um maior. Combinado com o ACK atrasado do receptor, pode adicionar dezenas de milissegundos em protocolos de pergunta e resposta com mensagens pequenas. Desligue com TCP_NODELAY (<code>socket.setNoDelay(true)</code>) em RPC, jogos e terminais.</p>`],
+ ['Rede','HTTP/2 × HTTP/3: o que muda?',`<p>HTTP/2 multiplexa streams numa conexão TCP, mas uma perda trava todos os streams porque o TCP entrega em ordem. HTTP/3 roda sobre QUIC em UDP: cada stream se recupera sozinho, TLS 1.3 vem integrado ao handshake e o connection ID deixa a conexão sobreviver à troca de rede.</p>`],
+ ['Rede','Balanceador L4 ou L7?',`<p>L4 repassa conexões por IP e porta: mais rápido e sem abrir o TLS, mas balanceia conexões, o que desequilibra gRPC e WebSocket longos. L7 entende HTTP: roteia por caminho e cabeçalho, termina TLS, faz retry e balanceia cada requisição, ao custo de mais processamento.</p>`],
+ ['Diagnóstico','A API está lenta e a CPU está baixa. O que você olha?',`<p>Espera: <code>top</code> (wa, estado D), <code>curl -w</code> para separar DNS, TCP, TLS e servidor, <code>ss -s</code> e <code>ss -ltn</code> (fila de accept, TIME_WAIT, CLOSE_WAIT), descritores em /proc, pool de conexões do banco e pool da libuv, e <code>strace -p</code> para ver em que syscall o processo espera. Depois traces para achar a dependência lenta.</p>`],
+];
+
+const CMDS = [
+  ['strace -f -tt -T -p PID', 'Em que syscall o processo está e quanto demora'],
+  ['ss -tanp · ss -s · ss -ltn', 'Conexões, estados e fila de accept'],
+  ['ls /proc/PID/fd | wc -l · lsof -p PID', 'Descritores abertos'],
+  ['ulimit -n 65535 · LimitNOFILE=65535', 'Limite de descritores (shell e systemd)'],
+  ['vmstat 1', 'Fila de execução, trocas de contexto, swap'],
+  ['tcpdump -i any -nn port 5060 -w x.pcap', 'Capturar SIP para o Wireshark'],
+  ['dig +trace dominio · dig @1.1.1.1 dominio', 'Resolução DNS passo a passo'],
+  ['curl -sv -o /dev/null URL', 'DNS, TCP, TLS e cabeçalhos'],
+  ['perf record -F 99 -g -p PID', 'Amostrar CPU para flame graph'],
+  ['UV_THREADPOOL_SIZE=8 node app.js', 'Pool da libuv maior'],
+  ['socket.setNoDelay(true)', 'Desligar o Nagle'],
+  ['server.keepAliveTimeout = 65_000', 'Maior que o idle do load balancer'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

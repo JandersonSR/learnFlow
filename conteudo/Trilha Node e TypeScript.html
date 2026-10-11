@@ -1,0 +1,1201 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Trilha Node e TypeScript</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:392px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Squad · trilha de engenharia</span>
+    <h1>Node.js e TypeScript com MongoDB, SQL, Redis e RabbitMQ</h1>
+    <p class="lead">Roteiro em vídeo do event loop ao desenho de sistemas: TypeScript estrito, API com Fastify e Zod, dados em MongoDB e SQL, Redis para cache e coordenação, RabbitMQ para processamento assíncrono e o que é preciso para rodar tudo em produção. Abaixo do vídeo estão a matriz de escolha de tecnologias, a trilha de estudo, o checklist por nível e as perguntas mais comuns.</p>
+    <div class="meta">
+      <span class="pill">Node 24 LTS</span><span class="pill">TypeScript</span><span class="pill">MongoDB</span><span class="pill">PostgreSQL / SQL Server</span><span class="pill">Redis</span><span class="pill">RabbitMQ</span>
+    </div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow">Decisão</span><h2>Qual tecnologia para cada papel</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch">Cada peça do sistema tem um papel. Escolha pelo problema, não pela moda.</p>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tecnologia</th><th>Papel</th><th>Escolha quando</th><th>Evite quando</th><th>Para começar</th></tr></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Documentação oficial do Node.js, TypeScript, MongoDB, PostgreSQL, Redis, RabbitMQ e das bibliotecas usadas, na ordem da trilha. A marcação fica salva só neste navegador.</p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Por nível</span><h2>Checklist de proficiência</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch">Cada item vale quando foi aplicado em código, não só lido. O botão ao lado leva à cena do vídeo.</p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" placeholder="Buscar: event loop, ack, cache, Mongoose…" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2>Comandos de bolso</h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer>Material de estudo da AGX. Os trechos de código são didáticos, usam o fluxo de pré-análise como exemplo e não foram executados neste material. Confira versões e APIs na documentação oficial antes de aplicar em produção.</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const SNIP = {"Dockerfile": "# syntax=docker/dockerfile:1\n# ---------- estágio 1: instala e compila ----------\nFROM node:24-slim AS build\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY tsconfig.json ./\nCOPY src ./src\nRUN npm run build && npm prune --omit=dev\n\n# ---------- estágio 2: só o necessário para rodar ----------\nFROM node:24-slim\nENV NODE_ENV=production\nWORKDIR /app\nCOPY --from=build /app/package.json ./\nCOPY --from=build /app/node_modules ./node_modules\nCOPY --from=build /app/dist ./dist\n# o usuário \"node\" já existe na imagem oficial e não tem privilégios\nUSER node\nEXPOSE 3000\n# node direto, sem npm start: o processo recebe o SIGTERM do Kubernetes\nCMD [\"node\", \"--import\", \"./dist/otel.js\", \"dist/server.js\"]", "app.ts": "// src/app.ts\nimport Fastify from 'fastify';\nimport { randomUUID } from 'node:crypto';\nimport { tratarErro } from './erros.ts';\nimport { cepRoutes } from './modulos/cep/rotas.ts';\nimport { preAnaliseRoutes } from './modulos/pre-analise/rotas.ts';\nimport type { Dependencias } from './dependencias.ts';\n\nexport function criarApp(deps: Dependencias) {\n  const app = Fastify({\n    logger: { level: deps.env.LOG_LEVEL },     // pino: JSON na saída padrão\n    requestIdHeader: 'x-correlation-id',       // reaproveita a correlação de quem chamou\n    genReqId: () => randomUUID(),\n    bodyLimit: 100 * 1024,                     // 100 KB por requisição\n  });\n\n  app.decorate('deps', deps);                  // tipado via declaration merging\n  app.setErrorHandler(tratarErro);\n\n  app.get('/healthz', async () => ({ status: 'ok' }));          // liveness\n  app.get('/readyz', async (_req, reply) => {                     // readiness\n    const ok = await deps.saude.verificar();                      // mongo, sql, redis, rabbit\n    return reply.status(ok ? 200 : 503).send({ ok });\n  });\n\n  app.register(cepRoutes, { prefix: '/cep' });\n  app.register(preAnaliseRoutes, { prefix: '/pre-analises' });\n  return app;\n}\n\n// src/modulos/pre-analise/rotas.ts\nexport const preAnaliseRoutes: FastifyPluginAsync = async (app) => {\n  app.post('/', async (req, reply) => {\n    const dados = NovaPreAnalise.parse(req.body);                 // ZodError vira 400\n    const id = await app.deps.preAnalises.registrar(dados, req.id); // banco + outbox\n    return reply\n      .status(202)\n      .header('location', `/pre-analises/${id}`)\n      .send({ id, status: 'recebida' });                          // não espera o processamento\n  });\n};", "async.ts": "import pLimit from 'p-limit';\nimport { Worker } from 'node:worker_threads';\n\n// 1. Independentes? Em paralelo\nconst [endereco, cliente] = await Promise.all([\n  viaCep.buscar(cep),\n  clientes.obter(clienteId),\n]);\n\n// 2. Uma falha não deve derrubar as outras\nconst resultados = await Promise.allSettled(ceps.map((c) => viaCep.buscar(c)));\nconst falhas = resultados.filter((r) => r.status === 'rejected');\n\n// 3. Timeout e cancelamento com AbortSignal\nconst resp = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {\n  signal: AbortSignal.timeout(2_000),            // aborta após 2 s\n});\n\n// 4. Muitos itens com concorrência limitada\nconst limite = pLimit(8);\nawait Promise.all(ceps.map((c) => limite(() => viaCep.buscar(c))));\n\n// 5. Nunca bloqueie o event loop\n//    evite: fs.readFileSync, crypto.pbkdf2Sync, JSON.parse de 50 MB, laço de CPU numa rota\n//    use: APIs assíncronas, streams, ou worker_threads para CPU pesada\nconst worker = new Worker(new URL('./calcula-score.js', import.meta.url), {\n  workerData: proposta,\n});\n\n// 6. Rejeição sem tratamento encerra o processo (padrão desde o Node 15)\nprocess.on('unhandledRejection', (err) => {\n  logger.fatal({ err }, 'rejeição não tratada');\n  process.exit(1);\n});", "docker-compose.yml": "# Ambiente local completo: docker compose up -d\nservices:\n  mongo:\n    image: mongo:8\n    command: [\"--replSet\", \"rs0\", \"--bind_ip_all\"]     # replica set: habilita transações\n    ports: [\"27017:27017\"]\n    healthcheck:\n      test: mongosh --quiet --eval \"try { rs.status().ok } catch (e) { rs.initiate().ok }\"\n      interval: 5s\n  postgres:\n    image: postgres:17\n    environment:\n      POSTGRES_DB: agx\n      POSTGRES_PASSWORD: ${PG_PASSWORD}                # arquivo .env, fora do Git\n    ports: [\"5432:5432\"]\n  redis:\n    image: redis:8\n    ports: [\"6379:6379\"]\n  rabbitmq:\n    image: rabbitmq:4-management                       # painel em http://localhost:15672\n    ports: [\"5672:5672\", \"15672:15672\"]\n\n# .env da aplicação\n# MONGO_URL=mongodb://localhost:27017/agx?replicaSet=rs0&directConnection=true\n# DATABASE_URL=postgres://postgres:<senha>@localhost:5432/agx\n# REDIS_URL=redis://localhost:6379\n# RABBITMQ_URL=amqp://guest:guest@localhost:5672", "erros.ts": "// src/erros.ts\nimport { ZodError, z } from 'zod';\nimport type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';\n\nexport class NaoEncontrado extends Error {}\nexport class RegraDeNegocio extends Error {}\nexport class Conflito extends Error {}\n\nexport function tratarErro(err: FastifyError | Error, req: FastifyRequest, reply: FastifyReply) {\n  const [status, title]: [number, string] =\n    err instanceof ZodError       ? [400, 'Dados inválidos'] :\n    err instanceof NaoEncontrado  ? [404, 'Recurso não encontrado'] :\n    err instanceof Conflito       ? [409, 'Conflito de versão'] :\n    err instanceof RegraDeNegocio ? [422, 'Regra de negócio violada'] :\n                                    [500, 'Erro inesperado'];\n\n  if (status >= 500) req.log.error({ err }, 'erro não tratado');\n\n  return reply.status(status).type('application/problem+json').send({\n    title,\n    status,\n    traceId: req.id,\n    ...(err instanceof ZodError ? { errors: z.flattenError(err).fieldErrors } : {}),\n  });\n}\n\n// src/server.ts: desligamento gracioso (o Kubernetes manda SIGTERM antes de matar o pod)\nconst app = criarApp(deps);\nawait app.listen({ port: env.PORT, host: '0.0.0.0' });\n\nfor (const sinal of ['SIGTERM', 'SIGINT'] as const) {\n  process.once(sinal, async () => {\n    app.log.info({ sinal }, 'encerrando');\n    await app.close();                          // para de aceitar e termina as requisições em andamento\n    await deps.consumidores.parar();            // cancela consumo e espera os acks pendentes\n    await Promise.all([deps.mongo.close(), deps.sql.destroy(), deps.redis.quit(), deps.rabbit.close()]);\n    process.exit(0);\n  });\n}", "mongo-modelo.ts": "// Embutir o que é lido junto e pertence ao pai; referenciar o que tem vida própria\ninterface PropostaDoc {\n  _id: string;                                              // propostaId\n  clienteId: string;                                        // referência\n  status: 'recebida' | 'aprovada' | 'recusada';\n  historico: { status: string; em: Date; por: string }[];   // embutido (dezenas, não milhões)\n  versao: number;                                           // concorrência otimista\n}\n\n// Mudança atômica em um documento: não precisa de transação\nconst r = await propostas.updateOne(\n  { _id: id, versao: versaoLida },                          // só se ninguém mudou antes\n  {\n    $set: { status: 'aprovada' },\n    $push: { historico: { status: 'aprovada', em: new Date(), por: usuario } },\n    $inc: { versao: 1 },\n  },\n);\nif (r.matchedCount === 0) throw new Conflito('A proposta mudou desde a leitura');\n\n// Mais de uma coleção: transação (exige replica set, inclusive no Docker local)\nconst session = mongo.startSession();\ntry {\n  await session.withTransaction(async () => {\n    await propostas.updateOne({ _id: id }, { $set: { status: 'aprovada' } }, { session });\n    await outbox.insertOne(\n      { rota: 'proposta.aprovada', chave: id, payload, criadoEm: new Date(), enviadoEm: null },\n      { session },\n    );\n  });\n} finally {\n  await session.endSession();\n}\n\nawait propostas.createIndexes([\n  { key: { clienteId: 1, status: 1 } },                     // \"propostas do cliente por status\"\n  { key: { 'historico.em': -1 } },\n]);", "mongo.ts": "// src/infra/mongo.ts\nimport { MongoClient, type Collection } from 'mongodb';\n\ninterface EnderecoDoc {\n  _id: string;                  // o próprio CEP como chave\n  logradouro: string;\n  cidade: string;\n  uf: string;\n  atualizadoEm: Date;\n}\n\nexport const mongo = new MongoClient(env.MONGO_URL, { maxPoolSize: 20 });  // um cliente por processo\nawait mongo.connect();\nconst enderecos: Collection<EnderecoDoc> = mongo.db('agx').collection('enderecos');\n\n// Índices fazem parte do código\nawait enderecos.createIndex({ uf: 1, cidade: 1 });\nawait enderecos.createIndex({ atualizadoEm: 1 }, { expireAfterSeconds: 30 * 24 * 3600 }); // TTL: 30 dias\n\n// Upsert idempotente: repetir não duplica\nawait enderecos.updateOne(\n  { _id: cep },\n  { $set: { logradouro, cidade, uf, atualizadoEm: new Date() } },\n  { upsert: true },\n);\n\n// Leitura com filtro coberto por índice, projeção e limite\nconst deSp = await enderecos\n  .find({ uf: 'SP', cidade: 'São Paulo' }, { projection: { logradouro: 1 } })\n  .sort({ _id: 1 })\n  .limit(100)\n  .toArray();\n\n// Agregação: contagem por UF\nconst ranking = await enderecos\n  .aggregate<{ _id: string; total: number }>([\n    { $group: { _id: '$uf', total: { $sum: 1 } } },\n    { $sort: { total: -1 } },\n  ])\n  .toArray();\n\n// Antes de ir para produção: explain mostra se usou índice (IXSCAN) ou varreu tudo (COLLSCAN)\nconst plano = await enderecos.find({ uf: 'SP' }).explain('executionStats');", "otel.ts": "// src/otel.ts: carregado antes da aplicação  →  node --import ./dist/otel.js dist/server.js\nimport { NodeSDK } from '@opentelemetry/sdk-node';\nimport { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';\nimport { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';\n\nnew NodeSDK({\n  serviceName: 'agx-pre-analise-api',\n  traceExporter: new OTLPTraceExporter(),               // OTEL_EXPORTER_OTLP_ENDPOINT\n  instrumentations: [getNodeAutoInstrumentations()],    // http, fastify, pg, mongodb, ioredis, amqplib\n}).start();\n// No Azure: @azure/monitor-opentelemetry com useAzureMonitor() envia ao Application Insights\n\n// src/logger.ts: pino em JSON, sem dado sensível\nimport { pino } from 'pino';\nexport const logger = pino({\n  level: env.LOG_LEVEL,\n  redact: ['req.headers.authorization', '*.cpf'],       // nunca logar token ou CPF\n});\nlogger.info({ propostaId, correlationId }, 'pré-análise registrada');\n\n// A métrica que mais importa no Node: atraso do event loop\nimport { monitorEventLoopDelay } from 'node:perf_hooks';\nconst atraso = monitorEventLoopDelay({ resolution: 20 });\natraso.enable();\nsetInterval(() => {\n  logger.info({ p99ms: atraso.percentile(99) / 1e6 }, 'event loop delay');\n  atraso.reset();\n}, 60_000).unref();", "outbox.ts": "// src/modulos/pre-analise/registrar.ts\nimport { randomUUID } from 'node:crypto';\n\n// Pré-análise e mensagem a publicar na MESMA transação\nexport async function registrar(dados: NovaPreAnalise, correlationId: string) {\n  const id = randomUUID();\n  await db.transaction().execute(async (trx) => {\n    await trx.insertInto('pre_analises').values({\n      id,\n      proposta_id: dados.propostaId,\n      valor: String(dados.valorSolicitado),\n      status: 'recebida',\n      criado_em: new Date(),\n    }).execute();\n\n    await trx.insertInto('outbox').values({\n      rota: 'pre-analise.recebida',\n      chave: dados.propostaId,\n      payload: { versao: 1, eventoId: randomUUID(), correlationId, ...dados },\n      enviado_em: null,\n    }).execute();\n  });\n  return id;\n}\n\n// Relay: SKIP LOCKED deixa várias réplicas trabalharem sem pegar a mesma linha\nexport async function relayOutbox(publicar: (m: LinhaOutbox) => Promise<void>) {\n  await db.transaction().execute(async (trx) => {\n    const pendentes = await trx\n      .selectFrom('outbox')\n      .selectAll()\n      .where('enviado_em', 'is', null)\n      .orderBy('id')\n      .limit(100)\n      .forUpdate()\n      .skipLocked()\n      .execute();\n\n    for (const m of pendentes) {\n      await publicar(m);                                       // RabbitMQ com confirmação\n      await trx.updateTable('outbox').set({ enviado_em: new Date() }).where('id', '=', m.id).execute();\n    }\n  });\n}\n// Rodar a cada segundo: setInterval com .unref(), ou um worker dedicado", "rabbit-consumidor.ts": "// src/workers/processador.ts (processo separado da API)\nconst ch = await conn.createChannel();\nawait ch.prefetch(10);                                  // até 10 mensagens sem ack por instância\n\nconst { consumerTag } = await ch.consume('pre-analise.processador', async (msg) => {\n  if (!msg) return;                                     // consumo cancelado pelo broker\n  const log = logger.child({\n    correlationId: msg.properties.headers?.['x-correlation-id'],\n    messageId: msg.properties.messageId,\n  });\n  try {\n    const evento = PreAnaliseRecebida.parse(JSON.parse(msg.content.toString()));\n    await processarIdempotente(evento);\n    ch.ack(msg);                                        // ack só depois de terminar\n  } catch (err) {\n    if (err instanceof ZodError || err instanceof SyntaxError) {\n      log.error({ err }, 'mensagem inválida: direto para a DLQ');\n      ch.nack(msg, false, false);                       // sem requeue → dead letter\n    } else {\n      log.warn({ err }, 'falha temporária: nova entrega');\n      ch.nack(msg, false, true);                        // volta à fila e conta para o x-delivery-limit\n    }\n  }\n}, { noAck: false });\n\n// Idempotente: marcador e resultado na mesma transação\nasync function processarIdempotente(e: PreAnaliseRecebida) {\n  await db.transaction().execute(async (trx) => {\n    const r = await trx\n      .insertInto('eventos_processados')\n      .values({ evento_id: e.eventoId, consumidor: 'processador' })\n      .onConflict((oc) => oc.doNothing())\n      .executeTakeFirst();\n    if (r.numInsertedOrUpdatedRows === 0n) return;      // já processado: nada a fazer\n    await trx.insertInto('resultados').values(avaliar(e)).execute();\n  });\n}\n\n// Encerramento: para de receber, termina o que está em andamento, fecha\nexport async function parar() {\n  await ch.cancel(consumerTag);\n  await aguardarEmAndamento();\n  await ch.close();\n}\n// Espera crescente entre tentativas: fila de retry com x-message-ttl que devolve à fila principal", "rabbit-topologia.ts": "// src/infra/rabbit.ts\nimport amqp from 'amqplib';\n\nconst conn = await amqp.connect(env.RABBITMQ_URL);\nconst pub = await conn.createConfirmChannel();          // publisher confirms\n\n// Exchange topic: roteia pela routing key\nawait pub.assertExchange('propostas', 'topic', { durable: true });\nawait pub.assertExchange('propostas.dlx', 'direct', { durable: true });\n\n// Cada consumidor tem a SUA fila: a mesma mensagem chega às duas\nfor (const fila of ['pre-analise.processador', 'pre-analise.auditoria']) {\n  await pub.assertQueue(fila, {\n    durable: true,\n    arguments: {\n      'x-queue-type': 'quorum',                         // replicada: padrão para produção\n      'x-delivery-limit': 5,                            // depois de 5 entregas, vai para a DLX\n      'x-dead-letter-exchange': 'propostas.dlx',\n      'x-dead-letter-routing-key': fila,                // cada fila tem a sua DLQ\n    },\n  });\n  await pub.bindQueue(fila, 'propostas', 'pre-analise.*');\n  await pub.assertQueue(`${fila}.dlq`, { durable: true, arguments: { 'x-queue-type': 'quorum' } });\n  await pub.bindQueue(`${fila}.dlq`, 'propostas.dlx', fila);\n}\n\n// Publicar com persistência e confirmação do broker\nexport async function publicar(rota: string, evento: { eventoId: string }, correlationId: string) {\n  pub.publish('propostas', rota, Buffer.from(JSON.stringify(evento)), {\n    persistent: true,                                   // gravado em disco\n    contentType: 'application/json',\n    messageId: evento.eventoId,\n    headers: { 'x-correlation-id': correlationId, 'x-versao': 1 },\n  });\n  await pub.waitForConfirms();                          // só volta quando o broker aceitou\n}\n\n// Conexão caiu? Reconecte com espera crescente e recrie canais e topologia\nconn.on('close', () => reconectarComBackoff());", "redis.ts": "// src/infra/redis.ts\nimport { Redis } from 'ioredis';\nimport { setTimeout as esperar } from 'node:timers/promises';\n\nexport const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 });\n\n// 1. Cache-aside com TTL e uma só busca na origem por chave\nexport async function obterCep(cep: string, tentativas = 0): Promise<Endereco | null> {\n  const chave = `cep:${cep}`;\n  const emCache = await redis.get(chave);\n  if (emCache) return JSON.parse(emCache) as Endereco | null;\n\n  const trava = await redis.set(`${chave}:lock`, '1', 'PX', 5_000, 'NX');\n  if (!trava && tentativas < 20) {                 // outra réplica já está buscando\n    await esperar(100);\n    return obterCep(cep, tentativas + 1);\n  }\n  try {\n    const e = (await repo.obter(cep)) ?? (await viaCep.buscar(cep));\n    await redis.set(chave, JSON.stringify(e), 'EX', e ? 6 * 3600 : 300);  // \"não existe\" com TTL curto\n    return e;\n  } finally {\n    if (trava) await redis.del(`${chave}:lock`);\n  }\n}\n\n// 2. Limite de taxa por cliente (janela fixa de 1 minuto)\nexport async function dentroDoLimite(clienteId: string, limite = 100) {\n  const chave = `rl:${clienteId}:${Math.floor(Date.now() / 60_000)}`;\n  const total = await redis.incr(chave);\n  if (total === 1) await redis.expire(chave, 60);\n  return total <= limite;\n}\n\n// 3. Chave de idempotência para POST: só a primeira chamada passa\nexport async function primeiraVez(idempotencyKey: string) {\n  const r = await redis.set(`idem:${idempotencyKey}`, 'processando', 'EX', 86_400, 'NX');\n  return r === 'OK';\n}\n\n// Redis é cache e coordenação: o dado oficial fica no SQL ou no Mongo", "sql.ts": "// src/infra/sql.ts\nimport { Kysely, PostgresDialect, sql, type Generated } from 'kysely';\nimport pg from 'pg';\n\n// Tipos das tabelas (gerados do banco com kysely-codegen)\ninterface Db {\n  pre_analises: { id: string; proposta_id: string; valor: string; status: string; criado_em: Date };\n  outbox: { id: Generated<number>; rota: string; chave: string; payload: unknown; enviado_em: Date | null };\n  eventos_processados: { evento_id: string; consumidor: string };\n  resultados: { proposta_id: string; status: string; avaliado_em: Date };\n}\n\nexport const db = new Kysely<Db>({\n  dialect: new PostgresDialect({\n    pool: new pg.Pool({ connectionString: env.DATABASE_URL, max: 10 }),\n  }),\n});\n// SQL Server: MssqlDialect (tedious + tarn) com a mesma API de consulta\n\n// Consulta tipada: coluna ou tabela errada não compila\nconst recentes = await db\n  .selectFrom('pre_analises')\n  .select(['id', 'proposta_id', 'status'])\n  .where('status', '=', 'recebida')\n  .where('criado_em', '>=', desde)\n  .orderBy('criado_em', 'desc')\n  .limit(50)\n  .execute();\n\n// Paginação por chave: estável em tabelas grandes\nconst pagina = await db\n  .selectFrom('pre_analises')\n  .selectAll()\n  .where('id', '>', ultimoId)\n  .orderBy('id')\n  .limit(100)\n  .execute();\n\n// SQL escrito à mão quando for mais claro, ainda parametrizado\nconst { rows } = await sql<{ status: string; total: number }>`\n  select status, count(*)::int as total\n  from pre_analises\n  where criado_em >= ${desde}\n  group by status\n`.execute(db);\n\n// Migrations versionadas: kysely Migrator (ou a ferramenta do time) no pipeline, antes do deploy", "streams.ts": "import { createReadStream, createWriteStream } from 'node:fs';\nimport { pipeline } from 'node:stream/promises';\nimport { Transform } from 'node:stream';\nimport { createGzip } from 'node:zlib';\n\n// Arquivo de 2 GB com memória constante: pipeline cuida do backpressure\nawait pipeline(\n  createReadStream('ceps.csv'),\n  new Transform({\n    transform(chunk, _enc, cb) {\n      cb(null, normalizar(chunk.toString()));   // simplificado: em CSV real, use um parser de linhas\n    },\n  }),\n  createGzip(),\n  createWriteStream('ceps-normalizados.csv.gz'),\n);\n\n// Cursor do MongoDB também é iterável: não carrega tudo na memória\nfor await (const doc of enderecos.find({ uf: 'SP' }).batchSize(1_000)) {\n  await processar(doc);\n}\n\n// Resposta HTTP grande: envie como stream, não monte uma string gigante\napp.get('/relatorios/ceps.csv', async (_req, reply) => {\n  reply.type('text/csv');\n  return reply.send(gerarCsv());               // gerarCsv() devolve um Readable\n});", "teste.ts": "// test/pre-analise.e2e.test.ts\nimport { afterAll, beforeAll, describe, expect, it } from 'vitest';\nimport { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';\nimport { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';\nimport { RabbitMQContainer, type StartedRabbitMQContainer } from '@testcontainers/rabbitmq';\n\nlet pg: StartedPostgreSqlContainer;\nlet mongo: StartedMongoDBContainer;\nlet rabbit: StartedRabbitMQContainer;\nlet ambiente: Awaited<ReturnType<typeof iniciarAmbiente>>;   // API + workers apontando para os contêineres\n\nbeforeAll(async () => {\n  [pg, mongo, rabbit] = await Promise.all([\n    new PostgreSqlContainer('postgres:17').start(),\n    new MongoDBContainer('mongo:8').start(),\n    new RabbitMQContainer('rabbitmq:4-management').start(),\n  ]);\n  ambiente = await iniciarAmbiente({\n    databaseUrl: pg.getConnectionUri(),\n    mongoUrl: mongo.getConnectionString(),\n    rabbitUrl: rabbit.getAmqpUrl(),\n  });\n}, 120_000);\n\nafterAll(async () => {\n  await ambiente.fechar();\n  await Promise.all([pg.stop(), mongo.stop(), rabbit.stop()]);\n});\n\ndescribe('POST /pre-analises', () => {\n  it('responde 202 e o processador grava o resultado', async () => {\n    const r = await ambiente.http.inject({ method: 'POST', url: '/pre-analises', payload: exemploFicticio() });\n    expect(r.statusCode).toBe(202);\n\n    await expect\n      .poll(() => ambiente.resultados.obter(r.json().id), { timeout: 15_000 })\n      .toMatchObject({ status: 'aprovada' });\n  });\n\n  it('rejeita CPF inválido com 400 e problem+json', async () => {\n    const r = await ambiente.http.inject({\n      method: 'POST', url: '/pre-analises', payload: { ...exemploFicticio(), cpf: '123' },\n    });\n    expect(r.statusCode).toBe(400);\n    expect(r.headers['content-type']).toContain('application/problem+json');\n  });\n});", "tipos.ts": "// União discriminada: o compilador obriga a tratar cada caso\ntype Resultado<T> =\n  | { ok: true; valor: T }\n  | { ok: false; erro: 'cep_invalido' | 'nao_encontrado'; mensagem: string };\n\nfunction paraHttp(r: Resultado<Endereco>): { status: number; corpo: unknown } {\n  if (r.ok) return { status: 200, corpo: r.valor };\n  switch (r.erro) {\n    case 'cep_invalido':\n      return { status: 400, corpo: { title: r.mensagem } };\n    case 'nao_encontrado':\n      return { status: 404, corpo: { title: r.mensagem } };\n    default: {\n      const nunca: never = r.erro;             // novo caso sem tratamento = erro de compilação\n      throw new Error(`não tratado: ${nunca}`);\n    }\n  }\n}\n\n// Tipo marcado: um Cep só existe depois de validado\ntype Cep = string & { readonly __marca: 'Cep' };\nfunction paraCep(entrada: string): Cep | null {\n  const d = entrada.replace(/\\D/g, '');\n  return d.length === 8 ? (d as Cep) : null;\n}\n\n// Genéricos e tipos utilitários\ninterface Repositorio<T, Id> {\n  obter(id: Id): Promise<T | null>;\n  salvar(item: T): Promise<void>;\n}\ntype EnderecoResumo = Pick<Endereco, 'cep' | 'cidade' | 'uf'>;\ntype NovoEndereco = Omit<Endereco, 'atualizadoEm'>;\n\n// satisfies: confere o formato sem perder os literais\nconst filas = {\n  processador: 'pre-analise.processador',\n  auditoria: 'pre-analise.auditoria',\n} as const satisfies Record<string, string>;\n\n// unknown em vez de any: obriga a checar antes de usar\nfunction mensagemDe(erro: unknown): string {\n  return erro instanceof Error ? erro.message : String(erro);\n}", "tsconfig.json": "// tsconfig.json\n{\n  \"compilerOptions\": {\n    \"target\": \"ES2023\",\n    \"module\": \"NodeNext\",                     // segue o \"type\" do package.json\n    \"moduleResolution\": \"NodeNext\",\n    \"rootDir\": \"src\",\n    \"outDir\": \"dist\",\n    \"strict\": true,                           // strictNullChecks, noImplicitAny e outros\n    \"noUncheckedIndexedAccess\": true,         // lista[i] é T | undefined\n    \"exactOptionalPropertyTypes\": true,\n    \"verbatimModuleSyntax\": true,             // import type explícito\n    \"erasableSyntaxOnly\": true,               // TS 5.8+: só sintaxe que o Node sabe apagar\n    \"rewriteRelativeImportExtensions\": true,  // TS 5.7+: import './x.ts' vira './x.js' no build\n    \"skipLibCheck\": true,\n    \"sourceMap\": true\n  },\n  \"include\": [\"src\"]\n}\n\n// package.json\n{\n  \"type\": \"module\",\n  \"engines\": { \"node\": \">=24\" },\n  \"scripts\": {\n    \"dev\": \"node --watch --env-file=.env src/server.ts\",   // Node roda .ts direto (remove os tipos)\n    \"typecheck\": \"tsc --noEmit\",\n    \"build\": \"tsc\",\n    \"start\": \"node --import ./dist/otel.js dist/server.js\",\n    \"test\": \"vitest run\"\n  }\n}", "zod.ts": "import { z } from 'zod';\n\n// Um schema = validação em tempo de execução + tipo em tempo de compilação\nexport const NovaPreAnalise = z.object({\n  propostaId: z.uuid(),\n  cpf: z.string().regex(/^\\d{11}$/),\n  valorSolicitado: z.number().positive().max(500_000),\n  canal: z.enum(['app', 'loja', 'parceiro']).default('app'),\n});\nexport type NovaPreAnalise = z.infer<typeof NovaPreAnalise>;\n\n// Ambiente validado na subida: o processo nem inicia com variável errada\nconst Env = z.object({\n  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),\n  PORT: z.coerce.number().int().default(3000),\n  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),\n  MONGO_URL: z.url(),\n  DATABASE_URL: z.url(),\n  REDIS_URL: z.url(),\n  RABBITMQ_URL: z.url(),\n});\nexport const env = Env.parse(process.env);\n\n// Na rota: safeParse para responder 400 em vez de lançar\nconst r = NovaPreAnalise.safeParse(req.body);\nif (!r.success) {\n  return reply.status(400).type('application/problem+json').send({\n    title: 'Dados inválidos',\n    errors: z.flattenError(r.error).fieldErrors,\n  });\n}"};
+// ===================== CENAS =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const TITLE = {k:'Squad · trilha Node', h:'Node.js e TypeScript com MongoDB, SQL, Redis e RabbitMQ',
+  p:'Do event loop ao design de sistemas: o mesmo fluxo de pré-análise da squad, agora em Node, com cada tecnologia no papel em que ela é melhor.',
+  chips:['Node 24 LTS','TypeScript strict','Fastify + Zod','MongoDB · PostgreSQL','Redis · RabbitMQ']};
+const OUTRO = {k:'Fim do roteiro', h:'Agora, pratique no protótipo',
+  p:'Abaixo do vídeo estão a matriz de escolha de tecnologias, a trilha de estudo, o checklist por nível e as perguntas que clientes e entrevistadores mais fazem.',
+  chips:['docker compose up','npm run dev','vitest','rabbitmq management']};
+const S = (file, key, lang = 'ts') => ({type:'code', file, lang, code: SNIP[key]});
+
+const SCENES = [
+/* ---------- VISÃO GERAL ---------- */
+{ id:'intro', ch:'Visão geral', title:'Uma trilha, cinco tecnologias',
+  say:'Esta é a trilha de Node.js com TypeScript da squad. Vamos do funcionamento do event loop até o desenho de um sistema completo, usando o mesmo fluxo de pré-análise das outras trilhas: uma API que responde na hora, dados em MongoDB e em SQL, cache e coordenação no Redis, e processamento assíncrono com RabbitMQ.',
+  v:{type:'title'} },
+
+{ id:'mapa', ch:'Visão geral', title:'Cada tecnologia no seu papel',
+  say:'Cada peça tem um papel. A API em Node com TypeScript recebe e valida. O SQL guarda o que precisa de transação e relacionamento, como a pré-análise e o outbox. O MongoDB guarda documentos de forma flexível, como a proposta com seu histórico. O Redis acelera leituras e coordena réplicas. E o RabbitMQ entrega as mensagens aos workers, que processam fora da requisição.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:200,w:130,h:70, html:B('Cliente','POST /pre-analises')},
+    {at:2, x:184,y:180,w:180,h:110, cls:'blue', html:B('API Node + TS','Fastify, Zod, pino')+UL('valida','responde 202')},
+    {at:4.5, x:400,y:84,w:240,h:84, cls:'amber', html:B('PostgreSQL / SQL Server','pré-análise + outbox na mesma transação')},
+    {at:7, x:400,y:184,w:240,h:84, cls:'green', html:B('MongoDB','proposta com histórico embutido')},
+    {at:9.5, x:400,y:284,w:240,h:84, cls:'amber', html:B('Redis','cache, rate limit, idempotência, locks')},
+    {at:12, x:676,y:134,w:258,h:96, cls:'blue', html:B('RabbitMQ','exchange propostas · filas quorum')+'<small style="font:12px var(--f-mono);color:var(--st-dim);margin-top:4px">processador · auditoria · DLQ</small>'},
+    {at:14, x:676,y:254,w:258,h:84, cls:'green', html:B('Workers Node','consomem, processam, dão ack')},
+    {at:16, x:24,y:400,w:910,h:100, cls:'ext', html:B('Regra da trilha','um banco por necessidade, não por moda · o dado oficial nunca fica só no Redis · nada pesado dentro da requisição')},
+  ], lines:[
+    {at:2, d:'M154 235 L 184 235', cls:'flow'},
+    {at:4.5, d:'M364 210 C 382 210, 382 126, 400 126', cls:'amber'},
+    {at:7, d:'M364 230 L 400 226', cls:'flow'},
+    {at:9.5, d:'M364 250 C 382 250, 382 326, 400 326', cls:'amber'},
+    {at:12, d:'M640 126 C 660 126, 660 170, 676 170', cls:'flow'},
+    {at:14, d:'M805 230 L 805 254', cls:'flow'},
+  ]}},
+
+/* ---------- RUNTIME NODE ---------- */
+{ id:'eventloop', ch:'Runtime Node', title:'O event loop em uma tela',
+  say:'O Node executa o seu JavaScript em uma única thread. Operações de rede e de disco são entregues ao sistema operacional ou ao pool do libuv, e o callback volta para a fila quando termina. Promises resolvidas rodam como microtarefas, antes da próxima fase do loop. Por isso uma só thread atende milhares de conexões, desde que ninguém a bloqueie com CPU pesada.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:250,h:150, cls:'blue', html:B('Call stack','seu código, uma thread')+UL('handler da rota','JSON.parse, validação')},
+    {at:3, x:330,y:92,w:280,h:150, cls:'green', html:B('Sistema e libuv','trabalho fora da thread')+UL('sockets: epoll / IOCP','pool de 4 threads: fs, dns, crypto, zlib')},
+    {at:6, x:654,y:92,w:270,h:150, cls:'amber', html:B('Filas','o que volta para rodar')+UL('microtarefas: promises','fases: timers, poll, check')},
+    {at:9.5, x:36,y:270,w:430,h:110, cls:'green', html:B('Ótimo para','I/O: APIs, gateways, BFF, filas, tempo real')},
+    {at:11.5, x:494,y:270,w:430,h:110, cls:'amber', html:B('Cuidado com','CPU na thread: hash síncrono, JSON gigante, regex catastrófica, laços longos')},
+    {at:14, x:36,y:400,w:888,h:104, cls:'ext', html:B('Sinal de problema','event loop delay subindo: todas as requisições ficam lentas ao mesmo tempo · solução: worker_threads, outro serviço ou dividir o trabalho')},
+  ], lines:[
+    {at:3, d:'M286 167 L 330 167', cls:'flow'},
+    {at:6, d:'M610 167 L 654 167', cls:'flow'},
+    {at:7, d:'M790 242 C 790 262, 160 262, 160 242', cls:'dim'},
+  ]}},
+
+{ id:'async', ch:'Runtime Node', title:'Assíncrono sem armadilhas',
+  say:'Chamadas independentes vão em paralelo com Promise.all; quando uma falha não deve derrubar as outras, allSettled. Toda chamada externa tem prazo, e o AbortSignal.timeout resolve isso no fetch. Muitos itens pedem concorrência limitada. CPU pesada vai para worker threads. E uma rejeição sem tratamento derruba o processo, então registre e encerre de forma controlada.',
+  v:S('src/exemplos/assincrono.ts','async.ts')},
+
+{ id:'streams', ch:'Runtime Node', title:'Streams e backpressure',
+  say:'Streams processam dados em pedaços, com memória constante. A função pipeline liga leitura, transformação, compressão e escrita, e respeita o backpressure: se o destino está lento, a origem espera. Cursores do MongoDB também são iteráveis, e respostas HTTP grandes devem sair como stream, nunca como uma string gigante.',
+  v:S('src/exemplos/streams.ts','streams.ts')},
+
+/* ---------- TYPESCRIPT ---------- */
+{ id:'tsconfig', ch:'TypeScript', title:'tsconfig e package.json para Node',
+  say:'A configuração começa estrita: strict, acesso a índice que pode ser undefined e imports de tipo explícitos. O módulo segue o padrão NodeNext, com ESM pelo type module. Desde o Node 22.18 e 23.6, o Node roda arquivos .ts direto, apagando os tipos; a opção erasableSyntaxOnly garante que o código só usa sintaxe que pode ser apagada. Em produção, roda o JavaScript compilado.',
+  v:S('tsconfig.json + package.json','tsconfig.json')},
+
+{ id:'tipos', ch:'TypeScript', title:'Tipos que pegam bugs',
+  say:'Uniões discriminadas fazem o compilador exigir o tratamento de cada caso, e o never acusa o caso esquecido. Tipos marcados impedem passar uma string qualquer onde se espera um CEP validado. Genéricos e utilitários como Pick e Omit evitam duplicar tipos. Satisfies confere o formato sem perder os literais, e unknown obriga a checar antes de usar.',
+  v:S('src/exemplos/tipos.ts','tipos.ts')},
+
+{ id:'zod', ch:'TypeScript', title:'Validação em runtime com Zod',
+  say:'Tipos do TypeScript somem em tempo de execução, então tudo o que entra precisa ser validado. Com Zod, um único schema valida o dado e gera o tipo. O mesmo vale para as variáveis de ambiente: se faltar uma URL, o processo nem sobe. Na rota, safeParse permite responder 400 com os erros por campo.',
+  v:S('src/schemas.ts','zod.ts')},
+
+/* ---------- API HTTP ---------- */
+{ id:'frameworks', ch:'API HTTP', title:'Express, Fastify, NestJS ou Hono?',
+  say:'Express é o mais conhecido e, na versão 5, trata promises nativamente, mas não traz estrutura. Fastify é rápido, tem plugins encapsulados, validação por schema e logger pino embutido: é a escolha desta trilha. NestJS traz módulos, injeção de dependência e decorators, bom para times grandes vindos de Java ou .NET. Hono é mínimo e roda também em edge e Bun.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:150, html:B('Express 5','o mais conhecido')+UL('enorme ecossistema de middlewares','sem estrutura: o time define','mais lento que Fastify')},
+    {at:4, x:494,y:92,w:430,h:150, cls:'green', html:B('Fastify','escolha desta trilha','recomendado','gr')+UL('rápido, plugins encapsulados','schema, pino e inject para testes','bom tipo com TypeScript')},
+    {at:8, x:36,y:262,w:430,h:150, cls:'blue', html:B('NestJS','estrutura de framework')+UL('módulos, DI, decorators, guards','familiar para quem vem de .NET','mais cerimônia e mágica')},
+    {at:12, x:494,y:262,w:430,h:150, cls:'amber', html:B('Hono','mínimo e multiplataforma')+UL('Node, Bun, Deno, edge','Web Standards (Request/Response)','ecossistema menor')},
+    {at:15, x:36,y:430,w:888,h:72, cls:'ext', html:B('Critério','time grande e domínio extenso: NestJS · APIs enxutas e rápidas: Fastify · legado ou middleware específico: Express')},
+  ]}},
+
+{ id:'estrutura', ch:'API HTTP', title:'Estrutura do projeto',
+  say:'Organize por módulo de negócio, não por tipo de arquivo. Cada módulo tem rotas, schemas, regras e acesso a dados. A pasta de infraestrutura concentra clientes de Mongo, SQL, Redis e RabbitMQ, criados uma vez na subida. API e workers são processos separados que compartilham o mesmo código de domínio.',
+  v:{type:'term', lines:[
+    'c|tree src -L 2',
+    'o|src',
+    'o|├── server.ts                # sobe a API e trata SIGTERM',
+    'o|├── app.ts                   # cria o Fastify (usado também nos testes)',
+    'o|├── otel.ts                  # OpenTelemetry, carregado antes de tudo',
+    'o|├── env.ts                   # variáveis validadas com Zod',
+    'o|├── dependencias.ts          # composição: cria clientes e serviços uma vez',
+    'o|├── modulos',
+    'o|│   ├── cep                  # rotas.ts, schemas.ts, servico.ts, repositorio.ts',
+    'o|│   └── pre-analise          # rotas.ts, registrar.ts, avaliar.ts',
+    'o|├── infra                    # mongo.ts, sql.ts, redis.ts, rabbit.ts',
+    'o|└── workers',
+    'o|    ├── processador.ts       # processo próprio: node dist/workers/processador.js',
+    'o|    ├── auditoria.ts',
+    'o|    └── relay-outbox.ts',
+  ]}},
+
+{ id:'app', ch:'API HTTP', title:'A aplicação Fastify',
+  say:'Uma função cria a aplicação recebendo as dependências, o que permite usar a mesma app nos testes. O cabeçalho de correlação vira o id da requisição e aparece em todos os logs. Há rotas separadas de liveness e readiness, e cada módulo é um plugin com prefixo. A rota de pré-análise valida, registra e responde 202 sem esperar o processamento.',
+  v:S('src/app.ts','app.ts')},
+
+{ id:'erros', ch:'API HTTP', title:'Erros padronizados e desligamento gracioso',
+  say:'Um tratador central converte erros em respostas problem+json com status, título e o traceId. Erro de validação é 400, conflito de versão é 409, regra de negócio é 422, e só o 500 é registrado como erro. No desligamento, a aplicação para de aceitar requisições, termina as que estão em andamento, para os consumidores e fecha as conexões, nessa ordem.',
+  v:S('src/erros.ts + src/server.ts','erros.ts')},
+
+/* ---------- DADOS ---------- */
+{ id:'mongosql', ch:'Dados', title:'MongoDB ou SQL?',
+  say:'SQL é a escolha quando os dados são relacionais, precisam de transações entre várias tabelas, restrições e consultas ad hoc, como dinheiro e status de propostas. MongoDB brilha quando o dado é um documento lido e escrito inteiro, com estrutura que varia, como uma proposta com histórico e anexos. Muitos sistemas usam os dois, cada um no que faz melhor.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'amber', html:B('SQL (PostgreSQL, SQL Server)','relacional')+UL('transações entre várias tabelas','chaves estrangeiras e restrições','consultas e relatórios ad hoc','dinheiro, saldos, status oficiais','outbox na mesma transação')},
+    {at:5, x:494,y:92,w:430,h:250, cls:'green', html:B('MongoDB','documentos')+UL('agregado lido e gravado inteiro','esquema que varia por registro','escala horizontal por sharding','atualização atômica por documento','transações existem, mas devem ser exceção')},
+    {at:11, x:36,y:362,w:888,h:140, cls:'ext', html:B('Perguntas para decidir','Quais consultas o sistema faz? · Preciso de transação entre entidades? · O dado é lido junto ou em pedaços? · Quem mais vai consultar (BI, auditoria)? · O time domina qual dos dois?')},
+  ]}},
+
+{ id:'mongo', ch:'Dados', title:'MongoDB com o driver oficial',
+  say:'Um MongoClient por processo, com pool de conexões. Os índices fazem parte do código, inclusive o índice TTL, que apaga documentos antigos sozinho. Upsert torna a gravação idempotente. Consultas usam filtro coberto por índice, projeção e limite, e o explain mostra se o banco usou índice ou varreu a coleção inteira.',
+  v:S('src/infra/mongo.ts','mongo.ts')},
+
+{ id:'mongo-modelo', ch:'Dados', title:'Modelagem no MongoDB',
+  say:'Embuta o que é lido junto e pertence ao pai, como o histórico da proposta; referencie o que tem vida própria, como o cliente. Uma atualização num único documento já é atômica, e um campo de versão dá concorrência otimista. Quando precisar mexer em duas coleções juntas, use transação, que exige replica set, inclusive no ambiente local.',
+  v:S('src/modulos/proposta/repositorio.ts','mongo-modelo.ts')},
+
+{ id:'sql', ch:'Dados', title:'SQL tipado com Kysely',
+  say:'Kysely é um query builder tipado: os tipos das tabelas são gerados do banco, e uma coluna errada não compila. O SQL gerado é previsível, a paginação por chave é simples, e quando for mais claro escrever SQL à mão, a template sql continua parametrizada. Ele suporta PostgreSQL e também SQL Server. Prisma e Drizzle são alternativas válidas.',
+  v:S('src/infra/sql.ts','sql.ts')},
+
+{ id:'outbox', ch:'Dados', title:'Outbox no SQL',
+  say:'A pré-análise e a mensagem a publicar são gravadas na mesma transação. Um relay lê as mensagens pendentes com FOR UPDATE SKIP LOCKED, o que permite várias réplicas trabalharem sem pegar a mesma linha, publica no RabbitMQ com confirmação e marca como enviada. Se o broker estiver fora, nada se perde: a linha espera.',
+  v:S('src/modulos/pre-analise/registrar.ts','outbox.ts')},
+
+{ id:'redis', ch:'Dados', title:'Redis: cache, limites e idempotência',
+  say:'O Redis tem três usos principais aqui. Cache-aside com TTL e uma trava curta, para que só uma réplica busque na origem quando o cache expira. Limite de taxa por cliente com um contador por janela. E chave de idempotência com SET NX, para um POST repetido não ser processado duas vezes. O dado oficial nunca fica só no Redis.',
+  v:S('src/infra/redis.ts','redis.ts')},
+
+/* ---------- MENSAGERIA ---------- */
+{ id:'rabbit-conceitos', ch:'Mensageria', title:'RabbitMQ: exchanges, filas e bindings',
+  say:'No RabbitMQ, o produtor publica numa exchange com uma routing key. Bindings ligam a exchange às filas, e cada fila entrega a um consumidor, que confirma com ack. Uma exchange topic roteia por padrão de chave. Cada sistema interessado tem a sua fila, então a mesma mensagem chega ao processador e à auditoria. O que falha de vez vai para a dead letter exchange.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:200,w:150,h:70, cls:'blue', html:B('Produtor','routing key pre-analise.recebida')},
+    {at:2.5, x:214,y:180,w:170,h:110, cls:'amber', html:B('Exchange','propostas · topic')+'<small style="margin-top:6px;font:12px var(--f-mono);color:var(--st-dim)">binding pre-analise.*</small>'},
+    {at:5, x:430,y:110,w:250,h:80, cls:'green', html:B('Fila quorum','pre-analise.processador')},
+    {at:5.5, x:430,y:280,w:250,h:80, cls:'green', html:B('Fila quorum','pre-analise.auditoria')},
+    {at:7.5, x:720,y:110,w:210,h:80, html:B('Processador','prefetch 10 · ack manual')},
+    {at:8, x:720,y:280,w:210,h:80, html:B('Auditoria','sua própria fila')},
+    {at:11, x:430,y:420,w:500,h:80, cls:'ext', html:B('Dead letter','x-delivery-limit 5 → propostas.dlx → *.dlq · inspecionar e republicar')},
+    {at:14, x:24,y:420,w:380,h:80, html:B('Garantias','publisher confirms + mensagem persistente + ack depois do processamento')},
+  ], lines:[
+    {at:2.5, d:'M174 235 L 214 235', cls:'flow'},
+    {at:5, d:'M384 220 C 410 220, 405 150, 430 150', cls:'flow'},
+    {at:5.5, d:'M384 250 C 410 250, 405 320, 430 320', cls:'flow'},
+    {at:7.5, d:'M680 150 L 720 150', cls:'green'},
+    {at:8, d:'M680 320 L 720 320', cls:'green'},
+    {at:11, d:'M555 360 L 555 420', cls:'dim'},
+  ]}},
+
+{ id:'rabbit-topologia', ch:'Mensageria', title:'Topologia e publicação confiável',
+  say:'A topologia é declarada no código: exchange topic durável, uma fila quorum por consumidor, com limite de entregas e dead letter própria. Filas quorum são replicadas e são o padrão recomendado. Na publicação, a mensagem é persistente, leva id e correlação nos cabeçalhos, e o canal de confirmação só retorna quando o broker aceitou.',
+  v:S('src/infra/rabbit.ts','rabbit-topologia.ts')},
+
+{ id:'rabbit-consumidor', ch:'Mensageria', title:'Consumidor com ack, retry e idempotência',
+  say:'O consumidor limita as mensagens em voo com prefetch e confirma só depois de processar. Mensagem inválida vai direto para a dead letter; falha temporária volta para a fila e conta para o limite de entregas. A idempotência grava o marcador do evento e o resultado na mesma transação. No encerramento, cancela o consumo e termina o que está em andamento.',
+  v:S('src/workers/processador.ts','rabbit-consumidor.ts')},
+
+{ id:'rabbit-kafka', ch:'Mensageria', title:'RabbitMQ ou Kafka?',
+  say:'RabbitMQ é um broker de filas: roteamento flexível, mensagem removida após o ack, ótimo para comandos e tarefas entre serviços. Kafka é um log de eventos: mensagens retidas por tempo, releitura por qualquer grupo, ordem por partição e vazão muito alta. Desde a versão 3.9, o RabbitMQ também tem streams, um log replicável que reduz essa distância.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:250, cls:'blue', html:B('RabbitMQ','broker de filas')+UL('roteamento por exchange e binding','mensagem sai da fila após o ack','prioridade, TTL, dead letter nativa','ótimo para tarefas e comandos','streams para replay (3.9+)')},
+    {at:5, x:494,y:92,w:430,h:250, cls:'amber', html:B('Kafka / Event Hubs','log de eventos')+UL('retenção por tempo, releitura','vários grupos independentes','ordem por partição (chave)','vazão muito alta','DLQ e retry ficam com a aplicação')},
+    {at:11, x:36,y:362,w:888,h:140, cls:'ext', html:B('Na prática','tarefas a executar e respostas rápidas entre serviços: RabbitMQ · histórico de eventos que vários sistemas releem, analytics e alto volume: Kafka · a trilha de Kafka cobre o outro lado')},
+  ]}},
+
+/* ---------- PRODUÇÃO ---------- */
+{ id:'local', ch:'Produção', title:'Ambiente local com Docker Compose',
+  say:'Um docker compose sobe tudo o que a aplicação precisa: MongoDB em replica set para permitir transações, PostgreSQL, Redis e RabbitMQ com o painel de gerenciamento. As URLs vão para o arquivo env da aplicação, e senhas ficam fora do Git.',
+  v:S('docker-compose.yml','docker-compose.yml','yaml')},
+
+{ id:'docker', ch:'Produção', title:'Imagem de produção',
+  say:'A imagem usa dois estágios: o primeiro instala tudo e compila, o segundo leva só as dependências de produção e o JavaScript gerado. Roda com o usuário node, sem privilégios. O comando chama o node diretamente, sem npm start, para que o processo receba o SIGTERM e encerre de forma graciosa. No Dockerfile, comentários ficam sempre em linhas próprias.',
+  v:S('Dockerfile','Dockerfile','docker')},
+
+{ id:'otel', ch:'Produção', title:'Logs, traces e o atraso do event loop',
+  say:'O OpenTelemetry é carregado antes da aplicação e instrumenta sozinho HTTP, Fastify, PostgreSQL, MongoDB, Redis e RabbitMQ, ligando tudo num mesmo trace. Os logs saem em JSON pelo pino, com campos sensíveis ocultos. E a métrica que mais importa no Node é o atraso do event loop: se ele sobe, toda a aplicação fica lenta.',
+  v:S('src/otel.ts + src/logger.ts','otel.ts')},
+
+{ id:'escala', ch:'Produção', title:'Escalar Node em produção',
+  say:'No Kubernetes, use um processo Node por contêiner e escale com réplicas, em vez do módulo cluster. A API não guarda estado; sessão, cache e travas ficam no Redis. Cada processo tem pools de conexão limitados, e a soma de réplicas vezes pool precisa caber no banco. Defina limite de memória e o tamanho do heap do V8 de acordo.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:200, cls:'blue', html:B('Réplicas','1 processo por contêiner')+UL('HPA por CPU ou RPS','sem cluster dentro do pod','workers escalam pela fila')},
+    {at:4, x:340,y:92,w:280,h:200, cls:'green', html:B('Sem estado','nada importante na memória')+UL('sessão e travas no Redis','cache local só como L1','uploads direto no storage')},
+    {at:7.5, x:644,y:92,w:280,h:200, cls:'amber', html:B('Conexões','a conta que derruba bancos')+UL('réplicas × pool ≤ limite do banco','PgBouncer quando precisar','um MongoClient por processo')},
+    {at:11, x:36,y:312,w:430,h:190, html:B('Memória','V8 dentro do contêiner')+UL('--max-old-space-size ≈ 75% do limit','heap snapshot para vazamentos','listeners e caches sem limite: suspeitos')},
+    {at:14, x:494,y:312,w:430,h:190, cls:'green', html:B('Sinais','o que alertar')+UL('event loop delay p99','p95/p99 por rota e taxa de 5xx','profundidade das filas e mensagens na DLQ')},
+  ]}},
+
+{ id:'testes', ch:'Produção', title:'Testes de ponta a ponta com Testcontainers',
+  say:'Os testes de integração sobem PostgreSQL, MongoDB e RabbitMQ reais em contêineres, iniciam a API e os workers apontando para eles e usam o inject do Fastify para chamar a rota sem abrir porta. O expect.poll do Vitest espera o resultado assíncrono aparecer. Testes de unidade continuam cobrindo as regras puras.',
+  v:S('test/pre-analise.e2e.test.ts','teste.ts')},
+
+/* ---------- DESIGN ---------- */
+{ id:'design', ch:'Design de sistemas', title:'O sistema completo',
+  say:'Juntando tudo: a requisição passa pelo gateway, chega a uma réplica da API, que consulta o Redis antes do banco, grava pré-análise e outbox numa transação SQL e responde. O relay publica no RabbitMQ, os workers processam com idempotência e gravam no SQL e no MongoDB. Cada salto tem prazo, retry com limite e métrica.',
+  v:{type:'boxes', items:[
+    {at:.8, x:24,y:190,w:120,h:70, html:B('Cliente','HTTPS')},
+    {at:2, x:166,y:190,w:130,h:70, cls:'blue', html:B('Gateway','TLS, WAF, rate limit')},
+    {at:3.5, x:320,y:100,w:180,h:250, cls:'region', html:'<span class="rl">API Node · N réplicas</span><div class="pods" style="margin-top:12px"><span class="pod">api-1</span><span class="pod">api-2</span><span class="pod">api-3</span></div>'},
+    {at:5.5, x:530,y:84,w:180,h:64, cls:'amber', html:B('Redis','cache · rl · idem')},
+    {at:7, x:530,y:170,w:180,h:64, cls:'amber', html:B('SQL','pré-análise + outbox')},
+    {at:9, x:530,y:300,w:180,h:64, cls:'blue', html:B('Relay outbox','SKIP LOCKED')},
+    {at:10.5, x:740,y:300,w:196,h:64, cls:'blue', html:B('RabbitMQ','filas quorum')},
+    {at:12, x:740,y:170,w:196,h:64, cls:'green', html:B('Workers','processador · auditoria')},
+    {at:13.5, x:740,y:84,w:196,h:64, cls:'green', html:B('MongoDB','proposta + histórico')},
+    {at:15.5, x:24,y:400,w:912,h:104, cls:'ext', html:B('Em cada salto','timeout · retry com limite · idempotência · correlationId no log · métrica de latência e erro · alerta com runbook')},
+  ], lines:[
+    {at:2, d:'M144 225 L 166 225', cls:'flow'},
+    {at:3.5, d:'M296 225 L 320 225', cls:'flow'},
+    {at:5.5, d:'M500 150 C 515 150, 515 116, 530 116', cls:'amber'},
+    {at:7, d:'M500 202 L 530 202', cls:'flow'},
+    {at:9, d:'M620 234 L 620 300', cls:'dim'},
+    {at:10.5, d:'M710 332 L 740 332', cls:'flow'},
+    {at:12, d:'M838 300 L 838 234', cls:'flow'},
+    {at:13.5, d:'M838 170 L 838 148', cls:'flow'},
+    {at:13.5, d:'M740 202 C 725 202, 725 210, 710 210', cls:'dim'},
+  ]}},
+
+{ id:'roteiro', ch:'Design de sistemas', title:'Decisões que o cliente vai cobrar',
+  say:'Numa conversa de design, estas são as decisões que precisam estar justificadas: onde fica cada dado e por quê, o que é síncrono e o que é assíncrono, como o sistema se comporta quando cada dependência falha, como se evita duplicidade e perda, como escala, como se observa e quanto custa.',
+  v:{type:'check', items:[
+    'Requisitos e números: RPS, pico, volume, p99',
+    'Onde fica cada dado: SQL, Mongo ou Redis',
+    'Síncrono × assíncrono, e o prazo esperado',
+    'Contrato da API, versão e erros',
+    'Contrato das mensagens, com versão',
+    'Falhas: timeout, retry, DLQ, circuit breaker',
+    'Sem perda: outbox, confirms, ack após processar',
+    'Sem duplicidade: idempotência em API e worker',
+    'Escala: réplicas, pools, filas, índices',
+    'Segurança: authN/Z, segredos, dados pessoais',
+    'Observabilidade: logs, traces, event loop, filas',
+    'Custo e o que fica para depois',
+  ]}},
+
+{ id:'check', ch:'Fechamento', title:'Checklist por nível',
+  say:'Use esta lista para medir o progresso de cada pessoa. Cada item vale quando foi aplicado em código. A versão completa, separada por nível e com atalho para a cena, está abaixo do vídeo.',
+  v:{type:'check', items:[
+    'Básico: async sem bloquear o event loop',
+    'Básico: TypeScript strict sem any',
+    'Básico: entrada e env validados com Zod',
+    'Intermediário: Fastify modular e problem+json',
+    'Intermediário: desligamento gracioso',
+    'Intermediário: Mongo com índices e explain',
+    'Intermediário: SQL tipado e paginação por chave',
+    'Avançado: outbox com SKIP LOCKED',
+    'Avançado: Redis para cache, limite e idempotência',
+    'Avançado: RabbitMQ com confirms, ack e DLQ',
+    'Produção: imagem, OpenTelemetry e testes reais',
+    'Sistemas: justificar cada decisão do design',
+  ]}},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a matriz de escolha entre frameworks, bancos e brokers, a trilha de estudo com a documentação oficial, o checklist por nível e as perguntas mais comuns sobre Node, TypeScript, MongoDB, SQL, Redis e RabbitMQ.',
+  v:{type:'outro'} },
+];
+// ===================== MATRIZ, TRILHA, CHECKLIST, FAQ, COMANDOS =====================
+const MATRIZ = [
+  ['Fastify','Framework HTTP','APIs enxutas e rápidas, plugins encapsulados, schema, logger pino e inject para testes.','O time precisa de estrutura imposta pelo framework (módulos, DI) desde o início.','npm i fastify'],
+  ['NestJS','Framework HTTP','Time grande, domínio extenso, quem vem de .NET ou Java, padrões de módulo, DI e guards.','Serviço pequeno ou time que prefere código explícito a decorators.','npx @nestjs/cli new'],
+  ['Express 5','Framework HTTP','Legado, middleware específico do ecossistema Express, protótipo rápido.','Projeto novo que precisa de desempenho e estrutura.','npm i express'],
+  ['PostgreSQL / SQL Server','Banco relacional','Transações entre tabelas, restrições, relatórios, dinheiro e status oficiais, outbox.','Documentos de formato muito variável lidos sempre inteiros.','npm i kysely pg'],
+  ['MongoDB','Banco de documentos','Agregados lidos e gravados inteiros, esquema variável, escala horizontal.','Muitas relações e transações entre entidades a cada operação.','npm i mongodb'],
+  ['Redis','Memória compartilhada','Cache, rate limit, idempotência, travas curtas, sessões, contadores.','Única cópia de um dado que não pode se perder.','npm i ioredis'],
+  ['RabbitMQ','Broker de filas','Tarefas e comandos entre serviços, roteamento flexível, dead letter nativa.','Vários sistemas precisam reler o histórico de eventos por dias.','npm i amqplib'],
+  ['Kafka / Event Hubs','Log de eventos','Eventos relidos por vários grupos, alto volume, ordem por chave, retenção.','Fila simples de tarefas com poucas mensagens por segundo.','npm i @confluentinc/kafka-javascript'],
+];
+
+const STUDY = [
+  ['Documentação da API do Node.js','Módulos nativos: fs, stream, worker_threads, perf_hooks','https://nodejs.org/docs/latest/api/','async'],
+  ['Event loop, timers e process.nextTick','Como o Node agenda o trabalho','https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick','eventloop'],
+  ['Não bloqueie o event loop','O que trava a thread e como evitar','https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop','eventloop'],
+  ['Rodar TypeScript nativamente no Node','Remoção de tipos e limitações','https://nodejs.org/en/learn/typescript/run-natively','tsconfig'],
+  ['Handbook do TypeScript','Tipos, narrowing, genéricos','https://www.typescriptlang.org/docs/handbook/intro.html','tipos'],
+  ['Referência do tsconfig','Cada opção do compilador','https://www.typescriptlang.org/tsconfig/','tsconfig'],
+  ['Zod','Schemas, inferência e erros','https://zod.dev','zod'],
+  ['Fastify','Rotas, plugins, hooks, testes com inject','https://fastify.dev/docs/latest/','app'],
+  ['NestJS','Módulos, providers, guards','https://docs.nestjs.com/','frameworks'],
+  ['Driver Node do MongoDB','Conexão, CRUD, agregação, transações','https://www.mongodb.com/docs/drivers/node/current/','mongo'],
+  ['Modelagem de dados no MongoDB','Embutir ou referenciar','https://www.mongodb.com/docs/manual/data-modeling/','mongo-modelo'],
+  ['Transações no MongoDB','Quando e como usar','https://www.mongodb.com/docs/manual/core/transactions/','mongo-modelo'],
+  ['Kysely','Query builder tipado para SQL','https://kysely.dev/docs/intro','sql'],
+  ['Documentação do PostgreSQL','SQL, índices, transações, locks','https://www.postgresql.org/docs/current/','outbox'],
+  ['Documentação do Redis','Tipos de dados, expiração, padrões','https://redis.io/docs/latest/','redis'],
+  ['ioredis','Cliente Redis para Node','https://github.com/redis/ioredis','redis'],
+  ['Tutoriais do RabbitMQ','Filas, exchanges, roteamento, tópicos','https://www.rabbitmq.com/tutorials','rabbit-conceitos'],
+  ['Filas quorum','Filas replicadas e limite de entregas','https://www.rabbitmq.com/docs/quorum-queues','rabbit-topologia'],
+  ['Confirmações (confirms e acks)','Garantias de publicação e consumo','https://www.rabbitmq.com/docs/confirms','rabbit-consumidor'],
+  ['Dead letter exchanges','Para onde vai o que falhou','https://www.rabbitmq.com/docs/dlx','rabbit-consumidor'],
+  ['OpenTelemetry para JavaScript','Traces, métricas e instrumentação automática','https://opentelemetry.io/docs/languages/js/','otel'],
+  ['Testcontainers para Node','Bancos e brokers reais nos testes','https://node.testcontainers.org/','testes'],
+  ['Node.js Best Practices','Guia da comunidade para produção','https://github.com/goldbergyoni/nodebestpractices','escala'],
+];
+
+const CHECK = [
+  ['Básico','Explicar o event loop e o que bloqueia a thread','eventloop'],
+  ['Básico','Promise.all, allSettled e timeouts com AbortSignal','async'],
+  ['Básico','Processar arquivo grande com stream e pipeline','streams'],
+  ['Básico','Projeto TypeScript strict, sem any, com tsconfig para Node','tsconfig'],
+  ['Intermediário','Uniões discriminadas, never e tipos marcados','tipos'],
+  ['Intermediário','Entrada e variáveis de ambiente validadas com Zod','zod'],
+  ['Intermediário','Escolher o framework e justificar','frameworks'],
+  ['Intermediário','Fastify organizado por módulos, com liveness e readiness','app'],
+  ['Intermediário','Erros em problem+json e desligamento gracioso','erros'],
+  ['Dados','Justificar SQL ou MongoDB para cada dado','mongosql'],
+  ['Dados','MongoDB com índices, upsert e explain','mongo'],
+  ['Dados','Modelagem embutir × referenciar e concorrência otimista','mongo-modelo'],
+  ['Dados','SQL tipado com paginação por chave','sql'],
+  ['Dados','Outbox na transação e relay com SKIP LOCKED','outbox'],
+  ['Dados','Redis para cache-aside, rate limit e idempotência','redis'],
+  ['Mensageria','Topologia com exchange topic, filas quorum e DLQ','rabbit-topologia'],
+  ['Mensageria','Publisher confirms e mensagens persistentes','rabbit-topologia'],
+  ['Mensageria','Consumidor com prefetch, ack após processar e idempotência','rabbit-consumidor'],
+  ['Mensageria','Explicar quando usar RabbitMQ e quando Kafka','rabbit-kafka'],
+  ['Produção','Ambiente local completo com Docker Compose','local'],
+  ['Produção','Imagem multi-stage, usuário node e node direto no CMD','docker'],
+  ['Produção','OpenTelemetry, pino e event loop delay','otel'],
+  ['Produção','Testes de ponta a ponta com Testcontainers','testes'],
+  ['Sistemas','Desenhar e justificar o sistema completo','roteiro'],
+];
+
+const FAQ = [
+ ['Node','Node é single thread. Aguenta muita carga?',`<p>Aguenta muita carga de I/O: a thread do JavaScript só coordena, e rede e disco ficam com o sistema operacional. O limite aparece com CPU pesada dentro da requisição. Nesse caso, use worker_threads, outro serviço ou divida o trabalho, e escale com réplicas.</p>`],
+ ['Node','Como descobrir o que está deixando a API lenta?',`<p>Olhe o event loop delay: se sobe, algo bloqueia a thread. Use <code>node --cpu-prof</code> ou o Chrome DevTools com <code>--inspect</code> para perfilar, e os traces do OpenTelemetry para achar dependências lentas. Para memória, heap snapshots comparados ao longo do tempo.</p>`],
+ ['Node','Qual versão do Node usar?',`<p>Sempre uma LTS em produção: as versões pares viram LTS em outubro de cada ano. Hoje, o Node 24. Fixe a versão em <code>engines</code> e na imagem Docker, e planeje a atualização antes do fim do suporte.</p>`],
+ ['TypeScript','Preciso compilar o TypeScript se o Node roda .ts?',`<p>Em desenvolvimento, rodar direto é prático. Em produção, compile: o Node só apaga os tipos, não checa nada, e não aceita enums e outras sintaxes que geram código. Rode <code>tsc --noEmit</code> no pipeline para a checagem de tipos.</p>`],
+ ['TypeScript','ESM ou CommonJS?',`<p>ESM para projetos novos, com <code>"type": "module"</code> e <code>module: NodeNext</code>. O Node atual consegue usar <code>require</code> em módulos ESM sincronamente, o que reduz atrito com bibliotecas antigas.</p>`],
+ ['TypeScript','Por que validar com Zod se já tenho tipos?',`<p>Tipos existem só na compilação. O corpo de uma requisição, uma mensagem da fila ou uma variável de ambiente chegam como dados quaisquer. O schema valida em tempo de execução e gera o tipo, então os dois nunca divergem.</p>`],
+ ['API','Express, Fastify ou NestJS para o projeto?',`<p>Fastify para APIs enxutas e rápidas, com bom suporte a TypeScript. NestJS quando o time é grande e quer estrutura de módulos e injeção de dependência. Express quando há legado ou middleware que só existe para ele. O que pesa mais é manter um padrão único entre os serviços.</p>`],
+ ['API','Como versionar e documentar a API?',`<p>Gere o OpenAPI a partir dos schemas (@fastify/swagger, ou zod-to-openapi). Versione por prefixo de rota quando houver quebra de contrato e mantenha a versão antiga até os clientes migrarem.</p>`],
+ ['Dados','Mongoose ou o driver oficial?',`<p>O driver oficial com tipos do TypeScript e validação com Zod é suficiente e mais transparente. Mongoose agrega schemas, hooks e populate, úteis em projetos com muita regra no modelo, ao custo de mais mágica e desempenho um pouco menor.</p>`],
+ ['Dados','Prisma, Drizzle ou Kysely?',`<p>Prisma é o mais produtivo para CRUD e migrations, com um modelo próprio. Drizzle e Kysely ficam mais perto do SQL e dão tipos fortes; Kysely também suporta SQL Server. Escolha um e padronize, e sempre olhe o SQL gerado nas consultas importantes.</p>`],
+ ['Dados','MongoDB tem transação?',`<p>Tem, desde a versão 4.0, e exige replica set. Mas se o modelo precisa de transação em quase toda operação, provavelmente o dado é relacional. Prefira desenhar agregados que mudam num único documento, que já é atômico.</p>`],
+ ['Dados','Como evitar o problema de N+1 e consultas lentas?',`<p>No SQL, traga os dados relacionados com join ou em uma consulta por lote, e confira o plano com <code>EXPLAIN</code>. No MongoDB, modele para ler o agregado inteiro e confira com <code>explain('executionStats')</code>. Crie os índices a partir das consultas reais.</p>`],
+ ['Redis','Redis perde dados?',`<p>Pode perder os últimos segundos, mesmo com persistência ligada, dependendo da configuração. Por isso ele guarda cache e coordenação, e o dado oficial fica no SQL ou no MongoDB. Se o Redis cair, a aplicação deve continuar funcionando, só mais devagar.</p>`],
+ ['Redis','Como invalidar o cache?',`<p>Defina o TTL pelo tempo que o dado pode ficar desatualizado. Na escrita, apague a chave (ou publique um evento que apaga). Cuidado com chaves por usuário sem a identidade na chave e com "não encontrado" guardado por tempo demais.</p>`],
+ ['Redis','Posso usar o Redis como fila?',`<p>Para filas simples, Redis Streams ou bibliotecas como BullMQ funcionam bem, com retry e agendamento. Para roteamento entre vários sistemas, dead letter e garantias de entrega mais fortes, um broker como RabbitMQ é mais adequado.</p>`],
+ ['RabbitMQ','A mensagem pode se perder?',`<p>Não, se três coisas estiverem ligadas: publisher confirms, mensagem persistente em fila durável (quorum) e ack só depois do processamento. Some o outbox para não perder o evento quando o broker está fora no momento da gravação.</p>`],
+ ['RabbitMQ','A mesma mensagem pode chegar duas vezes?',`<p>Sim. Se o consumidor cair depois de processar e antes do ack, ela é entregue de novo. Por isso o consumidor é idempotente, usando o id do evento numa tabela de processados dentro da mesma transação do resultado.</p>`],
+ ['RabbitMQ','E a ordem das mensagens?',`<p>Uma fila entrega em ordem, mas com vários consumidores e reentregas a ordem de processamento não é garantida. Se a ordem por entidade importa, use uma fila com um consumidor só, filas por partição (consistent hash exchange) ou Kafka com a chave da entidade.</p>`],
+ ['RabbitMQ','Como fazer retry com espera crescente?',`<p>Envie a mensagem que falhou para uma fila de espera com <code>x-message-ttl</code> e dead letter de volta para a exchange principal; uma fila por tempo de espera (5 s, 30 s, 2 min). O cabeçalho <code>x-death</code> mostra quantas vezes ela já voltou.</p>`],
+ ['Produção','Quantas réplicas e quanto de memória?',`<p>Um processo por contêiner, réplicas pelo HPA. Meça o consumo em teste de carga e defina o limite de memória com folga, ajustando <code>--max-old-space-size</code> para cerca de 75% dele. Some réplicas vezes pool de conexões e confira se o banco aguenta.</p>`],
+ ['Produção','Como proteger a cadeia de dependências do npm?',`<p>Use lockfile e <code>npm ci</code>, revise atualizações com Dependabot ou Renovate, rode <code>npm audit</code> no pipeline e prefira pacotes mantidos e com poucas dependências. Não rode scripts de instalação desconhecidos em CI com credenciais.</p>`],
+ ['Produção','Monorepo ou um repositório por serviço?',`<p>Monorepo com workspaces (npm, pnpm) facilita compartilhar tipos e contratos de eventos entre API e workers. Repositórios separados dão independência de deploy. Para uma squad com poucos serviços relacionados, o monorepo costuma ser mais simples.</p>`],
+];
+
+const CMDS = [
+  ['node --watch --env-file=.env src/server.ts','Rodar em desenvolvimento com recarga'],
+  ['npx tsc --noEmit','Checar os tipos sem gerar arquivos'],
+  ['node --cpu-prof dist/server.js','Gerar perfil de CPU para análise'],
+  ['node --inspect dist/server.js','Depurar e perfilar pelo Chrome DevTools'],
+  ['docker compose up -d\ndocker compose logs -f rabbitmq','Subir o ambiente local e ver logs'],
+  ['docker exec -it <mongo> mongosh','Console do MongoDB'],
+  ['docker exec -it <postgres> psql -U postgres agx','Console do PostgreSQL'],
+  ['docker exec -it <redis> redis-cli --scan --pattern "cep:*"','Listar chaves do cache sem travar o Redis'],
+  ['docker exec <rabbitmq> rabbitmqctl list_queues name messages consumers','Filas, mensagens e consumidores'],
+  ['npx vitest run\nnpx vitest --coverage','Testes e cobertura'],
+  ['npm audit --omit=dev','Vulnerabilidades nas dependências de produção'],
+  ['npx kysely-codegen','Gerar os tipos das tabelas a partir do banco'],
+];
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG resource terraform provider backend variable output data features const let function import export from type interface if else for of in try catch finally throw class extends as satisfies default switch case break continue typeof instanceof null undefined void readonly never unknown string number boolean CMD'.split(' '));
+function findComment(line, lang){
+  let q = null;
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === q) q = null; continue; }
+    if (ch === '"' || (lang === 'ts' && (ch === "'" || ch === '`'))) { q = ch; continue; }
+    const slash = lang === 'cs' || lang === 'ts';
+    if (!slash && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if (slash && ch === '/' && line[i+1] === '/') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = lang === 'ts'
+    ? /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`[^`]*`?)|(\b\d[\d_]*(?:\.\d+)?n?\b)|([A-Za-z_$][\w$]*)/g
+    : /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : ((lang === 'cs' || lang === 'ts') && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>bash · ~/agx-pre-analise-node</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', ts:'TypeScript', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>
+      <button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button></div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+renderList('studyList', 'progStudy', 'node-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', 'node-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+
+$('matrizBody').innerHTML = MATRIZ.map(r => `<tr><td>${esc(r[0])}</td><td><span class="ent">${esc(r[1])}</span></td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td><code>${esc(r[4])}</code></td></tr>`).join('');
+
+/* início: primeira cena visível e parada */
+load(0); syncPlayBtn(); requestAnimationFrame(frame);
+</script>
+
+</body></html>
