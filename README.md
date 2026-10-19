@@ -44,16 +44,6 @@ npm run build          # gera dist/
 npm run dev            # gera e abre em http://localhost:3000
 ```
 
-## Publicar na Vercel (grátis, repositório privado)
-
-1. Entre em [vercel.com](https://vercel.com) com a conta do GitHub (plano **Hobby**, gratuito).
-2. **Add New → Project →** importe `JandersonSR/learnFlow`. Se o repositório não aparecer, clique em **Adjust GitHub App Permissions** e libere o acesso a ele.
-3. Deixe tudo como está (o `vercel.json` já define o build `npm run build` e a pasta `dist`) e clique em **Deploy**.
-4. O site fica em `https://learnflow-<algo>.vercel.app`. Em **Settings → Domains** dá para trocar o nome (ex.: `learnflow-jander.vercel.app`) ou usar um domínio próprio.
-
-Cada `git push` na `main` publica uma versão nova.
-
-> **Quem pode ver:** qualquer pessoa com o endereço. O repositório continua privado, mas o site não exige login. Na Vercel gratuita, a proteção por login (Deployment Protection) só cobre as prévias, não o endereço principal. Se quiser o site fechado, use Cloudflare Pages com Cloudflare Access (grátis até 50 pessoas).
 
 ## Observações
 
