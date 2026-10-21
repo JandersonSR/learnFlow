@@ -10,6 +10,7 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, copyFileSy
 import { join, extname, basename, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CARREIRAS } from "./carreiras.mjs";
+import { gerarProjetos } from "./projetos.mjs";
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CONTEUDO = join(raiz, "conteudo");
@@ -21,6 +22,7 @@ const DIST = join(raiz, "dist");
 const CATEGORIAS = [
   { id: "volumes", nome: "Guia Técnico", descricao: "Os 24 volumes, do básico ao nível de arquiteto.", teste: (n) => /^Vol \d+ - /.test(n) },
   { id: "avancadas", nome: "Trilhas avançadas", descricao: "Aprofundamentos e o projeto final integrador.", teste: (n) => n.startsWith("Nova - ") },
+  { id: "projetos", nome: "Projetos guiados", descricao: "Um sistema real construído módulo a módulo, com lições, exercícios e perguntas de entrevista.", teste: () => false },
   { id: "certificacoes", nome: "Certificações", descricao: "Azure, AWS, Kubernetes, Kafka, segurança e dados.", teste: (n) => n.startsWith("Cert - ") },
   { id: "tecnologias", nome: "Trilhas por tecnologia", descricao: ".NET, Node, AKS, Terraform, Kafka, dados e liderança.", teste: () => true },
 ];
@@ -201,6 +203,7 @@ for (const t of trilhas) {
   writeFileSync(join(DIST, "trilhas", `${t.slug}.html`), html);
 }
 for (const g of guias) copyFileSync(join(CONTEUDO, g.origem), join(DIST, g.arquivo));
+const proj = gerarProjetos({ raiz, dist: DIST, barra: BARRA_MENU });
 
 const dados = {
   gerado: new Date().toISOString(),
@@ -210,13 +213,15 @@ const dados = {
       ({ slug: s, nome, categoria, volume, selo, resumo, temas, cenas, total, chave }))
     .sort((a, b) => (a.volume ?? 999) - (b.volume ?? 999) || a.nome.localeCompare(b.nome, "pt-BR")),
   guias: guias.map(({ nome, arquivo, tamanho }) => ({ nome, arquivo, tamanho })),
+  projetos: proj.projetos,
 };
+dados.trilhas.push(...proj.modulos);
 
 // caminhos de carreira: troca o nome do arquivo pelo endereço da página
 const porBase = new Map(trilhas.map((t) => [t.base, t.slug]));
 const semPagina = new Set();
 const resolver = (lista = []) => lista.map((b) => {
-  const s = porBase.get(b);
+  const s = porBase.get(b) ?? proj.refs.get(b.toLowerCase());
   if (!s) semPagina.add(b);
   return s;
 }).filter(Boolean);
@@ -233,7 +238,7 @@ writeFileSync(
 copyFileSync(join(raiz, "scripts", "favicon.svg"), join(DIST, "favicon.svg"));
 
 console.log(`${trilhas.length} trilhas, ${guias.length} guia(s) em PDF, ${linksTrocados} links entre trilhas apontando para o site.`);
-console.log(`${dados.carreiras.length} caminhos de carreira.`);
+console.log(`${dados.carreiras.length} caminhos de carreira; ${proj.projetos.length} projeto(s) guiado(s) com ${proj.modulos.length} módulos e ${proj.paginas} páginas.`);
 if (semPagina.size) console.warn("Trilhas citadas em scripts/carreiras.mjs que não existem em conteudo/:\n  " + [...semPagina].join("\n  "));
 if (naoResolvidos.size) console.warn("Links sem trilha correspondente (continuam apontando para claude.ai):\n  " + [...naoResolvidos].join("\n  "));
 const semChave = trilhas.filter((t) => !t.chave).map((t) => t.arquivo);

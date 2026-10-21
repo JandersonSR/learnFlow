@@ -31,7 +31,21 @@ O nome do arquivo define a categoria:
 
 No menu, o seletor **Carreira** (e a seção "Por onde começar") mostra as trilhas na ordem recomendada para cada objetivo, separadas em etapas com uma meta de saída, o progresso do caminho e o **próximo passo** (a primeira trilha da ordem ainda não concluída). O caminho escolhido fica salvo no navegador e no endereço (`#carreira-staff`), então dá para mandar o link de um caminho.
 
-Os caminhos ficam em `scripts/carreiras.mjs`. Para criar ou mudar um, edite a lista usando o nome do arquivo de cada trilha (sem `.html`); o build avisa se algum nome não existir em `conteudo/`.
+Os caminhos ficam em `scripts/carreiras.mjs` e podem misturar trilhas, certificações e módulos de projetos guiados. Para criar ou mudar um, edite a lista usando o nome do arquivo de cada trilha (sem `.html`); o build avisa se algum nome não existir em `conteudo/`.
+
+## Projetos guiados
+
+Cursos práticos em Markdown que constroem um sistema real módulo a módulo (hoje, o **OrderFlow**). Ficam em `projetos/<nome>/`:
+
+```
+projetos/orderflow/README.md        visão do projeto (vira "sobre o projeto")
+projetos/orderflow/docs/README.md   mapa do curso, com a tabela "Mapa dos módulos"
+projetos/orderflow/docs/**.md       lições, exercícios e perguntas de entrevista
+```
+
+O build transforma cada `.md` numa página do site e cada linha da tabela "Mapa dos módulos" (`| # | Módulo | Status | Certificação |`) num cartão em **Projetos guiados**. Módulo com link e status "pronto" abre; os outros aparecem como "em breve". Cada página tem o botão **Marcar como lida**, e o progresso do módulo aparece no menu e nos caminhos de carreira.
+
+Para publicar um módulo novo: copie os `.md` para a pasta do módulo e troque a linha dele na tabela para `[Nome](modulo-02/README.md) | ✅ pronto`. Nos caminhos de carreira, um módulo entra como `"orderflow:2"`.
 
 ## Adicionar ou atualizar uma trilha
 

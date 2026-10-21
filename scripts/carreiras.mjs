@@ -7,6 +7,9 @@
 //   estudar:  trilhas da etapa, na ordem
 //   consulta: material de apoio da etapa (abrir quando precisar, não estudar inteiro)
 //   meta:     o critério para considerar a etapa concluída
+//
+// Módulos de projetos guiados entram como "<projeto>:<número do módulo>",
+// por exemplo "orderflow:1" ou "orderflow:1-J" (a coluna # do mapa do curso).
 
 export const CARREIRAS = [
   {
@@ -37,7 +40,50 @@ export const CARREIRAS = [
         nome: "Escopo de Staff e prova pública",
         meta: "Uma RFC entre times, um diagnóstico com números e o capstone apresentado.",
         estudar: ["Vol 22 - Staff Engineer e Arquitetura Evolutiva", "code cookbook", "Nova - Performance, Carga e Caos"],
-        consulta: ["Vol 18 - Negócios e Produto para Engenheiros", "Cert - AZ-305 Azure Solutions Architect"],
+        consulta: ["Vol 18 - Negócios e Produto para Engenheiros", "Cert - AZ-305 Azure Solutions Architect", "orderflow:8"],
+      },
+    ],
+  },
+  {
+    id: "dotnet-java-producao",
+    nome: "Sênior .NET e Java em produção (OrderFlow)",
+    resumo: "O sistema OrderFlow construído módulo a módulo, com ASP.NET 10 e Java/Spring ligados por Kafka e rodando no AKS, intercalado com as trilhas e as certificações de cada etapa.",
+    duracao: "6 a 8 meses",
+    etapas: [
+      {
+        nome: "ASP.NET 10 para quem vem de Node",
+        meta: "Orders API pronta, com idempotência, ProblemDetails, health checks e testes, defendida linha a linha.",
+        estudar: ["Nova - De Node e Typescript para CSharp e ASP.NET", "orderflow:0", "orderflow:1"],
+        consulta: ["Trilha C# e ASP.NET Core", "Vol 04 - Runtimes e Linguagens"],
+      },
+      {
+        nome: "Java e Spring Boot",
+        meta: "Payments em Java 25 + Spring Boot 4 com o mesmo nível de qualidade do Orders.",
+        estudar: ["orderflow:1-J"],
+      },
+      {
+        nome: "Kafka entre os serviços",
+        meta: "Orders e Payments conversando só por eventos, com outbox, retry, DLT e Schema Registry; prova CCDAK.",
+        estudar: ["Vol 01 - Mensageria e Caches", "orderflow:2", "orderflow:3", "Kafka e Event Hubs com .NET", "Cert - Confluent Kafka Developer e Administrator"],
+        consulta: ["Vol 03 - Bancos de Dados"],
+      },
+      {
+        nome: "Kubernetes e AKS",
+        meta: "Os dois serviços no AKS com Ingress, Workload Identity, Key Vault e KEDA; provas AZ-104 e AI-200.",
+        estudar: ["orderflow:4", "orderflow:5", "AKS na Prática com .NET", "Terraform AKS e Event Hubs", "orderflow:6", "Cert - AZ-104 Azure Administrator", "Cert - AI-200 Azure AI Cloud Developer"],
+        consulta: ["Cert - CKA Kubernetes Administrator", "Vol 05 - Cloud"],
+      },
+      {
+        nome: "Operação em produção",
+        meta: "OpenTelemetry nas duas stacks, CI/CD, deploy sem downtime e runbooks; prova AZ-400.",
+        estudar: ["orderflow:7", "Vol 13 - Observabilidade na Prática", "Cert - AZ-400 Azure DevOps Engineer"],
+        consulta: ["Nova - Performance, Carga e Caos"],
+      },
+      {
+        nome: "Tech lead e Staff",
+        meta: "ADRs, system design e trade-offs do OrderFlow apresentados como em entrevista de Staff.",
+        estudar: ["orderflow:8", "Vol 06 - System Design", "Vol 22 - Staff Engineer e Arquitetura Evolutiva"],
+        consulta: ["Vol 21 - Tech Lead na Prática", "Vol 19 - Carreira e Entrevistas"],
       },
     ],
   },
@@ -60,12 +106,13 @@ export const CARREIRAS = [
       {
         nome: "Ecossistema .NET",
         meta: "Migrar uma API de Node para ASP.NET com EF Core e testes.",
-        estudar: ["Nova - De Node e Typescript para CSharp e ASP.NET", "Trilha C# e ASP.NET Core"],
+        estudar: ["Nova - De Node e Typescript para CSharp e ASP.NET", "Trilha C# e ASP.NET Core", "orderflow:1"],
+        consulta: ["orderflow:1-J"],
       },
       {
         nome: "Sistemas em produção",
         meta: "Consumidor idempotente com DLQ, métricas RED e as falhas do OWASP corrigidas.",
-        estudar: ["Vol 01 - Mensageria e Caches", "Kafka e Event Hubs com .NET", "Vol 13 - Observabilidade na Prática", "Vol 14 - Segurança de Aplicações"],
+        estudar: ["Vol 01 - Mensageria e Caches", "Kafka e Event Hubs com .NET", "orderflow:2", "orderflow:3", "Vol 13 - Observabilidade na Prática", "Vol 14 - Segurança de Aplicações"],
         consulta: ["Cert - Confluent Kafka Developer e Administrator"],
       },
       {
@@ -148,12 +195,12 @@ export const CARREIRAS = [
       {
         nome: "Infra como código e Kubernetes",
         meta: "Cluster AKS criado por Terraform com deploy automatizado.",
-        estudar: ["Terraform AKS e Event Hubs", "AKS na Prática com .NET", "Cert - CKA Kubernetes Administrator"],
+        estudar: ["Terraform AKS e Event Hubs", "AKS na Prática com .NET", "orderflow:4", "orderflow:6", "Cert - CKA Kubernetes Administrator"],
       },
       {
         nome: "Pipelines e operação",
         meta: "Pipeline com segurança, deploy progressivo e SLO com alerta por burn rate.",
-        estudar: ["Cert - AZ-400 Azure DevOps Engineer", "Vol 13 - Observabilidade na Prática", "Nova - Performance, Carga e Caos"],
+        estudar: ["Cert - AZ-400 Azure DevOps Engineer", "Vol 13 - Observabilidade na Prática", "orderflow:7", "Nova - Performance, Carga e Caos"],
       },
       {
         nome: "Arquitetura e multicloud",

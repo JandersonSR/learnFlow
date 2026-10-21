@@ -83,6 +83,11 @@ main{padding-block:8px 80px}
 .rodape{margin-top:auto;padding-top:14px;display:flex;align-items:center;gap:10px;font:500 12px var(--f-mono);color:var(--muted)}
 .rodape .mini{flex:1;height:5px;border-radius:99px;background:var(--line);overflow:hidden}
 .rodape .mini i{display:block;height:100%;background:var(--ok);width:0}
+.cartao.embreve{opacity:.62;border-style:dashed;cursor:default}
+.cartao.embreve:hover{transform:none;box-shadow:none;border-color:var(--line)}
+.proj-links{font-size:14px;margin-top:6px!important}
+.proj-links a{color:var(--accent)}
+.consulta a[aria-disabled]{opacity:.6;border-style:dotted;cursor:default}
 .cartao.feita{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
 .cartao.feita .selo::after{content:"✓ concluída";color:var(--ok);margin-left:auto;letter-spacing:.04em}
 
@@ -97,9 +102,9 @@ main{padding-block:8px 80px}
 
 
 /* ---------- caminhos de carreira ---------- */
-.carreira-sel{display:flex;align-items:center;gap:8px;flex:0 1 auto}
+.carreira-sel{display:flex;align-items:center;gap:8px;flex:0 1 340px;min-width:0}
 .carreira-sel label{font:600 13px var(--f-body);color:var(--muted);white-space:nowrap}
-.carreira-sel select{font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;max-width:100%;min-width:0}
+.carreira-sel select{font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%;min-width:0;flex:1 1 auto;text-overflow:ellipsis}
 .carreira-sel select:focus{outline:2px solid var(--accent);outline-offset:1px}
 .caminhos{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .caminho{font:inherit;text-align:left;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -224,7 +229,7 @@ function ler(chave) {
 }
 function progresso(t) {
   if (!t.chave || !t.total) return { feitos: 0, total: t.total || 0 };
-  const feitos = ler(t.chave + "-study").length + ler(t.chave + "-check").length;
+  const feitos = t.tipo === "modulo" ? ler(t.chave).length : ler(t.chave + "-study").length + ler(t.chave + "-check").length;
   return { feitos: Math.min(feitos, t.total), total: t.total };
 }
 
@@ -242,9 +247,26 @@ carreira = carreiraInicial();
 if (!CARREIRAS.some((c) => c.id === carreira)) carreira = "";
 try { filtro = sessionStorage.getItem("lf:filtro") || "todas"; } catch {}
 
-const indiceBusca = new Map(DADOS.trilhas.map((t) => [t.slug, norm([t.nome, t.selo, t.resumo, ...(t.temas || [])].join(" "))]));
+const indiceBusca = new Map(DADOS.trilhas.map((t) => [t.slug, norm([t.nome, t.subtitulo, t.selo, t.resumo, ...(t.temas || [])].join(" "))]));
+
+function cartaoModulo(t, ordem, agora) {
+  const p = progresso(t);
+  const pct = p.total ? Math.round((100 * p.feitos) / p.total) : 0;
+  const feita = p.total && p.feitos >= p.total;
+  const tag = t.pronto ? "a" : "div";
+  return `<${tag} class="cartao modulo${feita ? " feita" : ""}${agora ? " agora" : ""}${t.pronto ? "" : " embreve"}"${t.pronto ? ` href="${esc(t.href)}"` : ' aria-disabled="true"'}>
+    <span class="selo">${ordem ? `<span class="ordem" aria-label="Passo ${ordem}">${ordem}</span>` : ""}<span class="vol">M${esc(t.modulo)}</span>${esc(t.selo)}</span>
+    <h3>${esc(t.subtitulo)}</h3>
+    <p class="resumo">${esc(t.resumo)}</p>
+    ${t.temas?.length ? `<div class="temas">${t.temas.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
+    <div class="rodape">${t.pronto
+      ? `<span>${t.licoes} página${t.licoes > 1 ? "s" : ""}</span><span class="mini" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span>${p.feitos}/${p.total}</span>`
+      : `<span>Em breve · módulo ainda não publicado</span>`}</div>
+  </${tag}>`;
+}
 
 function cartao(t, ordem, agora) {
+  if (t.tipo === "modulo") return cartaoModulo(t, ordem, agora);
   const p = progresso(t);
   const pct = p.total ? Math.round((100 * p.feitos) / p.total) : 0;
   const feita = p.total && p.feitos >= p.total;
@@ -262,9 +284,10 @@ function cartao(t, ordem, agora) {
 }
 
 const feitaT = (t) => { const p = progresso(t); return p.total > 0 && p.feitos >= p.total; };
+const disponivel = (t) => t.tipo !== "modulo" || t.pronto;
 
 function progressoCarreira(c) {
-  const slugs = [...new Set(c.etapas.flatMap((e) => e.estudar))];
+  const slugs = [...new Set(c.etapas.flatMap((e) => e.estudar))].filter((s) => porSlug.get(s) && disponivel(porSlug.get(s)));
   let feitos = 0, total = 0, prontas = 0;
   for (const s of slugs) {
     const t = porSlug.get(s); if (!t) continue;
@@ -276,7 +299,7 @@ function progressoCarreira(c) {
 
 function proximaDe(c) {
   for (const [i, e] of c.etapas.entries())
-    for (const s of e.estudar) { const t = porSlug.get(s); if (t && !feitaT(t)) return { t, etapa: i }; }
+    for (const s of e.estudar) { const t = porSlug.get(s); if (t && disponivel(t) && !feitaT(t)) return { t, etapa: i }; }
   return null;
 }
 
@@ -285,7 +308,7 @@ function caminhos() {
     const p = progressoCarreira(c);
     return `<button class="caminho" type="button" data-c="${esc(c.id)}">
       <strong>${esc(c.nome)}</strong>
-      <span>${c.etapas.length} etapas · ${p.trilhas} trilhas · ${esc(c.duracao || "")}</span>
+      <span>${c.etapas.length} etapas · ${p.trilhas} passos · ${esc(c.duracao || "")}</span>
       <span class="mini" aria-hidden="true"><i style="width:${p.pct}%"></i></span>
     </button>`;
   }).join("");
@@ -301,8 +324,8 @@ function renderRoteiro(t0) {
     <div class="topo"><h2>${esc(c.nome)}</h2><span class="dur">${esc(c.duracao || "")}</span></div>
     <p>${esc(c.resumo)}</p>
     <div class="barra" role="progressbar" aria-label="Progresso no caminho" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.pct}"><i style="width:${p.pct}%"></i></div>
-    <p>${p.prontas} de ${p.trilhas} trilhas concluídas · ${p.pct}% dos itens. <button class="sair" type="button" id="sairCarreira">Ver todas as trilhas</button></p>
-    ${prox ? `<a class="proximo" href="trilhas/${prox.t.slug}.html"><span><small>Próximo passo · Etapa ${prox.etapa + 1}</small><strong>${esc(prox.t.nome)}</strong></span><span class="seta" aria-hidden="true">→</span></a>`
+    <p>${p.prontas} de ${p.trilhas} passos concluídos · ${p.pct}% dos itens. <button class="sair" type="button" id="sairCarreira">Ver todas as trilhas</button></p>
+    ${prox ? `<a class="proximo" href="${esc(prox.t.href || `trilhas/${prox.t.slug}.html`)}"><span><small>Próximo passo · Etapa ${prox.etapa + 1}</small><strong>${esc(prox.t.nome)}</strong></span><span class="seta" aria-hidden="true">→</span></a>`
            : `<p><strong>Caminho concluído.</strong> Revise as trilhas de consulta e escolha o próximo objetivo.</p>`}
   </section>`;
   c.etapas.forEach((e, i) => {
@@ -315,7 +338,7 @@ function renderRoteiro(t0) {
     html += `<section class="secao" id="etapa-${i + 1}">
       <div class="secao-topo"><div><h2><span class="etapa-num">ETAPA ${i + 1}</span>${esc(e.nome)}</h2>${e.meta ? `<p class="meta"><b>Meta:</b> ${esc(e.meta)}</p>` : ""}</div><span class="cont">${prontas}/${ts.length} concluídas</span></div>
       ${cards ? `<div class="grade">${cards}</div>` : ""}
-      ${consV.length ? `<div class="consulta"><span>Consulta:</span>${consV.map((t) => `<a href="trilhas/${t.slug}.html">${esc(t.nome)}</a>`).join("")}</div>` : ""}
+      ${consV.length ? `<div class="consulta"><span>Consulta:</span>${consV.map((t) => t.tipo === "modulo" && !t.pronto ? `<a aria-disabled="true">${esc(t.nome)} (em breve)</a>` : `<a href="${esc(t.href || `trilhas/${t.slug}.html`)}">${esc(t.nome)}</a>`).join("")}</div>` : ""}
     </section>`;
     mostradas += consV.length;
   });
@@ -345,7 +368,7 @@ function render() {
     if (!ts.length) continue;
     total += ts.length;
     html += `<section class="secao" id="cat-${c.id}">
-      <div class="secao-topo"><div><h2>${esc(c.nome)}</h2><p>${esc(c.descricao)}</p></div><span class="cont">${ts.length} trilha${ts.length > 1 ? "s" : ""}</span></div>
+      <div class="secao-topo"><div><h2>${esc(c.nome)}</h2><p>${esc(c.descricao)}</p>${c.id === "projetos" ? (DADOS.projetos || []).map((pr) => `<p class="proj-links"><strong>${esc(pr.nome)}:</strong> <a href="${esc(pr.inicio)}">mapa do curso</a>${pr.sobre ? ` · <a href="${esc(pr.sobre)}">sobre o projeto</a>` : ""}</p>`).join("") : ""}</div><span class="cont">${ts.length} ${c.id === "projetos" ? "módulo" : "trilha"}${ts.length > 1 ? "s" : ""}</span></div>
       <div class="grade">${ts.map((t) => cartao(t)).join("")}</div></section>`;
   }
   $("lista").innerHTML = html;
@@ -367,20 +390,23 @@ function chips() {
 function painel() {
   let feitos = 0, total = 0, andamento = 0, concluidas = 0;
   for (const t of DADOS.trilhas) {
+    if (!disponivel(t)) continue;
     const p = progresso(t);
     feitos += p.feitos; total += p.total;
     if (p.total && p.feitos >= p.total) concluidas++;
     else if (p.feitos > 0) andamento++;
   }
   const pct = total ? Math.round((100 * feitos) / total) : 0;
-  $("nTrilhas").textContent = DADOS.trilhas.length;
+  const videos = DADOS.trilhas.filter((x) => x.tipo !== "modulo").length;
+  $("nTrilhas").textContent = videos;
   $("nAndamento").textContent = andamento;
   $("nConcluidas").textContent = concluidas;
   $("nPct").textContent = pct + "%";
   $("nItens").textContent = `${feitos} de ${total} itens concluídos`;
   $("barraGeral").style.width = pct + "%";
   const cenas = DADOS.trilhas.reduce((a, t) => a + t.cenas, 0);
-  $("subtitulo").textContent = `${DADOS.trilhas.length} trilhas em vídeo com ${cenas} cenas, checklists e referências. Escolha uma trilha, assista às cenas e marque o que já aplicou.`;
+  const mods = DADOS.trilhas.filter((x) => x.tipo === "modulo" && x.pronto).length;
+  $("subtitulo").textContent = `${videos} trilhas em vídeo com ${cenas} cenas${mods ? ` e ${mods} módulos de projeto guiado` : ""}, checklists e referências. Escolha um caminho de carreira ou uma trilha e marque o que já aplicou.`;
 
   let ultima = null;
   try { ultima = localStorage.getItem("lf:ultima"); } catch {}
@@ -433,7 +459,7 @@ $("guias").innerHTML = DADOS.guias.map((g) => `<a class="guia" href="${esc(g.arq
 
 // ---------- exportar / importar progresso ----------
 function aviso(msg) { const a = $("aviso"); a.textContent = msg; a.classList.add("on"); clearTimeout(aviso.t); aviso.t = setTimeout(() => a.classList.remove("on"), 2600); }
-const CHAVES = () => DADOS.trilhas.filter((t) => t.chave).flatMap((t) => [t.chave + "-study", t.chave + "-check"]);
+const CHAVES = () => DADOS.trilhas.filter((t) => t.chave).flatMap((t) => t.tipo === "modulo" ? [t.chave] : [t.chave + "-study", t.chave + "-check"]);
 
 $("exportar").addEventListener("click", () => {
   const dados = {};
@@ -458,7 +484,7 @@ $("arquivo").addEventListener("change", async (e) => {
     for (const [k, v] of Object.entries(j.dados)) {
       if (!validas.has(k) || !Array.isArray(v)) continue;
       // junta com o que já existe neste aparelho (não apaga nada)
-      const junto = [...new Set([...ler(k), ...v.filter(Number.isInteger)])];
+      const junto = [...new Set([...ler(k), ...v.filter((x) => Number.isInteger(x) || typeof x === "string")])];
       localStorage.setItem(k, JSON.stringify(junto)); n++;
     }
     tudo();
