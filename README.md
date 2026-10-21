@@ -27,6 +27,12 @@ O nome do arquivo define a categoria:
 | `Cert - ...` | Certificações |
 | qualquer outro | Trilhas por tecnologia |
 
+## Caminhos de carreira
+
+No menu, o seletor **Carreira** (e a seção "Por onde começar") mostra as trilhas na ordem recomendada para cada objetivo, separadas em etapas com uma meta de saída, o progresso do caminho e o **próximo passo** (a primeira trilha da ordem ainda não concluída). O caminho escolhido fica salvo no navegador e no endereço (`#carreira-staff`), então dá para mandar o link de um caminho.
+
+Os caminhos ficam em `scripts/carreiras.mjs`. Para criar ou mudar um, edite a lista usando o nome do arquivo de cada trilha (sem `.html`); o build avisa se algum nome não existir em `conteudo/`.
+
 ## Adicionar ou atualizar uma trilha
 
 1. Copie o `.html` (ou `.pdf`) para `conteudo/`. Para atualizar, substitua o arquivo com o mesmo nome.

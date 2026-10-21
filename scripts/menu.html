@@ -65,7 +65,7 @@ a{color:inherit}
 
 /* ---------- seções e cartões ---------- */
 main{padding-block:8px 80px}
-.secao{margin-top:34px}
+.secao{margin-top:34px;scroll-margin-top:96px}
 .secao-topo{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .secao h2{font:800 22px/1.2 var(--f-display);margin:0;letter-spacing:-.01em}
 .secao-topo p{margin:2px 0 0;color:var(--muted);font-size:14px}
@@ -95,6 +95,43 @@ main{padding-block:8px 80px}
 .vazio{padding:40px 0;color:var(--muted);text-align:center}
 .vazio button{font:inherit;color:var(--accent);background:none;border:0;cursor:pointer;text-decoration:underline}
 
+
+/* ---------- caminhos de carreira ---------- */
+.carreira-sel{display:flex;align-items:center;gap:8px;flex:0 1 auto}
+.carreira-sel label{font:600 13px var(--f-body);color:var(--muted);white-space:nowrap}
+.carreira-sel select{font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;max-width:100%;min-width:0}
+.carreira-sel select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.caminhos{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.caminho{font:inherit;text-align:left;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0}
+.caminho:hover{border-color:var(--accent)}
+.caminho:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.caminho strong{font:700 16px/1.25 var(--f-display)}
+.caminho span{font-size:13px;color:var(--muted)}
+.caminho .mini{height:4px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px}
+.caminho .mini i{display:block;height:100%;background:var(--ok)}
+.roteiro{margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:12px}
+.roteiro .topo{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline;justify-content:space-between}
+.roteiro h2{font:800 24px/1.15 var(--f-display);margin:0;letter-spacing:-.01em}
+.roteiro p{margin:0;color:var(--muted);max-width:70ch}
+.roteiro .dur{font:500 13px var(--f-mono);color:var(--muted)}
+.roteiro .barra{background:var(--line)}
+.roteiro .barra i{background:var(--ok)}
+.proximo{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--accent-soft);text-decoration:none;color:var(--ink);border:1px solid transparent}
+.proximo:hover{border-color:var(--accent)}
+.proximo small{display:block;color:var(--accent);font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase}
+.proximo strong{font:700 16px/1.3 var(--f-display)}
+.proximo .seta{margin-left:auto;font:700 18px var(--f-display);color:var(--accent)}
+.sair{font:inherit;font-size:14px;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.etapa-num{font:700 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 7px;margin-right:8px;vertical-align:3px}
+.meta{margin:6px 0 0;font-size:14px;color:var(--ink)}
+.meta b{color:var(--muted);font-weight:600}
+.cartao .ordem{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);font:700 12px var(--f-mono);letter-spacing:0}
+.cartao.agora{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.cartao.agora .selo::before{content:"próxima";order:9;margin-left:auto;color:var(--accent);letter-spacing:.04em}
+.consulta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;font-size:13px;color:var(--muted)}
+.consulta a{color:var(--ink);text-decoration:none;border:1px dashed var(--line);border-radius:99px;padding:4px 10px}
+.consulta a:hover{border-color:var(--accent);color:var(--accent)}
+
 /* ---------- progresso (exportar/importar) ---------- */
 .dados{margin-top:48px;padding:18px;border:1px dashed var(--line);border-radius:var(--r);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
 .dados p{margin:0;color:var(--muted);font-size:14px;max-width:60ch}
@@ -105,9 +142,13 @@ main{padding-block:8px 80px}
 .aviso.on{opacity:1;transform:translate(-50%,0)}
 
 @media (max-width:520px){
+  .carreira-sel{flex:1 1 100%}
+  .carreira-sel select{flex:1}
   .hero{padding-bottom:22px}
   .grade{grid-template-columns:1fr}
-  .chip{padding:8px 10px}
+  .chip{padding:8px 10px;white-space:nowrap}
+  .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px;flex:1 1 100%}
+  .chips::-webkit-scrollbar{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -141,11 +182,17 @@ main{padding-block:8px 80px}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="busca" type="search" placeholder="Buscar trilha ou tema (ex.: Kafka, AZ-104, Redis)" autocomplete="off" aria-label="Buscar trilha ou tema">
     </label>
+    <div class="carreira-sel"><label for="carreira">Carreira</label><select id="carreira"><option value="">Todas as trilhas</option></select></div>
     <div class="chips" id="chips" role="group" aria-label="Filtrar por categoria"></div>
   </div>
 </div>
 
 <main class="wrap">
+  <section class="secao" id="secCaminhos" hidden>
+    <div class="secao-topo"><div><h2>Por onde começar</h2><p>Escolha um objetivo de carreira e veja as trilhas na ordem certa, por etapa.</p></div></div>
+    <div class="caminhos" id="caminhos"></div>
+  </section>
+  <div id="roteiro"></div>
   <div id="lista"></div>
   <div class="vazio" id="vazio" hidden>Nenhuma trilha encontrada. <button id="limpar" type="button">Limpar a busca</button></div>
 
@@ -183,16 +230,26 @@ function progresso(t) {
 
 let filtro = "todas";
 let termo = "";
+let carreira = "";
+const CARREIRAS = DADOS.carreiras || [];
+const porSlug = new Map(DADOS.trilhas.map((t) => [t.slug, t]));
+function carreiraInicial() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h.startsWith("carreira-")) return h.slice(9);
+  try { return localStorage.getItem("lf:carreira") || ""; } catch { return ""; }
+}
+carreira = carreiraInicial();
+if (!CARREIRAS.some((c) => c.id === carreira)) carreira = "";
 try { filtro = sessionStorage.getItem("lf:filtro") || "todas"; } catch {}
 
 const indiceBusca = new Map(DADOS.trilhas.map((t) => [t.slug, norm([t.nome, t.selo, t.resumo, ...(t.temas || [])].join(" "))]));
 
-function cartao(t) {
+function cartao(t, ordem, agora) {
   const p = progresso(t);
   const pct = p.total ? Math.round((100 * p.feitos) / p.total) : 0;
   const feita = p.total && p.feitos >= p.total;
-  return `<a class="cartao${feita ? " feita" : ""}" href="trilhas/${t.slug}.html">
-    <span class="selo">${t.volume ? `<span class="vol">VOL ${String(t.volume).padStart(2, "0")}</span>` : ""}${esc(t.selo || "")}</span>
+  return `<a class="cartao${feita ? " feita" : ""}${agora ? " agora" : ""}" href="trilhas/${t.slug}.html">
+    <span class="selo">${ordem ? `<span class="ordem" aria-label="Passo ${ordem}">${ordem}</span>` : ""}${t.volume ? `<span class="vol">VOL ${String(t.volume).padStart(2, "0")}</span>` : ""}${esc(t.selo || "")}</span>
     <h3>${esc(t.nome)}</h3>
     <p class="resumo">${esc(t.resumo)}</p>
     ${t.temas?.length ? `<div class="temas">${t.temas.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
@@ -204,8 +261,77 @@ function cartao(t) {
   </a>`;
 }
 
+const feitaT = (t) => { const p = progresso(t); return p.total > 0 && p.feitos >= p.total; };
+
+function progressoCarreira(c) {
+  const slugs = [...new Set(c.etapas.flatMap((e) => e.estudar))];
+  let feitos = 0, total = 0, prontas = 0;
+  for (const s of slugs) {
+    const t = porSlug.get(s); if (!t) continue;
+    const p = progresso(t); feitos += p.feitos; total += p.total;
+    if (feitaT(t)) prontas++;
+  }
+  return { feitos, total, prontas, trilhas: slugs.length, pct: total ? Math.round((100 * feitos) / total) : 0 };
+}
+
+function proximaDe(c) {
+  for (const [i, e] of c.etapas.entries())
+    for (const s of e.estudar) { const t = porSlug.get(s); if (t && !feitaT(t)) return { t, etapa: i }; }
+  return null;
+}
+
+function caminhos() {
+  $("caminhos").innerHTML = CARREIRAS.map((c) => {
+    const p = progressoCarreira(c);
+    return `<button class="caminho" type="button" data-c="${esc(c.id)}">
+      <strong>${esc(c.nome)}</strong>
+      <span>${c.etapas.length} etapas · ${p.trilhas} trilhas · ${esc(c.duracao || "")}</span>
+      <span class="mini" aria-hidden="true"><i style="width:${p.pct}%"></i></span>
+    </button>`;
+  }).join("");
+}
+
+function renderRoteiro(t0) {
+  const c = CARREIRAS.find((x) => x.id === carreira);
+  const p = progressoCarreira(c);
+  const prox = proximaDe(c);
+  const casa = (t) => { const idx = indiceBusca.get(t.slug); return t0.every((w) => idx.includes(w)); };
+  let n = 0, mostradas = 0;
+  let html = `<section class="roteiro" aria-label="Caminho de carreira">
+    <div class="topo"><h2>${esc(c.nome)}</h2><span class="dur">${esc(c.duracao || "")}</span></div>
+    <p>${esc(c.resumo)}</p>
+    <div class="barra" role="progressbar" aria-label="Progresso no caminho" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.pct}"><i style="width:${p.pct}%"></i></div>
+    <p>${p.prontas} de ${p.trilhas} trilhas concluídas · ${p.pct}% dos itens. <button class="sair" type="button" id="sairCarreira">Ver todas as trilhas</button></p>
+    ${prox ? `<a class="proximo" href="trilhas/${prox.t.slug}.html"><span><small>Próximo passo · Etapa ${prox.etapa + 1}</small><strong>${esc(prox.t.nome)}</strong></span><span class="seta" aria-hidden="true">→</span></a>`
+           : `<p><strong>Caminho concluído.</strong> Revise as trilhas de consulta e escolha o próximo objetivo.</p>`}
+  </section>`;
+  c.etapas.forEach((e, i) => {
+    const ts = e.estudar.map((s) => porSlug.get(s)).filter(Boolean);
+    const cons = e.consulta.map((s) => porSlug.get(s)).filter(Boolean);
+    const cards = ts.map((t) => { n++; return casa(t) ? (mostradas++, cartao(t, n, prox && prox.t.slug === t.slug)) : ""; }).join("");
+    const consV = cons.filter(casa);
+    if (!cards && !consV.length) return;
+    const prontas = ts.filter(feitaT).length;
+    html += `<section class="secao" id="etapa-${i + 1}">
+      <div class="secao-topo"><div><h2><span class="etapa-num">ETAPA ${i + 1}</span>${esc(e.nome)}</h2>${e.meta ? `<p class="meta"><b>Meta:</b> ${esc(e.meta)}</p>` : ""}</div><span class="cont">${prontas}/${ts.length} concluídas</span></div>
+      ${cards ? `<div class="grade">${cards}</div>` : ""}
+      ${consV.length ? `<div class="consulta"><span>Consulta:</span>${consV.map((t) => `<a href="trilhas/${t.slug}.html">${esc(t.nome)}</a>`).join("")}</div>` : ""}
+    </section>`;
+    mostradas += consV.length;
+  });
+  $("roteiro").innerHTML = html;
+  $("lista").innerHTML = "";
+  $("vazio").hidden = mostradas > 0;
+  $("secGuias").hidden = true;
+  $("secCaminhos").hidden = true;
+}
+
 function render() {
   const t0 = norm(termo).trim().split(/\s+/).filter(Boolean);
+  $("chips").hidden = !!carreira;
+  if (carreira) return renderRoteiro(t0);
+  $("roteiro").innerHTML = "";
+  $("secCaminhos").hidden = !(CARREIRAS.length && filtro === "todas" && !t0.length);
   const passa = (t) => {
     if (filtro === "andamento") { const p = progresso(t); if (!(p.feitos > 0 && p.feitos < p.total)) return false; }
     else if (filtro !== "todas" && t.categoria !== filtro) return false;
@@ -220,7 +346,7 @@ function render() {
     total += ts.length;
     html += `<section class="secao" id="cat-${c.id}">
       <div class="secao-topo"><div><h2>${esc(c.nome)}</h2><p>${esc(c.descricao)}</p></div><span class="cont">${ts.length} trilha${ts.length > 1 ? "s" : ""}</span></div>
-      <div class="grade">${ts.map(cartao).join("")}</div></section>`;
+      <div class="grade">${ts.map((t) => cartao(t)).join("")}</div></section>`;
   }
   $("lista").innerHTML = html;
   $("vazio").hidden = total > 0;
@@ -263,7 +389,22 @@ function painel() {
   if (t) { $("continuar").href = `trilhas/${t.slug}.html`; $("continuarNome").textContent = t.nome; }
 }
 
-function tudo() { painel(); chips(); render(); }
+function opcoesCarreira() {
+  $("carreira").innerHTML = `<option value="">Todas as trilhas</option>` +
+    CARREIRAS.map((c) => `<option value="${esc(c.id)}"${c.id === carreira ? " selected" : ""}>${esc(c.nome)}</option>`).join("");
+}
+function escolherCarreira(id) {
+  carreira = id || "";
+  try { carreira ? localStorage.setItem("lf:carreira", carreira) : localStorage.removeItem("lf:carreira"); } catch {}
+  try { history.replaceState(null, "", carreira ? `#carreira-${carreira}` : location.pathname + location.search); } catch {}
+  $("carreira").value = carreira;
+  render();
+  const alvo = carreira ? $("roteiro") : $("secCaminhos").hidden ? $("lista") : $("secCaminhos");
+  const barra = document.querySelector(".barra-filtros").offsetHeight;
+  scrollTo({ top: alvo.getBoundingClientRect().top + scrollY - barra - 12, behavior: "smooth" });
+}
+
+function tudo() { painel(); chips(); caminhos(); render(); }
 
 $("chips").addEventListener("click", (e) => {
   const b = e.target.closest(".chip"); if (!b) return;
@@ -271,8 +412,13 @@ $("chips").addEventListener("click", (e) => {
   try { sessionStorage.setItem("lf:filtro", filtro); } catch {}
   chips(); render();
 });
+$("carreira").addEventListener("change", (e) => escolherCarreira(e.target.value));
+$("caminhos").addEventListener("click", (e) => { const b = e.target.closest(".caminho"); if (b) escolherCarreira(b.dataset.c); });
+$("roteiro").addEventListener("click", (e) => { if (e.target.id === "sairCarreira") escolherCarreira(""); });
+addEventListener("hashchange", () => { const c = carreiraInicial(); if (c !== carreira && (c === "" || CARREIRAS.some((x) => x.id === c))) escolherCarreira(c); });
 $("busca").addEventListener("input", (e) => { termo = e.target.value; render(); });
 $("limpar").addEventListener("click", () => { termo = ""; $("busca").value = ""; filtro = "todas"; chips(); render(); $("busca").focus(); });
+opcoesCarreira();
 document.addEventListener("keydown", (e) => {
   if (e.key === "/" && document.activeElement !== $("busca")) { e.preventDefault(); $("busca").focus(); }
 });

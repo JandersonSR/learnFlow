@@ -9,6 +9,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, copyFileSync, statSync } from "node:fs";
 import { join, extname, basename, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { CARREIRAS } from "./carreiras.mjs";
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CONTEUDO = join(raiz, "conteudo");
@@ -211,6 +212,19 @@ const dados = {
   guias: guias.map(({ nome, arquivo, tamanho }) => ({ nome, arquivo, tamanho })),
 };
 
+// caminhos de carreira: troca o nome do arquivo pelo endereço da página
+const porBase = new Map(trilhas.map((t) => [t.base, t.slug]));
+const semPagina = new Set();
+const resolver = (lista = []) => lista.map((b) => {
+  const s = porBase.get(b);
+  if (!s) semPagina.add(b);
+  return s;
+}).filter(Boolean);
+dados.carreiras = CARREIRAS.map((c) => ({
+  ...c,
+  etapas: c.etapas.map((e) => ({ ...e, estudar: resolver(e.estudar), consulta: resolver(e.consulta) })),
+}));
+
 const modelo = readFileSync(join(raiz, "scripts", "menu.html"), "utf8");
 writeFileSync(
   join(DIST, "index.html"),
@@ -219,6 +233,8 @@ writeFileSync(
 copyFileSync(join(raiz, "scripts", "favicon.svg"), join(DIST, "favicon.svg"));
 
 console.log(`${trilhas.length} trilhas, ${guias.length} guia(s) em PDF, ${linksTrocados} links entre trilhas apontando para o site.`);
+console.log(`${dados.carreiras.length} caminhos de carreira.`);
+if (semPagina.size) console.warn("Trilhas citadas em scripts/carreiras.mjs que não existem em conteudo/:\n  " + [...semPagina].join("\n  "));
 if (naoResolvidos.size) console.warn("Links sem trilha correspondente (continuam apontando para claude.ai):\n  " + [...naoResolvidos].join("\n  "));
 const semChave = trilhas.filter((t) => !t.chave).map((t) => t.arquivo);
 if (semChave.length) console.warn("Trilhas sem chave de progresso:", semChave.join(", "));
