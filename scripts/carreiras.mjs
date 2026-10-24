@@ -15,7 +15,7 @@ export const CARREIRAS = [
   {
     id: "mercado",
     tipo: "mercado",
-    nome: "Mercado atual e futuro (sênior+)",
+    nome: "Mercado atual e futuro",
     resumo: "O que estudar por horizonte de tempo para engenharia de software sênior ou acima: o que as vagas já cobram hoje, o que está em alta agora e o que deve pesar nos próximos anos.",
     duracao: "revisado em out/2026",
     fontes: [
