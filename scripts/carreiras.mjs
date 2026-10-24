@@ -13,6 +13,47 @@
 
 export const CARREIRAS = [
   {
+    id: "mercado",
+    tipo: "mercado",
+    nome: "Mercado atual e futuro (sênior+)",
+    resumo: "O que estudar por horizonte de tempo para engenharia de software sênior ou acima: o que as vagas já cobram hoje, o que está em alta agora e o que deve pesar nos próximos anos.",
+    duracao: "revisado em out/2026",
+    fontes: [
+      ["Gartner: as 10 tendências estratégicas de tecnologia para 2026", "https://www.businesswire.com/news/home/20251020453550/en/Gartner-Identifies-the-Top-Strategic-Technology-Trends-for-2026"],
+      ["Stack Overflow Developer Survey 2025", "https://survey.stackoverflow.co/2025/"],
+    ],
+    etapas: [
+      {
+        nome: "Hoje: o que toda vaga sênior já cobra",
+        horizonte: "Hoje",
+        porque: "É o filtro das entrevistas de sênior em qualquer empresa: desenhar sistemas, operar em produção com segurança e trabalhar com IA no fluxo do time.",
+        estudar: ["Vol 06 - System Design", "Vol 16 - Fundamentos de Engenharia de Software", "Vol 01 - Mensageria e Caches", "Vol 05 - Cloud", "Vol 13 - Observabilidade na Prática", "Vol 14 - Segurança de Aplicações", "Vol 09 - LLMs no Desenvolvimento em Equipe"],
+        consulta: ["Vol 07 - Algoritmos e Estruturas de Dados", "Vol 19 - Carreira e Entrevistas"],
+      },
+      {
+        nome: "Em alta agora: IA em produção e plataforma",
+        horizonte: "2026",
+        porque: "84% dos devs já usam ou vão usar IA (Stack Overflow 2025) e as plataformas de desenvolvimento nativas de IA estão entre as tendências da Gartner para 2026. O diferencial é levar IA para produção com avaliação, custo e operação, não só usar o assistente.",
+        estudar: ["Vol 15 - Engenharia de IA Aplicada a Fundo", "Vol 23 - Desenvolvimento Assistido por IA Avançado", "Nova - IA para DevOps e AIOps", "Nova - Platform Engineering e FinOps", "Nova - Sistemas Distribuídos a Fundo", "Cert - AI-200 Azure AI Cloud Developer"],
+        consulta: ["Nova - Python para Backend e IA", "Cert - AZ-104 Azure Administrator"],
+      },
+      {
+        nome: "Próximos 1 a 2 anos: agentes, segurança de IA e domínio",
+        horizonte: "1–2 anos",
+        porque: "Sistemas multiagentes, modelos específicos de domínio e plataformas de segurança de IA estão na lista da Gartner. Quem modela bem o domínio e protege agentes vai liderar esses projetos.",
+        estudar: ["Vol 24 - IA Corporativa Avançada", "Cert - AI-103 Azure AI Apps and Agents", "Cert - SC-500 Cloud and AI Security Engineer", "Nova - DDD Estratégico, Event Storming e BDD", "Nova - ML e Deep Learning"],
+        consulta: ["Nova - IA na Gestão de Projetos e Times", "Nova - Arquitetura SaaS Multi-tenant"],
+      },
+      {
+        nome: "Longo prazo: mais escopo por engenheiro",
+        horizonte: "3–5 anos",
+        porque: "A Gartner prevê times de engenharia menores com IA: cada engenheiro passa a responder por mais sistema, custo e negócio. Pesam arquitetura evolutiva, proveniência de software, nuvem soberana e visão de produto.",
+        estudar: ["Vol 22 - Staff Engineer e Arquitetura Evolutiva", "Cert - AZ-305 Azure Solutions Architect", "Vol 18 - Negócios e Produto para Engenheiros", "Nova - Frontend Avançado, Micro-frontends e IA para UI"],
+        consulta: ["Vol 11 - Criar Sua Empresa de Tecnologia", "Cert - SC-100 Cybersecurity Architect"],
+      },
+    ],
+  },
+  {
     id: "staff",
     nome: "Staff Engineer e Arquiteto",
     resumo: "De sênior a Staff: entrevista de sênior alto e big tech, sistemas distribuídos, IA aplicada no capstone e escopo de Staff no trabalho.",
@@ -39,7 +80,7 @@ export const CARREIRAS = [
       {
         nome: "Escopo de Staff e prova pública",
         meta: "Uma RFC entre times, um diagnóstico com números e o capstone apresentado.",
-        estudar: ["Vol 22 - Staff Engineer e Arquitetura Evolutiva", "code cookbook", "Nova - Performance, Carga e Caos"],
+        estudar: ["Vol 22 - Staff Engineer e Arquitetura Evolutiva", "Nova - DDD Estratégico, Event Storming e BDD", "code cookbook", "Nova - Performance, Carga e Caos"],
         consulta: ["Vol 18 - Negócios e Produto para Engenheiros", "Cert - AZ-305 Azure Solutions Architect", "orderflow:8"],
       },
     ],
@@ -77,13 +118,13 @@ export const CARREIRAS = [
         nome: "Operação em produção",
         meta: "OpenTelemetry nas duas stacks, CI/CD, deploy sem downtime e runbooks; prova AZ-400.",
         estudar: ["orderflow:7", "Vol 13 - Observabilidade na Prática", "Cert - AZ-400 Azure DevOps Engineer"],
-        consulta: ["Nova - Performance, Carga e Caos"],
+        consulta: ["Nova - Performance, Carga e Caos", "Nova - Platform Engineering e FinOps"],
       },
       {
         nome: "Tech lead e Staff",
         meta: "ADRs, system design e trade-offs do OrderFlow apresentados como em entrevista de Staff.",
         estudar: ["orderflow:8", "Vol 06 - System Design", "Vol 22 - Staff Engineer e Arquitetura Evolutiva"],
-        consulta: ["Vol 21 - Tech Lead na Prática", "Vol 19 - Carreira e Entrevistas"],
+        consulta: ["Vol 21 - Tech Lead na Prática", "Nova - DDD Estratégico, Event Storming e BDD", "Vol 19 - Carreira e Entrevistas"],
       },
     ],
   },
@@ -97,6 +138,7 @@ export const CARREIRAS = [
         nome: "Fundamentos do runtime e do código",
         meta: "Explicar event loop, thread pool e GC; escrever código testável com as boas práticas do time.",
         estudar: ["Vol 04 - Runtimes e Linguagens", "Trilha Node e TypeScript", "Vol 16 - Fundamentos de Engenharia de Software"],
+        consulta: ["Nova - DDD Estratégico, Event Storming e BDD"],
       },
       {
         nome: "Dados",
@@ -142,7 +184,8 @@ export const CARREIRAS = [
       {
         nome: "IA no desenvolvimento",
         meta: "Fluxo do time com agentes de código, especificações e revisão.",
-        estudar: ["Vol 09 - LLMs no Desenvolvimento em Equipe", "Vol 23 - Desenvolvimento Assistido por IA Avançado"],
+        estudar: ["Vol 09 - LLMs no Desenvolvimento em Equipe", "Vol 23 - Desenvolvimento Assistido por IA Avançado", "Nova - IA para DevOps e AIOps"],
+        consulta: ["Nova - IA na Gestão de Projetos e Times"],
       },
       {
         nome: "IA corporativa e produto",
@@ -171,7 +214,8 @@ export const CARREIRAS = [
       {
         nome: "Entregar com o time",
         meta: "Fluxo com limite de WIP, status semanal e IA no fluxo do time.",
-        estudar: ["Vol 10 - Gestão de Projetos e Equipes", "Vol 09 - LLMs no Desenvolvimento em Equipe"],
+        estudar: ["Vol 10 - Gestão de Projetos e Equipes", "Vol 09 - LLMs no Desenvolvimento em Equipe", "Nova - IA na Gestão de Projetos e Times"],
+        consulta: ["Nova - IA para DevOps e AIOps"],
       },
       {
         nome: "Negócio e próximo nível",
@@ -200,7 +244,7 @@ export const CARREIRAS = [
       {
         nome: "Pipelines e operação",
         meta: "Pipeline com segurança, deploy progressivo e SLO com alerta por burn rate.",
-        estudar: ["Cert - AZ-400 Azure DevOps Engineer", "Vol 13 - Observabilidade na Prática", "orderflow:7", "Nova - Performance, Carga e Caos"],
+        estudar: ["Cert - AZ-400 Azure DevOps Engineer", "Vol 13 - Observabilidade na Prática", "orderflow:7", "Nova - Platform Engineering e FinOps", "Nova - IA para DevOps e AIOps", "Nova - Performance, Carga e Caos"],
       },
       {
         nome: "Arquitetura e multicloud",
@@ -303,7 +347,7 @@ export const CARREIRAS = [
       {
         nome: "Navegador e frontend moderno",
         meta: "Explicar renderização, Core Web Vitals e estado no React.",
-        estudar: ["Vol 02 - Frontend", "Frontend React e Angular"],
+        estudar: ["Vol 02 - Frontend", "Frontend React e Angular", "Nova - Frontend Avançado, Micro-frontends e IA para UI"],
       },
       {
         nome: "Ponta a ponta",
@@ -328,7 +372,7 @@ export const CARREIRAS = [
         nome: "Produto",
         meta: "SaaS multi-tenant com pagamentos e integrações funcionando.",
         estudar: ["Nova - Arquitetura SaaS Multi-tenant", "Vol 12 - Ferramentas e Integrações do Mercado"],
-        consulta: ["Vol 08 - Asterisk e Telefonia"],
+        consulta: ["Vol 08 - Asterisk e Telefonia", "Nova - Platform Engineering e FinOps"],
       },
       {
         nome: "Diferencial com IA",

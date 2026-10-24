@@ -130,6 +130,10 @@ main{padding-block:8px 80px}
 .etapa-num{font:700 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 7px;margin-right:8px;vertical-align:3px}
 .meta{margin:6px 0 0;font-size:14px;color:var(--ink)}
 .meta b{color:var(--muted);font-weight:600}
+.caminho.mercado{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--surface) 70%)}
+.tag-mercado{font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.fontes{margin-top:28px;font-size:13px;color:var(--muted)}
+.fontes a{color:var(--accent)}
 .cartao .ordem{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);font:700 12px var(--f-mono);letter-spacing:0}
 .cartao.agora{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .cartao.agora .selo::before{content:"próxima";order:9;margin-left:auto;color:var(--accent);letter-spacing:.04em}
@@ -306,7 +310,8 @@ function proximaDe(c) {
 function caminhos() {
   $("caminhos").innerHTML = CARREIRAS.map((c) => {
     const p = progressoCarreira(c);
-    return `<button class="caminho" type="button" data-c="${esc(c.id)}">
+    return `<button class="caminho${c.tipo === "mercado" ? " mercado" : ""}" type="button" data-c="${esc(c.id)}">
+      ${c.tipo === "mercado" ? `<small class="tag-mercado">Sugestão de estudos · hoje e futuro</small>` : ""}
       <strong>${esc(c.nome)}</strong>
       <span>${c.etapas.length} etapas · ${p.trilhas} passos · ${esc(c.duracao || "")}</span>
       <span class="mini" aria-hidden="true"><i style="width:${p.pct}%"></i></span>
@@ -325,7 +330,7 @@ function renderRoteiro(t0) {
     <p>${esc(c.resumo)}</p>
     <div class="barra" role="progressbar" aria-label="Progresso no caminho" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.pct}"><i style="width:${p.pct}%"></i></div>
     <p>${p.prontas} de ${p.trilhas} passos concluídos · ${p.pct}% dos itens. <button class="sair" type="button" id="sairCarreira">Ver todas as trilhas</button></p>
-    ${prox ? `<a class="proximo" href="${esc(prox.t.href || `trilhas/${prox.t.slug}.html`)}"><span><small>Próximo passo · Etapa ${prox.etapa + 1}</small><strong>${esc(prox.t.nome)}</strong></span><span class="seta" aria-hidden="true">→</span></a>`
+    ${prox ? `<a class="proximo" href="${esc(prox.t.href || `trilhas/${prox.t.slug}.html`)}"><span><small>Próximo passo · ${c.etapas[prox.etapa].horizonte ? esc(c.etapas[prox.etapa].horizonte) : `Etapa ${prox.etapa + 1}`}</small><strong>${esc(prox.t.nome)}</strong></span><span class="seta" aria-hidden="true">→</span></a>`
            : `<p><strong>Caminho concluído.</strong> Revise as trilhas de consulta e escolha o próximo objetivo.</p>`}
   </section>`;
   c.etapas.forEach((e, i) => {
@@ -336,12 +341,13 @@ function renderRoteiro(t0) {
     if (!cards && !consV.length) return;
     const prontas = ts.filter(feitaT).length;
     html += `<section class="secao" id="etapa-${i + 1}">
-      <div class="secao-topo"><div><h2><span class="etapa-num">ETAPA ${i + 1}</span>${esc(e.nome)}</h2>${e.meta ? `<p class="meta"><b>Meta:</b> ${esc(e.meta)}</p>` : ""}</div><span class="cont">${prontas}/${ts.length} concluídas</span></div>
+      <div class="secao-topo"><div><h2><span class="etapa-num">${e.horizonte ? esc(e.horizonte.toUpperCase()) : `ETAPA ${i + 1}`}</span>${esc(e.nome)}</h2>${e.meta ? `<p class="meta"><b>Meta:</b> ${esc(e.meta)}</p>` : ""}${e.porque ? `<p class="meta"><b>Por quê:</b> ${esc(e.porque)}</p>` : ""}</div><span class="cont">${prontas}/${ts.length} concluídas</span></div>
       ${cards ? `<div class="grade">${cards}</div>` : ""}
       ${consV.length ? `<div class="consulta"><span>Consulta:</span>${consV.map((t) => t.tipo === "modulo" && !t.pronto ? `<a aria-disabled="true">${esc(t.nome)} (em breve)</a>` : `<a href="${esc(t.href || `trilhas/${t.slug}.html`)}">${esc(t.nome)}</a>`).join("")}</div>` : ""}
     </section>`;
     mostradas += consV.length;
   });
+  if (c.fontes?.length) html += `<p class="fontes">Fontes: ${c.fontes.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join(" · ")}</p>`;
   $("roteiro").innerHTML = html;
   $("lista").innerHTML = "";
   $("vazio").hidden = mostradas > 0;
@@ -416,8 +422,12 @@ function painel() {
 }
 
 function opcoesCarreira() {
+  const opt = (c) => `<option value="${esc(c.id)}"${c.id === carreira ? " selected" : ""}>${esc(c.nome)}</option>`;
+  const mercado = CARREIRAS.filter((c) => c.tipo === "mercado");
+  const carreiras = CARREIRAS.filter((c) => c.tipo !== "mercado");
   $("carreira").innerHTML = `<option value="">Todas as trilhas</option>` +
-    CARREIRAS.map((c) => `<option value="${esc(c.id)}"${c.id === carreira ? " selected" : ""}>${esc(c.nome)}</option>`).join("");
+    (mercado.length ? `<optgroup label="Sugestão de estudos">${mercado.map(opt).join("")}</optgroup>` : "") +
+    `<optgroup label="Caminhos de carreira">${carreiras.map(opt).join("")}</optgroup>`;
 }
 function escolherCarreira(id) {
   carreira = id || "";
