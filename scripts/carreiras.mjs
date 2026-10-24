@@ -84,7 +84,39 @@ export const CARREIRAS = [
         consulta: ["Vol 18 - Negócios e Produto para Engenheiros", "Cert - AZ-305 Azure Solutions Architect", "orderflow:8"],
       },
     ],
+  },  {
+    id: "referencia",
+    nome: "Referência Técnica",
+    resumo: "Para ser a pessoa que o time consulta: saber decidir e implementar auth, estrutura de código, APIs, dados, nuvem e system design em qualquer stack, e defender a escolha por escrito.",
+    duracao: "5 meses · ~6 h por semana",
+    etapas: [
+      {
+        nome: "Decisões do dia a dia",
+        meta: "Escolher e implementar auth (OIDC, PKCE, M2M) em .NET, Java e Node, e montar a estrutura de pastas de um serviço com regras de dependência testadas.",
+        estudar: ["Decisão - Autenticação e Autorização em Cada Stack", "Decisão - Estrutura de Código e Pastas por Stack"],
+        consulta: ["Vol 14 - Segurança de Aplicações", "Nova - De Node e Typescript para CSharp e ASP.NET"],
+      },
+      {
+        nome: "Contratos e dados",
+        meta: "Desenhar uma API contract-first com erros, paginação e idempotência, e escolher banco, cache e padrão de consistência com justificativa.",
+        estudar: ["Decisão - APIs, Contratos e Integração", "Decisão - Dados, Consistência e Cache"],
+        consulta: ["Vol 01 - Mensageria e Caches", "Nova - DDD Estratégico, Event Storming e BDD"],
+      },
+      {
+        nome: "Plataforma e nuvem",
+        meta: "Dizer onde rodar cada componente em Azure, AWS e GCP, com custo e operação estimados.",
+        estudar: ["Decisão - Onde Rodar Cada Coisa na Nuvem", "Nova - Platform Engineering e FinOps"],
+        consulta: ["Nova - AWS na Prática", "Cert - AZ-305 Azure Solutions Architect"],
+      },
+      {
+        nome: "System design e influência",
+        meta: "Um design doc completo de um sistema real (pagamentos, tempo real ou IA), com trade-offs, ADRs e revisão entre times.",
+        estudar: ["Decisão - System Design Aprofundado", "Nova - Sistemas Distribuídos a Fundo", "Vol 22 - Staff Engineer e Arquitetura Evolutiva"],
+        consulta: ["Vol 06 - System Design", "orderflow:8"],
+      },
+    ],
   },
+
   {
     id: "dotnet-java-producao",
     nome: "Sênior .NET e Java em produção (OrderFlow)",
