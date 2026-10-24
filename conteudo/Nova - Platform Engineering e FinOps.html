@@ -1,0 +1,1254 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha de Platform Engineering e FinOps</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"budget.tf": "# Orçamentos como código: o alerta chega ANTES da fatura, para o dono certo\n\n# AWS: orçamento mensal do time de Vendas, filtrado pela tag de alocação \"time\"\nresource \"aws_budgets_budget\" \"vendas\" {\n  name         = \"time-vendas-mensal\"\n  budget_type  = \"COST\"\n  limit_amount = \"3000\"\n  limit_unit   = \"USD\"\n  time_unit    = \"MONTHLY\"\n\n  cost_filter {\n    name   = \"TagKeyValue\"\n    values = [\"user:time$vendas\"]        # a tag precisa estar ativada para custo\n  }\n  notification {                         # previsão: avisa no dia 10, não no dia 30\n    comparison_operator        = \"GREATER_THAN\"\n    threshold                  = 90\n    threshold_type             = \"PERCENTAGE\"\n    notification_type          = \"FORECASTED\"\n    subscriber_email_addresses = [\"lideranca-vendas@loja.dev\"]\n  }\n  notification {\n    comparison_operator        = \"GREATER_THAN\"\n    threshold                  = 100\n    threshold_type             = \"PERCENTAGE\"\n    notification_type          = \"ACTUAL\"\n    subscriber_email_addresses = [\"lideranca-vendas@loja.dev\", \"finops@loja.dev\"]\n  }\n}\n\n# Azure: orçamento no resource group do time (assinatura e management group também)\nresource \"azurerm_consumption_budget_resource_group\" \"vendas\" {\n  name              = \"orcamento-vendas\"\n  resource_group_id = azurerm_resource_group.vendas.id\n  amount            = 15000\n  time_grain        = \"Monthly\"\n  time_period {\n    start_date = \"2026-10-01T00:00:00Z\"\n  }\n  notification {\n    enabled        = true\n    threshold      = 90\n    operator       = \"GreaterThan\"\n    threshold_type = \"Forecasted\"\n    contact_emails = [\"lideranca-vendas@loja.dev\"]\n  }\n}\n\n# Anomalia > orçamento fixo: AWS Cost Anomaly Detection (aws_ce_anomaly_monitor)\n# e Azure Cost Management anomaly alerts pegam o pico de ontem, não o fim do mês.", "catalog-info.yaml": "# catalog-info.yaml na raiz do repositório: o serviço se descreve, o catálogo descobre\napiVersion: backstage.io/v1alpha1\nkind: System\nmetadata:\n  name: loja\n  description: Venda online, do carrinho à entrega\nspec:\n  owner: group:vendas\n  domain: comercio\n---\napiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: pedidos-api\n  description: Cria, confirma e acompanha pedidos\n  tags: [node, typescript]\n  annotations:\n    github.com/project-slug: loja/pedidos-api\n    backstage.io/techdocs-ref: dir:.            # docs/ + mkdocs.yml no próprio repo\n    argocd/app-name: pedidos-api-prod             # status do deploy no portal\n    pagerduty.com/service-id: P7X2K9Q             # quem está de plantão\n  links:\n    - url: https://grafana.loja.dev/d/pedidos\n      title: Painel RED\nspec:\n  type: service\n  lifecycle: production\n  owner: group:vendas\n  system: loja\n  providesApis: [pedidos-v1]\n  consumesApis: [pagamentos-v2]\n  dependsOn: [resource:pedidos-db]\n---\napiVersion: backstage.io/v1alpha1\nkind: API\nmetadata:\n  name: pedidos-v1\nspec:\n  type: openapi\n  lifecycle: production\n  owner: group:vendas\n  system: loja\n  definition:\n    $text: ./openapi.yaml\n---\napiVersion: backstage.io/v1alpha1\nkind: Resource\nmetadata:\n  name: pedidos-db\nspec:\n  type: database\n  owner: group:vendas\n  system: loja", "crossplane.yaml": "# Crossplane v2: a plataforma define a API \"Banco\"; o time pede um banco como pede um Deployment\napiVersion: apiextensions.crossplane.io/v2\nkind: CompositeResourceDefinition\nmetadata:\n  name: bancos.plataforma.loja.io\nspec:\n  scope: Namespaced                       # padrão no v2: o XR vive no namespace do time\n  group: plataforma.loja.io\n  names: { kind: Banco, plural: bancos }\n  versions:\n    - name: v1alpha1\n      served: true\n      referenceable: true\n      schema:\n        openAPIV3Schema:\n          type: object\n          properties:\n            spec:\n              type: object\n              required: [engine]\n              properties:\n                engine: { type: string, enum: [postgres, mysql] }\n                tamanho: { type: string, enum: [pequeno, medio, grande], default: pequeno }\n                backupDias: { type: integer, minimum: 7, maximum: 35, default: 7 }\n            status:\n              type: object\n              properties:\n                endpoint: { type: string }\n---\n# o que o time de Vendas commita no repositório GitOps dele\napiVersion: plataforma.loja.io/v1alpha1\nkind: Banco\nmetadata:\n  name: pedidos-db\n  namespace: vendas\nspec:\n  engine: postgres\n  tamanho: medio\n# A Composition (com funções, em modo Pipeline) traduz isso em RDS ou Azure Database,\n# subnet group, security group, segredo e tags de custo; o Crossplane reconcilia sempre:\n# alguém apagou o banco no console? ele volta.", "custos.mjs": "// custos.mjs: custo por serviço e por unidade a partir de um export FOCUS (CSV com Tags JSON)\nimport { readFileSync } from 'node:fs';\n\nexport function lerCsv(texto) {          // RFC 4180: aspas, vírgula e \"\" dentro do campo\n  const linhas = []; let campo = '', linha = [], aspas = false;\n  for (let i = 0; i < texto.length; i++) {\n    const c = texto[i];\n    if (aspas) {\n      if (c === '\"' && texto[i + 1] === '\"') { campo += '\"'; i++; }\n      else if (c === '\"') aspas = false; else campo += c;\n    } else if (c === '\"') aspas = true;\n    else if (c === ',') { linha.push(campo); campo = ''; }\n    else if (c === '\\n') { linha.push(campo); linhas.push(linha); linha = []; campo = ''; }\n    else if (c !== '\\r') campo += c;\n  }\n  if (campo || linha.length) { linha.push(campo); linhas.push(linha); }\n  const [cab, ...dados] = linhas;\n  return dados.map((l) => Object.fromEntries(cab.map((k, i) => [k, l[i]])));\n}\n\nexport function alocar(linhas, { chave = 'servico', compartilhado = 'compartilhado' } = {}) {\n  const direto = new Map();\n  let comum = 0, semTag = 0, total = 0, faturado = 0;\n  for (const l of linhas) {\n    const custo = Number(l.EffectiveCost);      // amortizado: já com reservas e descontos\n    const dono = JSON.parse(l.Tags || '{}')[chave];\n    total += custo; faturado += Number(l.BilledCost);\n    if (!dono) semTag += custo;\n    else if (dono === compartilhado) comum += custo;\n    else direto.set(dono, (direto.get(dono) ?? 0) + custo);\n  }\n  const base = [...direto.values()].reduce((a, b) => a + b, 0);\n  const servicos = [...direto].map(([servico, d]) => {\n    const rateio = base ? comum * (d / base) : 0;   // proporcional ao custo direto\n    return { servico, direto: d, rateio, total: d + rateio };\n  }).sort((a, b) => b.total - a.total);\n  return { servicos, semTag, comum, total, faturado, pctSemTag: total ? semTag / total : 0 };\n}\nexport function porUnidade(servicos, unidades) {\n  return servicos.map((s) => {\n    const u = unidades.find((x) => x.servico === s.servico);\n    return { ...s, unidade: u?.unidade ?? '-',\n      custoUnitario: u ? s.total / Number(u.quantidade) : null };\n  });\n}\n\nif (process.argv[1]?.endsWith('custos.mjs')) {\n  const [arqCustos = 'dados/custos.csv', arqUnid = 'dados/unidades.csv'] =\n    process.argv.slice(2);\n  const r = alocar(lerCsv(readFileSync(arqCustos, 'utf8')));\n  const linhas = porUnidade(r.servicos, lerCsv(readFileSync(arqUnid, 'utf8')));\n  const $ = (v, d = 2) => '$' + v.toFixed(d);\n  console.table(linhas.map((s) => ({ servico: s.servico, direto: $(s.direto),\n    rateio: $(s.rateio), total: $(s.total),\n    'por unidade': s.custoUnitario == null ? '-' : `${$(s.custoUnitario, 4)}/${s.unidade}` })));\n  console.log(`efetivo ${$(r.total)} · faturado ${$(r.faturado)} · compartilhado `\n    + `${$(r.comum)} · sem tag ${$(r.semTag)} (${(r.pctSemTag * 100).toFixed(1)}%)`);\n  if (r.pctSemTag > 0.05) { console.error('✘ mais de 5% sem tag'); process.exitCode = 2; }\n}", "modulo.tf": "# frete-api/infra/main.tf: o time CONSOME o módulo; a plataforma o mantém e versiona\nmodule \"servico\" {\n  source  = \"app.terraform.io/loja/servico-web/aws\"   # registry privado\n  version = \"~> 3.2\"                                   # patch e minor automáticos\n  nome         = \"frete-api\"\n  time         = \"vendas\"\n  ambiente     = \"prod\"\n  cpu          = 512\n  min_replicas = 2\n  banco        = { engine = \"postgres\", tamanho = \"medio\" }\n}\noutput \"url\" { value = module.servico.url }\n# modules/servico-web/variables.tf: os guarda-corpos moram na interface\nvariable \"nome\" {\n  type = string\n  validation {\n    condition     = can(regex(\"^[a-z][a-z0-9-]{2,39}$\", var.nome))\n    error_message = \"Use kebab-case, de 3 a 40 caracteres.\"\n  }\n}\nvariable \"ambiente\" {\n  type = string\n  validation {\n    condition     = contains([\"dev\", \"hml\", \"prod\"], var.ambiente)\n    error_message = \"Ambiente deve ser dev, hml ou prod.\"\n  }\n}\nvariable \"cpu\" {\n  type    = number\n  default = 256\n  validation {\n    condition     = contains([256, 512, 1024, 2048], var.cpu)\n    error_message = \"Tamanhos permitidos: 256, 512, 1024, 2048.\"\n  }\n}\nvariable \"banco\" {\n  type = object({\n    engine  = string\n    tamanho = optional(string, \"pequeno\")         # pequeno | medio | grande\n  })\n  default = null\n}\n\n# modules/servico-web/main.tf (trecho): tags de custo sempre, sem depender de ninguém\nlocals {\n  tags = { servico = var.nome, time = var.time, ambiente = var.ambiente,\n           gerenciado-por = \"terraform\" }\n}\nresource \"aws_ecs_service\" \"this\" {\n  name          = var.nome\n  desired_count = var.min_replicas\n  tags          = local.tags\n  lifecycle {\n    precondition {\n      condition     = var.ambiente != \"prod\" || var.min_replicas >= 2\n      error_message = \"Produção exige ao menos 2 réplicas.\"\n    }\n  }\n  # cluster, task_definition, rede e autoscaling omitidos\n}", "plataforma.test.mjs": "// plataforma.test.mjs: o golden path e a conta de custos têm testes (node --test)\nimport { test } from 'node:test';\nimport assert from 'node:assert/strict';\nimport { existsSync, mkdtempSync, readFileSync } from 'node:fs';\nimport { tmpdir } from 'node:os';\nimport { join } from 'node:path';\nimport { scaffold, validar } from './scaffold.mjs';\nimport { alocar, lerCsv, porUnidade } from './custos.mjs';\n\nconst OK = { nome: 'frete-api', time: 'vendas', sistema: 'loja' };\n\ntest('scaffold gera CI, Dockerfile, catálogo e README sem placeholder sobrando', () => {\n  const destino = join(mkdtempSync(join(tmpdir(), 'plat-')), 'frete-api');\n  assert.equal(scaffold(OK, destino), 6);\n  for (const f of ['.github/workflows/ci.yml', 'Dockerfile', 'catalog-info.yaml', 'README.md'])\n    assert.ok(existsSync(join(destino, f)), f);\n  const catalogo = readFileSync(join(destino, 'catalog-info.yaml'), 'utf8');\n  assert.match(catalogo, /owner: group:vendas/);\n  assert.doesNotMatch(catalogo, /\\{\\{/);\n});\n\ntest('scaffold recusa nome fora do padrão, time desconhecido e destino existente', () => {\n  assert.equal(validar({ ...OK, nome: 'Frete_API' }).length, 1);\n  assert.equal(validar({ ...OK, time: 'marketing' }).length, 1);\n  assert.throws(() => scaffold(OK, tmpdir()), /destino já existe/);\n});\n\ntest('CSV com Tags JSON entre aspas é lido sem quebrar nas vírgulas', () => {\n  const [l] = lerCsv('A,Tags\\n1,\"{\"\"servico\"\":\"\"x\"\",\"\"time\"\":\"\"y\"\"}\"\\n');\n  assert.deepEqual(JSON.parse(l.Tags), { servico: 'x', time: 'y' });\n});\n\nconst CSV = `EffectiveCost,BilledCost,Tags\n300,300,\"{\"\"servico\"\":\"\"a\"\"}\"\n100,100,\"{\"\"servico\"\":\"\"b\"\"}\"\n40,40,\"{\"\"servico\"\":\"\"compartilhado\"\"}\"\n60,60,`;\n\ntest('compartilhado é rateado pelo custo direto; sem tag fica visível', () => {\n  const r = alocar(lerCsv(CSV));\n  assert.deepEqual(r.servicos.map((s) => [s.servico, s.total]), [['a', 330], ['b', 110]]);\n  assert.equal(r.semTag, 60);\n  assert.equal(r.pctSemTag, 0.12);\n  assert.equal(r.servicos.reduce((t, s) => t + s.total, 0) + r.semTag, r.total);\n});\n\ntest('custo unitário = custo total alocado ÷ unidades de negócio', () => {\n  const r = alocar(lerCsv(CSV));\n  const [a] = porUnidade(r.servicos, [{ servico: 'a', unidade: 'pedido', quantidade: '1100' }]);\n  assert.equal(a.custoUnitario, 0.3);\n});", "preview.yaml": "# ApplicationSet do Argo CD: um ambiente efêmero por PR com o rótulo \"preview\"\napiVersion: argoproj.io/v1alpha1\nkind: ApplicationSet\nmetadata:\n  name: pedidos-preview\n  namespace: argocd\nspec:\n  goTemplate: true\n  goTemplateOptions: [\"missingkey=error\"]\n  generators:\n    - pullRequest:\n        github:\n          owner: loja\n          repo: pedidos-api\n          tokenRef: { secretName: github-token, key: token }\n          labels: [preview]                 # opt-in: nem todo PR precisa de ambiente\n        requeueAfterSeconds: 120\n  template:\n    metadata:\n      name: 'pedidos-pr-{{.number}}'\n      labels: { tipo: preview, time: vendas }\n      finalizers: [resources-finalizer.argocd.argoproj.io]   # PR fechou: apaga tudo\n    spec:\n      project: previews                     # quotas e destinos restritos\n      source:\n        repoURL: https://github.com/loja/pedidos-api.git\n        targetRevision: '{{.head_sha}}'\n        path: deploy/chart\n        helm:\n          parameters:\n            - { name: image.tag, value: 'pr-{{.number}}-{{.head_short_sha}}' }\n            - { name: ingress.host, value: 'pr-{{.number}}.preview.loja.dev' }\n            - { name: replicas, value: '1' }\n            - { name: banco.modo, value: 'efemero' }   # Postgres no pod, dados de seed\n      destination:\n        server: https://kubernetes.default.svc\n        namespace: 'pedidos-pr-{{.number}}'\n      syncPolicy:\n        automated: { prune: true, selfHeal: true }\n        syncOptions: [CreateNamespace=true]\n# custo: nós spot, desliga fora do horário, TTL de 72 h sem commit, tag ambiente=preview", "scaffold.mjs": "// scaffold.mjs: golden path mínimo; cria um serviço a partir de template/ (Node 22, sem deps)\nimport {\n  cpSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync,\n} from 'node:fs';\nimport { join, dirname } from 'node:path';\nimport { fileURLToPath } from 'node:url';\nimport { parseArgs } from 'node:util';\n\nconst TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), 'template');\nconst NOME = /^[a-z][a-z0-9-]{2,39}$/;                  // vira DNS, tag e repo: kebab-case\nconst TIMES = new Set(['vendas', 'pagamentos', 'estoque', 'expedicao', 'plataforma']);\n\nexport function validar(p) {\n  const erros = [];\n  if (!NOME.test(p.nome ?? '')) erros.push('nome: kebab-case, 3 a 40 caracteres');\n  if (!TIMES.has(p.time)) erros.push(`time: um de ${[...TIMES].join(', ')}`);\n  if (!p.sistema) erros.push('sistema: obrigatório (agrupa no catálogo e no custo)');\n  return erros;\n}\n\nconst arquivos = (dir) => readdirSync(dir).flatMap((n) => {\n  const c = join(dir, n);\n  return statSync(c).isDirectory() ? arquivos(c) : [c];\n});\n\nexport function scaffold(params, destino, origem = TEMPLATE) {\n  const erros = validar(params);\n  if (erros.length) throw new Error('parâmetros inválidos:\\n  ' + erros.join('\\n  '));\n  if (existsSync(destino)) throw new Error(`destino já existe: ${destino}`);\n  const valores = { descricao: `Serviço ${params.nome}`, ...params };\n  cpSync(origem, destino, { recursive: true });\n  for (const arq of arquivos(destino)) {\n    const txt = readFileSync(arq, 'utf8').replace(/\\{\\{(\\w+)\\}\\}/g, (m, k) => {\n      if (!(k in valores)) throw new Error(`placeholder sem valor: ${m} em ${arq}`);\n      return valores[k];\n    });\n    writeFileSync(arq, txt);\n  }\n  return arquivos(destino).length;\n}\n\nif (process.argv[1] === fileURLToPath(import.meta.url)) {\n  const { values } = parseArgs({ options: {\n    nome: { type: 'string' }, time: { type: 'string' },\n    sistema: { type: 'string' }, descricao: { type: 'string' }, destino: { type: 'string' },\n  } });\n  try {\n    const n = scaffold(values, values.destino ?? join('servicos', values.nome ?? ''));\n    console.log(`✔ ${values.nome}: ${n} arquivos (CI, Docker, catálogo, README, /healthz)`);\n  } catch (e) {\n    console.error(`✘ ${e.message}`);\n    process.exitCode = 1;\n  }\n}", "template.yaml": "apiVersion: scaffolder.backstage.io/v1beta3\nkind: Template\nmetadata:\n  name: servico-node                     # golden path virou formulário\n  title: Serviço Node.js (recomendado)\n  description: API com CI, Dockerfile, OpenTelemetry, catálogo, docs e tags de custo\nspec:\n  owner: group:plataforma\n  type: service\n  parameters:\n    - title: O serviço\n      required: [nome, time, sistema]\n      properties:\n        nome:\n          title: Nome\n          type: string\n          pattern: '^[a-z][a-z0-9-]{2,39}$'\n        time:\n          title: Time dono\n          type: string\n          ui:field: OwnerPicker              # grupos e pessoas do catálogo\n        sistema:\n          title: Sistema\n          type: string\n          ui:field: EntityPicker\n          ui:options: { catalogFilter: { kind: System } }\n    - title: Repositório\n      required: [repoUrl]\n      properties:\n        repoUrl:\n          type: string\n          ui:field: RepoUrlPicker\n          ui:options: { allowedHosts: [github.com] }\n  steps:\n    - id: gerar\n      name: Gerar a partir do esqueleto\n      action: fetch:template\n      input:\n        url: ./skeleton                  # arquivos com ${{ values.nome }} etc.\n        values:\n          nome: ${{ parameters.nome }}\n          time: ${{ parameters.time }}\n          sistema: ${{ parameters.sistema }}\n    - id: publicar\n      name: Criar o repositório\n      action: publish:github\n      input:\n        repoUrl: ${{ parameters.repoUrl }}\n        defaultBranch: main\n    - id: registrar\n      name: Registrar no catálogo\n      action: catalog:register\n      input:\n        repoContentsUrl: ${{ steps.publicar.output.repoContentsUrl }}\n        catalogInfoPath: /catalog-info.yaml\n  output:\n    links:\n      - { title: Repositório, url: '${{ steps.publicar.output.remoteUrl }}' }\n      - title: No catálogo\n        entityRef: ${{ steps.registrar.output.entityRef }}"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"], "csc500": ["Cert · SC-500 Cloud and AI Security", "https://claude.ai/artifact/PhJmPwwXH1A4zaQoywZmkU"], "csc100": ["Cert · SC-100 Cybersecurity Architect", "https://claude.ai/artifact/Fg63ZrBdBQC4mWJrPB3Jmh"], "csc2003": ["Cert · SC-200 e SC-300", "https://claude.ai/artifact/AiAtvk2jwqACoPN32mYu6S"], "c901": ["Cert · AI-901 AI Fundamentals", "https://claude.ai/artifact/E5sF2gdYzJkQhoTuPqnnJ1"], "cdp700": ["Cert · DP-700 Fabric Data Engineer", "https://claude.ai/artifact/StB9Z2V1nRRLeiHqLqzrKX"], "cpl300": ["Cert · PL-300 Power BI", "https://claude.ai/artifact/YNPpL7WWufh7Lub5aRKRqk"], "nnet": ["Nova · Node/TS para C#/ASP.NET", "https://claude.ai/artifact/4QE5egh7BN3FTDLnpD15P4"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Nova · Platform Engineering e FinOps =====================
+const CONF = {
+  title: 'Trilha de Platform Engineering e FinOps', file: 'Nova - Platform Engineering e FinOps', key: 'nplat',
+  eyebrow: 'Trilha nova · Plataforma e FinOps', h1: 'O caminho fácil é o caminho certo, e cada real tem dono',
+  lead: 'Roteiro em vídeo para quem vai de sênior a staff: plataforma interna como produto e o time de plataforma do Team Topologies, golden paths e templates de serviço, Backstage com catálogo, software templates, TechDocs e scorecards, self-service com módulos Terraform e Crossplane, GitOps com Argo CD e Flux, ambientes efêmeros por PR, DORA, SPACE e DevEx, adoção sem obrigar, e FinOps de ponta a ponta: framework, tags e alocação, showback e chargeback, custo por pedido, rightsizing, spot, reservas e savings plans, custos escondidos, FinOps para IA, orçamentos e FOCUS, com um laboratório em Node que gera um serviço e calcula custo por unidade.',
+  pills: ['Golden paths', 'Backstage', 'Terraform e Crossplane', 'GitOps', 'DORA e DevEx', 'Tags e alocação', 'Unit economics', 'FOCUS'],
+  term: 'bash · ~/plataforma-lab',
+  faqPlaceholder: 'Buscar: golden path, Backstage, GitOps, DORA, showback, savings plan, FOCUS…',
+  matriz: {title: 'Compromissos de custo na nuvem', desc: 'Desconto se troca por compromisso ou por risco de interrupção. Cubra a base estável com compromisso, o variável com sob demanda e o tolerante a falha com spot. Percentuais mudam: confira a documentação atual.', cols: ['Mecanismo', 'AWS', 'Azure', 'Desconto típico', 'Compromisso', 'Use para'], tag: false},
+};
+const TITLE = {k: 'Trilha nova · Platform Engineering e FinOps', h: 'Platform Engineering e FinOps',
+  p: 'Plataforma interna é um produto cujos clientes são os times de produto: sucesso é tempo até o primeiro deploy, não número de ferramentas. FinOps é o mesmo raciocínio aplicado ao dinheiro: visibilidade, dono e decisão por unidade de negócio.',
+  chips: ['plataforma como produto', 'golden path', 'Backstage', 'GitOps', 'DORA', 'tags', 'custo por pedido', 'FOCUS']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Caminho pavimentado e custo com dono',
+  p: 'Abaixo do vídeo estão os compromissos de custo de AWS e Azure lado a lado, os links para as cenas de cloud, Kubernetes, CI/CD e observabilidade de outras trilhas, a trilha de estudo, o checklist e as perguntas de entrevista.',
+  chips: ['menor plataforma viável', 'adoção por mérito', 'tags no módulo', 'custo por unidade', 'alerta por previsão']};
+
+const SCENES = [
+/* ---------- PLATAFORMA ---------- */
+{ id:'intro', ch:'Plataforma', title:'Plataforma é produto, custo tem dono',
+  say:'Com dez times criando serviços, cada um reinventa pipeline, Dockerfile, observabilidade, segredos e infraestrutura, e a fatura da nuvem cresce sem ninguém saber de quem é. Platform Engineering responde à primeira dor: um caminho pavimentado e self-service que deixa o jeito certo como o mais fácil. FinOps responde à segunda: cada real com dono, medido por unidade de negócio. As duas se encontram no mesmo ponto: o template que cria o serviço já nasce com tags de custo, alertas e métricas.',
+  v:{type:'title'} },
+
+{ id:'idp', ch:'Plataforma', title:'O que é uma plataforma interna',
+  say:'O white paper de plataformas da CNCF define plataforma como um conjunto integrado de capacidades, apresentado conforme as necessidades de quem usa. Na prática: portal, templates, pipelines, infraestrutura sob pedido, observabilidade e segredos, consumidos por self-service. Não é um time que recebe tíquetes para criar banco, nem um Kubernetes jogado no colo dos devs. Comece pela menor plataforma viável, que pode ser uma página de wiki com um template e um módulo Terraform, e cresça pela dor mais frequente.',
+  v:GRID(2, [
+    ['É','capacidades por self-service',['portal, templates, pipelines','infra sob pedido, com guarda-corpos','observabilidade e segredos prontos','documentado e opcional','seguro por padrão'],'green'],
+    ['Não é','',['fila de tíquetes para ops','Kubernetes cru no colo dos devs','30 ferramentas sem integração','obrigatório por decreto','projeto com fim: é produto'],'ext'],
+  ], {h:270, step:5, rodape:'Thinnest viable platform: comece por um template + um módulo + uma página; cresça pela dor mais frequente'}) },
+
+{ id:'platform-team', ch:'Plataforma', title:'O time de plataforma no Team Topologies',
+  say:'No Team Topologies, o time de plataforma existe para reduzir a carga cognitiva dos times alinhados ao fluxo. O modo de interação padrão é X como serviço: o time de produto consome sem precisar conversar. Na descoberta de uma capacidade nova, colaboração por tempo limitado com um time piloto. E um time habilitador ensina a usar e depois sai. O antipadrão é a plataforma virar gargalo: se todo pedido exige reunião, ela é um time de operações com outro nome. Meça quanto do trabalho dos times passa sem tocar em vocês.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:190, cls:'blue', html:B('Stream-aligned','os clientes')+UL('entregam valor ao negócio','consomem a plataforma','carga cognitiva no limite')},
+    {at:4, x:340,y:92,w:280,h:190, cls:'green', html:B('Platform','o fornecedor interno')+UL('X-as-a-Service','APIs, templates, docs','sem tíquete no caminho')},
+    {at:7, x:644,y:92,w:280,h:190, cls:'amber', html:B('Enabling','o professor')+UL('ensina a usar','mentoria por semanas','depois sai')},
+    {at:10, x:36,y:302,w:430,h:200, cls:'green', html:B('Modos de interação','')+UL('padrão: X como serviço','capacidade nova: colaboração com piloto','adoção: facilitação pelo habilitador')},
+    {at:14, x:494,y:302,w:430,h:200, cls:'ext', html:B('Antipadrões','')+UL('todo pedido vira reunião ou tíquete','plataforma decide o que o produto usa','ninguém mede se reduziu carga')},
+  ]}},
+
+{ id:'golden-paths', ch:'Plataforma', title:'Golden paths: o caminho pavimentado',
+  say:'Golden path, ou paved road, é um caminho opinativo e suportado para uma tarefa comum: criar uma API em Node, um worker de fila, um site estático. Ele traz decisões já tomadas: linguagem e versão, CI, imagem base, observabilidade com OpenTelemetry, segredos, deploy, alertas e tags de custo. O time escolhe o caminho e chega à produção no primeiro dia. Não é uma jaula: sair do caminho é permitido, mas quem sai assume o custo de manter. E o caminho é versionado: a melhoria chega a quem já usa.',
+  v:GRID(3, [
+    ['Opinativo','decisões já tomadas',['Node 22, TypeScript','CI, imagem, OTel','tags e alertas'],'green'],
+    ['Suportado','tem dono e plantão',['documentado','plataforma corrige','melhoria chega a todos'],'blue'],
+    ['Opcional','não é jaula',['sair é permitido','quem sai, mantém','exceção registrada em ADR'],'amber'],
+  ], {h:220, step:4, rodape:'Métrica do golden path: do "quero um serviço" ao primeiro deploy em produção · meta: horas, não semanas'}) },
+
+/* ---------- PORTAL ---------- */
+{ id:'catalogo', ch:'Portal', title:'Backstage: o catálogo de software',
+  say:'Backstage, criado no Spotify e hoje projeto da CNCF, é o portal mais adotado. O coração é o catálogo: cada repositório tem um catalog info yaml e se descreve. System agrupa componentes; Component é o serviço, com dono, ciclo de vida e anotações que ligam o portal ao GitHub, ao Argo CD e ao plantão; API aponta para o OpenAPI; Resource é o banco. Com isso o portal responde em segundos: quem é dono, onde está o painel, quem consome esta API. O catálogo vale mais que qualquer plugin.',
+  v:S('catalog-info.yaml','catalog-info.yaml','yaml')},
+
+{ id:'templates', ch:'Portal', title:'Software templates: o golden path',
+  say:'Software template é o golden path virando formulário. Os parâmetros são um JSON Schema com campos especiais, como o seletor de dono e o de repositório, que leem o próprio catálogo. Os passos executam ações: fetch template renderiza o esqueleto com os valores, publish github cria o repositório e catalog register cadastra o serviço no catálogo. Em minutos o time tem repositório, CI verde, Dockerfile, docs e dono definido. O esqueleto usa a sintaxe Nunjucks, com cifrão e chaves duplas; o laboratório faz o mesmo em Node puro.',
+  v:S('template.yaml','template.yaml','yaml')},
+
+{ id:'techdocs', ch:'Portal', title:'TechDocs, scorecards e o portal',
+  say:'TechDocs é docs como código: Markdown e mkdocs no próprio repositório, renderizados no portal, ao lado do serviço; a documentação muda no mesmo PR que o código. Scorecards medem a maturidade de cada serviço contra padrões: tem dono, runbook, alerta de SLO, imagem sem vulnerabilidade crítica, versão do Node suportada. No Backstage vêm de plugins, como Tech Insights ou o Soundcheck do Spotify. Há alternativas prontas como Port, Cortex e Roadie, que hospeda Backstage. Backstage dá trabalho: é um produto React e Node para manter.',
+  v:GRID(3, [
+    ['TechDocs','docs como código',['Markdown + mkdocs no repo','muda no mesmo PR','busca no portal'],'blue'],
+    ['Scorecards','maturidade visível',['dono, runbook, alerta de SLO','sem CVE crítica','Node suportado'],'green'],
+    ['Construir ou comprar','',['Backstage: React + Node seu','Roadie: Backstage hospedado','Port, Cortex, OpsLevel'],'amber'],
+  ], {h:220, step:4, rodape:'Scorecard é para conversa e priorização, não para ranking público de times'}) },
+
+/* ---------- SELF-SERVICE ---------- */
+{ id:'terraform', ch:'Self-service de infra', title:'Módulos Terraform com guarda-corpos',
+  say:'Self-service de infraestrutura começa com módulos. O time consome um módulo versionado do registry privado e passa poucos parâmetros: nome, time, ambiente, tamanho. Os guarda-corpos moram na interface: validation recusa nome fora do padrão e tamanhos não aprovados, precondition exige duas réplicas em produção, e as tags de custo são aplicadas sempre, sem depender da memória de ninguém. Fixe a versão com til e maior, para receber correções sem quebras. OpenTofu é a alternativa de código aberto com a mesma linguagem.',
+  v:S('frete-api/infra/main.tf','modulo.tf','hcl')},
+
+{ id:'crossplane', ch:'Self-service de infra', title:'Crossplane: infra como API do Kubernetes',
+  say:'Crossplane leva a mesma ideia para dentro do Kubernetes. A plataforma define uma API própria, como Banco, com um esquema que só aceita Postgres ou MySQL e três tamanhos. O time aplica um recurso Banco no seu namespace, normalmente via GitOps, e uma Composition, escrita com funções, cria o banco gerenciado, a rede, o segredo e as tags. Diferente do Terraform, o Crossplane reconcilia sem parar: se alguém apaga o banco no console, ele volta. Na versão dois, os recursos compostos ficam no namespace e não precisam mais de claims.',
+  v:S('crossplane.yaml','crossplane.yaml','yaml')},
+
+{ id:'gitops', ch:'Self-service de infra', title:'GitOps com Argo CD e Flux',
+  say:'GitOps tem quatro princípios do OpenGitOps: estado desejado declarativo, versionado e imutável, puxado automaticamente e reconciliado continuamente. Em vez de o pipeline dar kubectl apply com credencial de produção, um agente no cluster puxa do Git e corrige desvios. Argo CD traz interface rica, ApplicationSets e um modelo de projetos multi-time; Flux é mais enxuto, composto por controladores e forte em automação de imagens. Os dois são projetos graduados da CNCF. Rollback vira git revert, e auditoria vira git log.',
+  v:GRID(2, [
+    ['Argo CD','interface e multi-time',['UI com diff e saúde','ApplicationSets geram apps','AppProjects: limites por time','sync waves e hooks'],'blue'],
+    ['Flux','enxuto e componível',['controladores: source, kustomize, helm','automação de atualização de imagem','sem UI própria obrigatória','multi-tenancy por namespace'],'green'],
+  ], {h:240, step:5, rodape:'OpenGitOps: declarativo · versionado e imutável · puxado automaticamente · reconciliado continuamente'}) },
+
+{ id:'efemeros', ch:'Self-service de infra', title:'Ambientes efêmeros por PR',
+  say:'Ambiente efêmero sobe a versão do PR isolada, com URL própria, para revisão, teste de contrato e demonstração ao produto, e some quando o PR fecha. Com Argo CD, um ApplicationSet com gerador de pull request cria uma aplicação por PR com o rótulo preview: namespace próprio, imagem marcada com o número e o hash, uma réplica e banco efêmero com dados de seed. O finalizer apaga tudo no fechamento. Para não virar fatura: opt-in por rótulo, nós spot, desligar fora do horário e tempo de vida máximo.',
+  v:S('preview.yaml','preview.yaml','yaml')},
+
+/* ---------- MÉTRICAS ---------- */
+{ id:'dora', ch:'Métricas e produto', title:'DORA: as cinco métricas de entrega',
+  say:'O DORA passou a usar cinco métricas, em dois grupos. Vazão: tempo de execução das mudanças, do commit à produção; frequência de deploy; e tempo de recuperação de um deploy com falha. Instabilidade: taxa de falha de mudanças e taxa de retrabalho, a fração de deploys não planejados para corrigir problema em produção. A plataforma move essas métricas para todos os times de uma vez. Use para ver tendência por time e decidir onde investir, nunca para comparar times ou dar bônus: métrica que vira meta deixa de medir.',
+  v:GRID(2, [
+    ['Vazão','throughput',['tempo do commit à produção','frequência de deploy','recuperação de deploy com falha'],'green'],
+    ['Instabilidade','instability',['taxa de falha de mudanças','taxa de retrabalho (nova)','deploys não planejados'],'amber'],
+  ], {h:220, step:5, rodape:'Tendência por time para decidir investimento · nunca ranking nem bônus: métrica que vira meta deixa de medir (Goodhart)'}) },
+
+{ id:'devex', ch:'Métricas e produto', title:'SPACE, DevEx e o primeiro deploy',
+  say:'DORA mede o sistema de entrega; a experiência das pessoas precisa de outras lentes. SPACE, de Nicole Forsgren e colegas, lembra que produtividade tem cinco dimensões: satisfação, performance, atividade, comunicação e eficiência. DevEx resume em três: ciclos de feedback, carga cognitiva e estado de fluxo. Para a plataforma, as métricas mais honestas são tempo até o primeiro deploy de um serviço novo, tempo de onboarding de uma pessoa, percentual de serviços no golden path e uma pesquisa curta por trimestre.',
+  v:{type:'boxes', defs:[
+    ['S · P · A','satisfação, performance, atividade', .8],
+    ['C · E','comunicação, eficiência e fluxo', 3],
+    ['DevEx','feedback, carga cognitiva, fluxo', 5.2],
+    ['Percepção','pesquisa + telemetria', 7.6],
+  ], items:[
+    {at:10, x:470,y:92,w:454,h:250, cls:'green', html:B('Métricas da plataforma','')+UL('tempo até o 1º deploy de serviço novo','onboarding: 1º PR em produção','% de serviços no golden path','tempo de espera por infra','pesquisa trimestral de 5 perguntas','tíquetes para a plataforma: caindo')},
+    {at:15, x:470,y:362,w:454,h:140, cls:'ext', html:B('Não meça assim','')+UL('linhas de código, commits, PRs por pessoa','pesquisa identificada: use anônima')},
+  ]}},
+
+{ id:'produto', ch:'Métricas e produto', title:'Plataforma como produto, sem obrigar',
+  say:'Plataforma como produto significa ter gerente de produto, entrevistar os times, roadmap público, documentação, comunicação de mudanças e política de descontinuação. A adoção vem por mérito: o caminho pavimentado precisa ser mais rápido e mais barato que a alternativa. Comece com um time piloto com dor real, publique o caso, e deixe o portal mostrar o ganho. Obrigar por decreto gera adoção de fachada e ressentimento. O que pode ser obrigatório são resultados, como tags de custo e segurança, não ferramentas.',
+  v:GRID(2, [
+    ['Produto','',['PM e entrevistas com times','roadmap público, changelog','docs, exemplos, suporte','descontinuação com prazo'],'blue'],
+    ['Adoção sem obrigar','',['piloto com dor real','caminho mais rápido que a alternativa','caso publicado, números','obrigatório: resultado, não ferramenta'],'green'],
+  ], {h:250, step:5, rodape:'Decreto gera adoção de fachada · exija tags, segurança e SLO; deixe a ferramenta competir'}) },
+
+/* ---------- FINOPS ---------- */
+{ id:'finops', ch:'FinOps', title:'O framework FinOps',
+  say:'FinOps é a prática que faz engenharia, finanças e negócio decidirem juntos sobre o valor da tecnologia. O framework da FinOps Foundation tem três fases em ciclo: informar, com visibilidade e alocação; otimizar, com taxas e uso; e operar, com processos, governança e melhoria contínua. Desde a edição de dois mil e vinte e cinco, o framework fala em escopos: nuvem pública, SaaS, licenças, data center e IA. Os princípios dizem que o valor de negócio guia as decisões e que todos são donos do próprio uso.',
+  v:FLOW([
+    ['Informar','visibilidade e alocação','blue'],
+    ['Otimizar','taxas e uso','green'],
+    ['Operar','processos e governança','amber'],
+  ], {y:100, h:96, step:2.2, cards:[
+    ['Princípios (resumo)','',['valor de negócio guia decisões','todos são donos do próprio uso','dados acessíveis, no prazo e corretos','habilitado centralmente','modelo variável é oportunidade'],'blue'],
+    ['Escopos (2025+)','',['nuvem pública','SaaS e licenças','data center e nuvem privada','IA: tokens e GPUs','maturidade: engatinhar, andar, correr'],'green'],
+  ], ch:200}) },
+
+{ id:'tags', ch:'FinOps', title:'Tags e alocação de custo',
+  say:'Sem alocação não há FinOps. Defina poucas tags obrigatórias, com valores controlados: serviço, time, ambiente e centro de custo. Aplique na origem, no módulo Terraform e no template, e bloqueie o que vier sem tag com Azure Policy, ou com tag policies e SCPs na AWS. Na AWS, ative as tags para alocação de custo; no Azure, use herança de tags. Custo sem tag vai para uma fila com meta, como menos de cinco por cento. E há o compartilhado, como cluster, NAT e logs, rateado por regra combinada.',
+  v:{type:'boxes', defs:[
+    ['servico','frete-api', .8],
+    ['time','vendas', 2.4],
+    ['ambiente','dev · hml · prod · preview', 4],
+    ['centro-de-custo','CC-1042', 5.6],
+  ], items:[
+    {at:7.5, x:470,y:92,w:454,h:200, cls:'green', html:B('Na origem','')+UL('módulo e template aplicam sempre','Azure Policy: deny ou modify','AWS: tag policies + SCP','ativar tags de alocação de custo')},
+    {at:12, x:470,y:312,w:454,h:190, cls:'amber', html:B('O que sobra','')+UL('sem tag: fila com meta < 5%','compartilhado: rateio combinado','proporcional, uso medido ou fixo')},
+  ]}},
+
+{ id:'showback', ch:'FinOps', title:'Showback e chargeback',
+  say:'Showback mostra a cada time quanto ele custou, sem cobrança: é o começo certo, porque cria consciência sem briga contábil. Chargeback lança o custo no orçamento do time ou da unidade de negócio: exige alocação confiável, regra de rateio aceita por todos e tempo para contestação. Um meio-termo comum é cobrar só o custo direto e mostrar o compartilhado. Em qualquer caso, o relatório precisa chegar ao time na frequência em que ele decide, semanal ou por deploy, e não num PDF mensal que ninguém abre.',
+  v:GRID(2, [
+    ['Showback','mostrar',['quanto cada time custou','sem lançamento contábil','cria consciência, sem briga','comece por aqui'],'blue'],
+    ['Chargeback','cobrar',['entra no orçamento do time','alocação confiável antes','rateio aceito por todos','janela de contestação'],'amber'],
+  ], {h:240, step:5, rodape:'Meio-termo: cobra o direto, mostra o compartilhado · relatório semanal no canal do time, não PDF mensal'}) },
+
+{ id:'unit', ch:'FinOps', title:'Unit economics: custo por pedido',
+  say:'Custo total subindo pode ser ótima notícia, se o negócio cresceu mais rápido. Por isso a métrica central é o custo por unidade de negócio: custo alocado ao serviço, incluindo o rateio do compartilhado, dividido pela unidade que ele entrega, como pedidos, transações, notas emitidas ou conversas atendidas. Acompanhe a tendência e compare com a receita por unidade: é margem de contribuição. No laboratório, a API de pedidos custa cerca de dois centavos e oito décimos de dólar por pedido, e o atendimento com IA, três centavos por conversa.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:888,h:100, cls:'region', html:'<span class="rl">a fórmula</span><div style="margin-top:12px;font:18px var(--f-mono)">custo por unidade = (custo direto + rateio do compartilhado) ÷ unidades de negócio</div>'},
+    {at:5, x:36,y:212,w:280,h:150, cls:'green', html:B('pedidos-api','US$ 1.348,87')+UL('48.210 pedidos','≈ US$ 0,028 / pedido')},
+    {at:7, x:340,y:212,w:280,h:150, cls:'blue', html:B('atendimento-ia','US$ 406,68')+UL('12.450 conversas','≈ US$ 0,033 / conversa')},
+    {at:9, x:644,y:212,w:280,h:150, cls:'amber', html:B('notas-fiscais','US$ 51,69')+UL('46.900 notas','≈ US$ 0,001 / nota')},
+    {at:12, x:36,y:382,w:888,h:120, cls:'ext', html:B('Como ler','')+UL('total subindo + unidade caindo = eficiência crescendo','compare com receita por unidade: margem de contribuição')},
+  ]}},
+
+{ id:'rightsizing', ch:'FinOps', title:'Rightsizing e autoscaling',
+  say:'O desperdício mais comum é recurso grande demais ou ligado sem uso. Rightsizing olha o uso real, como p95 de CPU e memória em duas a quatro semanas, e reduz o tamanho; no Kubernetes, isso significa ajustar requests, porque é por requests que o nó é ocupado e pago. Desligue dev e homologação à noite e no fim de semana: são cerca de setenta por cento das horas da semana. Autoscaling acompanha a demanda: HPA ou KEDA para pods, Karpenter ou cluster autoscaler para nós. Arquivos velhos vão para camadas frias.',
+  v:GRID(3, [
+    ['Rightsizing','pelo uso real',['p95 de CPU e memória','2 a 4 semanas','requests no Kubernetes'],'green'],
+    ['Desligar','fora do horário',['dev e hml à noite','fim de semana','~70% das horas da semana'],'blue'],
+    ['Autoscaling','acompanhar a demanda',['HPA, KEDA nos pods','Karpenter, cluster autoscaler','camadas frias no storage'],'amber'],
+  ], {h:220, step:4, rodape:'Ordem: apagar o que não é usado → reduzir o tamanho → escalar com a demanda → só então comprar compromisso'}) },
+
+{ id:'compromissos', ch:'FinOps', title:'Spot, reservas e savings plans',
+  say:'Depois de otimizar o uso, otimize a taxa. Spot usa capacidade ociosa com desconto grande, mas pode ser interrompido: dois minutos de aviso na AWS e trinta segundos no Azure; serve para CI, lote, previews e pods sem estado. Savings plans trocam um compromisso de gasto por hora, de um ou três anos, por desconto flexível entre famílias e regiões; existem na AWS e no Azure. Reservas dão mais desconto, presas a um recurso, como um banco que não muda. Cubra só a base estável e acompanhe a utilização.',
+  v:GRID(3, [
+    ['Spot','risco de interrupção',['AWS: aviso de 2 min','Azure: 30 s','CI, lote, previews'],'amber'],
+    ['Savings plans','gasto por hora, 1 ou 3 anos',['AWS Compute SP','Azure savings plan','flexível entre famílias'],'green'],
+    ['Reservas','recurso específico',['RDS, SQL, VMs fixas','maior desconto','menos flexível'],'blue'],
+  ], {h:220, step:4, rodape:'Cubra a base estável (ex.: 60–80% do mínimo), meça utilização e cobertura · descontos mudam: confira'}) },
+
+{ id:'escondidos', ch:'FinOps', title:'Os custos escondidos',
+  say:'A fatura costuma surpreender fora da computação. Egress: dados saindo para a internet ou entre regiões são cobrados por gigabyte. NAT gateway cobra por hora e por gigabyte processado; tráfego para o S3 ou para o registry passando pelo NAT custa à toa, e um endpoint de VPC resolve. Tráfego entre zonas de disponibilidade também é cobrado. Logs e observabilidade crescem com cada linha de debug e cada rótulo de alta cardinalidade. Na AWS, IPv4 público é pago por hora. E há discos, snapshots e IPs órfãos.',
+  v:GRID(3, [
+    ['Rede','',['egress por GB','NAT: hora + GB processado','entre zonas também'],'ext'],
+    ['Observabilidade','',['log de debug em produção','retenção sem política','cardinalidade de rótulos'],'amber'],
+    ['Órfãos','',['discos e snapshots','IPv4 público pago/hora','previews esquecidos'],'blue'],
+  ], {h:220, step:4, rodape:'Correções baratas: VPC endpoint para S3/ECR · amostragem e retenção por nível · varredura semanal de órfãos'}) },
+
+{ id:'ia', ch:'FinOps', title:'FinOps para IA',
+  say:'Em IA o custo é por token, e cresce com o contexto, não só com o número de usuários. As alavancas, em ordem: modelo menor para a tarefa, roteando para o maior só quando necessário; cache de prompt para o prefixo fixo, como instruções e documentos, que é cobrado com grande desconto na leitura; lote assíncrono, que costuma custar metade; limite de tokens de saída; menos contexto com boa recuperação. Meça custo por conversa ou por tarefa resolvida, com tags por time no gateway de modelos, e orçamento por chave.',
+  v:{type:'boxes', defs:[
+    ['Modelo menor','roteia para o maior quando precisa', .8],
+    ['Cache de prompt','prefixo fixo com desconto', 3],
+    ['Lote assíncrono','costuma custar metade', 5.2],
+    ['Limitar saída','max tokens e formato', 7.2],
+    ['Menos contexto','recuperação melhor', 9],
+  ], items:[
+    {at:11, x:470,y:92,w:454,h:230, cls:'green', html:B('Medir','')+UL('custo por conversa ou tarefa resolvida','tokens de entrada, cache e saída','tag de time no gateway de modelos','orçamento e limite por chave')},
+    {at:16, x:470,y:342,w:454,h:160, cls:'amber', html:B('GPU própria','')+UL('só com uso alto e constante','ociosidade é o custo escondido')},
+  ]}},
+
+{ id:'budgets', ch:'FinOps', title:'Orçamentos e alertas como código',
+  say:'Orçamento sem alerta é relatório; alerta para o lugar errado é ruído. Crie orçamentos como código, por time e por ambiente, filtrados pelas tags. O alerta por previsão é o mais útil: avisa no dia dez que o mês vai estourar, não no dia trinta. Na AWS, o filtro de tag usa o formato user, nome da tag, cifrão e valor, e a tag precisa estar ativada. No Azure, o orçamento fica no resource group, na assinatura ou no management group. Para picos de um dia, detecção de anomalia funciona melhor que limite fixo.',
+  v:S('budget.tf','budget.tf','hcl')},
+
+{ id:'focus', ch:'FinOps', title:'FOCUS: a fatura num formato só',
+  say:'Cada nuvem exporta custos com colunas e nomes próprios, e juntar AWS, Azure e SaaS era trabalho de planilha. FOCUS, a especificação aberta da FinOps Foundation, padroniza: BilledCost é o que foi faturado; EffectiveCost é o custo amortizado, com reservas e descontos distribuídos no uso; ListCost é o preço de tabela; além de ServiceName, ChargeCategory e Tags como JSON. A versão um ponto quatro saiu em dois mil e vinte e seis, e AWS, Azure, Google Cloud e Oracle já exportam nesse formato. O laboratório lê um export FOCUS.',
+  v:GRID(2, [
+    ['Colunas que importam','',['BilledCost: o faturado','EffectiveCost: amortizado','ListCost: preço de tabela','ChargeCategory: Usage, Purchase…','Tags: JSON com as suas tags'],'blue'],
+    ['Na prática','',['exports FOCUS: AWS, Azure, GCP, OCI','uma consulta para várias nuvens','alocação usa EffectiveCost','fatura confere com BilledCost','versão atual: 1.4 (2026)'],'green'],
+  ], {h:270, step:5, rodape:'Compra de reserva/savings plan: BilledCost alto e EffectiveCost zero; o custo aparece amortizado no uso'}) },
+
+/* ---------- LABORATÓRIO ---------- */
+{ id:'lab-scaffold', ch:'Laboratório', title:'Lab: o golden path em 50 linhas',
+  say:'O laboratório roda em Node vinte e dois sem dependências. O scaffold valida os parâmetros como um template do Backstage faria: nome em kebab case, porque vira DNS, tag e repositório; time de uma lista conhecida; e sistema obrigatório, porque agrupa no catálogo e no custo. Depois copia a pasta template e troca os marcadores, falhando se sobrar algum sem valor. O resultado tem CI do GitHub Actions, Dockerfile com usuário não root, catalog info, README com as tags de custo e rota de saúde.',
+  v:S('scaffold.mjs','scaffold.mjs','js')},
+
+{ id:'lab-custo', ch:'Laboratório', title:'Lab: custo por serviço e por unidade',
+  say:'O script lê um export no formato FOCUS. O leitor de CSV respeita aspas, porque a coluna Tags é um JSON cheio de vírgulas. A alocação usa EffectiveCost, o custo amortizado, então a compra do savings plan entra com zero e o desconto aparece no uso das máquinas. Cada linha vai para o serviço da tag; o compartilhado é rateado proporcionalmente ao custo direto; o que vem sem tag fica visível, com percentual. Por fim, divide pelo volume de negócio de cada serviço. Acima de cinco por cento sem tag, o processo sai com erro.',
+  v:S('custos.mjs','custos.mjs','js')},
+
+{ id:'lab-testes', ch:'Laboratório', title:'Lab: os testes da plataforma',
+  say:'Plataforma também tem teste. O primeiro gera um serviço numa pasta temporária e confere que existem CI, Dockerfile, catálogo e README, com o dono certo e nenhum marcador sobrando. O segundo prova que nome fora do padrão, time desconhecido e destino existente são recusados. Os três de custo cobrem o CSV com JSON entre aspas, o rateio proporcional do compartilhado com o sem tag visível, e a conferência de que nada se perde na soma, e o custo unitário. Cinco testes, menos de um segundo.',
+  v:S('plataforma.test.mjs','plataforma.test.mjs','js')},
+
+{ id:'lab-run', ch:'Laboratório', title:'Lab: gerar, testar e alocar',
+  say:'Gere o serviço frete api do time de vendas: seis arquivos. Tente um nome com maiúscula e um time inexistente: o erro lista tudo de uma vez, que é a mensagem que um dev quer ver. Rode os cinco testes. Depois rode o relatório de custos: a API de pedidos lidera com mil trezentos e quarenta e oito dólares, dos quais trezentos e quarenta e sete são rateio; custo efetivo igual ao faturado no mês; e sessenta e um dólares sem tag, de uma máquina de teste esquecida. Abaixo da meta, mas com dono a procurar.',
+  v:T('c|node scaffold.mjs --nome frete-api --time vendas --sistema loja',
+      'ok|✔ frete-api: 6 arquivos (CI, Docker, catálogo, README, /healthz)',
+      'c|node scaffold.mjs --nome Frete_API --time marketing --sistema loja',
+      'err|✘ parâmetros inválidos: nome: kebab-case, 3 a 40 · time: um de vendas, pagamentos…',
+      'c|node --test',
+      'o|# tests 5 · # pass 5 · # fail 0',
+      'c|node custos.mjs dados/custos.csv dados/unidades.csv',
+      'o|│ pedidos-api    │ $1002.00 │ $346.87 │ $1348.87 │ $0.0280/pedido    │',
+      'o|│ atendimento-ia │ $302.10  │ $104.58 │ $406.68  │ $0.0327/conversa  │',
+      'o|│ pagamentos-api │ $208.00  │ $72.01  │ $280.01  │ $0.0054/transação │',
+      'o|│ notas-fiscais  │ $38.40   │ $13.29  │ $51.69   │ $0.0011/nota      │',
+      'ok|efetivo $2148.55 · faturado $2148.55 · compartilhado $536.75 · sem tag $61.30 (2.9%)')},
+
+{ id:'check', ch:'Laboratório', title:'Checklist de plataforma e FinOps',
+  say:'Antes de dizer que domina: você explica plataforma como produto e o papel do time de plataforma, desenha um golden path, publica serviços no catálogo do Backstage com template, oferece infraestrutura por módulos e Crossplane com guarda-corpos, entrega por GitOps com ambientes efêmeros, mede DORA e DevEx, conquista adoção sem decreto, aplica o ciclo FinOps, impõe tags na origem, faz showback, calcula custo por unidade, otimiza uso antes da taxa, caça custos escondidos e de IA e lê um export FOCUS.',
+  v:CK('Menor plataforma viável', 'Golden path com dono', 'catalog-info.yaml em todo repo', 'Template que gera CI verde', 'Módulo com validation e tags', 'GitOps com reconciliação', 'Preview por PR com TTL', 'DORA + tempo ao 1º deploy', 'Tags obrigatórias na origem', 'Custo por unidade de negócio', 'Uso antes de compromisso', 'Alerta por previsão')},
+
+{ id:'outro', ch:'Laboratório', title:'Próximo passo',
+  say:'Abaixo do vídeo estão os compromissos de custo de AWS e Azure lado a lado, os links para as cenas de cloud, Kubernetes, CI e CD e observabilidade de outras trilhas, a trilha de estudo, o checklist e as perguntas de entrevista. O exercício que mais rende: meça quanto tempo um time leva hoje do quero um serviço ao primeiro deploy, escreva o template que derruba esse número, e no mesmo mês exporte a fatura em FOCUS e calcule o custo por pedido do seu principal serviço.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Infraestrutura como código', 'v05', 'iac', 'Terraform do zero, estado e plano'],
+  ['CI/CD e estratégias de deploy', 'v05', 'cicd', 'O pipeline que o golden path padroniza'],
+  ['De onde vem a fatura e como reduzir', 'v05', 'custos', 'A primeira visão de custo de nuvem'],
+  ['Kubernetes: os conceitos essenciais', 'v05', 'kubernetes', 'A base do GitOps e do Crossplane'],
+  ['De onde vem o custo e como cortar', 'v13', 'custo', 'Custo de observabilidade em detalhe'],
+  ['Cardinalidade derruba o Prometheus', 'v13', 'cardinalidade', 'O rótulo que explode a fatura'],
+  ['Cost Explorer, tags e Savings Plans', 'naws', 'custos', 'FinOps na AWS na prática'],
+  ['As armadilhas da fatura', 'naws', 'armadilhas', 'NAT, egress e IPv4 na AWS'],
+  ['VPC endpoints e PrivateLink', 'naws', 'endpoints', 'Tirar o tráfego do NAT'],
+  ['Custo por tenant e unit economics', 'nsaas', 'custo', 'Custo por unidade num SaaS'],
+  ['IaC e configuração desejada', 'c400', 'iac', 'IaC na visão da AZ-400'],
+  ['Environments, checks e aprovações', 'c400', 'ambientes', 'Aprovação e ambientes no pipeline'],
+  ['Autoscaling e autocura', 'ccka', 'autoscaling', 'HPA e escalonamento no Kubernetes'],
+  ['DORA e métricas de entrega', 'staff', 'dora', 'Medir se a entrega melhora'],
+  ['Regras de arquitetura viram teste', 'v22', 'fitness', 'Scorecard como fitness function'],
+  ['O gateway de modelos', 'v24', 'gateway', 'Onde medir tokens e custo de IA'],
+  ['A calculadora de unit economics', 'v18', 'calculadora', 'Margem de contribuição por unidade'],
+];
+
+const MATRIZ = [
+  ['Sob demanda', 'On-Demand', 'Pay-as-you-go', '0%', 'Nenhum', 'Picos, cargas novas e imprevisíveis'],
+  ['Spot', 'Spot Instances (aviso de 2 min)', 'Spot VMs (aviso de 30 s)', 'Até ~90%', 'Nenhum, mas pode ser interrompido', 'CI, lote, previews, pods sem estado com PDB'],
+  ['Savings plan flexível', 'Compute Savings Plans (EC2, Fargate, Lambda)', 'Savings plan for compute', 'Até ~65%', 'Gasto por hora, 1 ou 3 anos', 'Base estável que muda de família ou região'],
+  ['Reserva ou plano específico', 'Reserved Instances, EC2 Instance SP, RDS reservado', 'Azure Reservations (VM, SQL, Cosmos DB)', 'Até ~72%', 'Recurso específico, 1 ou 3 anos', 'Bancos e cargas que não mudam'],
+  ['Acordo corporativo', 'Private pricing / acordo de gasto', 'MACC (compromisso de consumo)', 'Negociado', 'Gasto total anual ou plurianual', 'Gasto grande e previsível, negociado com compras'],
+];
+
+const STUDY = [
+  ['CNCF Platforms White Paper', 'Definição e atributos de plataforma', 'https://tag-app-delivery.cncf.io/whitepapers/platforms/', 'idp'],
+  ['Team Topologies', 'Time de plataforma e modos de interação', 'https://teamtopologies.com/', 'platform-team'],
+  ['Backstage: Software Templates', 'Parâmetros, ações e esqueleto', 'https://backstage.io/docs/features/software-templates/', 'templates'],
+  ['Backstage: TechDocs', 'Docs como código no portal', 'https://backstage.io/docs/features/techdocs/', 'techdocs'],
+  ['Terraform: módulos', 'Criar, versionar e publicar módulos', 'https://developer.hashicorp.com/terraform/language/modules', 'terraform'],
+  ['Crossplane', 'Documentação oficial (v2)', 'https://docs.crossplane.io/', 'crossplane'],
+  ['OpenGitOps', 'Os quatro princípios', 'https://opengitops.dev/', 'gitops'],
+  ['Argo CD: gerador de pull request', 'ApplicationSet por PR', 'https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Pull-Request/', 'efemeros'],
+  ['DORA', 'Métricas e pesquisa de entrega', 'https://dora.dev/', 'dora'],
+  ['The SPACE of Developer Productivity', 'Forsgren e colegas, ACM Queue', 'https://queue.acm.org/detail.cfm?id=3454124', 'devex'],
+  ['FinOps Framework', 'Fases, domínios, capacidades e escopos', 'https://www.finops.org/framework/', 'finops'],
+  ['FOCUS', 'Especificação aberta de custo e uso', 'https://focus.finops.org/', 'focus'],
+];
+
+const CHECK = [
+  ['Plataforma', 'Medir hoje o tempo do pedido ao 1º deploy', 'devex'],
+  ['Plataforma', 'Escrever o golden path de uma API em uma página', 'golden-paths'],
+  ['Portal', 'catalog-info.yaml em 5 repositórios reais', 'catalogo'],
+  ['Portal', 'Software template com fetch, publish e register', 'templates'],
+  ['Infra', 'Módulo Terraform com validation e tags', 'terraform'],
+  ['Infra', 'ApplicationSet de preview com TTL', 'efemeros'],
+  ['Métricas', 'Painel com as cinco métricas DORA', 'dora'],
+  ['FinOps', 'Política que bloqueia recurso sem tag', 'tags'],
+  ['FinOps', 'Showback semanal no canal de cada time', 'showback'],
+  ['FinOps', 'Custo por pedido do serviço principal', 'unit'],
+  ['FinOps', 'Achar tráfego de S3 passando pelo NAT', 'escondidos'],
+  ['FinOps', 'Orçamento com alerta por previsão', 'budgets'],
+  ['Lab', 'Rodar scaffold, testes e relatório', 'lab-run'],
+  ['Lab', 'Adicionar ListCost e a economia por desconto', 'lab-custo'],
+];
+
+const FAQ = [
+ ['Plataforma','O que é platform engineering e como difere de DevOps?',`<p>DevOps é a cultura de quem constrói também opera. Platform engineering é a forma de escalar isso sem que cada time domine tudo: um time de plataforma oferece capacidades self-service (templates, pipelines, infra, observabilidade) como produto, reduzindo a carga cognitiva dos times de produto.</p>`],
+ ['Plataforma','Como você mede o sucesso de uma plataforma interna?',`<p>Tempo até o primeiro deploy de um serviço novo, tempo de onboarding, percentual de serviços no golden path, métricas DORA dos times que usam, tíquetes para a plataforma caindo e uma pesquisa curta de satisfação. Nunca pelo número de ferramentas.</p>`],
+ ['Plataforma','Como conseguir adoção sem obrigar?',`<p>Tratando como produto: piloto com um time que tem dor real, caminho mais rápido e barato que a alternativa, documentação, suporte e números publicados. Obrigatório só o resultado (tags, segurança, SLO), não a ferramenta. Decreto gera adoção de fachada.</p>`],
+ ['Portal','Backstage vale a pena?',`<p>O catálogo com dono, APIs e dependências vale quase sempre. Backstage em si é um produto React e Node para manter, com upgrades frequentes; com time pequeno, considero Roadie (Backstage hospedado), Port ou Cortex. Começo pelo catálogo e um template, não por vinte plugins.</p>`],
+ ['Infra','Terraform ou Crossplane para self-service?',`<p>Terraform com módulos versionados e guarda-corpos resolve a maioria e é conhecido. Crossplane faz sentido quando a plataforma já é Kubernetes e GitOps: a infra vira API do cluster e é reconciliada continuamente. Muitas empresas usam os dois.</p>`],
+ ['Entrega','O que é GitOps e por que é mais seguro?',`<p>Estado desejado declarativo e versionado no Git, puxado e reconciliado continuamente por um agente no cluster (Argo CD ou Flux). O CI não precisa de credencial de produção, desvios são corrigidos, rollback é git revert e auditoria é git log.</p>`],
+ ['Métricas','Quais são as métricas DORA hoje?',`<p>Cinco: tempo de execução de mudanças, frequência de deploy e tempo de recuperação de deploy com falha (vazão), e taxa de falha de mudanças e taxa de retrabalho (instabilidade). Uso como tendência por time, nunca como ranking ou bônus.</p>`],
+ ['FinOps','Showback ou chargeback?',`<p>Começo por showback: mostra o custo a cada time sem briga contábil. Chargeback exige alocação confiável, regra de rateio aceita e janela de contestação. Meio-termo: cobrar o direto e mostrar o compartilhado.</p>`],
+ ['FinOps','Como você alocaria custos compartilhados como cluster e NAT?',`<p>Tag "compartilhado" e rateio por regra combinada: proporcional ao custo direto, ao uso medido (requests de CPU por namespace, GB por serviço) ou fixo. O importante é ser simples, explicável e estável, e manter o custo sem tag visível com meta.</p>`],
+ ['FinOps','A fatura subiu 30%. O que você faz?',`<p>Olho o custo por unidade antes do total: se pedidos subiram 40%, é eficiência. Se não, quebro por serviço, conta e categoria (EffectiveCost), procuro anomalias (egress, NAT, logs, órfãos, previews), confiro cobertura de compromissos e falo com o dono do serviço com os números.</p>`],
+ ['FinOps','Quando comprar savings plan ou reserva?',`<p>Depois de otimizar o uso. Cubro só a base estável, por exemplo 60 a 80% do mínimo de horas, com savings plan quando há mudança de família ou região e reserva para bancos fixos. Acompanho utilização e cobertura todo mês.</p>`],
+ ['IA','Como controlar custo de LLM em produção?',`<p>Modelo menor por padrão com roteamento, cache de prompt para o prefixo fixo, lote assíncrono quando não há usuário esperando, limite de tokens de saída e menos contexto. Meço custo por conversa resolvida, com tags por time e orçamento por chave no gateway de modelos.</p>`],
+];
+
+const CMDS = [
+  ['node scaffold.mjs --nome frete-api --time vendas --sistema loja', 'Golden path do laboratório'],
+  ['node --test', 'Testes do scaffold e da alocação'],
+  ['node custos.mjs dados/custos.csv dados/unidades.csv', 'Custo por serviço e por unidade'],
+  ['npx @backstage/create-app@latest', 'Criar um portal Backstage'],
+  ['terraform plan -var-file=prod.tfvars', 'Ver o efeito antes de aplicar'],
+  ['argocd app diff pedidos-api-prod', 'Diferença entre Git e cluster'],
+  ['flux get kustomizations', 'Estado da reconciliação no Flux'],
+  ['kubectl get bancos -n vendas', 'XR do Crossplane como recurso do time'],
+  ['user:time$vendas', 'Filtro de tag em AWS Budgets'],
+  ['custo por unidade = (direto + rateio) ÷ unidades', 'Unit economics'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

@@ -1,0 +1,1312 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Trilha de Frontend Avançado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"RespostaIA.test.tsx": "// src/RespostaIA.test.tsx: comportamento visto pelo usuário, sem olhar estado interno\nimport { render, screen } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\nimport { expect, test, vi } from 'vitest';\nimport type { ComponentProps } from 'react';\nimport { RespostaIA, type Pedaco } from './RespostaIA';\n\nasync function* respostaFalsa(): AsyncGenerator<Pedaco> {\n  yield { tipo: 'texto', texto: 'Use SSG ' };\n  yield { tipo: 'texto', texto: 'para o blog.' };\n  yield { tipo: 'fonte', titulo: 'Docs do Next.js', url: 'https://nextjs.org/docs' };\n}\nasync function* respostaInfinita(_: string, signal: AbortSignal): AsyncGenerator<Pedaco> {\n  yield { tipo: 'texto', texto: 'Pensando' };\n  await new Promise((_, rejeita) =>\n    signal.addEventListener('abort', () => rejeita(new DOMException('parou', 'AbortError'))));\n}\n\ntype Perguntar = ComponentProps<typeof RespostaIA>['perguntar'];\nasync function perguntar(perguntarFn: Perguntar, avaliar = vi.fn()) {\n  const user = userEvent.setup();\n  render(<RespostaIA perguntar={perguntarFn} avaliar={avaliar} />);\n  await user.type(screen.getByLabelText('Pergunta'), 'Como renderizo o blog?');\n  await user.click(screen.getByRole('button', { name: 'Enviar' }));\n  return { user, avaliar };\n}\n\ntest('mostra o texto em streaming, as fontes e pede feedback', async () => {\n  const { user, avaliar } = await perguntar(respostaFalsa);\n  expect(await screen.findByRole('status')).toHaveTextContent('Resposta pronta.');\n  expect(screen.getByText('Use SSG para o blog.')).toBeInTheDocument();\n  const fontes = screen.getByRole('list', { name: 'Fontes' });\n  expect(fontes).toContainElement(screen.getByRole('link', { name: 'Docs do Next.js' }));\n  await user.click(screen.getByRole('button', { name: 'Útil' }));\n  expect(avaliar).toHaveBeenCalledWith('util');\n});\n\ntest('o botão Parar interrompe sem mostrar erro', async () => {\n  const { user } = await perguntar(respostaInfinita);\n  await user.click(await screen.findByRole('button', { name: 'Parar' }));\n  expect(await screen.findByRole('status')).toHaveTextContent('Resposta interrompida.');\n  expect(screen.queryByRole('alert')).not.toBeInTheDocument();\n  expect(screen.getByText('Pensando')).toBeInTheDocument();    // o parcial fica na tela\n});\n\ntest('falha da API vira alerta, e Enviar volta a funcionar', async () => {\n  const falha = async function* (): AsyncGenerator<Pedaco> { throw new Error('500'); };\n  await perguntar(falha);\n  expect(await screen.findByRole('alert')).toHaveTextContent('Não consegui responder');\n  expect(screen.getByRole('button', { name: 'Enviar' })).toBeEnabled();\n});", "RespostaIA.tsx": "// src/RespostaIA.tsx: resposta de IA em streaming, com parar, fontes e feedback\nimport { useRef, useState, type FormEvent } from 'react';\n\nexport type Fonte = { tipo: 'fonte'; titulo: string; url: string };\nexport type Pedaco = { tipo: 'texto'; texto: string } | Fonte;\ntype Status = 'ocioso' | 'gerando' | 'pronto' | 'parado' | 'erro';\ntype Props = {\n  perguntar: (pergunta: string, signal: AbortSignal) => AsyncIterable<Pedaco>;\n  avaliar: (nota: 'util' | 'ruim') => void;\n};\nconst AVISO: Record<Status, string> = {\n  ocioso: '', gerando: 'Gerando resposta…', pronto: 'Resposta pronta.',\n  parado: 'Resposta interrompida.', erro: '',\n};\n\nexport function RespostaIA({ perguntar, avaliar }: Props) {\n  const [pergunta, setPergunta] = useState('');\n  const [texto, setTexto] = useState('');\n  const [fontes, setFontes] = useState<Fonte[]>([]);\n  const [status, setStatus] = useState<Status>('ocioso');\n  const ctrl = useRef<AbortController | null>(null);\n\n  async function enviar(e: FormEvent) {\n    e.preventDefault();\n    const c = (ctrl.current = new AbortController());\n    setTexto(''); setFontes([]); setStatus('gerando');\n    try {\n      for await (const p of perguntar(pergunta, c.signal)) {\n        if (p.tipo === 'texto') setTexto(t => t + p.texto);   // cresce aos poucos\n        else setFontes(f => [...f, p]);\n      }\n      setStatus('pronto');\n    } catch {\n      setStatus(c.signal.aborted ? 'parado' : 'erro');      // parar não é erro\n    }\n  }\n\n  const gerando = status === 'gerando';\n  return (\n    <form onSubmit={enviar} aria-label=\"Perguntar à IA\">\n      <label htmlFor=\"pergunta\">Pergunta</label>\n      <input id=\"pergunta\" value={pergunta} onChange={e => setPergunta(e.target.value)} />\n      {gerando\n        ? <button type=\"button\" onClick={() => ctrl.current?.abort()}>Parar</button>\n        : <button type=\"submit\" disabled={!pergunta.trim()}>Enviar</button>}\n      {/* role=status anuncia a mudança de estado ao leitor de tela, não cada token */}\n      <p role=\"status\">{AVISO[status]}</p>\n      <article aria-busy={gerando}>{texto}</article>\n      {status === 'erro' && <p role=\"alert\">Não consegui responder. Tente de novo.</p>}\n      {fontes.length > 0 && <ol aria-label=\"Fontes\">\n        {fontes.map(f => <li key={f.url}><a href={f.url}>{f.titulo}</a></li>)}\n      </ol>}\n      {status === 'pronto' && <div role=\"group\" aria-label=\"Avaliar resposta\">\n        <button type=\"button\" onClick={() => avaliar('util')}>Útil</button>\n        <button type=\"button\" onClick={() => avaliar('ruim')}>Não ajudou</button>\n      </div>}\n    </form>\n  );\n}", "ShellApp.tsx": "// shell/src/App.tsx: carrega o remote em tempo de execução, com plano B\n// (tipos de 'catalogo/Vitrine' vêm do dts do remote ou de um remotes.d.ts)\nimport { Component, lazy, Suspense, type ReactNode } from 'react';\n\nconst Vitrine = lazy(() => import('catalogo/Vitrine'));   // baixa o remote só aqui\n\nclass SeFalhar extends Component<{ children: ReactNode }, { erro: boolean }> {\n  state = { erro: false };\n  static getDerivedStateFromError() { return { erro: true }; }\n  render() {\n    return this.state.erro ? <p>Vitrine indisponível agora.</p> : this.props.children;\n  }\n}\n\nexport default function App() {\n  return (\n    <main>\n      <h1>Loja</h1>\n      <SeFalhar>\n        <Suspense fallback={<p>Carregando vitrine…</p>}>\n          <Vitrine categoria=\"notebooks\" />\n        </Suspense>\n      </SeFalhar>\n    </main>\n  );\n}", "bff.ts": "// bff/tela-pedido.ts: o BFF monta UMA resposta sob medida para a tela\n// Tipos gerados do contrato: npx openapi-typescript openapi.yaml -o api.d.ts\nimport createClient from 'openapi-fetch';\nimport type { paths } from './api.d.ts';\n\nconst pedidos = createClient<paths>({ baseUrl: process.env.PEDIDOS_URL });\n\n// O que a tela precisa, e nada mais: o front não conhece os serviços de trás\nexport type TelaPedido = {\n  numero: string;\n  status: 'aberto' | 'pago' | 'enviado';\n  total: string;                       // já formatado: regra de exibição no BFF\n  itens: { nome: string; qtd: number }[];\n  rastreio?: string;\n};\n\nexport async function telaPedido(id: string, token: string): Promise<TelaPedido> {\n  const auth = { headers: { authorization: `Bearer ${token}` } };\n  const [ped, ent] = await Promise.all([                   // fan-out em paralelo\n    pedidos.GET('/pedidos/{id}', { params: { path: { id } }, ...auth }),\n    pedidos.GET('/pedidos/{id}/entrega', { params: { path: { id } }, ...auth }),\n  ]);\n  if (!ped.data) throw new Error(`pedido ${id}: HTTP ${ped.response.status}`);\n  const p = ped.data;                  // tipado pelo contrato: renomeou campo, não compila\n  return {\n    numero: p.numero,\n    status: p.status,\n    total: (p.totalCentavos / 100).toLocaleString('pt-BR',\n      { style: 'currency', currency: 'BRL' }),\n    itens: p.itens.map(i => ({ nome: i.descricao, qtd: i.quantidade })),\n    rastreio: ent.data?.codigoRastreio,  // entrega fora do ar? a tela segue sem rastreio\n  };\n}", "estado.tsx": "// src/pedidos.tsx: dado do servidor no TanStack Query, estado de UI no Zustand\nimport { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';\nimport { create } from 'zustand';\n\ntype Pedido = { id: string; status: 'aberto' | 'pago'; total: number };\ntype Filtro = Pedido['status'] | 'todos';\n\n// 1) Estado de cliente: pequeno, síncrono, sem cópia de dado da API\ntype UiState = { filtro: Filtro; setFiltro: (f: Filtro) => void };\nexport const useUi = create<UiState>()(set => ({\n  filtro: 'todos',\n  setFiltro: filtro => set({ filtro }),\n}));\n\n// 2) Estado de servidor: cache por chave, deduplicação, revalidação\nconst chave = (filtro: Filtro) => ['pedidos', filtro] as const;\n\nasync function listar(filtro: Filtro, signal: AbortSignal): Promise<Pedido[]> {\n  const r = await fetch(`/api/pedidos?status=${filtro}`, { signal });\n  if (!r.ok) throw new Error(`HTTP ${r.status}`);\n  return r.json();\n}\n\nexport function usePedidos() {\n  const filtro = useUi(s => s.filtro);              // seletor: só re-renderiza se mudar\n  return useQuery({\n    queryKey: chave(filtro),                         // filtro faz parte da chave\n    queryFn: ({ signal }) => listar(filtro, signal), // signal cancela a busca velha\n    staleTime: 30_000,                               // 30 s sem refetch\n  });\n}\n\nexport function usePagar() {\n  const qc = useQueryClient();\n  return useMutation({\n    mutationFn: (id: string) => fetch(`/api/pedidos/${id}/pagar`, { method: 'POST' }),\n    onMutate: async id => {                          // otimista: muda a tela antes\n      await qc.cancelQueries({ queryKey: ['pedidos'] });\n      const antes = qc.getQueriesData<Pedido[]>({ queryKey: ['pedidos'] });\n      qc.setQueriesData<Pedido[]>({ queryKey: ['pedidos'] }, lista =>\n        lista?.map(p => (p.id === id ? { ...p, status: 'pago' } : p)));\n      return { antes };\n    },\n    onError: (_e, _id, ctx) =>                       // deu errado: volta o que era\n      ctx?.antes.forEach(([k, dados]) => qc.setQueryData(k, dados)),\n    onSettled: () => qc.invalidateQueries({ queryKey: ['pedidos'] }), // a verdade\n  });\n}", "mf.config.ts": "// Module Federation 2 com Rsbuild: dois apps, dois deploys, um React só\nimport { defineConfig } from '@rsbuild/core';\nimport { pluginReact } from '@rsbuild/plugin-react';\nimport { pluginModuleFederation } from '@module-federation/rsbuild-plugin';\n\nconst shared = {                     // o mesmo bloco nos dois lados\n  react: { singleton: true, requiredVersion: '^19.0.0' },     // uma cópia na página\n  'react-dom': { singleton: true, requiredVersion: '^19.0.0' },\n};\n\n// ---------- catalogo/rsbuild.config.ts: o REMOTE (time do catálogo) ----------\nexport const catalogo = defineConfig({\n  server: { port: 3001 },\n  output: { assetPrefix: 'auto' },   // chunks resolvidos a partir da URL do próprio remote\n  plugins: [pluginReact(), pluginModuleFederation({\n    name: 'catalogo',                // nome global do remote\n    exposes: { './Vitrine': './src/Vitrine.tsx' },  // contrato público: só isto\n    shared,\n    dts: false,                      // true: gera tipos para o host consumir\n  })],\n});\n\n// ---------- shell/rsbuild.config.ts: o HOST (layout, rotas, login) ----------\nexport const shell = defineConfig({\n  server: { port: 3000 },\n  plugins: [pluginReact(), pluginModuleFederation({\n    name: 'shell',\n    remotes: {                       // manifesto: a URL muda por ambiente, sem rebuild\n      catalogo: 'catalogo@http://localhost:3001/mf-manifest.json',\n    },\n    shared,\n    dts: false,\n  })],\n});\n\n// Os dois entrypoints são só: import('./bootstrap');\n// o import assíncrono dá tempo ao runtime de negociar o \"shared\" antes do React subir.", "page.tsx": "// app/produtos/[id]/page.tsx · Next.js 16 com cacheComponents: true no next.config.ts\nimport { Suspense } from 'react';\nimport { cacheLife, cacheTag } from 'next/cache';\nimport { BotaoComprar } from './BotaoComprar';     // 'use client': só ele vira JS no browser\n\nconst API = process.env.API_URL ?? 'http://localhost:4000';\ntype Produto = { id: string; nome: string; preco: number };\n\nasync function getProduto(id: string): Promise<Produto> {\n  'use cache';                         // cache do resultado; a chave inclui o argumento id\n  cacheLife('hours');                  // perfil: serve do cache e revalida em segundo plano\n  cacheTag(`produto-${id}`);           // updateTag('produto-1') numa Server Action invalida\n  const r = await fetch(`${API}/produtos/${id}`);\n  if (!r.ok) throw new Error(`produto ${id}: HTTP ${r.status}`);\n  return r.json();\n}\n\nasync function Estoque({ id }: { id: string }) {   // sem cache: roda a cada requisição\n  const r = await fetch(`${API}/estoque/${id}`);\n  const { qtd } = (await r.json()) as { qtd: number };\n  return <p>{qtd > 0 ? `${qtd} em estoque` : 'Esgotado'}</p>;\n}\n\nasync function Detalhe({ params }: { params: Promise<{ id: string }> }) {\n  const { id } = await params;                     // Next 16: params é uma Promise\n  const p = await getProduto(id);\n  return (\n    <>\n      <h1>{p.nome}</h1>\n      <p>{p.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>\n      <Suspense fallback={<p>Consultando estoque…</p>}>\n        <Estoque id={id} />\n      </Suspense>\n      <BotaoComprar id={id} />\n    </>\n  );\n}\n\nexport default function Pagina(props: { params: Promise<{ id: string }> }) {\n  return (\n    <main>\n      <nav aria-label=\"Trilha\"><a href=\"/produtos\">Produtos</a></nav> {/* casca estática */}\n      <Suspense fallback={<p>Carregando produto…</p>}>  {/* o resto chega por streaming */}\n        <Detalhe params={props.params} />\n      </Suspense>\n    </main>\n  );\n}", "produto.spec.ts": "// e2e/produto.spec.ts: navegador real, página real; poucos testes, no fluxo que dá dinheiro\nimport { test, expect } from '@playwright/test';\nimport AxeBuilder from '@axe-core/playwright';\n\ntest.beforeEach(async ({ page }) => {\n  await page.goto('/produtos/1');\n});\n\ntest('compra um produto', async ({ page }) => {\n  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Notebook X');\n  await expect(page.getByText('3 em estoque')).toBeVisible();   // o trecho em streaming\n  await page.getByRole('button', { name: /comprar/i }).click();\n  await expect(page.getByRole('button', { name: 'No carrinho' })).toBeVisible();\n});\n\ntest('sem violações de acessibilidade detectáveis', async ({ page }) => {\n  await expect(page.getByText('3 em estoque')).toBeVisible();\n  const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();\n  expect(r.violations.map(v => v.id)).toEqual([]);   // automação pega parte, não tudo\n});\n\ntest('visual: a página não mudou sem querer', async ({ page }) => {\n  await expect(page.getByText('3 em estoque')).toBeVisible();\n  await expect(page).toHaveScreenshot('produto.png', {\n    fullPage: true,\n    maxDiffPixelRatio: 0.01,                        // tolera antialiasing, não layout\n    mask: [page.getByText(/em estoque|esgotado/i)], // dado que muda: mascara\n  });\n});"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"], "csc500": ["Cert · SC-500 Cloud and AI Security", "https://claude.ai/artifact/PhJmPwwXH1A4zaQoywZmkU"], "csc100": ["Cert · SC-100 Cybersecurity Architect", "https://claude.ai/artifact/Fg63ZrBdBQC4mWJrPB3Jmh"], "csc2003": ["Cert · SC-200 e SC-300", "https://claude.ai/artifact/AiAtvk2jwqACoPN32mYu6S"], "c901": ["Cert · AI-901 AI Fundamentals", "https://claude.ai/artifact/E5sF2gdYzJkQhoTuPqnnJ1"], "cdp700": ["Cert · DP-700 Fabric Data Engineer", "https://claude.ai/artifact/StB9Z2V1nRRLeiHqLqzrKX"], "cpl300": ["Cert · PL-300 Power BI", "https://claude.ai/artifact/YNPpL7WWufh7Lub5aRKRqk"], "nnet": ["Nova · Node/TS para C#/ASP.NET", "https://claude.ai/artifact/4QE5egh7BN3FTDLnpD15P4"], "nddd": ["Nova · DDD Estratégico e BDD", "https://claude.ai/artifact/55HAvKNZCcMru49J14HT9L"], "nplat": ["Nova · Platform Engineering e FinOps", "https://claude.ai/artifact/2gEj4biSYPQfkWNqk6e5Q7"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Nova · Frontend Avançado, Micro-frontends e IA para UI =====================
+const CONF = {
+  title: 'Trilha de Frontend Avançado', file: 'Nova - Frontend Avançado, Micro-frontends e IA para UI', key: 'nfront',
+  eyebrow: 'Trilha nova · frontend com olhos de arquiteto', h1: 'Frontend avançado, micro-frontends e IA para UI',
+  lead: 'Roteiro em vídeo para o engenheiro forte em backend que quer decidir o frontend como arquiteto: CSR, SSR, SSG, ISR, streaming e Server Components por página, React 19 e Next.js 16, monorepo com Nx ou Turborepo, design system e tokens, micro-frontends com Module Federation 2 e composição na borda, estado de servidor e de cliente, formulários, Core Web Vitals, acessibilidade, Testing Library e Playwright, React Native com Expo, BFF e contratos tipados, e IA para gerar e revisar telas e para construir a interface de produtos com IA. Fecha com um laboratório que roda.',
+  pills: ['RSC e streaming', 'Next.js 16', 'Monorepo', 'Design tokens', 'Module Federation 2', 'TanStack Query', 'Playwright', 'React Native', 'IA para UI'],
+  term: 'bash · ~/loja-front',
+  faqPlaceholder: 'Buscar: RSC, hidratação, micro-frontend, singleton, INP, BFF, PWA, v0…',
+  matriz: {title: 'Como compor o frontend', desc: 'Do mais simples ao mais autônomo. Cada passo para a direita compra independência de deploy e cobra em consistência, desempenho e operação.', cols: ['Abordagem', 'Como compõe', 'Deploy independente', 'Bom para', 'Custo principal']},
+};
+const TITLE = {k: 'Trilha nova · Frontend Avançado', h: 'Frontend com olhos de arquiteto',
+  p: 'Você já sabe desenhar o backend. Esta trilha dá as decisões de frontend que um arquiteto toma, com o porquê de cada uma, código que roda e o que a IA muda no jeito de construir interfaces.',
+  chips: ['RSC', 'Next.js 16', 'Nx · Turborepo', 'tokens', 'Module Federation', 'Web Vitals', 'Expo', 'v0 · Stitch · Figma']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Decida por página, componha pelo time',
+  p: 'Abaixo do vídeo estão a tabela de composição, os links para as cenas relacionadas, a documentação oficial, o checklist e as perguntas de entrevista de frontend sênior.',
+  chips: ['servidor por padrão', 'cache por chave', 'p75 de usuários reais', 'HTML primeiro', 'singleton no React', 'gerado é rascunho']};
+
+const MAIS = (g, ...xs) => (g.items.push(...xs), g);
+const MONO = (t, px) => `<div style="margin-top:8px;font:${px || 14}px/1.7 var(--f-mono)">` + t + '</div>';
+
+const SCENES = [
+/* ---------- RENDERIZAÇÃO ---------- */
+{ id:'intro', ch:'Renderização', title:'Frontend com olhos de arquiteto',
+  say:'Você já domina o backend. Esta trilha é o frontend do ponto de vista de quem decide a arquitetura: onde o HTML nasce, como organizar vários times num monorepo, quando micro-frontends valem o custo, onde mora cada estado, como medir performance e acessibilidade, quando escolher React Native, PWA ou nativo, e como usar IA para gerar telas sem perder o design system. Termina com um laboratório que roda de verdade: um componente de resposta de IA com testes e um Module Federation com dois apps.',
+  v:{type:'title'} },
+
+{ id:'render-opcoes', ch:'Renderização', title:'CSR, SSR, SSG, ISR, streaming e RSC',
+  say:'As seis estratégias, em uma linha cada. CSR manda um HTML vazio e o JavaScript monta tudo: bom para painel logado, ruim para SEO e celular fraco. SSR gera o HTML a cada requisição: personalizado e indexável, mas o tempo do servidor vira o seu TTFB. SSG gera no build. ISR é estático com revalidação, por tempo ou sob demanda. Streaming envia a casca da página na hora e os pedaços lentos depois, nos limites de Suspense. E os React Server Components rodam só no servidor: o JavaScript deles nunca chega ao navegador.',
+  v:GRID(3, [
+    ['CSR','HTML vazio + JavaScript',['painel atrás de login','SEO fraco, tela branca','custo: JS no celular'],'blue'],
+    ['SSR','HTML a cada requisição',['personalizado e indexável','TTFB = tempo do servidor','hidrata no cliente'],'green'],
+    ['SSG','HTML no build',['docs, blog, marketing','servido pela CDN','muda só com deploy'],'green'],
+    ['ISR','estático + revalidação',['catálogo, home','por tempo ou por tag','pode servir algo velho'],'amber'],
+    ['Streaming','HTML em pedaços',['casca sai na hora','Suspense define os pedaços','dado lento chega depois'],'amber'],
+    ['RSC','componente só no servidor',['zero JS no navegador','acessa banco e API direto',"'use client' só no interativo"],''],
+  ], {step:2.8}) },
+
+{ id:'render-decisao', ch:'Renderização', title:'Qual escolher, página por página',
+  say:'A decisão é por página, com cinco perguntas. Precisa de SEO ou de link compartilhável? Se não, CSR resolve, como num painel administrativo. O conteúdo é igual para todos? Então gere estático e sirva da CDN, com revalidação. Muda por usuário ou a cada segundo? SSR com streaming. Tem parte lenta e parte rápida? Casca estática com os pedaços dinâmicos em Suspense, o chamado pré-render parcial. E quanto JavaScript a página precisa? Server Components por padrão e cliente só no que interage. Num e-commerce, cada área cai numa resposta diferente.',
+  v:{type:'boxes', defs:[
+    ['SEO ou link?','não → CSR resolve (painel, admin)', .8],
+    ['Igual para todos?','sim → SSG ou ISR na CDN', 3.2],
+    ['Muda por usuário?','sim → SSR com streaming', 5.6],
+    ['Lenta e rápida?','casca estática + Suspense (PPR)', 8],
+    ['Quanto JS?','RSC por padrão, cliente no botão', 10.4],
+  ], items:[
+    {at:13, x:470,y:92,w:454,h:250, cls:'region', html:'<span class="rl">um e-commerce real</span>'+UL('home e categoria: ISR, revalida por tag','produto: casca estática + preço e estoque em streaming','carrinho e checkout: dinâmico, ilhas de cliente','minha conta: SSR ou CSR atrás do login','ajuda e blog: SSG')},
+    {at:17, x:470,y:362,w:454,h:140, cls:'ext', html:B('O erro comum','uma estratégia só para o app inteiro')+UL('o framework mistura por rota e componente','decida com SEO, personalização e frequência')},
+  ]}},
+
+{ id:'rsc-codigo', ch:'Renderização', title:'Next.js 16: casca estática e streaming',
+  say:'Este é o Next dezesseis com Cache Components ligado. O getProduto tem a diretiva use cache: o resultado fica em cache, com a chave gerada pelo compilador, perfil de horas e uma tag que uma Server Action invalida com updateTag. O estoque não tem cache, então roda a cada requisição, dentro de um Suspense. A navegação é casca estática; o resto chega por streaming. Só o BotaoComprar é componente de cliente. Eu rodei: o build marca a rota como pré-render parcial e a resposta chega em pedaços, com o fallback antes do estoque.',
+  v:S('app/produtos/[id]/page.tsx','page.tsx','tsx')},
+
+{ id:'react19-next16', ch:'Renderização', title:'O que mudou no React 19 e Next 16',
+  say:'O que mudou e cai em entrevista. No React dezenove: Actions e useActionState para formulários com estado de envio, o hook use para ler Promise e contexto, Activity e useEffectEvent na versão dezenove ponto dois, e o React Compiler um ponto zero, que memoiza sozinho. No Next dezesseis: o cache ficou explícito com Cache Components, o Turbopack virou o bundler padrão, o middleware virou proxy ponto ts e params e cookies ficaram assíncronos. Para invalidar, updateTag lê a própria escrita e revalidateTag faz stale-while-revalidate.',
+  v:GRID(2, [
+    ['React 19.x','hoje 19.3',['Actions e useActionState','use(): Promise e contexto','Activity e useEffectEvent (19.2)','React Compiler 1.0: memo automático'],'blue'],
+    ['Next.js 16','out/2025 · hoje 16.4',["Cache Components: 'use cache'",'Turbopack é o bundler padrão','proxy.ts substitui middleware.ts','params e cookies() assíncronos'],'green'],
+    ['Invalidar o cache','Server Actions',['updateTag: lê a própria escrita','revalidateTag(tag, "max"): SWR','refresh(): só o que não tem cache'],'amber'],
+    ['Fora do Next','a escolha pelo requisito',['React Router 7 e TanStack Start','SPA: Vite + React','conteúdo: Astro'],''],
+  ], {step:3.6, rodape:'Versões mudam rápido: leia as notas de versão e rode o codemod oficial antes de migrar'}) },
+
+/* ---------- ESCALA ---------- */
+{ id:'monorepo', ch:'Escala', title:'Monorepo com Nx ou Turborepo',
+  say:'Com vários times e vários apps, o monorepo deixa compartilhar código sem publicar pacote a cada mudança. Apps ficam em apps, código comum em packages: o design system, os tokens, o cliente da API gerado do contrato e as configurações. O ponto não é a pasta, é rodar só o que mudou. Turborepo é simples: cache de tarefas, local e remoto, e o filtro affected. Nx vai além: conhece o grafo, impõe fronteiras entre módulos por tags e gera código. Nos dois, a mesma regra: app não importa de app, e cada pasta tem dono.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:400,h:410, cls:'region', html:'<span class="rl">um repositório, vários deploys</span>'+MONO('apps/<br>&nbsp;&nbsp;loja-web/ &nbsp;&nbsp;&nbsp;&nbsp;Next.js<br>&nbsp;&nbsp;backoffice/ &nbsp;&nbsp;Vite + React<br>&nbsp;&nbsp;app-mobile/ &nbsp;&nbsp;Expo<br>packages/<br>&nbsp;&nbsp;ui/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;design system<br>&nbsp;&nbsp;tokens/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cor, espaço, tipo<br>&nbsp;&nbsp;api-client/ &nbsp;&nbsp;gerado do OpenAPI<br>&nbsp;&nbsp;config/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eslint, tsconfig<br>CODEOWNERS', 17)},
+    {at:6, x:460,y:92,w:464,h:120, cls:'blue', html:B('Turborepo','cache de tarefas, pouca opinião')+UL('turbo run build --affected','cache remoto entre CI e máquinas')},
+    {at:9, x:460,y:228,w:464,h:120, cls:'green', html:B('Nx','grafo do projeto + regras')+UL('nx affected -t test','tags e module boundaries, geradores')},
+    {at:13, x:460,y:364,w:464,h:138, cls:'ext', html:B('Regras que valem nos dois','')+UL('app não importa de app','sem dependência circular entre packages','cada pasta tem dono no CODEOWNERS')},
+  ]}},
+
+{ id:'design-system', ch:'Escala', title:'Design system e tokens',
+  say:'Design system é o contrato visual entre design e engenharia, e começa nos tokens. Tokens primitivos dão nome aos valores, como azul seiscentos. Tokens semânticos dão intenção, como cor de ação, e é neles que o tema escuro ou a marca de outro cliente troca o valor. Uma ferramenta como o Style Dictionary gera os tokens para CSS, iOS e Android a partir de um JSON. Por cima, componentes sobre uma base headless e acessível, como Radix ou React Aria, com variantes tipadas, documentados no Storybook, versionados e com teste visual.',
+  v:MAIS(FLOW([['Tokens','cor, espaço, tipo','blue'],['Componentes','Button, Dialog, Field','green'],['Documentação','Storybook, exemplos','amber'],['Produtos','os apps consomem','']],
+    {y:96, h:86, step:1.8, ch:180, cards:[
+      ['Tokens são o contrato','',['primitivo: azul-600 = #2563eb','semântico: cor-acao → azul-600','tema escuro troca o semântico','JSON → CSS, iOS, Android'],'blue'],
+      ['Componentes acessíveis','',['base headless: Radix, React Aria','variantes tipadas, sem className livre','versionado com changesets','teste visual por componente'],'green'],
+    ]}),
+    {at:14, x:36,y:422,w:888,h:80, cls:'region', html:'<span class="rl">tokens.css gerado</span>'+MONO(':root { --azul-600: #2563eb; --cor-acao: var(--azul-600); } &nbsp;[data-tema=escuro] { --cor-acao: var(--azul-300); }', 13)}) },
+
+/* ---------- MICRO-FRONTENDS ---------- */
+{ id:'mfe-quando', ch:'Micro-frontends', title:'Quando micro-frontends valem a pena',
+  say:'Micro-frontend resolve problema de organização, não de tecnologia. Vale quando há vários times com domínios claros, como catálogo, checkout e conta, e um deploy trava o outro, quando os ciclos de release são diferentes ou quando você migra um legado aos poucos, no padrão strangler. Não vale com um ou dois times, nem quando o problema real é build lento, que um monorepo com cache resolve. O preço é alto: dependência duplicada, interface inconsistente, versões a coordenar e uma plataforma que alguém precisa manter. Comece com monolito modular.',
+  v:GRID(3, [
+    ['Vale a pena','',['vários times, domínios claros','um deploy trava o outro','releases em ritmos diferentes','migrar legado aos poucos'],'green'],
+    ['Não vale','',['um ou dois times','o problema é build lento','"cada time com seu framework"','ninguém cuida da plataforma'],'ext'],
+    ['O preço','',['dependência duplicada','UX inconsistente','versões a coordenar','erro só em produção'],'amber'],
+  ], {step:4, rodape:'Comece por monolito modular com fronteiras claras; extraia um MFE quando a dor de deploy for real'}) },
+
+{ id:'mfe-composicao', ch:'Micro-frontends', title:'As quatro formas de compor',
+  say:'Há quatro formas de compor. Em build, cada parte é um pacote npm: simples e tipado, mas mudar uma parte exige novo deploy do app. Em runtime no cliente, o Module Federation baixa o código de outro deploy e negocia as dependências compartilhadas: autonomia real, com erro que pode aparecer só em produção. No servidor ou na borda, fragmentos de HTML são montados antes de chegar ao navegador, com SSI, ESI ou um worker na CDN: bom para SEO e LCP. E iframe ou Web Components isolam tudo, ao custo de layout e acessibilidade.',
+  v:GRID(2, [
+    ['Build-time','pacotes npm',['simples e tipado','mudou uma parte: novo deploy','bom para design system'],'blue'],
+    ['Runtime no cliente','Module Federation',['deploy independente','shared deps negociadas','risco: falha em produção'],'green'],
+    ['Servidor ou borda','SSI, ESI, worker na CDN',['HTML pronto antes do browser','bom para SEO e LCP','cache por fragmento'],'amber'],
+    ['iframe e Web Components','isolamento total',['layout e foco sofrem','bom para widget de terceiro'],''],
+  ], {step:3.6}) },
+
+{ id:'mfe-config', ch:'Micro-frontends', title:'Module Federation 2: a configuração',
+  say:'Aqui o Module Federation dois com Rsbuild, num arquivo só para caber na tela. O remote, o catálogo, expõe só a Vitrine: esse é o contrato público. O host, o shell, aponta para o manifesto do remote, um JSON com os arquivos e as versões, então trocar de ambiente é trocar a URL, sem rebuild. React e react-dom são singleton: uma cópia na página, senão os hooks quebram. O assetPrefix auto faz os chunks do remote serem buscados no servidor dele. E o entrypoint é só um import dinâmico do bootstrap.',
+  v:S('rsbuild.config.ts','mf.config.ts','ts')},
+
+{ id:'mfe-shared', ch:'Micro-frontends', title:'Dependências compartilhadas e versões',
+  say:'O ponto delicado é a dependência compartilhada. Host e remotes registram as versões que trazem, e o runtime escolhe. Com singleton, todos usam uma cópia só, a maior versão registrada, com aviso se ela estiver fora da faixa pedida; com strictVersion, o aviso vira erro. Sem singleton, cada um usa a maior versão compatível ou carrega a própria. Eager põe no bundle inicial; evite. A política que funciona: React e o roteador singleton na mesma major, design system por faixa semver sem quebra, e um teste de contrato do remote no CI.',
+  v:{type:'boxes', defs:[
+    ['Uma cópia','singleton: true · react, router', .8],
+    ['Faixa aceita','requiredVersion: \'^19.0.0\'', 2.8],
+    ['Faixa rígida','strictVersion: fora = erro', 4.8],
+    ['Sem atraso','eager: no bundle inicial; evite', 6.8],
+    ['Só do host','import: false · o host fornece', 8.8],
+  ], items:[
+    {at:10.5, x:470,y:92,w:454,h:190, cls:'region', html:'<span class="rl">o que o runtime faz na página</span>'+UL('host e remotes registram as versões','singleton: a maior registrada, aviso se fora da faixa','sem singleton: a maior compatível ou a própria')},
+    {at:15, x:470,y:302,w:454,h:200, cls:'green', html:B('Política que funciona','')+UL('React e router: singleton, mesma major','design system: semver, sem quebra na minor','resto: cada MFE leva o seu','teste de contrato do remote no CI')},
+  ]}},
+
+{ id:'mfe-comunicacao', ch:'Micro-frontends', title:'Como os MFEs conversam',
+  say:'MFEs conversam pelo mínimo. A URL é a fonte da verdade: rota e filtros moram nela, e cada MFE lê o que precisa. Do host para o remote, props tipadas, como num componente. Do remote para fora, eventos do navegador, com nome e formato versionados, como um contrato de mensageria que você já conhece do backend. Cada MFE busca os próprios dados, e a sessão fica num cookie que todos enviam. O que não fazer: uma store Redux global compartilhada, que acopla todos os times de novo, só que em runtime.',
+  v:MAIS(GRID(3, [
+    ['URL','a fonte da verdade',['rota e filtros na URL','cada MFE lê o que precisa','link compartilhável','voltar e F5 funcionam'],'green'],
+    ['Props e eventos','contrato explícito',['host passa props tipadas','remote emite CustomEvent','nome e payload versionados','sem chamar função do outro'],'blue'],
+    ['Dados','cada um busca o seu',['mesma API, cache HTTP','sessão em cookie HttpOnly','sem store global comum','dono do dado é um MFE só'],'amber'],
+  ], {h:220, step:3.6}),
+    {at:12, x:36,y:332,w:888,h:170, cls:'region', html:'<span class="rl">evento como contrato, igual a uma fila</span>'+MONO("window.dispatchEvent(new CustomEvent('carrinho:item-adicionado.v1', {<br>&nbsp;&nbsp;detail: { sku: 'NB-123', qtd: 1 },<br>}));<br>window.addEventListener('carrinho:item-adicionado.v1', e =&gt; atualizarBadge(e.detail));", 14)}) },
+
+/* ---------- ESTADO ---------- */
+{ id:'estado', ch:'Estado e formulários', title:'Estado de servidor × estado de cliente',
+  say:'A separação mais importante do frontend. Estado de servidor é cópia de algo que mora no backend: vai no TanStack Query, com cache por chave, deduplicação e revalidação. Repare que o filtro faz parte da chave, e o signal cancela a busca velha. Estado de cliente é o que só existe na tela: fica no Zustand, pequeno, lido por seletor para não renderizar à toa. A mutation de pagar é otimista: muda o cache antes, guarda o anterior para desfazer no erro e invalida no final, porque a verdade está no servidor. Redux Toolkit segue bom onde já é usado.',
+  v:S('src/pedidos.tsx','estado.tsx','tsx')},
+
+{ id:'forms', ch:'Estado e formulários', title:'Formulários sem dor',
+  say:'Formulário bom tem um schema só, em Zod, usado no front para dar retorno rápido e no servidor, que sempre valida de novo. Para formulários grandes, React Hook Form: campos não controlados, renderiza só o campo que mudou, e o resolver do Zod liga os dois. Para formulários simples, as Actions do React dezenove: o atributo action recebe uma função, useActionState devolve o erro e o estado pendente, e com Server Action o formulário funciona até sem JavaScript. Em qualquer caso: label em todo campo, erro em texto ligado ao campo e foco no primeiro erro.',
+  v:GRID(2, [
+    ['Schema único','Zod no front e no servidor',['a mesma regra nos dois lados','tipo inferido do schema','o servidor sempre revalida'],'blue'],
+    ['React Hook Form','formulários grandes',['campos não controlados','re-render só do campo','zodResolver liga ao schema'],'green'],
+    ['Actions do React 19','<form action={fn}>',['useActionState: erro e pendente','useFormStatus no botão','Server Action: sem JS também'],'amber'],
+    ['UX e acessibilidade','',['label em todo campo','erro em texto + aria-describedby','foco no primeiro erro'],''],
+  ], {step:3.6}) },
+
+/* ---------- PERFORMANCE ---------- */
+{ id:'vitals', ch:'Performance', title:'Core Web Vitals no campo',
+  say:'Performance de verdade é o percentil setenta e cinco de usuários reais, em três métricas. LCP, até dois segundos e meio: a imagem principal com fetchpriority alta e nunca com lazy, servidor rápido com cache e CDN. INP, até duzentos milissegundos: quebre tarefas longas, use useTransition em filtros e hidrate menos com Server Components. CLS, até zero vírgula um: largura e altura em toda mídia e espaço reservado para o que entra depois. Meça no campo, com a biblioteca web-vitals; o Lighthouse só depura. E ponha um orçamento de JavaScript no CI.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:280,h:250, cls:'green', html:B('LCP','maior elemento visível','≤ 2,5 s','gr')+UL('imagem do topo: fetchpriority alta','nunca lazy na imagem do topo','TTFB: cache e CDN','preload da fonte principal')},
+    {at:4.5, x:340,y:92,w:280,h:250, cls:'blue', html:B('INP','reação a clique e tecla','≤ 200 ms','gr')+UL('tarefas longas: quebre','useTransition em filtros','menos hidratação: RSC')},
+    {at:8, x:644,y:92,w:280,h:250, cls:'amber', html:B('CLS','o conteúdo pulando','≤ 0,1','gr')+UL('width e height em mídia','espaço para banner e anúncio','fonte com size-adjust')},
+    {at:11.5, x:36,y:362,w:430,h:140, cls:'ext', html:B('Campo, não laboratório','p75 de usuários reais')+UL('CrUX ou RUM com web-vitals','Lighthouse só depura')},
+    {at:15, x:494,y:362,w:430,h:140, cls:'ext', html:B('Orçamento no CI','limite de JS inicial por rota')+UL('o PR que estoura não entra','regressão vira bug, não opinião')},
+  ]}},
+
+{ id:'bundle', ch:'Performance', title:'Bundle, code splitting e imagens',
+  say:'Menos JavaScript é a otimização com maior retorno. Analise o bundle antes de cortar: o vilão costuma ser uma biblioteca pesada, como moment, que o Intl do navegador substitui, ou um barrel file que puxa o pacote inteiro. Divida por rota, o que o Next faz sozinho, e use lazy para editor, gráfico e mapa. Imagens são o maior peso da página: AVIF ou WebP com srcset e sizes corretos, lazy abaixo da dobra, prioridade alta na imagem do topo e sempre com dimensões. O componente Image do Next faz quase tudo isso.',
+  v:MAIS(GRID(3, [
+    ['Bundle','meça antes de cortar',['analisador de bundle','moment → Intl','barrel file puxa tudo','import nomeado: tree-shaking'],'amber'],
+    ['Code splitting','',['por rota: automático no Next','lazy() para editor, mapa','prefetch no hover','terceiros depois da carga'],'blue'],
+    ['Imagens','o maior peso da página',['AVIF ou WebP + srcset','sizes correto','lazy abaixo da dobra','width e height sempre'],'green'],
+  ], {h:220, step:3.6}),
+    {at:12, x:36,y:332,w:888,h:170, cls:'region', html:'<span class="rl">na prática</span>'+MONO("const Grafico = lazy(() =&gt; import('./Grafico')); &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// baixa só quando renderizar<br>&lt;img src=\"hero.avif\" width=\"1200\" height=\"600\" fetchpriority=\"high\" alt=\"…\"&gt;<br>&lt;img src=\"card.webp\" width=\"300\" height=\"200\" loading=\"lazy\" alt=\"\"&gt;", 14)}) },
+
+/* ---------- QUALIDADE ---------- */
+{ id:'a11y', ch:'Qualidade', title:'Acessibilidade essencial',
+  say:'Acessibilidade começa no HTML: button para ação, link para navegação, label em todo campo e landmarks como main e nav. Teclado: tudo alcançável com Tab, foco sempre visível, Esc fecha o modal e o foco volta para onde estava. Modal, combobox, abas e menu são difíceis: use uma base como Radix ou React Aria, que segue os padrões da W3C. Conteúdo dinâmico se anuncia com role status e alert. Contraste de quatro e meio para um, e respeite quem pede menos movimento. A meta é WCAG dois ponto dois AA, e a Lei Brasileira de Inclusão já exige.',
+  v:GRID(3, [
+    ['HTML primeiro','',['button para ação, a para link','label em todo campo','main, nav, um h1'],'blue'],
+    ['Teclado e foco','',['Tab na ordem visual','foco sempre visível','Esc fecha, o foco volta'],'blue'],
+    ['Componentes difíceis','',['modal, combobox, abas, menu','Radix ou React Aria','padrões do APG da W3C'],'green'],
+    ['Conteúdo dinâmico','',['role="status" para avisos','role="alert" para erros','não mova o foco à toa'],'green'],
+    ['Cor e movimento','',['contraste 4,5:1','estado não só por cor','prefers-reduced-motion'],'amber'],
+    ['Processo','',['axe no CI pega parte','teste só com teclado','e com leitor de tela'],'amber'],
+  ], {step:2.8, rodape:'Meta: WCAG 2.2 AA · Brasil: Lei Brasileira de Inclusão · UE: European Accessibility Act (jun/2025)'}) },
+
+{ id:'testes', ch:'Qualidade', title:'Testes: componente, E2E e visual',
+  say:'A estratégia: muitos testes de componente com Testing Library, que você vê no laboratório, e poucos de ponta a ponta com Playwright, só nos fluxos que dão dinheiro. Este roda num navegador real contra a página de produto do Next. O primeiro compra, buscando por papel e nome. O segundo roda o axe com as regras WCAG A e AA; na primeira execução ele acusou de verdade a falta do title da página. O terceiro é teste visual: compara a captura com a referência, tolera um por cento de pixels e mascara o estoque, que muda. Os três passaram aqui.',
+  v:S('e2e/produto.spec.ts','produto.spec.ts','ts')},
+
+/* ---------- MOBILE ---------- */
+{ id:'mobile', ch:'Mobile', title:'React Native, PWA ou nativo?',
+  say:'Mobile começa por uma pergunta: o app precisa de algo que o navegador não dá? Se não, PWA: um código, sem loja, mas no iOS o push só funciona com o app instalado na tela inicial. Se precisa e o time é web, React Native com Expo: interface nativa em TypeScript, rotas por arquivo, build na nuvem e atualização do JavaScript sem passar pela loja. Nativo, em Swift e Kotlin, fica para câmera pesada, realidade aumentada e widgets. Por dentro, o React Native só roda na New Architecture desde a zero ponto oitenta e dois, sem a ponte JSON antiga.',
+  v:MAIS(GRID(3, [
+    ['PWA','a web instalável',['um código, deploy na hora','sem loja e sem revisão','iOS: push só instalado','sensores e background limitados'],'blue'],
+    ['React Native + Expo','nativo, em TypeScript',['UI nativa, time web','Expo Router, EAS Build','update OTA do JS','tipos e lógica com o site'],'green'],
+    ['Nativo','Swift e Kotlin',['AR, câmera, widgets','máximo de performance','APIs no dia do lançamento','dois times, dois códigos'],'amber'],
+  ], {h:220, step:3.6}),
+    {at:13, x:36,y:332,w:888,h:170, cls:'region', html:'<span class="rl">React Native por dentro (out/2026: RN 0.88 · Expo SDK 58 · React 19.3)</span>'+UL('JSI: o JavaScript chama C++ direto, sem serializar JSON','Fabric: renderizador novo · TurboModules: módulos nativos tipados e sob demanda','só New Architecture desde a 0.82 · Hermes é o motor padrão')}) },
+
+/* ---------- CONTRATOS ---------- */
+{ id:'bff', ch:'Contratos', title:'BFF e contratos tipados',
+  say:'O backend for frontend é um backend pequeno, do time de frontend, que monta a resposta sob medida para a tela. Aqui ele chama dois serviços em paralelo, formata o total e esconde a estrutura de trás. O cliente é tipado pelo contrato: os tipos são gerados do OpenAPI, então um campo renomeado no backend quebra a compilação, não a produção. Se a entrega estiver fora, a tela segue sem rastreio. Em uma frase cada: tRPC compartilha os tipos direto entre servidor e cliente TypeScript, sem contrato escrito; GraphQL deixa o cliente pedir exatamente os campos que quer.',
+  v:S('bff/tela-pedido.ts','bff.ts','ts')},
+
+/* ---------- IA PARA UI ---------- */
+{ id:'ia-gerar', ch:'IA para UI', title:'Gerar telas com IA: as ferramentas',
+  say:'Quatro ferramentas cobrem a geração de telas hoje. O v0, da Vercel, transforma um prompt num app Next com Tailwind e shadcn, sincroniza com o GitHub e publica na Vercel. O Google Stitch gera design a partir de texto ou imagem, num canvas com agente e voz, guarda o sistema visual num arquivo DESIGN ponto md e exporta para Figma, HTML ou AI Studio. O modo Build do AI Studio gera e roda um app React com Gemini no navegador. E no Figma, o Make prototipa por prompt e o servidor MCP entrega o design ao seu agente de código, ligado aos seus componentes pelo Code Connect.',
+  v:GRID(2, [
+    ['v0 (Vercel)','prompt → app Next.js',['React, Tailwind, shadcn/ui','sincroniza com o GitHub','deploy na Vercel'],'blue'],
+    ['Google Stitch','texto ou imagem → design',['canvas com agente e voz','DESIGN.md com o sistema','exporta Figma, HTML, AI Studio'],'green'],
+    ['Google AI Studio','modo Build',['prompt → app React + Gemini','roda e edita no navegador','protótipo de produto com IA'],'amber'],
+    ['Figma','Make e servidor MCP',['Make: prompt → protótipo','MCP: o design para o agente','Code Connect: seu componente'],''],
+  ], {step:3.6, rodape:'Essas ferramentas mudam a cada trimestre: confira a documentação atual antes de padronizar no time'}) },
+
+{ id:'ia-fluxo', ch:'IA para UI', title:'Do prompt ao PR sem perder o padrão',
+  say:'O fluxo que funciona. Primeiro, contexto: dê à ferramenta os tokens, a lista de componentes e as regras, por arquivo de design ou pelo servidor MCP. Segundo, gere variações e escolha. Terceiro, traga para o repositório como rascunho, numa branch. Quarto, troque o que foi inventado pelo design system: a div estilizada vira o seu Button, a cor hexadecimal vira token. Quinto, revise e teste como código de qualquer colega. O prompt diz o que usar e o que é proibido. O gerado é protótipo até alguém ler, testar e assumir.',
+  v:{type:'boxes', defs:[
+    ['1 · Contexto','tokens, componentes, DESIGN.md', .8],
+    ['2 · Variações','gere três telas, escolha uma', 2.8],
+    ['3 · Rascunho','numa branch, nunca direto', 4.8],
+    ['4 · Design system','div estilizada → &lt;Button&gt;', 6.8],
+    ['5 · Revisão','a11y, estados, segurança, testes', 8.8],
+  ], items:[
+    {at:10.5, x:470,y:92,w:454,h:250, cls:'region', html:'<span class="rl">prompt</span>'+MONO('Tela de lista de pedidos em React + TS.<br>Use SÓ componentes de @loja/ui (Button,<br>Table, Badge) e tokens de @loja/tokens.<br>Estados: carregando, vazio e erro.<br>Sem cor hex, sem lib nova, WCAG 2.2 AA.', 13)},
+    {at:15, x:470,y:362,w:454,h:140, cls:'ext', html:B('O gerado é protótipo','')+UL('bonito no print, frágil no uso','ninguém leu = ninguém mantém')},
+  ]}},
+
+{ id:'ia-revisar', ch:'IA para UI', title:'Revisando o código que a IA gerou',
+  say:'Revise o código gerado com quatro lentes. Acessibilidade, a que mais falha: div com onClick no lugar de botão, campo sem label, ícone sem nome acessível. Design system: cor hexadecimal solta, componente recriado do zero, biblioteca nova que ninguém pediu. Estado e dados: fetch em useEffect sem cancelamento, só o caminho feliz, e use client na página inteira. Segurança e peso: HTML injetado com dado externo, chave de API no cliente e pacote que nem existe. Automatize o que der com ESLint, axe no CI e regras que proíbem cor solta e imports fora do design system.',
+  v:GRID(2, [
+    ['Acessibilidade','o que mais falha',['div com onClick, não button','campo sem label','ícone sem nome acessível','foco e contraste esquecidos'],'ext'],
+    ['Design system','consistência',['cor hex e px soltos','componente recriado do zero','biblioteca nova sem pedir','espaço fora da escala'],'amber'],
+    ['Estado e dados','',['fetch em useEffect sem abort','só o caminho feliz','sem carregando, vazio, erro',"'use client' na página toda"],'blue'],
+    ['Segurança e peso','',['dangerouslySetInnerHTML','chave de API no cliente','pacote que nem existe','dependência pesada à toa'],'green'],
+  ], {step:3.6, rodape:'Automatize: eslint-plugin-jsx-a11y, axe no CI, regra que proíbe hex e import fora do design system'}) },
+
+{ id:'ia-produto', ch:'IA para UI', title:'A interface de um produto com IA',
+  say:'Produto com IA tem uma interface própria. Streaming: o texto chega aos poucos, por Server-Sent Events ou fetch com stream, e o tempo até o primeiro token é o que o usuário sente. Estados além de carregando: pensando, usando uma ferramenta, escrevendo, com o botão parar sempre visível e o parcial mantido na tela. Erros diferentes para falha, timeout e cota. Citações numeradas e clicáveis, que deixam o usuário conferir. Feedback de útil ou não, ligado ao trace da resposta, que alimenta a avaliação. E acessibilidade: anuncie o estado, não cada token.',
+  v:GRID(3, [
+    ['Streaming','texto aos poucos',['SSE ou fetch com stream','primeiro token rápido','markdown sanitizado'],'blue'],
+    ['Estados','além de carregando',['pensando, ferramenta, escrevendo','Parar sempre visível','o parcial fica na tela'],'blue'],
+    ['Erro e limite','',['falha, timeout, cota','mensagens diferentes','tentar sem redigitar'],'ext'],
+    ['Citações','confiança verificável',['fontes numeradas, clicáveis','trecho exato da fonte','sem fonte: diga'],'green'],
+    ['Feedback','o dado da avaliação',['útil · não ajudou · motivo','ligado ao trace','vira caso de avaliação'],'green'],
+    ['Acessibilidade','',['anuncie o estado, não o token','aria-busy enquanto gera','o foco não pula'],'amber'],
+  ], {step:2.8}) },
+
+/* ---------- LABORATÓRIO ---------- */
+{ id:'lab-comp', ch:'Laboratório', title:'Lab: o componente de resposta de IA',
+  say:'O laboratório junta a trilha num componente. A função perguntar é injetada e devolve um iterador assíncrono de pedaços, texto ou fonte, então o componente não sabe se do outro lado há SSE, WebSocket ou um mock. Cada pedaço de texto cresce o estado com a forma funcional. O AbortController liga o botão Parar, e parar não é tratado como erro. O status é uma união de cinco valores, sem booleanos soltos. O aviso de estado vai num role status, o erro num role alert, as fontes numa lista com nome e o feedback só aparece quando a resposta termina.',
+  v:S('src/RespostaIA.tsx','RespostaIA.tsx','tsx')},
+
+{ id:'lab-teste', ch:'Laboratório', title:'Lab: testes com Testing Library',
+  say:'Os testes usam só o que o usuário percebe. Os geradores falsos simulam o streaming: um responde com dois pedaços e uma fonte, outro fica pensando até o sinal de abortar, outro falha. O primeiro teste digita pelo rótulo, clica em Enviar pelo papel e nome, espera o status de pronto e confere o texto, a fonte e o feedback. O segundo para no meio e confere que não aparece erro e que o parcial fica. O terceiro confere o alerta e que dá para tentar de novo. Nenhum teste olha estado interno: dá para reescrever o componente sem tocar neles.',
+  v:S('src/RespostaIA.test.tsx','RespostaIA.test.tsx','tsx')},
+
+{ id:'lab-mf', ch:'Laboratório', title:'Lab: o host carrega o remote',
+  say:'No host, o remote é só um import dinâmico com lazy: o código do catálogo é baixado na hora de renderizar a vitrine, do servidor do outro time. O Suspense mostra o carregando, e o error boundary é o plano B obrigatório: se o remote estiver fora do ar, a loja continua de pé e mostra vitrine indisponível. Eu testei os dois casos: com o remote fora, apareceu o aviso; com ele no ar, apareceu a vitrine, e o navegador não baixou um segundo React, porque o singleton funcionou. Os tipos do remote vêm do dts gerado ou de um arquivo de declaração.',
+  v:S('shell/src/App.tsx','ShellApp.tsx','tsx')},
+
+{ id:'lab-run', ch:'Laboratório', title:'Rodar o laboratório',
+  say:'Para rodar: instale Vitest, jsdom e a Testing Library, e rode os três testes do componente. Depois, o Module Federation: construa e sirva o catálogo na porta três mil e um, que gera o manifesto, e o shell na três mil. Abra o shell: a vitrine aparece, vinda do outro servidor. Pare o catálogo e recarregue: o error boundary segura. Por fim, o Playwright contra a página do Next, com compra, axe e teste visual. Desafios: ligar o dts para tipar o remote, trocar a URL do manifesto por variável de ambiente e plugar o componente numa API de IA de verdade.',
+  v:T('c|npm i -D vitest jsdom @testing-library/{react,user-event,jest-dom}',
+      'c|npx vitest run', 'ok| ✓ src/RespostaIA.test.tsx (3 tests) 502ms', 'ok| Test Files  1 passed (1) · Tests  3 passed (3)',
+      'c|cd mf/catalogo && npx rsbuild build && npx rsbuild preview      # remote :3001',
+      'o|dist/mf-manifest.json · dist/static/js/catalogo.8a1063a4eb.js',
+      'c|cd mf/shell && npx rsbuild build && npx rsbuild preview         # host :3000',
+      'ok|http://localhost:3000 → "Loja · Ofertas de notebooks" (React baixado uma vez)',
+      'err|catálogo parado → "Vitrine indisponível agora." (o error boundary segura)',
+      'c|npx playwright test', 'ok|  3 passed (5.1s)')},
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de frontend sênior',
+  say:'Antes de dizer que domina: você escolhe a renderização por página e explica o custo, usa Server Components por padrão, organiza o monorepo com fronteiras, trata tokens como contrato, sabe quando micro-frontend não vale, configura o compartilhamento de dependências, separa estado de servidor e de cliente, mede Web Vitals no campo, garante acessibilidade, testa como o usuário, escolhe entre PWA, React Native e nativo e revisa o código gerado por IA como o de qualquer colega.',
+  v:CK('Renderização escolhida por página', 'RSC por padrão, cliente no fundo', 'Monorepo com fronteiras e donos', 'Tokens semânticos como contrato', 'MFE só com dor real de deploy', 'React singleton na mesma major', 'URL e eventos entre MFEs', 'Servidor no Query, UI no Zustand', 'Web Vitals no p75 de campo', 'HTML semântico e teclado', 'Testes por papel + E2E + visual', 'Código de IA revisado e testado')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a tabela das formas de compor o frontend, os links para as cenas das outras trilhas que cobrem o básico de React, Next e performance, a documentação oficial, o checklist e as perguntas de entrevista de frontend sênior. O exercício que mais rende: pegue uma tela real do seu produto, classifique cada parte por estratégia de renderização e tipo de estado, meça os Web Vitals de campo e escreva o ADR. É assim que um backend sênior vira full stack sênior.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Onde e quando o HTML nasce', 'v02', 'estrategias', 'As estratégias de renderização com exemplos'],
+  ['Hidratação e Server Components', 'v02', 'hidratacao', 'O erro clássico de hidratação e a fronteira use client'],
+  ['Next.js App Router: o essencial', 'v02', 'nextjs', 'Rotas, layouts e Server Actions'],
+  ['Os cinco tipos de estado', 'v02', 'tipos-estado', 'Local, compartilhado, servidor, formulário e URL'],
+  ['Dados do servidor', 'v02', 'dados-servidor', 'Cache por chave e stale-while-revalidate'],
+  ['Core Web Vitals', 'v02', 'vitals', 'LCP, INP e CLS explicados do zero'],
+  ['Acessibilidade: o mínimo profissional', 'v02', 'a11y', 'WCAG AA em seis práticas'],
+  ['Testes com MSW', 'v02', 'lab-testes', 'Testing Library com a rede simulada'],
+  ['Onde a página é montada', 'front', 'renderizacao', 'CSR, SSR e SSG com exemplos'],
+  ['React ou Angular?', 'front', 'escolha', 'Quando cada um faz sentido'],
+  ['TanStack Query na prática', 'front', 'react-dados', 'Cache, invalidação e mutações'],
+  ['Formulários com validação', 'front', 'react-form', 'React Hook Form e Zod'],
+  ['Angular com signals', 'front', 'angular-componente', 'Se um MFE do time for Angular'],
+  ['Desempenho no front', 'front', 'desempenho', 'Outra explicação das métricas'],
+  ['Segurança no navegador', 'front', 'seguranca', 'XSS, CSRF, CSP e tokens'],
+  ['Streaming com SSE', 'ia', 'streaming', 'O lado do servidor do texto que chega aos poucos'],
+  ['Saída estruturada', 'v15', 'saida', 'O modelo como função, base de UI gerada'],
+  ['Observabilidade de LLM', 'v15', 'observabilidade', 'O trace que o feedback da UI alimenta'],
+  ['Padrões de interface com IA', 'v24', 'ux', 'Padrões de UX que funcionam em produtos com IA'],
+  ['Métricas de produto com IA', 'v24', 'metricas', 'O que medir depois do feedback'],
+  ['A checklist de revisão', 'v09', 'checklist', 'Revisar código gerado por LLM'],
+  ['Monolito × micro, honesto', 'v06', 'monolito', 'O mesmo trade-off, no backend'],
+  ['Pirâmide, troféu e tipos de teste', 'v16', 'testes-tipos', 'A estratégia de testes em geral'],
+  ['As camadas de cache até a CDN', 'nperf', 'cdn', 'Onde o HTML estático é servido'],
+  ['Minimal API e OpenAPI', 'nnet', 'minimal', 'O contrato gerado no backend .NET'],
+];
+
+const MATRIZ = [
+  ['Monolito (SPA ou Next)', 'Um app, um build', 'Não', 'Um a três times, produto novo', 'Deploy único vira gargalo com muitos times'],
+  ['Monolito modular em monorepo', 'Pacotes internos com fronteiras', 'Não, mas build afetado e cache', 'Vários times, mesmo ritmo de release', 'Disciplina de fronteiras (Nx tags, CODEOWNERS)'],
+  ['Pacotes npm versionados', 'Composição em build', 'Do pacote sim; do app não', 'Design system, SDKs internos', 'Atualizar todos os consumidores'],
+  ['Module Federation (cliente)', 'Remotes carregados em runtime', 'Sim', 'Times autônomos num app só', 'Shared deps, erro em produção, plataforma'],
+  ['Composição no servidor ou borda', 'Fragmentos HTML (SSI, ESI, worker)', 'Sim', 'Sites de conteúdo com SEO', 'Cache por fragmento, infraestrutura'],
+  ['iframe e Web Components', 'Isolamento no navegador', 'Sim', 'Widgets de terceiros, legado', 'Layout, foco, acessibilidade e peso'],
+];
+
+const STUDY = [
+  ['react.dev: Server Components', 'Referência oficial de RSC', 'https://react.dev/reference/rsc/server-components', 'render-opcoes'],
+  ['Next.js 16 (anúncio)', 'Cache Components, proxy.ts, Turbopack', 'https://nextjs.org/blog/next-16', 'react19-next16'],
+  ['React 19.2 (anúncio)', 'Activity, useEffectEvent e mais', 'https://react.dev/blog/2025/10/01/react-19-2', 'react19-next16'],
+  ['Next.js: documentação', 'App Router, cache e streaming', 'https://nextjs.org/docs', 'rsc-codigo'],
+  ['Turborepo', 'Cache de tarefas e monorepo', 'https://turborepo.dev/docs', 'monorepo'],
+  ['Nx', 'Grafo, affected e module boundaries', 'https://nx.dev/docs', 'monorepo'],
+  ['Micro Frontends (martinfowler.com)', 'O artigo de referência sobre MFE', 'https://martinfowler.com/articles/micro-frontends.html', 'mfe-quando'],
+  ['Module Federation', 'Documentação oficial do MF 2', 'https://module-federation.io/', 'mfe-config'],
+  ['TanStack Query', 'Estado de servidor no React', 'https://tanstack.com/query/latest/docs/framework/react/overview', 'estado'],
+  ['Zustand', 'Estado de cliente mínimo', 'https://zustand.docs.pmnd.rs/', 'estado'],
+  ['React Hook Form', 'Formulários performáticos', 'https://react-hook-form.com/', 'forms'],
+  ['Web Vitals (web.dev)', 'LCP, INP e CLS', 'https://web.dev/articles/vitals', 'vitals'],
+  ['WAI-ARIA Authoring Practices', 'Padrões de componentes acessíveis', 'https://www.w3.org/WAI/ARIA/apg/', 'a11y'],
+  ['Testing Library: queries', 'Prioridade por papel e nome', 'https://testing-library.com/docs/queries/about/', 'lab-teste'],
+  ['Playwright: testes visuais', 'toHaveScreenshot e comparação', 'https://playwright.dev/docs/test-snapshots', 'testes'],
+  ['React Native: New Architecture', 'JSI, Fabric e TurboModules', 'https://reactnative.dev/architecture/landing-page', 'mobile'],
+  ['Expo', 'Framework recomendado para RN', 'https://docs.expo.dev/', 'mobile'],
+  ['openapi-typescript', 'Tipos gerados do contrato', 'https://openapi-ts.dev/', 'bff'],
+  ['v0', 'Geração de apps Next.js por prompt', 'https://v0.app/', 'ia-gerar'],
+  ['Google Stitch', 'Design de UI com IA', 'https://stitch.withgoogle.com/', 'ia-gerar'],
+  ['Servidor MCP do Figma', 'Design como contexto para agentes', 'https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server', 'ia-fluxo'],
+];
+
+const CHECK = [
+  ['Renderização', 'Classificar as páginas de um produto real por estratégia', 'render-decisao'],
+  ['Renderização', 'Página com casca estática e um Suspense em streaming', 'rsc-codigo'],
+  ['Renderização', "Mover 'use client' da página para o botão", 'render-opcoes'],
+  ['Escala', 'Monorepo com dois apps e um package de UI', 'monorepo'],
+  ['Escala', 'Tokens primitivos e semânticos com tema escuro', 'design-system'],
+  ['MFE', 'Escrever o ADR: MFE ou monolito modular', 'mfe-quando'],
+  ['MFE', 'Host e remote com Module Federation rodando', 'lab-mf'],
+  ['MFE', 'Provocar duas cópias do React e corrigir com singleton', 'mfe-shared'],
+  ['MFE', 'Evento versionado entre dois MFEs', 'mfe-comunicacao'],
+  ['Estado', 'Mutation otimista com rollback', 'estado'],
+  ['Estado', 'Formulário com Zod no front e no servidor', 'forms'],
+  ['Performance', 'Medir LCP, INP e CLS de campo (p75)', 'vitals'],
+  ['Performance', 'Code splitting de um componente pesado', 'bundle'],
+  ['Qualidade', 'Navegar a tela inteira só com teclado', 'a11y'],
+  ['Qualidade', 'E2E com axe e teste visual no CI', 'testes'],
+  ['Mobile', 'Decidir PWA, RN ou nativo para um caso real', 'mobile'],
+  ['Contratos', 'Cliente tipado gerado do OpenAPI', 'bff'],
+  ['IA', 'Gerar uma tela e trocar tudo pelo design system', 'ia-fluxo'],
+  ['IA', 'Revisar um PR gerado com as quatro lentes', 'ia-revisar'],
+  ['Lab', 'Componente de streaming com os três testes', 'lab-teste'],
+];
+
+const FAQ = [
+ ['Renderização','SSR, SSG, ISR ou CSR: como você decide?',`<p>Por página, não por projeto. Sem SEO e atrás de login: CSR basta. Igual para todos: SSG ou ISR servido da CDN, com revalidação por tempo ou por tag. Personalizado ou que muda a cada requisição: SSR com streaming. Página com partes lentas e rápidas: casca estática e pedaços dinâmicos em Suspense (pré-render parcial). Em todos os casos, Server Components por padrão e <code>'use client'</code> só no que interage.</p>`],
+ ['Renderização','O que são React Server Components e o que eles não são?',`<p>Componentes que rodam só no servidor (no build ou na requisição), acessam dados direto e não enviam JavaScript ao navegador. Não são SSR: SSR gera HTML de componentes que também hidratam no cliente; RSC nunca hidratam. Não têm estado, efeitos nem eventos. Podem renderizar Client Components, passando props serializáveis.</p>`],
+ ['Renderização','O que é hidratação e como reduzir o custo dela?',`<p>É o React ligar eventos e estado ao HTML que veio do servidor, o que exige baixar e executar o JavaScript dos componentes. Reduz-se com Server Components (o que não interage não hidrata), fronteira <code>'use client'</code> no fundo da árvore, lazy de componentes pesados e streaming com Suspense, que hidrata por partes. Erro clássico: HTML do servidor diferente do cliente por data, aleatório ou <code>window</code> no render.</p>`],
+ ['Arquitetura','Quando você usaria micro-frontends? E quando não?',`<p>Quando vários times com domínios claros se bloqueiam no deploy, têm ritmos de release diferentes ou estão migrando um legado aos poucos. Não uso com poucos times, nem quando o problema é build lento (monorepo com cache resolve) ou quando ninguém vai manter a plataforma. O custo é dependência duplicada, UX inconsistente, versões a coordenar e falhas que só aparecem em produção. Começo por monolito modular com fronteiras e extraio quando a dor for real.</p>`],
+ ['Arquitetura','Como você evita duas cópias do React num app com Module Federation?',`<p>Declarando <code>react</code> e <code>react-dom</code> como <code>shared</code> com <code>singleton: true</code> e a mesma faixa de <code>requiredVersion</code> no host e nos remotes, com entrypoint assíncrono (<code>import('./bootstrap')</code>) para o runtime negociar antes. <code>strictVersion</code> transforma incompatibilidade em erro. Governança: mesma major de React em todos e teste de contrato do remote no CI.</p>`],
+ ['Arquitetura','Como micro-frontends devem se comunicar?',`<p>Pelo mínimo: URL como fonte da verdade, props tipadas do host para o remote e eventos do navegador (<code>CustomEvent</code>) com nome e payload versionados para o resto. Cada MFE busca os próprios dados; sessão em cookie. Evito store global compartilhada, que recria o acoplamento entre times em runtime.</p>`],
+ ['Estado','Qual a diferença entre estado de servidor e estado de cliente?',`<p>Estado de servidor é uma cópia de algo que mora no backend e muda sem você saber: precisa de cache, deduplicação, revalidação e invalidação, que o TanStack Query entrega. Estado de cliente só existe na tela (modal aberto, filtro local, tema): fica em <code>useState</code>, Context ou Zustand. Colocar dados da API numa store global é o erro mais comum; filtros e paginação vão na URL.</p>`],
+ ['Performance','Os usuários reclamam de lentidão, mas o Lighthouse dá 95. O que você faz?',`<p>Olho dados de campo: CrUX ou RUM com <code>web-vitals</code>, no p75 e por tipo de dispositivo. Laboratório roda numa máquina boa e rede boa. Se o INP está ruim, procuro tarefas longas no painel Performance (hidratação, renderizações grandes, terceiros) e quebro o trabalho; se é o LCP, olho TTFB, a imagem principal e o CSS bloqueante. Depois ponho um orçamento no CI para não regredir.</p>`],
+ ['Acessibilidade','Como garantir acessibilidade num design system?',`<p>Componentes sobre uma base que já segue as práticas da W3C (Radix, React Aria), HTML semântico, foco visível e gerenciado em modais, tokens com contraste validado, testes por papel e nome (que quebram se a semântica sumir), axe no CI e testes manuais com teclado e leitor de tela. Automação pega só parte dos problemas.</p>`],
+ ['Testes','Como você divide os testes de um frontend?',`<p>Estático (TypeScript, ESLint) em tudo; unitário para funções puras; a maior parte em testes de componente com Testing Library, buscando por papel e nome e simulando a rede com MSW; poucos E2E com Playwright nos fluxos que dão dinheiro; testes visuais nos componentes do design system e nas páginas críticas, com dados mascarados.</p>`],
+ ['Mobile','React Native, PWA ou nativo: como escolher?',`<p>Pergunta-guia: o app precisa de algo que o navegador não dá? Se não, PWA (um código, sem loja; no iOS, push só instalado). Se precisa e o time é web, React Native com Expo, que hoje roda só na New Architecture (JSI, Fabric, TurboModules). Nativo para AR, câmera pesada, widgets ou quando a performance é o produto.</p>`],
+ ['Contratos','Para que serve um BFF? E tRPC ou GraphQL?',`<p>O BFF é um backend do time de frontend que agrega e formata dados para a tela, esconde os serviços de trás e concentra autenticação e cache. Com OpenAPI, gero tipos e cliente, e mudança de contrato quebra a compilação. tRPC compartilha tipos entre servidor e cliente TypeScript sem contrato escrito; GraphQL deixa o cliente pedir exatamente os campos.</p>`],
+ ['IA','Como você usaria IA para gerar telas sem bagunçar o design system?',`<p>Dou contexto antes (tokens, componentes, regras, por DESIGN.md ou servidor MCP do Figma), gero variações, trago como rascunho numa branch, troco tudo o que foi inventado por componentes e tokens do sistema e reviso com quatro lentes: acessibilidade, design system, estado e dados, segurança e peso. Lint de a11y, axe e regras contra cor solta no CI.</p>`],
+ ['IA','Quais estados a interface de um chat com IA precisa ter?',`<p>Ocioso, gerando (com subetapas como pensando ou usando ferramenta), pronto, interrompido e erro, separando falha, timeout e cota. Botão Parar sempre visível, parcial mantido ao parar, citações clicáveis, feedback ligado ao trace e anúncio do estado com <code>role="status"</code>, não de cada token.</p>`],
+];
+
+const CMDS = [
+  ['npx create-next-app@latest', 'Projeto Next.js 16 (App Router, TS, Tailwind)'],
+  ['cacheComponents: true  ·  \'use cache\' + cacheLife + cacheTag', 'Cache explícito no Next 16'],
+  ['updateTag(tag)  ·  revalidateTag(tag, \'max\')', 'Ler a própria escrita · SWR'],
+  ['npx turbo run build --affected  ·  npx nx affected -t test', 'Rodar só o que mudou'],
+  ['shared: { react: { singleton: true, requiredVersion: \'^19.0.0\' } }', 'Uma cópia do React com Module Federation'],
+  ['npx rsbuild build && npx rsbuild preview', 'Construir e servir host ou remote'],
+  ['npx vitest run', 'Testes de componente'],
+  ['npx playwright test --update-snapshots', 'Gerar referências do teste visual'],
+  ['npx openapi-typescript openapi.yaml -o api.d.ts', 'Tipos do contrato para o cliente'],
+  ['npx create-expo-app@latest', 'App React Native com Expo'],
+  ['LCP ≤ 2,5 s · INP ≤ 200 ms · CLS ≤ 0,1 (p75)', 'Core Web Vitals'],
+  ['getByRole(\'button\', { name: \'Enviar\' })', 'Busca preferida nos testes'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>
