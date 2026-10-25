@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Decisão: System Design Aprofundado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"busca.sql": "-- busca.sql · full-text + trigram + fusão RRF no próprio Postgres\nCREATE EXTENSION IF NOT EXISTS pg_trgm;\nCREATE EXTENSION IF NOT EXISTS unaccent;      -- \"tenis\" tem que achar \"Tênis\"\nCREATE TEXT SEARCH CONFIGURATION pt (COPY = portuguese);\nALTER TEXT SEARCH CONFIGURATION pt\n  ALTER MAPPING FOR hword, hword_part, word WITH unaccent, portuguese_stem;\nCREATE TABLE produtos (\n  id    int PRIMARY KEY,\n  nome  text NOT NULL,\n  descr text NOT NULL,\n  doc   tsvector GENERATED ALWAYS AS (\n          setweight(to_tsvector('pt', nome), 'A') ||\n          setweight(to_tsvector('pt', descr), 'B')) STORED\n);\nCREATE INDEX produtos_fts  ON produtos USING gin (doc);\nCREATE INDEX produtos_trgm ON produtos USING gin (nome gin_trgm_ops);\n\nINSERT INTO produtos VALUES\n (1, 'Tênis de corrida leve', 'amortecimento para corridas longas'),\n (2, 'Camiseta dry fit', 'tecido leve para correr no calor'),\n (3, 'Relógio GPS corredor', 'mede ritmo e distância da corrida'),\n (4, 'Tenis casual couro', 'para o dia a dia');\n\n-- \"tenis corrida\": léxica (FTS) + aproximada (trigram), fundidas por RRF\nWITH q AS (SELECT websearch_to_tsquery('pt', 'tenis corrida') AS tsq,\n                  'tenis corrida'::text AS txt),\nlexica AS (\n  SELECT id, row_number() OVER (ORDER BY ts_rank(doc, q.tsq) DESC) AS pos\n  FROM produtos, q WHERE doc @@ q.tsq),\nfuzzy AS (\n  SELECT id, row_number() OVER (ORDER BY similarity(nome, q.txt) DESC) AS pos\n  FROM produtos, q WHERE nome % q.txt)\nSELECT p.id, p.nome,\n       round(coalesce(1.0/(60 + l.pos), 0) + coalesce(1.0/(60 + f.pos), 0), 4) AS rrf\nFROM produtos p\nLEFT JOIN lexica l USING (id)\nLEFT JOIN fuzzy  f USING (id)\nWHERE l.id IS NOT NULL OR f.id IS NOT NULL\nORDER BY rrf DESC;", "cache_semantico.py": "# cache_semantico.py · cache por similaridade antes de chamar o LLM (python cache_semantico.py)\nimport hashlib, time\nimport numpy as np\n\ndef embed(texto: str, dim: int = 256) -> np.ndarray:\n    \"\"\"Substituto didático: trigramas com hash. Em produção: modelo de embeddings.\"\"\"\n    v = np.zeros(dim)\n    t = f\"  {texto.lower()}  \"\n    for i in range(len(t) - 2):\n        v[int(hashlib.md5(t[i:i + 3].encode()).hexdigest(), 16) % dim] += 1\n    return v / np.linalg.norm(v)\n\nclass CacheSemantico:\n    def __init__(self, limiar=0.85, ttl_s=3600):\n        self.limiar, self.ttl = limiar, ttl_s\n        self.itens = []  # (escopo, vetor, resposta, expira) · produção: índice vetorial\n\n    def buscar(self, escopo: str, pergunta: str):\n        q, agora = embed(pergunta), time.time()\n        candidatos = [(float(v @ q), r) for e, v, r, exp in self.itens\n                      if e == escopo and exp > agora]       # nunca cruza tenant/modelo\n        if not candidatos: return None, 0.0\n        sim, resp = max(candidatos)\n        return (resp if sim >= self.limiar else None), sim\n\n    def guardar(self, escopo, pergunta, resposta):\n        self.itens.append((escopo, embed(pergunta), resposta, time.time() + self.ttl))\n\ncache = CacheSemantico()\nescopo = \"tenant:loja7|modelo:mini|prompt:v3\"   # chave inclui versão do prompt\ncache.guardar(escopo, \"Qual o prazo para devolver um produto?\", \"Até 7 dias corridos.\")\n\nfor pergunta in [\"qual o prazo pra devolver um produto\",\n                 \"Qual o prazo de entrega para Sorocaba?\"]:\n    resp, sim = cache.buscar(escopo, pergunta)\n    print(f\"{sim:.2f}  {'HIT ' if resp else 'MISS'} {pergunta!r} -> {resp or 'chama o LLM'}\")\nprint(\"outro tenant:\", cache.buscar(\"tenant:outro|modelo:mini|prompt:v3\", \"qual o prazo\")[0])", "envelope.mjs": "// envelope.mjs · estimativa de capacidade em 30 segundos (node envelope.mjs)\nconst DIA = 86_400;\nconst premissas = {\n  dau: 2_000_000,          // usuários ativos por dia\n  pedidosPorUsuario: 0.5,  // escritas/dia\n  leiturasPorPedido: 20,   // leituras por escrita (catálogo, status, histórico)\n  fatorPico: 5,            // pico ÷ média (Black Friday: meça o seu!)\n  bytesPorPedido: 2_048,   // linha + índices\n  eventosPorPedido: 6,     // criado, reservado, pago, separado...\n  retencaoDias: 365 * 5,\n  replicas: 3,\n  escritasPorShard: 3_000, // capacidade sustentável medida em teste de carga\n  msgsPorParticao: 1_000,  // vazão de UM consumidor por partição\n  conexoesPorNo: 50_000,   // WebSocket por nó (memória, FD, CPU de TLS)\n  online: 0.1,             // fração do DAU conectada no pico\n};\nconst p = premissas;\nconst escritasMedia = (p.dau * p.pedidosPorUsuario) / DIA;\nconst escritasPico = escritasMedia * p.fatorPico;\nconst leiturasPico = escritasPico * p.leiturasPorPedido;\nconst eventosPico = escritasPico * p.eventosPorPedido;\nconst gbDia = (p.dau * p.pedidosPorUsuario * p.bytesPorPedido) / 1e9;\nconst tbTotal = (gbDia * p.retencaoDias * p.replicas) / 1e3;\nconst shards = Math.ceil((escritasPico * 2) / p.escritasPorShard); // folga de 2x\nconst particoes = Math.max(6, Math.ceil((eventosPico * 2) / p.msgsPorParticao));\nconst nosWs = Math.ceil((p.dau * p.online) / p.conexoesPorNo) + 1; // +1 para N+1\n\nconst f = (n) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });\nconsole.table({\n  'escritas/s (média)': f(escritasMedia),\n  'escritas/s (pico)': f(escritasPico),\n  'leituras/s (pico)': f(leiturasPico),\n  'eventos/s (pico)': f(eventosPico),\n  'GB novos por dia': f(gbDia),\n  'TB em 5 anos (x3)': f(tbTotal),\n  'shards de escrita': shards,\n  'partições Kafka': particoes,\n  'nós WebSocket': nosWs,\n});\n// Decisão: o gargalo é a LEITURA (cache + réplicas), não a escrita.\nif (leiturasPico > 10 * escritasPico) console.log('→ leitura domina: cache e réplicas');\nif (shards <= 1) console.log('→ 1 primário aguenta: não shardeie ainda');", "ledger.sql": "-- ledger.sql · partidas dobradas + idempotência (PostgreSQL 16)\nCREATE TABLE contas (id text PRIMARY KEY, tipo text NOT NULL);\nCREATE TABLE transacoes (\n  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  chave      text NOT NULL UNIQUE,          -- Idempotency-Key do cliente\n  hash_req   text NOT NULL,                 -- mesmo pedido? compara o hash\n  criada_em  timestamptz NOT NULL DEFAULT now()\n);\nCREATE TABLE lancamentos (                  -- append-only: nunca UPDATE\n  id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  transacao  uuid   NOT NULL REFERENCES transacoes,\n  conta      text   NOT NULL REFERENCES contas,\n  centavos   bigint NOT NULL CHECK (centavos <> 0)  -- débito < 0 < crédito\n);\n-- invariante: cada transação soma zero (checada no COMMIT)\nCREATE FUNCTION soma_zero() RETURNS trigger AS $$\nBEGIN\n  IF (SELECT sum(centavos) FROM lancamentos WHERE transacao = NEW.transacao) <> 0\n  THEN RAISE EXCEPTION 'transação % desbalanceada', NEW.transacao; END IF;\n  RETURN NULL;\nEND $$ LANGUAGE plpgsql;\nCREATE CONSTRAINT TRIGGER balanceada AFTER INSERT ON lancamentos\n  DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION soma_zero();\n\nCREATE FUNCTION transferir(p_chave text, p_hash text, de text, para text, valor bigint)\nRETURNS TABLE (transacao uuid, repetida boolean) AS $$\nDECLARE v_id uuid; v_hash text;\nBEGIN\n  INSERT INTO transacoes (chave, hash_req) VALUES (p_chave, p_hash)\n  ON CONFLICT (chave) DO NOTHING RETURNING id INTO v_id;\n  IF v_id IS NULL THEN                      -- retry: devolve o resultado original\n    SELECT t.id, t.hash_req INTO v_id, v_hash FROM transacoes t WHERE t.chave = p_chave;\n    IF v_hash <> p_hash THEN RAISE EXCEPTION 'chave reutilizada com outro corpo'; END IF;\n    RETURN QUERY SELECT v_id, true; RETURN;\n  END IF;\n  INSERT INTO lancamentos (transacao, conta, centavos)\n  VALUES (v_id, de, -valor), (v_id, para, valor);\n  RETURN QUERY SELECT v_id, false;\nEND $$ LANGUAGE plpgsql;\n\nCREATE VIEW saldos AS\n  SELECT conta, round(sum(centavos) / 100.0, 2) AS reais FROM lancamentos GROUP BY conta;", "presign.mjs": "// presign.mjs · o que o SDK faz ao pré-assinar uma URL do S3 (SigV4, só node:crypto)\nimport { createHash, createHmac } from 'node:crypto';\nconst sha = (s) => createHash('sha256').update(s).digest('hex');\nconst hmac = (k, s) => createHmac('sha256', k).update(s).digest();\nconst enc = (s) =>\n  encodeURIComponent(s).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16));\n\nexport function presign({ method, bucket, key, region, accessKey, secret, amzDate, expires }) {\n  const host = `${bucket}.s3.amazonaws.com`, dia = amzDate.slice(0, 8);\n  const escopo = `${dia}/${region}/s3/aws4_request`;\n  const q = {\n    'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',\n    'X-Amz-Credential': `${accessKey}/${escopo}`,\n    'X-Amz-Date': amzDate,\n    'X-Amz-Expires': String(expires),          // máximo 604800 s (7 dias) com SigV4\n    'X-Amz-SignedHeaders': 'host',\n  };\n  const qs = Object.keys(q).sort().map((k) => `${enc(k)}=${enc(q[k])}`).join('&');\n  const caminho = '/' + key.split('/').map(enc).join('/');\n  const canonico =\n    [method, caminho, qs, `host:${host}\\n`, 'host', 'UNSIGNED-PAYLOAD'].join('\\n');\n  const aAssinar = ['AWS4-HMAC-SHA256', amzDate, escopo, sha(canonico)].join('\\n');\n  let k = hmac('AWS4' + secret, dia);\n  for (const parte of [region, 's3', 'aws4_request']) k = hmac(k, parte);\n  const assinatura = createHmac('sha256', k).update(aAssinar).digest('hex');\n  return `https://${host}${caminho}?${qs}&X-Amz-Signature=${assinatura}`;\n}\n\n// vetor de teste da documentação da AWS (GET de test.txt, 24 h de validade)\nconst url = presign({\n  method: 'GET', bucket: 'examplebucket', key: 'test.txt', region: 'us-east-1',\n  accessKey: 'AKIAIOSFODNN7EXAMPLE', secret: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',\n  amzDate: '20130524T000000Z', expires: 86400,\n});\nconst esperado = 'aeeed9bbccd4d02ee5c0109b86d86835f995330da4c265957d157751f604d404';\nconsole.log(url.endsWith(esperado) ? '✔ assinatura confere com a doc da AWS' : '✘ ' + url);", "saga.mjs": "// saga.mjs · orquestrador com compensação e estado persistido (node saga.mjs)\nconst log = [];                                   // na vida real: tabela saga_estado\nconst salvar = (id, passo, status) => log.push({ id, passo, status });\n\nconst passos = [\n  { nome: 'reservar-estoque', fazer: (p) => svc.estoque(p), desfazer: (p) => svc.liberar(p) },\n  { nome: 'cobrar',           fazer: (p) => svc.cobrar(p),  desfazer: (p) => svc.estornar(p) },\n  { nome: 'emitir-nota',      fazer: (p) => svc.nota(p),    desfazer: null }, // pivô\n];\n\nasync function tentar(fn, p, tentativas = 3) {   // retry só em erro transitório\n  for (let i = 1; ; i++) {\n    try { return await fn(p); }\n    catch (e) { if (!e.transitorio || i === tentativas) throw e; }\n  }\n}\n\nexport async function executar(pedido) {\n  const feitos = [];\n  for (const passo of passos) {\n    salvar(pedido.id, passo.nome, 'iniciado');\n    try {\n      await tentar(passo.fazer, pedido);          // cada serviço é idempotente por pedido.id\n      salvar(pedido.id, passo.nome, 'ok'); feitos.push(passo);\n    } catch (e) {\n      salvar(pedido.id, passo.nome, `falhou: ${e.message}`);\n      for (const f of feitos.reverse()) {        // compensa na ordem inversa\n        if (!f.desfazer) continue;\n        await tentar(f.desfazer, pedido); salvar(pedido.id, f.nome, 'compensado');\n      }\n      return 'cancelado';\n    }\n  }\n  return 'concluido';\n}\n\n// serviços falsos: o cartão do pedido 2 é recusado (erro de negócio, sem retry)\nlet falhasRede = 1;\nconst svc = {\n  estoque: async () => {},\n  liberar: async () => {},\n  cobrar: async (p) => {\n    if (falhasRede-- > 0) throw Object.assign(new Error('timeout'), { transitorio: true });\n    if (p.cartao === 'recusado') throw new Error('cartão recusado');\n  },\n  estornar: async () => {},\n  nota: async () => {},\n};\n\nconsole.log('pedido 1:', await executar({ id: 1, cartao: 'ok' }));\nconsole.log('pedido 2:', await executar({ id: 2, cartao: 'recusado' }));\nconsole.table(log);", "sse.mjs": "// sse.mjs · notificações por SSE com retomada (node sse.mjs)\nimport http from 'node:http';\n\nconst buffer = [];                 // últimos eventos (na vida real: Redis Stream por usuário)\nconst clientes = new Set();\nlet seq = 0;\n\nfunction publicar(dado) {\n  const ev = { id: ++seq, dado };\n  buffer.push(ev); if (buffer.length > 1000) buffer.shift();\n  for (const res of clientes) enviar(res, ev);   // fan-out local deste nó\n}\nconst enviar = (res, ev) =>\n  res.write(`id: ${ev.id}\\nevent: notificacao\\ndata: ${JSON.stringify(ev.dado)}\\n\\n`);\n\nhttp.createServer((req, res) => {\n  if (req.url === '/eventos') {\n    res.writeHead(200, {\n      'Content-Type': 'text/event-stream',\n      'Cache-Control': 'no-cache',\n      'X-Accel-Buffering': 'no',   // não deixe o proxy segurar o stream\n    });\n    res.write('retry: 3000\\n\\n');  // cliente reconecta em 3 s\n    const ultimo = Number(req.headers['last-event-id'] ?? 0);\n    for (const ev of buffer) if (ev.id > ultimo) enviar(res, ev);   // retomada\n    clientes.add(res);\n    const batida = setInterval(() => res.write(': ping\\n\\n'), 15_000); // mantém viva\n    req.on('close', () => { clearInterval(batida); clientes.delete(res); });\n    return;\n  }\n  if (req.method === 'POST' && req.url === '/publicar') {\n    let corpo = '';\n    req.on('data', (c) => (corpo += c));\n    req.on('end', () => { publicar(JSON.parse(corpo)); res.writeHead(202).end(); });\n    return;\n  }\n  res.writeHead(404).end();\n}).listen(3000, () => console.log('SSE em http://localhost:3000/eventos'));"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"], "csc500": ["Cert · SC-500 Cloud and AI Security", "https://claude.ai/artifact/PhJmPwwXH1A4zaQoywZmkU"], "csc100": ["Cert · SC-100 Cybersecurity Architect", "https://claude.ai/artifact/Fg63ZrBdBQC4mWJrPB3Jmh"], "csc2003": ["Cert · SC-200 e SC-300", "https://claude.ai/artifact/AiAtvk2jwqACoPN32mYu6S"], "c901": ["Cert · AI-901 AI Fundamentals", "https://claude.ai/artifact/E5sF2gdYzJkQhoTuPqnnJ1"], "cdp700": ["Cert · DP-700 Fabric Data Engineer", "https://claude.ai/artifact/StB9Z2V1nRRLeiHqLqzrKX"], "cpl300": ["Cert · PL-300 Power BI", "https://claude.ai/artifact/YNPpL7WWufh7Lub5aRKRqk"], "nnet": ["Nova · Node/TS para C#/ASP.NET", "https://claude.ai/artifact/4QE5egh7BN3FTDLnpD15P4"], "nddd": ["Nova · DDD Estratégico e BDD", "https://claude.ai/artifact/55HAvKNZCcMru49J14HT9L"], "nplat": ["Nova · Platform Engineering e FinOps", "https://claude.ai/artifact/2gEj4biSYPQfkWNqk6e5Q7"], "nfront": ["Nova · Frontend Avançado e IA para UI", "https://claude.ai/artifact/HiRHNdQG5dPHgmatXLRznp"], "naiops": ["Nova · IA para DevOps e AIOps", "https://claude.ai/artifact/Ud6TL7ef8LJedXEgVsLf2k"], "niagestao": ["Nova · IA na Gestão de Projetos e Times", "https://claude.ai/artifact/PrRtahuM8fRh1DjgHAUhuy"], "dsd": ["Decisão · System Design Aprofundado", "https://claude.ai/artifact/Kvv86wZi2thj7j3k2CSdmH"], "dapi": ["Decisão · APIs, Contratos e Integração", "https://claude.ai/artifact/Y6MBSiEQRwgusWeWAYzYJX"], "ddados": ["Decisão · Dados, Consistência e Cache", "https://claude.ai/artifact/Q84iAmEPD4BwaD3TA4UiGH"], "dnuvem": ["Decisão · Onde Rodar Cada Coisa na Nuvem", "https://claude.ai/artifact/Rp73hmdEYS4TwasScVNHhH"], "dauth": ["Decisão · Autenticação e Autorização", "https://claude.ai/artifact/GhPinQqwEb98KGc7wvXfgh"], "destr": ["Decisão · Estrutura de Código e Pastas", "https://claude.ai/artifact/L7Yf9Boiw8Rf5UPYWTiGdF"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Decisão · System Design Aprofundado =====================
+const CONF = {
+  title: 'Decisão: System Design Aprofundado', file: 'Decisão - System Design Aprofundado', key: 'dsd',
+  eyebrow: 'Decisões de engenharia · System design', h1: 'Desenhar sistemas reais é escolher o que sacrificar',
+  lead: 'Roteiro em vídeo de decisão para quem vai de sênior a staff e arquiteto: o método (requisitos, SLOs, estimativa, gargalos), capacidade e back-of-envelope, chaves de partição e partições quentes, backpressure e degradação graciosa, e sete casos profundos com diagrama, decisões e o que muda em Azure, AWS e GCP: pagamentos com ledger, idempotência e reconciliação; pedidos com saga por orquestração ou coreografia; tempo real com WebSocket, SSE e push; busca com Postgres, OpenSearch e vetores; upload de mídia com URL pré-assinada; multi-região ativo-passivo e ativo-ativo; e plataforma de IA com RAG, filas, cache semântico e custo.',
+  pills: ['SLOs e estimativas', 'Partições quentes', 'Backpressure', 'Ledger e idempotência', 'Sagas', 'WebSocket × SSE', 'Busca híbrida', 'Multi-região', 'RAG e custo'],
+  term: 'bash · ~/design-lab',
+  faqPlaceholder: 'Buscar: ledger, saga, SSE, partição quente, RPO, presigned, cache semântico…',
+  matriz: {title: 'Requisito → padrão → serviço por nuvem', desc: 'Comece pelo requisito, escolha o padrão e só então o serviço. Nomes e limites de serviços mudam: confira a documentação atual antes de decidir.', cols: ['Requisito', 'Padrão', 'Azure', 'AWS', 'GCP'], tag: false},
+};
+const TITLE = {k: 'Decisões de engenharia · System design aprofundado', h: 'System design aprofundado',
+  p: 'Entrevista de system design mede se você sabe conversar; produção mede se o desenho aguenta pico, falha parcial, retry duplicado e fatura. Aqui cada caso vira decisão: o padrão, o porquê, o custo e o serviço em cada nuvem.',
+  chips: ['SLO', 'estimativa', 'partição', 'backpressure', 'ledger', 'saga', 'fan-out', 'RPO e RTO', 'RAG']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Requisito primeiro, serviço por último',
+  p: 'Abaixo do vídeo está a matriz de requisito, padrão e serviço por nuvem, os links para as cenas de system design, mensageria, sistemas distribuídos e IA de outras trilhas, a trilha de estudo, o checklist e as perguntas de entrevista.',
+  chips: ['meça antes de shardear', 'idempotente de ponta a ponta', 'compense, não trave', 'degrade com intenção', 'custo por requisição']};
+
+const SCENES = [
+/* ---------- MÉTODO ---------- */
+{ id:'intro', ch:'Método', title:'Decidir sob restrição, não desenhar caixas',
+  say:'O preparatório de entrevista já cobriu o encurtador, o feed e o rate limiter. Aqui o foco é o que acontece depois da lousa: o pagamento que chega duas vezes, a saga que falha no meio, a sala de chat com cem mil pessoas, a busca que não acha tênis sem acento, a região que cai e a fatura de tokens que dobra. Para cada caso: um diagrama, as decisões que importam, as armadilhas de produção e o que muda entre Azure, AWS e Google Cloud. No fim, uma matriz de requisito, padrão e serviço para consultar depois.',
+  v:{type:'title'} },
+
+{ id:'metodo', ch:'Método', title:'O método: do requisito ao trade-off',
+  say:'O método tem seis passos e a ordem importa. Requisitos funcionais e, principalmente, os não funcionais: latência, disponibilidade, consistência, retenção, conformidade. Depois o SLO, que transforma adjetivo em número. A estimativa diz a ordem de grandeza. O desenho mínimo atende o caminho principal. Os gargalos aparecem quando você multiplica pelo pico e pergunta o que cai primeiro. E cada escolha é registrada com o que foi sacrificado. Quem pula da funcionalidade direto para o Kafka desenha para um problema que não tem.',
+  v:FLOW([
+    ['1 · Requisitos','funcionais e não funcionais','blue'],
+    ['2 · SLOs','número, não adjetivo','blue'],
+    ['3 · Estimativa','ordem de grandeza','amber'],
+    ['4 · Desenho','caminho principal','green'],
+  ], {y:100, h:96, step:1.8, cards:[
+    ['5 · Gargalos','',['multiplique pelo pico','o que cai primeiro?','dependência mais lenta','ponto único de falha'],'amber'],
+    ['6 · Trade-offs registrados','',['o que foi sacrificado e por quê','ADR curto por decisão','gatilho para revisar','custo mensal estimado'],'green'],
+  ], ch:200}) },
+
+{ id:'slos', ch:'Método', title:'Requisito não funcional vira SLO',
+  say:'Disponível e rápido não são requisitos; são desejos. O SLI é a medida, como a fração de requisições com sucesso abaixo de trezentos milissegundos. O SLO é a meta, como noventa e nove vírgula noventa e cinco por cento em trinta dias. A diferença é o orçamento de erro: vinte e um minutos e meio por mês. Cada nove a mais custa caro: noventa e nove vírgula noventa e nove dá quatro minutos, o que exige multi-zona, deploy progressivo e, às vezes, multi-região. O SLO decide a arquitetura, não o contrário.',
+  v:{type:'boxes', defs:[
+    ['SLI','o que se mede: sucesso < 300 ms', .8],
+    ['SLO','a meta: 99,95% em 30 dias', 3],
+    ['Orçamento de erro','100% − SLO: o que pode falhar', 5.2],
+    ['SLA','contrato com multa: SLO mais folgado', 7.4],
+  ], items:[
+    {at:9.5, x:470,y:92,w:454,h:180, cls:'blue', html:B('Indisponibilidade por mês (30 dias)','')+UL('99,9% → 43,2 min','99,95% → 21,6 min','99,99% → 4,3 min','99,999% → 26 s')},
+    {at:14, x:470,y:292,w:454,h:150, cls:'amber', html:B('O que cada nove exige','')+UL('99,9: multi-zona e rollback rápido','99,99: canário, sem deploy manual','99,999: multi-região ativo-ativo')},
+  ]}},
+
+/* ---------- CAPACIDADE ---------- */
+{ id:'envelope', ch:'Capacidade', title:'Back-of-envelope em código',
+  say:'A estimativa cabe num script de quarenta linhas, e vale versionar junto do design doc. Entram as premissas: usuários ativos por dia, escritas por usuário, leituras por escrita, fator de pico, bytes por registro, retenção e réplicas. Entram também capacidades medidas em teste de carga, não tiradas da internet: escritas por shard, mensagens por partição para um consumidor, conexões por nó. Saem vazão média e de pico, armazenamento em cinco anos, shards, partições e nós. A regra no fim é a parte importante: o número decide.',
+  v:S('envelope.mjs','envelope.mjs','js')},
+
+{ id:'envelope-run', ch:'Capacidade', title:'O número que evita o overengineering',
+  say:'Dois milhões de usuários por dia parece grande, mas dá cinquenta e oito escritas por segundo no pico. Um único primário Postgres aguenta isso com folga; shardear agora seria pagar complexidade sem retorno. O que domina são as mil e cem leituras por segundo, vinte vezes as escritas: cache e réplicas de leitura primeiro. Onze terabytes em cinco anos, com três réplicas, pedem política de retenção e camada fria. Seis partições dão paralelismo de consumo com sobra. Refaça a conta quando uma premissa mudar dez vezes.',
+  v:T('c|node envelope.mjs',
+      'o|│ escritas/s (média) │ \'11,6\'    │',
+      'o|│ escritas/s (pico)  │ \'57,9\'    │',
+      'o|│ leituras/s (pico)  │ \'1.157,4\' │',
+      'o|│ eventos/s (pico)   │ \'347,2\'   │',
+      'o|│ GB novos por dia   │ \'2\'       │',
+      'o|│ TB em 5 anos (x3)  │ \'11,2\'    │',
+      'o|│ shards de escrita  │ 1         │',
+      'o|│ partições Kafka    │ 6         │',
+      'o|│ nós WebSocket      │ 5         │',
+      'ok|→ leitura domina: cache e réplicas',
+      'ok|→ 1 primário aguenta: não shardeie ainda')},
+
+{ id:'particao', ch:'Capacidade', title:'Chave de partição e partição quente',
+  say:'Quando shardear é inevitável, a chave de partição é a decisão mais cara de desfazer. Ela precisa ter alta cardinalidade, distribuir escrita por igual e coincidir com o padrão de acesso, para a consulta comum tocar uma partição só. Tenant como chave quebra quando um cliente é cem vezes maior que os outros: é a partição quente. Os limites são reais: no DynamoDB, cerca de mil unidades de escrita por partição; no Cosmos DB, vinte gigabytes por partição lógica; no Kafka, a ordem só vale dentro da partição. Mitigue com sufixo aleatório, chave composta ou isolando o cliente grande.',
+  v:GRID(3, [
+    ['Boa chave','',['alta cardinalidade','escrita bem distribuída','consulta comum: 1 partição','estável no tempo'],'green'],
+    ['Partição quente','sintomas',['throttling com uso médio baixo','um tenant 100× maior','chave = data de hoje','celebridade no feed'],'ext'],
+    ['Mitigação','',['sufixo aleatório (write sharding)','chave composta tenant#id','cliente grande isolado','cache na frente da leitura'],'amber'],
+  ], {h:230, step:4, rodape:'Limites por partição: DynamoDB ~1.000 WCU e 3.000 RCU · Cosmos DB 20 GB lógica · Kafka: ordem só na partição'}) },
+
+{ id:'backpressure', ch:'Capacidade', title:'Backpressure e degradação graciosa',
+  say:'Todo sistema tem um limite; a questão é o que acontece quando ele chega. Sem backpressure, filas internas crescem, a latência explode e tudo cai junto. Com ele, a fila é limitada e o excesso recebe quatrocentos e vinte e nove ou quinhentos e três com Retry-After. Load shedding descarta primeiro o tráfego de menor valor: o checkout vence a recomendação. Degradação graciosa é desligar o supérfluo de propósito, por feature flag: sem recomendações, sem contagem em tempo real, catálogo do cache. Decida isso antes do incidente, não durante.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:200,h:90, cls:'blue', html:B('Clientes','pico 5×')},
+    {at:2.5, x:276,y:92,w:240,h:90, cls:'amber', html:B('Admissão','fila limitada · 429/503')},
+    {at:4, x:556,y:92,w:368,h:90, cls:'green', html:B('Workers','concorrência fixa, timeout curto')},
+    {at:7, x:36,y:222,w:430,h:130, cls:'amber', html:B('Load shedding por prioridade','')+UL('checkout e pagamento: nunca','busca: reduz qualidade','recomendação: primeiro a cair')},
+    {at:11, x:494,y:222,w:430,h:130, cls:'green', html:B('Degradação planejada','')+UL('flags de brownout por recurso','catálogo servido do cache','contadores aproximados')},
+    {at:15, x:36,y:372,w:888,h:130, cls:'ext', html:B('Armadilhas','')+UL('fila sem limite: latência infinita, não erro','retry sem jitter: tempestade que derruba a volta','timeout maior que o do chamador: trabalho jogado fora')},
+  ], lines:[
+    {at:2.5, d:'M236 137 L 276 137', cls:'flow'}, {at:4, d:'M516 137 L 556 137', cls:'flow'},
+  ]}},
+
+/* ---------- PAGAMENTOS ---------- */
+{ id:'pag-desenho', ch:'Pagamentos', title:'Pagamentos: o desenho',
+  say:'O cliente manda o pagamento com uma Idempotency-Key. A API grava a intenção e os lançamentos no ledger na mesma transação, junto com uma linha na outbox. Um worker chama o provedor de pagamento, também com chave de idempotência, e trata a resposta assíncrona por webhook. A outbox publica os eventos para pedidos e notificações. Todo dia, um job de reconciliação compara o ledger com o extrato do provedor e com o banco. Repare: nenhuma chamada externa acontece dentro da transação do banco.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:180,h:90, cls:'blue', html:B('Cliente','Idempotency-Key')},
+    {at:2.5, x:256,y:92,w:220,h:90, cls:'green', html:B('API de pagamentos','grava intenção + ledger')},
+    {at:4.5, x:516,y:92,w:180,h:90, cls:'blue', html:B('Ledger','Postgres · append-only')},
+    {at:6, x:736,y:92,w:188,h:90, cls:'amber', html:B('Outbox','mesma transação')},
+    {at:8, x:256,y:232,w:220,h:90, cls:'green', html:B('Worker','chama o PSP com chave')},
+    {at:10, x:516,y:232,w:180,h:90, cls:'ext', html:B('PSP','Pix, cartão, boleto')},
+    {at:12, x:736,y:232,w:188,h:90, cls:'amber', html:B('Eventos','pedidos, notificações')},
+    {at:15, x:36,y:372,w:888,h:130, cls:'region', html:'<span class="rl">reconciliação diária</span>'+UL('ledger × extrato do PSP × extrato bancário','divergência vira caso com dono, nunca ajuste silencioso')},
+  ], lines:[
+    {at:2.5, d:'M216 137 L 256 137', cls:'flow'}, {at:4.5, d:'M476 137 L 516 137', cls:'flow'},
+    {at:6, d:'M696 137 L 736 137', cls:'flow'}, {at:8, d:'M366 182 L 366 232', cls:'flow'},
+    {at:10, d:'M476 277 L 516 277', cls:'flow'}, {at:12, d:'M830 182 L 830 232', cls:'flow'},
+  ]}},
+
+{ id:'pag-ledger', ch:'Pagamentos', title:'Ledger de partidas dobradas',
+  say:'O ledger é append-only: nunca se atualiza saldo, só se lançam movimentos, e o saldo é a soma. Cada transação tem pelo menos dois lançamentos que somam zero, conferidos por um constraint trigger adiado até o commit. Valores em centavos, como inteiro de sessenta e quatro bits, nunca float. A chave de idempotência é única na tabela de transações; com ON CONFLICT DO NOTHING, o retry não cria nada novo e devolve a transação original. Se a mesma chave chega com outro corpo, o hash diferente vira erro, não um segundo pagamento.',
+  v:S('ledger.sql','ledger.sql','sql')},
+
+{ id:'pag-run', ch:'Pagamentos', title:'Retry, chave reutilizada e desbalanço',
+  say:'Rodando no Postgres dezesseis. A primeira transferência cria a transação. O retry com a mesma chave e o mesmo corpo devolve o mesmo identificador, com repetida igual a verdadeiro: o cliente recebe a mesma resposta, e o dinheiro sai uma vez. A mesma chave com valor diferente é recusada. Um lançamento manual de um lado só é barrado no commit, porque a transação não soma zero. No fim, os saldos batem: menos cento e cinquenta e nove e noventa de um lado, mais do outro.',
+  v:T('c|psql ledger -f ledger-run.sql',
+      'o| 4799feba-7179-4569-ba8e-d42a744d8a39 | f',
+      'o| 4799feba-7179-4569-ba8e-d42a744d8a39 | t',
+      'err|ERROR:  chave reutilizada com outro corpo',
+      'o|BEGIN · INSERT 0 1 · INSERT 0 1',
+      'err|ERROR:  transação 2b59a744-8260-49c2-8c63-0b65ddc3ea88 desbalanceada',
+      'o|   conta    |  reais',
+      'o| cliente:42 | -159.90',
+      'ok| loja:7     |  159.90')},
+
+{ id:'pag-recon', ch:'Pagamentos', title:'Reconciliação e escolhas por nuvem',
+  say:'Idempotência evita duplicar; reconciliação descobre o que deu errado mesmo assim: webhook perdido, estorno feito no painel do provedor, timeout em que o provedor cobrou e você não soube. Compare três fontes por identificador externo e trate cada divergência como caso. Na nuvem, o ledger quase sempre fica num relacional gerenciado com transação de verdade. O Amazon QLDB, que prometia ledger imutável, teve fim de suporte em julho de dois mil e vinte e cinco: prefira um banco comum com tabela append-only e trilha de auditoria.',
+  v:GRID(3, [
+    ['Azure','',['Azure SQL ou PostgreSQL Flexible','ledger tables no Azure SQL','Service Bus para outbox','Functions timer: reconciliação'],'blue'],
+    ['AWS','',['Aurora PostgreSQL','DynamoDB: escrita condicional','QLDB: fim de suporte 07/2025','EventBridge Scheduler + Step Functions'],'amber'],
+    ['GCP','',['Cloud SQL ou AlloyDB','Spanner: ledger global','Pub/Sub para eventos','Cloud Scheduler + Workflows'],'green'],
+  ], {h:230, step:4, rodape:'Reconciliar 3 vias: ledger × PSP × banco · divergência vira caso com dono · nunca UPDATE de saldo'}) },
+
+/* ---------- SAGA ---------- */
+{ id:'saga-desenho', ch:'Pedidos e saga', title:'Pedidos: a saga e o passo pivô',
+  say:'Um pedido toca estoque, pagamento, nota fiscal e expedição, cada um com seu banco. Transação distribuída com dois PC trava recursos e depende de todos estarem de pé: não serve. A saga é uma sequência de transações locais, cada uma com uma compensação. Antes do passo pivô, tudo é desfazível: libera o estoque, estorna o cartão. O pivô, aqui a emissão da nota, é o ponto sem volta; depois dele, os passos só podem ser repetidos até dar certo. Projete o pivô o mais tarde possível.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:110,w:200,h:90, cls:'blue', html:B('Reservar estoque','compensa: liberar')},
+    {at:2.5, x:264,y:110,w:200,h:90, cls:'blue', html:B('Cobrar','compensa: estornar')},
+    {at:4.5, x:492,y:110,w:200,h:90, cls:'ext', html:B('Emitir nota','pivô: sem volta')},
+    {at:6.5, x:720,y:110,w:204,h:90, cls:'green', html:B('Expedir','só repetível')},
+    {at:9, x:36,y:250,w:428,h:110, cls:'amber', html:B('Antes do pivô','')+UL('falhou: compensa na ordem inversa','compensação também idempotente')},
+    {at:12, x:492,y:250,w:432,h:110, cls:'green', html:B('Depois do pivô','')+UL('retry até dar certo','alerta humano se travar')},
+    {at:15, x:36,y:392,w:888,h:110, cls:'ext', html:B('Isolamento','saga não tem I de ACID')+UL('outros veem o estado intermediário: use status pendente','contramedidas: bloqueio semântico, valor comutativo, releitura')},
+  ], lines:[
+    {at:2.5, d:'M236 155 L 264 155', cls:'flow'}, {at:4.5, d:'M464 155 L 492 155', cls:'flow'},
+    {at:6.5, d:'M692 155 L 720 155', cls:'flow'},
+  ]}},
+
+{ id:'saga-escolha', ch:'Pedidos e saga', title:'Orquestração × coreografia',
+  say:'Na coreografia, cada serviço reage a eventos e publica o próximo: acoplamento baixo, sem ponto central, ótimo para dois ou três passos. Mas o fluxo não está escrito em lugar nenhum, e descobrir por que um pedido parou vira arqueologia em logs. Na orquestração, um coordenador manda comandos e guarda o estado: o fluxo é legível, testável e tem timeout por passo, ao custo de um componente a mais. Regra prática: mais de três passos, compensação ou prazo de negócio, orquestre. Notificação e analytics, coreografe.',
+  v:GRID(2, [
+    ['Coreografia','eventos, sem centro',['bom para 2–3 passos','serviços não se conhecem','fluxo implícito: difícil depurar','ciclos de eventos escondidos','EventBridge · Event Grid · Pub/Sub'],'blue'],
+    ['Orquestração','coordenador com estado',['fluxo explícito e versionado','timeout e retry por passo','visão de onde cada pedido parou','um componente a mais','Step Functions · Durable · Workflows'],'green'],
+  ], {h:220, step:5, rodape:'Portável entre nuvens: Temporal · gerenciados: AWS Step Functions, Azure Durable Functions, GCP Workflows'}) },
+
+{ id:'saga-code', ch:'Pedidos e saga', title:'Orquestrador com compensação',
+  say:'O coração de um orquestrador cabe em poucas linhas. Cada passo tem fazer e desfazer; o pivô não tem desfazer. O estado é salvo antes e depois de cada passo, para que o orquestrador, se cair, retome de onde parou. Retry só para erro transitório, como timeout; cartão recusado é erro de negócio e dispara a compensação, na ordem inversa. Rodando: o pedido um sofre um timeout, tenta de novo e conclui; o pedido dois tem o cartão recusado, e o estoque reservado é liberado. Em produção, use um motor durável, não um laço caseiro.',
+  v:S('saga.mjs','saga.mjs','js')},
+
+/* ---------- TEMPO REAL ---------- */
+{ id:'rt-escolha', ch:'Tempo real', title:'WebSocket × SSE × push',
+  say:'WebSocket é bidirecional e de baixa latência: chat, colaboração, jogo. Custa conexões com estado, balanceador que suporte upgrade e reconexão por sua conta. SSE é só do servidor para o cliente, sobre HTTP comum, com reconexão e retomada pelo Last-Event-ID embutidas no navegador: perfeito para notificações, status de pedido e streaming de resposta de LLM. Push do sistema operacional, por FCM e APNs, entrega com o app fechado, mas sem garantia de ordem nem de prazo. A maioria dos produtos precisa de SSE mais push, não de WebSocket.',
+  v:GRID(3, [
+    ['WebSocket','bidirecional',['chat, colaboração, jogo','conexão com estado','LB com upgrade, sticky','reconexão é sua'],'blue'],
+    ['SSE','servidor → cliente',['notificação, status, LLM','HTTP comum, passa em proxy','retomada com Last-Event-ID','envio do cliente: POST'],'green'],
+    ['Push do SO','app fechado',['FCM (Android e web)','APNs (iOS)','sem ordem nem prazo','payload pequeno'],'amber'],
+  ], {h:230, step:4, rodape:'Regra prática: SSE para o app aberto + push para o app fechado · WebSocket quando o cliente também fala muito'}) },
+
+{ id:'rt-fanout', ch:'Tempo real', title:'Fan-out de chat e notificações',
+  say:'Conexões ficam em nós de gateway sem regra de negócio. Um registro de presença, em Redis, diz em qual nó cada usuário está. A mensagem é gravada primeiro no armazenamento, com número de sequência por conversa, e só depois distribuída por pub sub aos nós que têm destinatários. Grupo pequeno: fan-out na escrita. Canal com cem mil membros: fan-out na leitura, o cliente busca ao abrir. Quem está offline recebe push. E o cliente sempre confirma a última sequência vista, para pedir o que perdeu.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:200,h:86, cls:'blue', html:B('Clientes','WS ou SSE')},
+    {at:2.5, x:276,y:92,w:240,h:86, cls:'green', html:B('Gateways de conexão','sem regra de negócio')},
+    {at:4.5, x:556,y:92,w:368,h:86, cls:'amber', html:B('Pub/sub entre nós','Redis, NATS, Web PubSub')},
+    {at:6.5, x:276,y:212,w:240,h:86, cls:'blue', html:B('Presença','usuário → nó (Redis, TTL)')},
+    {at:8.5, x:556,y:212,w:368,h:86, cls:'green', html:B('Mensagens','grava antes · seq por conversa')},
+    {at:11, x:36,y:332,w:430,h:170, cls:'amber', html:B('Fan-out','')+UL('grupo pequeno: na escrita','canal enorme: na leitura','offline: push do SO','cliente pede desde a última seq')},
+    {at:15, x:494,y:332,w:430,h:170, cls:'ext', html:B('Limites que mordem','')+UL('AWS API GW WS: 2 h, ocioso 10 min','mensagem 128 KB, frame 32 KB','deploy derruba conexões: drene','tempestade de reconexão: jitter')},
+  ], lines:[
+    {at:2.5, d:'M236 135 L 276 135', cls:'flow'}, {at:4.5, d:'M516 135 L 556 135', cls:'flow'},
+    {at:6.5, d:'M396 178 L 396 212', cls:'flow'}, {at:8.5, d:'M740 178 L 740 212', cls:'flow'},
+  ]}},
+
+{ id:'rt-sse', ch:'Tempo real', title:'SSE com retomada em Node',
+  say:'SSE em Node puro. O cabeçalho text event stream, sem cache, e o X-Accel-Buffering para o proxy não segurar o fluxo. O campo retry diz ao navegador quando reconectar. Na reconexão, o EventSource manda o Last-Event-ID, e o servidor reenvia só o que o cliente perdeu, a partir do buffer; em produção, um Redis Stream por usuário. Um comentário de ping a cada quinze segundos mantém a conexão viva em balanceadores. Testado com curl: três eventos publicados, retomada a partir do id um, chegam o dois e o três.',
+  v:S('sse.mjs','sse.mjs','js')},
+
+{ id:'rt-nuvem', ch:'Tempo real', title:'Tempo real por nuvem',
+  say:'No Azure, SignalR Service se você já usa SignalR e .NET, com fallback para SSE e long polling; Web PubSub para WebSocket puro e subprotocolos próprios; Notification Hubs para push. Na AWS, API Gateway WebSocket com Lambda, AppSync Events para pub sub gerenciado, IoT Core para milhões de dispositivos, e push pelo AWS End User Messaging: o Amazon Pinpoint encerra o suporte em trinta de outubro de dois mil e vinte e seis. No Google Cloud não há gateway WebSocket gerenciado: Cloud Run aceita WebSocket com limite de sessenta minutos por requisição, e Firebase cobre push e sincronização.',
+  v:GRID(3, [
+    ['Azure','',['SignalR Service: .NET','Web PubSub: WS puro','Notification Hubs: push','Front Door com WebSocket'],'blue'],
+    ['AWS','',['API GW WebSocket + Lambda','AppSync Events: pub/sub','IoT Core: dispositivos','End User Messaging: push'],'amber'],
+    ['GCP','',['Cloud Run: WS até 60 min','sem gateway WS gerenciado','Firebase: FCM e Firestore','Pub/Sub entre nós'],'green'],
+  ], {h:230, step:4, rodape:'Amazon Pinpoint: fim de suporte em 30/10/2026; o push segue no AWS End User Messaging · confira limites atuais'}) },
+
+/* ---------- BUSCA ---------- */
+{ id:'busca-escolha', ch:'Busca', title:'Postgres FTS × OpenSearch × vetorial',
+  say:'Comece pelo banco que você já tem. Postgres com full text search, trigram e índice GIN resolve catálogo de dezenas de milhões de linhas, com transação, sem sincronizar nada. Elasticsearch ou OpenSearch entram com relevância fina, facetas pesadas, sinônimos, análise de idioma e volume de busca que você não quer no primário; o preço é um cluster e a sincronização. Busca vetorial acha por significado, não por palavra: ótima para perguntas, ruim para código de produto e SKU. Na prática, o melhor resultado costuma ser híbrido.',
+  v:GRID(3, [
+    ['Postgres FTS + trigram','já está aí',['transacional, sem sync','GIN em tsvector','erros de digitação: pg_trgm','até dezenas de milhões'],'green'],
+    ['Elasticsearch / OpenSearch','motor dedicado',['relevância e sinônimos','facetas e agregações','tira carga do primário','cluster + sincronização'],'blue'],
+    ['Vetorial','por significado',['pgvector ou nativo do motor','perguntas, RAG, similares','fraco em SKU e nomes','híbrido com RRF'],'amber'],
+  ], {h:230, step:4, rodape:'Ordem: Postgres → motor dedicado quando relevância ou volume pedirem → vetores somados, não no lugar'}) },
+
+{ id:'busca-code', ch:'Busca', title:'Busca híbrida no próprio Postgres',
+  say:'A armadilha apareceu na primeira execução: com a configuração portuguese pura, tenis sem acento não encontrava Tênis, porque o radical vira tên de um lado e ten do outro. A correção é uma configuração de texto com unaccent antes do stemmer. A coluna tsvector é gerada e indexada com GIN, com peso maior para o nome. A busca roda duas listas, a léxica por ts rank e a aproximada por trigram, e funde por Reciprocal Rank Fusion, um sobre sessenta mais a posição. O tênis de corrida aparece nas duas e sobe para o topo.',
+  v:S('busca.sql','busca.sql','sql')},
+
+{ id:'busca-sync', ch:'Busca', title:'Manter o índice em dia',
+  say:'Com motor dedicado, o desafio é a sincronização. Escrita dupla, no banco e no índice, diverge na primeira falha. O caminho seguro é o banco como fonte da verdade e o índice alimentado por outbox ou CDC, com Debezium ou o change feed do banco, num consumidor idempotente que grava pela versão. Mudança de mapeamento pede reindexação: crie um índice novo, preencha, e troque o alias de uma vez. Tenha um botão de reindexar tudo, porque um dia vai precisar.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:200,h:86, cls:'blue', html:B('Banco','fonte da verdade')},
+    {at:2.5, x:276,y:92,w:200,h:86, cls:'amber', html:B('Outbox / CDC','Debezium, change feed')},
+    {at:4.5, x:516,y:92,w:200,h:86, cls:'green', html:B('Indexador','idempotente por versão')},
+    {at:6.5, x:756,y:92,w:168,h:86, cls:'blue', html:B('Índice','via alias')},
+    {at:9, x:36,y:212,w:888,h:86, cls:'region', html:'<span class="rl">reindexação sem downtime</span><div style="margin-top:10px">produtos_v7 ← preenche em paralelo · alias produtos: v6 → v7 de uma vez · apaga v6</div>'},
+    {at:12, x:36,y:332,w:280,h:170, cls:'blue', html:B('Azure','')+UL('Azure AI Search','híbrido com RRF nativo','indexers de Cosmos e SQL')},
+    {at:14, x:340,y:332,w:280,h:170, cls:'amber', html:B('AWS','')+UL('OpenSearch Service','OpenSearch Serverless','zero-ETL de DynamoDB')},
+    {at:16, x:644,y:332,w:280,h:170, cls:'green', html:B('GCP','')+UL('Vertex AI Search','Elastic Cloud no Marketplace','AlloyDB com vetores')},
+  ], lines:[
+    {at:2.5, d:'M236 135 L 276 135', cls:'flow'}, {at:4.5, d:'M476 135 L 516 135', cls:'flow'},
+    {at:6.5, d:'M716 135 L 756 135', cls:'flow'},
+  ]}},
+
+/* ---------- MÍDIA ---------- */
+{ id:'midia-desenho', ch:'Mídia', title:'Upload e processamento de mídia',
+  say:'Arquivo grande não passa pela sua API. O cliente pede uma URL pré-assinada, com tipo e prazo curtos, e envia direto ao storage. O storage emite um evento de objeto criado, que entra numa fila; workers validam o arquivo de verdade, pelo conteúdo e não pela extensão, geram miniaturas ou transcodificam, e gravam o resultado num bucket separado, servido por CDN. O status vai para o banco e chega ao cliente por SSE. Vídeo longo pede upload multipart retomável e transcodificação em serviço próprio.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:180,h:86, cls:'blue', html:B('Cliente','1 · pede URL')},
+    {at:2.5, x:256,y:92,w:200,h:86, cls:'green', html:B('API','valida, assina 15 min')},
+    {at:4.5, x:36,y:212,w:180,h:86, cls:'blue', html:B('Upload direto','2 · PUT ou multipart')},
+    {at:5.5, x:256,y:212,w:200,h:86, cls:'amber', html:B('Bucket de entrada','privado')},
+    {at:7, x:496,y:212,w:200,h:86, cls:'amber', html:B('Evento + fila','objeto criado')},
+    {at:8.5, x:736,y:212,w:188,h:86, cls:'green', html:B('Workers','valida, thumb, transcode')},
+    {at:10.5, x:736,y:92,w:188,h:86, cls:'blue', html:B('Bucket público','servido por CDN')},
+    {at:13, x:36,y:332,w:888,h:170, cls:'ext', html:B('Decisões e armadilhas','')+UL('PUT pré-assinado não limita tamanho: POST com política ou validar no worker','tipo real pelo conteúdo, antivírus, remoção de EXIF','escreve em bucket diferente: evento não entra em laço','cache-busting: nome com hash, CDN com TTL longo')},
+  ], lines:[
+    {at:2.5, d:'M216 135 L 256 135', cls:'flow'}, {at:4.5, d:'M126 178 L 126 212', cls:'flow'},
+    {at:5.5, d:'M216 255 L 256 255', cls:'flow'}, {at:7, d:'M456 255 L 496 255', cls:'flow'},
+    {at:8.5, d:'M696 255 L 736 255', cls:'flow'}, {at:10.5, d:'M830 212 L 830 178', cls:'flow'},
+  ]}},
+
+{ id:'midia-code', ch:'Mídia', title:'O que a URL pré-assinada assina',
+  say:'Para entender o que o SDK faz, este arquivo pré-assina uma URL do S3 com Signature Version 4, usando só node crypto. Monta a requisição canônica, com método, caminho, query ordenada e cabeçalho host, faz o hash, e deriva a chave de assinatura em cadeia: data, região, serviço. Rodado contra o vetor de teste da documentação da AWS, a assinatura confere. No Azure o equivalente é a SAS com delegação de usuário; no Google Cloud, a signed URL V4. As três chegam a no máximo sete dias; use minutos.',
+  v:S('presign.mjs','presign.mjs','js')},
+
+/* ---------- MULTI-REGIÃO ---------- */
+{ id:'multi-escolha', ch:'Multi-região', title:'Ativo-passivo × ativo-ativo',
+  say:'RPO é quanto dado você aceita perder; RTO é quanto tempo fora do ar. Ativo-passivo replica para uma região de espera, quente ou fria; o RPO é o atraso da réplica, segundos, e o RTO é o tempo de promover e virar o DNS, minutos, se o runbook for ensaiado. Ativo-ativo serve das duas regiões e dá RTO perto de zero, mas exige escrever em duas regiões: conflito, última escrita vence ou consenso com latência entre regiões. Antes de tudo, pergunte se multi-zona não basta: quase sempre basta.',
+  v:GRID(2, [
+    ['Ativo-passivo','uma região escreve',['RPO: atraso da réplica (segundos)','RTO: promover + DNS (minutos)','mais simples e barato','failover ensaiado ou não existe'],'blue'],
+    ['Ativo-ativo','as duas servem',['RTO perto de zero','conflitos de escrita','LWW, CRDT ou consenso','latência entre regiões no commit forte'],'amber'],
+  ], {h:250, step:5, rodape:'Antes: multi-zona resolve a maioria · ativo-ativo por usuário (célula com região "casa") evita conflito'}) },
+
+{ id:'multi-dados', ch:'Multi-região', title:'Dados e tráfego multi-região',
+  say:'O banco decide o que é possível. No Azure, Azure SQL com failover groups para ativo-passivo, e Cosmos DB com escrita em várias regiões para ativo-ativo, resolvendo conflitos por última escrita. Na AWS, Aurora Global Database replica com atraso tipicamente abaixo de um segundo, e DynamoDB global tables têm o modo eventual e, desde junho de dois mil e vinte e cinco, o de consistência forte entre regiões. No Google Cloud, Spanner multirregional dá consistência forte nativa, ao custo de latência no commit. O tráfego vira por Front Door, Route 53 ou o balanceador global.',
+  v:GRID(3, [
+    ['Azure','',['SQL: failover groups','Cosmos: multi-region writes','Front Door / Traffic Manager','Storage GRS / GZRS'],'blue'],
+    ['AWS','',['Aurora Global Database','DynamoDB global tables','MREC ou MRSC (2025)','Route 53 + ARC'],'amber'],
+    ['GCP','',['Spanner multirregional','Cloud SQL: réplica cruzada','AlloyDB: cluster secundário','LB global de aplicação'],'green'],
+  ], {h:230, step:4, rodape:'Ensaie: failover trimestral com cronômetro · RPO/RTO medidos valem mais que os prometidos'}) },
+
+/* ---------- IA ---------- */
+{ id:'ia-desenho', ch:'Plataforma de IA', title:'Plataforma de IA: o desenho',
+  say:'Todos os apps passam por um gateway de modelos: autenticação, cota de tokens por time, roteamento entre modelo pequeno e grande, cache semântico, registro de custo e fallback entre provedores. Pedido interativo vai em streaming, por SSE. Pedido longo, como resumir mil contratos, vai para uma fila com concorrência limitada pela cota de tokens por minuto do provedor, e o resultado volta por webhook ou status. O RAG tem duas metades: ingestão, que fatia, gera embeddings e indexa; e consulta, que busca híbrido, reordena e monta o contexto.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:180,h:86, cls:'blue', html:B('Apps','chat, agentes, lote')},
+    {at:2.5, x:256,y:92,w:240,h:86, cls:'green', html:B('Gateway de modelos','cota, cache, roteamento')},
+    {at:4.5, x:536,y:92,w:388,h:86, cls:'amber', html:B('Provedores','modelo pequeno · grande · fallback')},
+    {at:6.5, x:256,y:212,w:240,h:86, cls:'amber', html:B('Fila de jobs longos','limitada por TPM')},
+    {at:8, x:536,y:212,w:388,h:86, cls:'blue', html:B('RAG: consulta','híbrido → rerank → contexto')},
+    {at:10, x:36,y:332,w:430,h:170, cls:'region', html:'<span class="rl">ingestão</span>'+UL('extrair → fatiar → embeddings','índice vetorial + texto','permissão por documento','reindexar ao trocar o modelo')},
+    {at:14, x:494,y:332,w:430,h:170, cls:'ext', html:B('Decisões','')+UL('streaming no interativo, fila no lote','429 do provedor: backoff e fila','avaliação offline antes de trocar modelo','custo por tarefa, não por chamada')},
+  ], lines:[
+    {at:2.5, d:'M216 135 L 256 135', cls:'flow'}, {at:4.5, d:'M496 135 L 536 135', cls:'flow'},
+    {at:6.5, d:'M376 178 L 376 212', cls:'flow'}, {at:8, d:'M730 178 L 730 212', cls:'flow'},
+  ]}},
+
+{ id:'ia-cache', ch:'Plataforma de IA', title:'Cache semântico com limiar',
+  say:'Cache exato quase nunca acerta em linguagem natural; o semântico compara embeddings. O ponto crítico não é a busca, é o escopo e o limiar. A chave inclui tenant, modelo e versão do prompt, para nunca entregar a resposta de um cliente a outro nem uma resposta de prompt antigo. O limiar decide: a mesma pergunta reescrita dá zero vírgula noventa e dois e acerta; prazo de entrega, parecida nas palavras mas outra pergunta, dá zero vírgula sessenta e um e vai ao modelo. Nunca cacheie resposta personalizada ou com dados do usuário.',
+  v:S('cache_semantico.py','cache_semantico.py','py')},
+
+{ id:'ia-custo', ch:'Plataforma de IA', title:'Custo de IA e escolhas por nuvem',
+  say:'O custo cresce com tokens, e os tokens crescem com o contexto. As alavancas: modelo pequeno por padrão, cache de prompt para o prefixo fixo, lote assíncrono, que costuma custar cerca de metade, limite de saída e menos contexto com boa recuperação. No Azure, Microsoft Foundry com o API Management como gateway, que tem políticas de cota de tokens e de cache semântico. Na AWS, Bedrock com Knowledge Bases, inferência em lote e cache de prompt. No Google Cloud, Vertex AI com RAG Engine, Vector Search, cache de contexto e predição em lote.',
+  v:GRID(3, [
+    ['Azure','',['Microsoft Foundry','APIM: llm-token-limit','APIM: llm-semantic-cache','AI Search para RAG'],'blue'],
+    ['AWS','',['Amazon Bedrock','Knowledge Bases','batch inference','prompt caching'],'amber'],
+    ['GCP','',['Vertex AI','RAG Engine e Vector Search','context caching','batch prediction'],'green'],
+  ], {h:230, step:4, rodape:'Meça custo por tarefa resolvida · descontos de lote e cache mudam por modelo: confira a tabela atual'}) },
+
+/* ---------- FECHAMENTO ---------- */
+{ id:'check', ch:'Fechamento', title:'Checklist de system design real',
+  say:'Antes de dizer que domina: você transforma requisito em SLO, estima em código e decide pelo número, escolhe chave de partição pensando na partição quente, limita filas e degrada com intenção, monta um ledger de partidas dobradas idempotente e reconciliado, desenha uma saga com pivô e escolhe entre orquestrar e coreografar, combina SSE e push, faz busca híbrida sem esquecer o acento, assina uploads com prazo curto, mede RPO e RTO de verdade e põe um gateway com cota e cache na frente dos modelos.',
+  v:CK('SLO com orçamento de erro', 'Estimativa versionada', 'Chave de partição revisada', 'Fila limitada + 429', 'Ledger soma zero', 'Idempotency-Key ponta a ponta', 'Reconciliação diária', 'Saga com pivô tardio', 'SSE + push', 'Busca com unaccent', 'Failover ensaiado', 'Gateway de modelos')},
+
+{ id:'outro', ch:'Fechamento', title:'Próximo passo',
+  say:'Abaixo do vídeo está a matriz de requisito, padrão e serviço por nuvem, os links para as cenas de system design, mensageria, sistemas distribuídos e IA de outras trilhas, a trilha de estudo, o checklist e as perguntas de entrevista. O exercício que mais rende: pegue o sistema mais crítico da sua empresa, escreva o SLO e a estimativa em uma página, aponte o primeiro gargalo no pico de cinco vezes e o que seria desligado para sobreviver a ele. Depois ensaie o failover e cronometre.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Método de system design (entrevista)', 'bt', 'metodo', 'O roteiro de entrevista que esta trilha aprofunda'],
+  ['Encurtador, feed e rate limiter', 'bt', 'url', 'Os casos clássicos que não se repetem aqui'],
+  ['Números que todo engenheiro sabe', 'v06', 'numeros', 'Latências e ordens de grandeza'],
+  ['Pagamentos no system design', 'v06', 'pagamentos', 'A primeira visão do caso de pagamentos'],
+  ['Chat e fluxo de mensagens', 'v06', 'chat', 'O chat no nível de entrevista'],
+  ['Outbox transacional', 'v01', 'outbox', 'Publicar evento sem perder nem duplicar'],
+  ['Saga em mensageria', 'v01', 'saga', 'Saga com filas e eventos'],
+  ['Idempotência de consumidores', 'ndist', 'idempotencia', 'Entrega pelo menos uma vez, efeito uma vez'],
+  ['Por que não 2PC', 'ndist', '2pc', 'Commit em duas fases e seus bloqueios'],
+  ['Backpressure a fundo', 'ndist', 'backpressure', 'Fila limitada e controle de fluxo'],
+  ['CRDT e convergência', 'ndist', 'crdt', 'Ativo-ativo sem conflito manual'],
+  ['Capacidade e Lei de Little', 'nperf', 'capacidade', 'Planejar capacidade com teste de carga'],
+  ['Noisy neighbor', 'nsaas', 'noisy', 'Tenant grande como partição quente'],
+  ['SLO e orçamento de erro', 'v13', 'slo', 'Definir e medir SLO'],
+  ['Busca híbrida', 'v15', 'hibrida', 'Léxica + vetorial com fusão'],
+  ['O gateway de modelos', 'v24', 'gateway', 'Cota, custo e roteamento de LLM'],
+  ['RPO e RTO na AZ-305', 'c305', 'rpo-rto', 'Continuidade no Azure'],
+  ['Recuperação de desastre na AWS', 'csaa', 'dr', 'Estratégias de DR da AWS'],
+];
+
+const MATRIZ = [
+  ['Não cobrar duas vezes', 'Idempotency-Key + ledger append-only', 'Azure SQL / PostgreSQL Flexible', 'Aurora PostgreSQL / DynamoDB condicional', 'Cloud SQL / AlloyDB / Spanner'],
+  ['Evento sem perder nem duplicar', 'Outbox + consumidor idempotente', 'Service Bus / Event Hubs', 'SQS, SNS, EventBridge, MSK', 'Pub/Sub'],
+  ['Fluxo longo com compensação', 'Saga orquestrada', 'Durable Functions / Logic Apps', 'Step Functions', 'Workflows'],
+  ['Notificar app aberto', 'SSE com Last-Event-ID', 'App Service / Container Apps + Web PubSub', 'ALB + ECS ou AppSync Events', 'Cloud Run'],
+  ['Chat bidirecional', 'WebSocket + presença + pub/sub', 'SignalR Service / Web PubSub', 'API Gateway WebSocket / AppSync Events', 'Cloud Run + Memorystore'],
+  ['Notificar app fechado', 'Push do SO', 'Notification Hubs', 'End User Messaging (push) / SNS', 'Firebase Cloud Messaging'],
+  ['Busca com relevância e facetas', 'Índice dedicado via CDC', 'Azure AI Search', 'OpenSearch Service / Serverless', 'Vertex AI Search / Elastic Cloud'],
+  ['Upload grande', 'URL pré-assinada + evento + fila', 'Blob Storage SAS + Event Grid', 'S3 presigned + EventBridge/SQS', 'GCS signed URL + Pub/Sub'],
+  ['Entrega de mídia', 'CDN + transcodificação assíncrona', 'Front Door + FFmpeg em Container Apps jobs', 'CloudFront + MediaConvert', 'Cloud CDN / Media CDN + Transcoder API'],
+  ['Sobreviver à perda de região', 'Ativo-passivo com failover ensaiado', 'SQL failover groups + Front Door', 'Aurora Global + Route 53 ARC', 'Cloud SQL réplica cruzada + LB global'],
+  ['Escrita em várias regiões', 'Ativo-ativo (LWW ou consenso)', 'Cosmos DB multi-region writes', 'DynamoDB global tables (MREC/MRSC)', 'Spanner multirregional'],
+  ['LLM com custo sob controle', 'Gateway + cache semântico + lote', 'Foundry + APIM AI gateway', 'Bedrock (batch, prompt caching)', 'Vertex AI (batch, context caching)'],
+];
+
+const STUDY = [
+  ['Google SRE Book: SLOs', 'SLI, SLO e orçamento de erro', 'https://sre.google/sre-book/service-level-objectives/', 'slos'],
+  ['AWS: URL pré-assinada SigV4', 'Assinatura por query string e o vetor de teste', 'https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html', 'midia-code'],
+  ['PostgreSQL: Full Text Search', 'tsvector, GIN e configurações', 'https://www.postgresql.org/docs/current/textsearch.html', 'busca-code'],
+  ['PostgreSQL: pg_trgm', 'Similaridade por trigramas', 'https://www.postgresql.org/docs/current/pgtrgm.html', 'busca-code'],
+  ['Microservices.io: Saga', 'Orquestração e coreografia', 'https://microservices.io/patterns/data/saga.html', 'saga-escolha'],
+  ['MDN: Server-sent events', 'EventSource, id e retry', 'https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events', 'rt-sse'],
+  ['API Gateway WebSocket: cotas', 'Duração, ociosidade e payload', 'https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-execution-service-websocket-limits-table.html', 'rt-fanout'],
+  ['Azure Web PubSub FAQ', 'Web PubSub × SignalR Service', 'https://learn.microsoft.com/azure/azure-web-pubsub/resource-faq', 'rt-nuvem'],
+  ['Amazon Pinpoint: fim de suporte', 'O que muda e o que segue', 'https://docs.aws.amazon.com/pinpoint/latest/userguide/migrate.html', 'rt-nuvem'],
+  ['DynamoDB global tables', 'Como funcionam MREC e MRSC', 'https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html', 'multi-dados'],
+  ['APIM: cache semântico de LLM', 'Política llm-semantic-cache-lookup', 'https://learn.microsoft.com/en-us/azure/api-management/llm-semantic-cache-lookup-policy', 'ia-custo'],
+];
+
+const CHECK = [
+  ['Método', 'Escrever SLO e orçamento de erro do sistema crítico', 'slos'],
+  ['Capacidade', 'Adaptar envelope.mjs às suas premissas reais', 'envelope'],
+  ['Capacidade', 'Achar a partição mais quente do seu maior banco', 'particao'],
+  ['Capacidade', 'Definir o que desliga primeiro no pico', 'backpressure'],
+  ['Pagamentos', 'Rodar ledger.sql e testar retry concorrente', 'pag-ledger'],
+  ['Pagamentos', 'Esboçar a reconciliação de 3 vias', 'pag-recon'],
+  ['Saga', 'Identificar o passo pivô de um fluxo real', 'saga-desenho'],
+  ['Saga', 'Reescrever saga.mjs com estado em tabela', 'saga-code'],
+  ['Tempo real', 'Trocar polling por SSE com Last-Event-ID', 'rt-sse'],
+  ['Busca', 'Testar busca sem acento no seu catálogo', 'busca-code'],
+  ['Mídia', 'Mover um upload da API para URL pré-assinada', 'midia-desenho'],
+  ['Multi-região', 'Cronometrar um failover em homologação', 'multi-escolha'],
+  ['IA', 'Medir taxa de acerto do cache por limiar', 'ia-cache'],
+  ['IA', 'Calcular custo por tarefa resolvida', 'ia-custo'],
+];
+
+const FAQ = [
+ ['Método','Como você começa um design de sistema real?',`<p>Pelos requisitos não funcionais transformados em SLO (latência, disponibilidade, consistência, retenção), depois uma estimativa de ordem de grandeza, o desenho mínimo do caminho principal e a pergunta "o que cai primeiro no pico de 5×?". Cada escolha vai num ADR curto com o que foi sacrificado.</p>`],
+ ['Capacidade','Quando shardear um banco?',`<p>Quando a estimativa e o teste de carga mostram que um primário com réplicas e cache não aguenta a escrita de pico com folga. Antes disso, shardear só traz complexidade. Quando chegar a hora, a chave de partição é a decisão mais difícil de desfazer.</p>`],
+ ['Capacidade','O que é partição quente e como resolver?',`<p>Uma partição que recebe muito mais tráfego que as outras (tenant gigante, chave por data, celebridade). Sintoma: throttling com uso médio baixo. Mitigação: sufixo aleatório na escrita, chave composta, isolar o cliente grande, cache na leitura.</p>`],
+ ['Capacidade','O que é degradação graciosa?',`<p>Desligar de propósito, por flag, o que é supérfluo para manter o essencial: sem recomendações, catálogo do cache, contadores aproximados. Combinada com fila limitada, 429/503 com Retry-After e load shedding por prioridade.</p>`],
+ ['Pagamentos','Como garantir que um pagamento não seja cobrado duas vezes?',`<p>Idempotency-Key do cliente, única no banco, gravada na mesma transação dos lançamentos; retry devolve o resultado original e a mesma chave com outro corpo é recusada. A chamada ao PSP também leva chave, e a reconciliação diária pega o que escapar.</p>`],
+ ['Pagamentos','Por que ledger de partidas dobradas?',`<p>Porque saldo atualizado no lugar perde histórico e esconde erro. Com lançamentos append-only que somam zero por transação, o saldo é derivado, a auditoria é natural e um erro aparece como desbalanço, não como número estranho.</p>`],
+ ['Saga','Orquestração ou coreografia?',`<p>Coreografia para fluxos curtos e reações independentes (notificação, analytics). Orquestração quando há mais de três passos, compensação ou prazo de negócio: o fluxo fica explícito, com timeout por passo e visão de onde cada instância parou.</p>`],
+ ['Tempo real','WebSocket ou SSE?',`<p>SSE quando o servidor fala e o cliente escuta (notificações, status, streaming de LLM): HTTP comum, reconexão e retomada nativas. WebSocket quando o cliente também envia muito e com baixa latência (chat, colaboração). Para app fechado, push do SO.</p>`],
+ ['Busca','Postgres ou Elasticsearch para busca?',`<p>Postgres com FTS, unaccent e pg_trgm até onde der: transacional e sem sincronização. Motor dedicado quando relevância, facetas ou volume pedirem, alimentado por outbox/CDC e com reindexação por alias. Vetores se somam em busca híbrida.</p>`],
+ ['Multi-região','Ativo-ativo vale a pena?',`<p>Raramente como primeiro passo. Multi-zona resolve a maioria. Ativo-passivo com failover ensaiado atende RTO de minutos. Ativo-ativo exige lidar com conflito de escrita ou pagar latência de consenso; se precisar, prefira células com região "casa" por usuário.</p>`],
+ ['IA','Como desenhar uma plataforma de LLM para vários times?',`<p>Gateway de modelos com autenticação, cota de tokens por time, roteamento entre modelos, cache semântico com escopo por tenant e versão de prompt, registro de custo e fallback. Interativo em streaming, lote em fila limitada pela cota do provedor.</p>`],
+ ['IA','Quais os riscos de cache semântico?',`<p>Vazamento entre tenants se o escopo não estiver na chave, resposta velha após mudar o prompt, e falso acerto com limiar baixo para perguntas parecidas nas palavras e diferentes no sentido. Nunca cacheie resposta personalizada.</p>`],
+];
+
+const CMDS = [
+  ['node envelope.mjs', 'Estimativa de capacidade'],
+  ['psql ledger -f ledger.sql', 'Criar o ledger de partidas dobradas'],
+  ['psql ledger -f ledger-run.sql', 'Retry, chave reutilizada e desbalanço'],
+  ['node saga.mjs', 'Orquestrador com compensação'],
+  ['curl -N -H "Last-Event-ID: 1" localhost:3000/eventos', 'Retomar o stream SSE'],
+  ['psql busca -f busca.sql', 'Busca híbrida FTS + trigram + RRF'],
+  ['node presign.mjs', 'SigV4 contra o vetor de teste da AWS'],
+  ['python cache_semantico.py', 'Cache semântico com limiar e escopo'],
+  ['indisponibilidade = (1 − SLO) × 43.200 min', 'Orçamento de erro mensal'],
+  ['RRF = Σ 1 / (60 + posição)', 'Fusão de rankings'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>

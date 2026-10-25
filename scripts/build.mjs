@@ -22,6 +22,7 @@ const DIST = join(raiz, "dist");
 const CATEGORIAS = [
   { id: "volumes", nome: "Guia Técnico", descricao: "Os 24 volumes, do básico ao nível de arquiteto.", teste: (n) => /^Vol \d+ - /.test(n) },
   { id: "avancadas", nome: "Trilhas avançadas", descricao: "Aprofundamentos e o projeto final integrador.", teste: (n) => n.startsWith("Nova - ") },
+  { id: "decisoes", nome: "Decisões de engenharia", descricao: "Como escolher e implementar: auth, estrutura de código, APIs, dados, nuvem e system design, por stack.", teste: (n) => n.startsWith("Decisão - ") },
   { id: "projetos", nome: "Projetos guiados", descricao: "Um sistema real construído módulo a módulo, com lições, exercícios e perguntas de entrevista.", teste: () => false },
   { id: "certificacoes", nome: "Certificações", descricao: "Azure, AWS, Kubernetes, Kafka, segurança e dados.", teste: (n) => n.startsWith("Cert - ") },
   { id: "tecnologias", nome: "Trilhas por tecnologia", descricao: ".NET, Node, AKS, Terraform, Kafka, dados e liderança.", teste: () => true },
@@ -130,7 +131,7 @@ function lerTrilha(arquivo) {
   const cenas = (s.match(/\bsay\s*:/g) || []).length;
 
   const categoria = CATEGORIAS.find((c) => c.teste(base));
-  const nome = NOMES[base] ?? base.replace(/^(Vol \d+|Nova|Cert) - /, "");
+  const nome = NOMES[base] ?? base.replace(/^(Vol \d+|Nova|Cert|Decisão) - /, "");
   const volume = (/^Vol (\d+)/.exec(base) || [])[1];
 
   return {

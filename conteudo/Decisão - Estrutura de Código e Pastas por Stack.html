@@ -1,0 +1,1271 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Decisão: Estrutura de Código e Pastas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout: cabeçalho curto, player 16:9 com capítulos ao lado, depois trilha, checklist, perguntas e comandos */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#0E1A2B; --muted:#566275; --line:#D8DEE7;
+  --accent:#1F55C9; --accent-soft:#E3EBFB; --amber:#B86E00; --ok:#16855A; --bad:#C23B30;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* palco: sempre escuro, como uma tela de vídeo */
+  --st-bg:#0A1324; --st-panel:#111E36; --st-panel2:#0D182D; --st-line:#25385A; --st-ink:#E8EEF8; --st-dim:#8798B4;
+  --st-blue:#5B95FF; --st-amber:#F2B544; --st-green:#3CCB8E; --st-red:#FF6B5E; --st-cyan:#62D3E8;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1220; --surface:#121B2C; --ink:#E5EBF4; --muted:#95A2B6; --line:#24324A;
+  --accent:#7AA2FF; --accent-soft:#1A2A4A; --amber:#F2B544; --ok:#3CCB8E; --bad:#FF7A6E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.08}
+h2{font-size:26px;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+header.top{display:flex;flex-direction:column;gap:12px;max-width:820px}
+header.top .lead{color:var(--muted);font-size:16.5px;max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;color:var(--muted)}
+
+/* ===== player ===== */
+.player-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:960px){.player-grid{grid-template-columns:minmax(0,1fr)}}
+.player{min-width:0;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.player:fullscreen{border:0;border-radius:0;justify-content:center;background:#000}
+.player:fullscreen .stage{max-height:calc(100vh - 150px);aspect-ratio:16/9;width:auto;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:var(--st-bg);color:var(--st-ink);font-family:var(--f-body)}
+.stage-inner{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0}
+.big-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,12,24,.45);border:0;cursor:pointer;color:#fff;z-index:5}
+.big-play span{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--st-blue);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.big-play:focus-visible span{outline:3px solid #fff;outline-offset:3px}
+.controls{display:flex;flex-direction:column;gap:8px;background:#0C1628;color:#DCE5F3;padding:10px 14px 12px}
+.bar{position:relative;height:18px;cursor:pointer;touch-action:none}
+.bar .track{position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:#2A3B5C}
+.bar .fill{position:absolute;left:0;top:7px;height:4px;border-radius:2px;background:var(--st-blue)}
+.bar .knob{position:absolute;top:3px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff}
+.bar .tick{position:absolute;top:4px;width:2px;height:10px;background:#5A6C8E}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbtn{background:transparent;border:1px solid transparent;color:inherit;font:500 13px var(--f-body);padding:6px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cbtn:hover{background:#1B2A45}
+.cbtn:focus-visible{outline:2px solid var(--st-blue)}
+.cbtn[aria-pressed="true"]{border-color:#3A5480;background:#16243E}
+.cbtn svg{width:18px;height:18px}
+.time{font:500 12.5px var(--f-mono);color:#A9B8D0;font-variant-numeric:tabular-nums;margin-left:4px}
+.spacer{flex:1}
+.caption{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.caption .cap-meta{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.caption .cap-title{font:700 19px var(--f-display)}
+.caption .cap-text{color:var(--ink);max-width:80ch}
+.chapters{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;max-height:720px;overflow:auto}
+.chapters h3{font-size:15px;padding:0 8px 8px}
+.ch-group{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ch-name{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:6px 8px 2px}
+.ch-item{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;color:var(--ink);font:14px var(--f-body)}
+.ch-item:hover{background:var(--accent-soft)}
+.ch-item:focus-visible{outline:2px solid var(--accent)}
+.ch-item .n{font:12px var(--f-mono);color:var(--muted)}
+.ch-item .tm{font:12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-item.active{background:var(--accent-soft);font-weight:600}
+.ch-item.active .n{color:var(--accent)}
+
+/* ===== cenas (coordenadas 960x540) ===== */
+.sc-head{position:absolute;left:36px;top:22px;right:36px;display:flex;align-items:baseline;gap:14px}
+.sc-ch{font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-amber)}
+.sc-title{font:700 25px var(--f-display);color:var(--st-ink);letter-spacing:-.01em}
+.sc-num{margin-left:auto;font:12px var(--f-mono);color:var(--st-dim)}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:36px;right:36px;top:76px;bottom:26px;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{height:32px;flex:none;display:flex;align-items:center;gap:7px;padding:0 12px;border-bottom:1px solid var(--st-line);background:var(--st-panel)}
+.win-bar i{width:10px;height:10px;border-radius:50%;background:#2D4066}
+.win-bar span{margin-left:8px;font:12.5px var(--f-mono);color:var(--st-dim)}
+.win-bar .lang{margin-left:auto;font:11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--st-cyan)}
+.win-body{position:relative;flex:1;overflow:hidden;padding:12px 18px}
+.win-inner{position:absolute;left:18px;right:18px;top:12px;transition:transform .35s ease}
+.tl{font:14.5px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-all;color:var(--st-ink);min-height:1.55em}
+.tl .ps{color:var(--st-amber)}
+.tl-o{color:var(--st-dim)} .tl-ok{color:var(--st-green)} .tl-err{color:var(--st-red)}
+.caret{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--st-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;font:13.4px/1.5 var(--f-mono);color:var(--st-ink)}
+.cl .ln-n{color:#4A5D82;text-align:right;user-select:none}
+.cl .tx{white-space:pre-wrap;word-break:break-word;min-width:0}
+.cl.cur{background:rgba(91,149,255,.07)}
+.t-k{color:#8FB8FF} .t-s{color:#F2C98A} .t-n{color:#7FE0B5} .t-kw{color:#E79BD8} .t-cm{color:#6F81A3;font-style:italic} .t-ty{color:#62D3E8}
+
+.lines{position:absolute;inset:0;width:960px;height:540px;pointer-events:none}
+.ln{fill:none;stroke:var(--st-line);stroke-width:2;opacity:0;transition:opacity .5s}
+.ln.on{opacity:1}
+.ln.flow{stroke:var(--st-blue);stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+.ln.amber{stroke:var(--st-amber)} .ln.green{stroke:var(--st-green)} .ln.dim{stroke:#3A4F78;stroke-dasharray:4 6}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.bx{position:absolute;background:var(--st-panel);border:1px solid var(--st-line);border-radius:8px;padding:9px 12px;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.bx.on{opacity:1;transform:none}
+.bx b{font:700 15px var(--f-display);color:var(--st-ink)}
+.bx small{font:12px var(--f-mono);color:var(--st-dim)}
+.bx.region{background:rgba(91,149,255,.04);border:1.5px dashed #34507F;padding:10px 14px}
+.bx.region>.rl{font:12px var(--f-mono);color:var(--st-blue);letter-spacing:.04em}
+.bx.blue{border-color:#3B63A8} .bx.amber{border-color:#8A6A2A} .bx.green{border-color:#2C7A5A}
+.bx.ext{background:#121A2B;border-style:dashed}
+.bx.ns{background:transparent;border:1.5px dashed var(--st-amber)}
+.bx.ns>.rl{font:12px var(--f-mono);color:var(--st-amber)}
+.bx .tag{align-self:flex-start;margin-top:4px;font:11px var(--f-mono);padding:1px 7px;border-radius:999px;background:#1C2D4D;color:var(--st-cyan)}
+.bx .tag.am{background:#3A2C10;color:var(--st-amber)}
+.bx .tag.gr{background:#123628;color:var(--st-green)}
+.pod{display:inline-flex;align-items:center;gap:6px;font:12px var(--f-mono);color:var(--st-ink);background:#173057;border:1px solid #3B63A8;border-radius:6px;padding:4px 8px}
+.pod::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--st-green)}
+.pods{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.def{position:absolute;left:36px;width:412px;display:grid;grid-template-columns:132px 1fr;gap:10px;align-items:baseline;opacity:.18;transition:opacity .4s}
+.def.on{opacity:1}
+.def b{font:700 16px var(--f-display);color:var(--st-amber)}
+.def span{font-size:14px;color:var(--st-ink)}
+.ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:14.5px;color:var(--st-ink)}
+.ul li{display:grid;grid-template-columns:16px 1fr;gap:8px}
+.ul li::before{content:"▸";color:var(--st-blue)}
+.kql{font:13px/1.5 var(--f-mono);color:var(--st-ink);white-space:pre;margin:6px 0 0}
+
+/* título */
+.title-card{position:absolute;left:64px;top:118px;right:64px;display:flex;flex-direction:column;gap:16px}
+.title-card .k{font:500 14px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--st-amber)}
+.title-card h2{font:800 64px/1.02 var(--f-display);color:var(--st-ink);letter-spacing:-.02em;max-width:720px}
+.title-card p{font-size:19px;color:var(--st-dim);max-width:640px}
+.title-card .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.title-card .chips span{font:13px var(--f-mono);border:1px solid var(--st-line);border-radius:999px;padding:4px 12px;color:var(--st-ink)}
+.grid-deco{position:absolute;right:56px;top:96px;display:grid;grid-template-columns:repeat(3,40px);gap:10px}
+.grid-deco i{width:40px;height:40px;border-radius:7px;border:1px solid #2A4374;background:#132849;animation:pulse 3.2s ease-in-out infinite}
+@keyframes pulse{50%{background:#1E3F73;border-color:#5B95FF}}
+
+/* escala */
+.sc-panel{position:absolute;background:var(--st-panel2);border:1px solid var(--st-line);border-radius:10px}
+.sc-panel .ph{position:absolute;left:14px;top:10px;font:12px var(--f-mono);color:var(--st-dim)}
+.node{position:absolute;width:128px;height:128px;border-radius:8px;border:1.5px solid #3B63A8;background:#10213D;transition:opacity .4s;padding:8px}
+.node .nl{font:11px var(--f-mono);color:var(--st-dim)}
+.node.prov{border-style:dashed;border-color:var(--st-amber);background:transparent}
+.node.prov .nl{color:var(--st-amber)}
+.node.off{opacity:.16;border-style:dashed}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.slot{height:36px;border-radius:5px;border:1px dashed #2A3B5C;display:grid;place-items:center;font:11px var(--f-mono);color:transparent;transition:.3s}
+.slot.run{border:1px solid var(--st-green);background:#123628;color:var(--st-green)}
+.slot.sys{border:1px solid #33456A;background:#18243A;color:var(--st-dim)}
+.pend{position:absolute;display:flex;gap:6px;align-items:center;font:12px var(--f-mono);color:var(--st-amber)}
+.pend i{display:inline-block;width:46px;height:28px;border:1.5px dashed var(--st-amber);border-radius:5px}
+.stat{position:absolute;font:13px var(--f-mono);color:var(--st-ink);font-variant-numeric:tabular-nums}
+.stat b{color:var(--st-amber);font-weight:500}
+.note{position:absolute;font:12px var(--f-mono);color:var(--st-dim)}
+
+/* rolling */
+.rp{position:absolute;width:150px;height:64px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font:12px var(--f-mono);transition:opacity .4s,border-color .3s,background .3s;opacity:0}
+.rp b{font:700 15px var(--f-display)}
+.rp.v1{border:1.5px solid #3B63A8;background:#132849;color:var(--st-ink);opacity:1}
+.rp.v1.term{border:1.5px dashed var(--st-red);background:#2A1518;color:var(--st-red)}
+.rp.v1.gone{opacity:.08}
+.rp.v2{opacity:0}
+.rp.v2.start{opacity:1;border:1.5px dashed var(--st-amber);background:transparent;color:var(--st-amber)}
+.rp.v2.ready{opacity:1;border:1.5px solid var(--st-green);background:#123628;color:var(--st-green)}
+.done{position:absolute;left:36px;right:36px;top:478px;text-align:center;font:500 15px var(--f-mono);color:var(--st-green);opacity:0;transition:opacity .5s}
+.done.on{opacity:1}
+
+/* checklist na tela */
+.ck{position:absolute;width:432px;display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:15.5px;line-height:1.35;color:var(--st-ink);opacity:0;transform:translateX(-8px);transition:.4s}
+.ck.on{opacity:1;transform:none}
+.ck i{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--st-line);display:grid;place-items:center;font-style:normal;color:transparent;font-size:14px;transition:.3s .25s}
+.ck.on i{border-color:var(--st-green);background:#123628;color:var(--st-green)}
+
+/* ===== seções de estudo ===== */
+section.blk{display:flex;flex-direction:column;gap:16px}
+.blk-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px 20px;justify-content:space-between}
+.blk-head p{color:var(--muted);max-width:70ch}
+.progress{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.progress b{color:var(--ok)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 16px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li input{width:18px;height:18px;margin-top:3px;accent-color:var(--ok)}
+.li label{cursor:pointer;min-width:0}
+.li .sub{display:block;color:var(--muted);font-size:13.5px}
+.li.done label{color:var(--muted)}
+.li.done label > span:first-child{text-decoration:line-through;text-decoration-color:var(--line)}
+.li .go{font:500 12px var(--f-mono);color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.li .go:focus-visible{outline:2px solid var(--accent)}
+.grp-t{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);padding:12px 16px 4px;border-top:1px solid var(--line);background:var(--bg)}
+.grp-t:first-child{border-top:0}
+
+.faq-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,.search:focus-visible,.textbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{flex:1 1 220px;min-width:0;font:14px var(--f-body);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.textbtn{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:6px 4px}
+.faq{display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.faq summary{cursor:pointer;list-style:none;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .cat{font:500 11.5px var(--f-mono);color:var(--amber);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.faq summary:focus-visible{outline:2px solid var(--accent);border-radius:10px}
+.faq .ans{padding:0 16px 15px;color:var(--ink);max-width:82ch;display:flex;flex-direction:column;gap:8px}
+.faq .ans p{color:var(--ink)}
+.faq-empty{color:var(--muted);padding:12px 0}
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:10px}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cmd pre{margin:0;font:13px/1.5 var(--f-mono);white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.cmd span{color:var(--muted);font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;min-width:860px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:12px 14px;border-top:1px solid var(--line)}
+.tbl thead th{border-top:0;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl td .ent{display:inline-block;font:12px var(--f-mono);color:var(--amber)}
+.tbl code{white-space:nowrap}
+.li.jv{grid-template-columns:minmax(0,150px) minmax(0,1fr) auto}
+a.go{text-decoration:none}
+@media (max-width:560px){.li.jv{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ln.flow,.grid-deco i,.caret{animation:none}
+  .bx,.ck,.win-inner,.def{transition:none}
+}
+@media (max-width:560px){ .time{display:none} .cbtn .lbl{display:none} }
+
+</style>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="hEyebrow"></span>
+    <h1 id="hTitle"></h1>
+    <p class="lead" id="hLead"></p>
+    <div class="meta" id="hPills"></div>
+  </header>
+
+  <div class="player-grid">
+    <div class="player" id="player">
+      <div class="stage" id="stage">
+        <div class="stage-inner" id="stageInner"></div>
+        <button class="big-play" id="bigPlay" aria-label="Reproduzir vídeo"><span><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+      </div>
+      <div class="controls">
+        <div class="bar" id="bar" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0">
+          <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="btnPrev" aria-label="Cena anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+          <button class="cbtn" id="btnPlay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="cbtn" id="btnNext" aria-label="Próxima cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+          <span class="time" id="time">00:00 / 00:00</span>
+          <span class="spacer"></span>
+          <button class="cbtn" id="btnVoice" aria-pressed="false" title="Ler a narração em voz alta (voz do navegador)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><span class="lbl">Voz</span></button>
+          <button class="cbtn" id="btnRate" title="Velocidade">1×</button>
+          <button class="cbtn" id="btnCopy" title="Copiar o código ou os comandos desta cena"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg><span class="lbl">Copiar</span></button>
+          <button class="cbtn" id="btnFull" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+        </div>
+      </div>
+      <div class="caption" aria-live="polite">
+        <span class="cap-meta" id="capMeta"></span>
+        <span class="cap-title" id="capTitle"></span>
+        <p class="cap-text" id="capText"></p>
+      </div>
+    </div>
+    <nav class="chapters" aria-label="Capítulos">
+      <h3>Capítulos</h3>
+      <div id="chapters"></div>
+    </nav>
+  </div>
+
+  <section class="blk" id="ja-visto">
+    <div class="blk-head"><div><span class="eyebrow">Outras trilhas</span><h2>Já coberto em outros vídeos</h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="jvDesc">Estes temas aparecem aqui, mas já foram explicados em detalhe em outra trilha. Cada link abre o vídeo correspondente, direto na cena.</p>
+    <div class="list" id="jaVisto"></div>
+  </section>
+
+  <section class="blk" id="matriz">
+    <div class="blk-head"><div><span class="eyebrow" id="mzEyebrow">Decisão</span><h2 id="mzTitle"></h2></div></div>
+    <p style="color:var(--muted);max-width:72ch" id="mzDesc"></p>
+    <div class="tbl-wrap"><table class="tbl"><thead id="mzHead"></thead><tbody id="matrizBody"></tbody></table></div>
+  </section>
+
+  <section class="blk" id="trilha">
+    <div class="blk-head">
+      <div><span class="eyebrow">Estudo</span><h2>Trilha de estudo</h2></div>
+      <span class="progress" id="progStudy"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="studyDesc"></p>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <section class="blk" id="checklist">
+    <div class="blk-head">
+      <div><span class="eyebrow">Prática</span><h2>Checklist da trilha</h2></div>
+      <span class="progress" id="progCheck"></span>
+    </div>
+    <p style="color:var(--muted);max-width:72ch" id="checkDesc"></p>
+    <div class="list" id="checkList"></div>
+  </section>
+
+  <section class="blk" id="perguntas">
+    <div class="blk-head">
+      <div><span class="eyebrow">Preparação</span><h2>Perguntas de clientes e entrevistas</h2></div>
+      <span class="progress" id="faqCount"></span>
+    </div>
+    <div class="faq-tools">
+      <input class="search" id="faqSearch" type="search" aria-label="Buscar nas perguntas">
+      <button class="textbtn" id="faqToggle">Abrir todas</button>
+    </div>
+    <div class="faq-tools" id="faqCats" role="group" aria-label="Filtrar por tema"></div>
+    <div class="faq" id="faq"></div>
+  </section>
+
+  <section class="blk" id="comandos">
+    <div class="blk-head"><div><span class="eyebrow">Consulta rápida</span><h2 id="cmdsTitle"></h2></div></div>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <footer id="footText"></footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SNIP = {"ArquiteturaTest.java": "// ArchUnit (JUnit 5) · regras de camada e de pacote como teste\n@AnalyzeClasses(packages = \"com.loja\", importOptions = ImportOption.DoNotIncludeTests.class)\nclass ArquiteturaTest {\n\n  @ArchTest\n  static final ArchRule dominioSemFramework = noClasses()\n      .that().resideInAPackage(\"..dominio..\")\n      .should().dependOnClassesThat()\n      .resideInAnyPackage(\"org.springframework..\", \"..infra..\", \"..web..\");\n\n  @ArchTest\n  static final ArchRule controllerNaoFalaComRepositorio = noClasses()\n      .that().resideInAPackage(\"..web..\")\n      .should().dependOnClassesThat().resideInAPackage(\"..infra..\");\n\n  @ArchTest\n  static final ArchRule semCiclosEntreModulos = slices()\n      .matching(\"com.loja.(*)..\").should().beFreeOfCycles();\n}\n\n// Spring Modulith 2 · cada subpacote direto de com.loja é um módulo;\n// só o pacote-base do módulo é API, subpacotes são internos\nclass ModulosTest {\n  ApplicationModules modulos = ApplicationModules.of(LojaApplication.class);\n\n  @Test\n  void estruturaValida() {\n    modulos.verify();          // sem ciclos, sem acesso a interno, allowedDependencies\n  }\n\n  @Test\n  void documentacao() {\n    new Documenter(modulos).writeDocumentation();   // diagramas e canvas por módulo\n  }\n}\n\n// pedidos/package-info.java · dependências permitidas explicitamente\n@org.springframework.modulith.ApplicationModule(allowedDependencies = \"estoque\")\npackage com.loja.pedidos;", "ArquiteturaTests.cs": "// xUnit + NetArchTest.Rules · Clean Architecture verificada no build\nusing System.Reflection;\nusing NetArchTest.Rules;\n\npublic class ArquiteturaTests\n{\n    static readonly Assembly Dominio = typeof(Loja.Domain.Pedido).Assembly;\n    static readonly Assembly Aplicacao = typeof(Loja.Application.CriarPedido).Assembly;\n\n    [Fact]\n    public void Dominio_nao_depende_de_ninguem()\n    {\n        var r = Types.InAssembly(Dominio)\n            .ShouldNot().HaveDependencyOnAny(\n                \"Loja.Application\", \"Loja.Infrastructure\", \"Loja.Api\",\n                \"Microsoft.EntityFrameworkCore\", \"Microsoft.AspNetCore\")\n            .GetResult();\n\n        Assert.True(r.IsSuccessful, string.Join(\", \", r.FailingTypeNames ?? []));\n    }\n\n    [Fact]\n    public void Aplicacao_nao_conhece_infra()\n    {\n        var r = Types.InAssembly(Aplicacao)\n            .ShouldNot().HaveDependencyOn(\"Loja.Infrastructure\")\n            .GetResult();\n        Assert.True(r.IsSuccessful);\n    }\n\n    [Fact]\n    public void Handlers_sao_sealed_e_internos()\n    {\n        var r = Types.InAssembly(Aplicacao)\n            .That().HaveNameEndingWith(\"Handler\")\n            .Should().BeSealed().And().NotBePublic()\n            .GetResult();\n        Assert.True(r.IsSuccessful);\n    }\n}\n// com projetos separados, o compilador já barra parte disso:\n// Loja.Domain.csproj não tem ProjectReference para Infrastructure.\n// Com slices num projeto só, o teste é a única barreira.", "CriarPedido.cs": "// Features/Pedidos/CriarPedido.cs · um slice: entrada, regra, saída e rota juntos\nnamespace Loja.Api.Features.Pedidos;\n\npublic static class CriarPedido\n{\n    public sealed record Comando(Guid ClienteId, List<ItemDto> Itens);\n    public sealed record ItemDto(string Sku, int Qtd);\n    public sealed record Resultado(Guid Id, decimal Total);\n\n    public static RouteHandlerBuilder Mapear(RouteGroupBuilder g) =>\n        g.MapPost(\"/\", async (Comando cmd, Handler h, CancellationToken ct) =>\n            await h.Executar(cmd, ct) is { } r\n                ? Results.Created($\"/pedidos/{r.Id}\", r)\n                : Results.UnprocessableEntity());\n\n    // sem MediatR: classe comum registrada na DI, chamada direto pela rota\n    public sealed class Handler(LojaDb db, IEstoque estoque)\n    {\n        public async Task<Resultado?> Executar(Comando cmd, CancellationToken ct)\n        {\n            var pedido = Pedido.Criar(cmd.ClienteId,\n                cmd.Itens.Select(i => (i.Sku, i.Qtd)));          // regra no domínio\n            if (!await estoque.Reservar(pedido.Itens, ct)) return null;\n            db.Pedidos.Add(pedido);\n            await db.SaveChangesAsync(ct);                       // EF direto, sem repositório\n            return new Resultado(pedido.Id, pedido.Total);\n        }\n    }\n}\n\n// Features/Pedidos/PedidosModule.cs\npublic static class PedidosModule\n{\n    public static IServiceCollection AddPedidos(this IServiceCollection s) =>\n        s.AddScoped<CriarPedido.Handler>().AddScoped<ListarPedidos.Handler>();\n\n    public static void MapPedidos(this IEndpointRouteBuilder app)\n    {\n        var g = app.MapGroup(\"/pedidos\").RequireAuthorization();\n        CriarPedido.Mapear(g);\n        ListarPedidos.Mapear(g);\n    }\n}", "dependency-cruiser.cjs": "/** regras de dependência do monólito modular (dependency-cruiser 18) */\nmodule.exports = {\n  forbidden: [\n    { name: 'dominio-puro', severity: 'error',\n      comment: 'domínio não depende de aplicação, infra, http nem de pacotes externos',\n      from: { path: '/dominio/' },\n      to: { pathNot: ['/dominio/', '^node:'] } },\n    { name: 'aplicacao-sem-infra', severity: 'error',\n      comment: 'caso de uso conhece portas, não implementações',\n      from: { path: '/aplicacao/' },\n      to: { path: ['/infra/', '/http/'] } },\n    { name: 'modulo-pela-api-publica', severity: 'error',\n      comment: 'outro módulo entra só pelo index.ts',\n      from: { path: '^src/modules/([^/]+)/' },\n      to: { path: '^src/modules/([^/]+)/.+',\n            pathNot: ['^src/modules/$1/', '^src/modules/[^/]+/index\\\\.ts$'] } },\n    { name: 'sem-ciclos', severity: 'error', from: {}, to: { circular: true } },\n  ],\n  options: { doNotFollow: { path: 'node_modules' }, tsPreCompilationDeps: true,\n             tsConfig: { fileName: 'tsconfig.json' } },\n};", "dotnet-clean.txt": "Loja.slnx                         # .NET 10: dotnet new sln gera .slnx\nDirectory.Build.props             # net10.0, Nullable, TreatWarningsAsErrors\nDirectory.Packages.props          # versões centrais dos pacotes NuGet\nsrc/\n  Loja.Domain/                    # entidades, value objects, eventos de domínio\n    Pedidos/Pedido.cs             #   zero pacotes, zero referência a projeto\n    Pedidos/PedidoCriado.cs\n  Loja.Application/               # casos de uso, portas, DTOs   → Domain\n    Pedidos/CriarPedido.cs        #   comando + handler + validação\n    Abstracoes/IEstoque.cs        #   porta implementada pela infra\n  Loja.Infrastructure/            # EF Core, clients HTTP, mensageria → Application\n    Persistencia/LojaDb.cs\n    Persistencia/Configuracoes/PedidoConfig.cs   # mapeamento EF fora da entidade\n    Persistencia/Migrations/\n    Estoque/EstoqueHttp.cs        #   adaptador da porta IEstoque\n    DependencyInjection.cs        #   AddInfrastructure(this IServiceCollection)\n  Loja.Api/                       # Program.cs, endpoints, auth   → todos\n    Endpoints/PedidosEndpoints.cs\n    appsettings.json\ntests/\n  Loja.Domain.Tests/              # unitário puro, rápido\n  Loja.Application.Tests/         # handlers com dublês das portas\n  Loja.Api.IntegrationTests/      # WebApplicationFactory + Testcontainers\n  Loja.ArchitectureTests/         # NetArchTest: a regra vira teste\n\n# setas de ProjectReference: Api → Infrastructure → Application → Domain\n# o compilador impede Domain de enxergar EF Core: a regra é física", "dotnet-slices.txt": "Loja.slnx\nsrc/Loja.Api/                     # um projeto; o corte é por funcionalidade\n  Program.cs                      # builder.Services.AddPedidos(); app.MapPedidos();\n  Features/\n    Pedidos/\n      CriarPedido.cs              # comando, validação, handler e rota no mesmo arquivo\n      ListarPedidos.cs            # leitura: projeção direta com Select, sem domínio\n      CancelarPedido.cs\n      PedidosModule.cs            # AddPedidos() + MapGroup(\"/pedidos\")\n    Pagamentos/\n      ConfirmarPagamento.cs\n      PagamentosModule.cs\n  Dominio/                        # entidades ricas compartilhadas entre slices\n    Pedido.cs\n  Infra/\n    LojaDb.cs                     # um DbContext; configs por pasta de feature\n    Migrations/\n  Comum/                          # ProblemDetails, auth, behaviors transversais\ntests/\n  Loja.Api.Tests/\n    Features/Pedidos/CriarPedidoTests.cs   # teste espelha o slice\n  Loja.ArchitectureTests/         # slice não importa slice de outra feature\n\n# MediatR 13+ tem licença comercial (grátis abaixo de US$ 5 mi/ano): avalie\n# alternativas: handler comum na DI, Wolverine, ou o gerador Mediator (source gen)", "express-tree.txt": "src/\n  server.ts                       # listen + desligamento gracioso (SIGTERM)\n  app.ts                          # cria o app: json, logger, rotas, erro\n  config.ts                       # zod.parse(process.env), falha na partida\n  modules/\n    pedidos/\n      index.ts                    # API pública: export { pedidosRouter }\n      pedidos.routes.ts           # Router: valida entrada, chama o service\n      pedidos.schema.ts           # zod: DTO de entrada e saída\n      pedidos.service.ts          # regra, recebe dependências por parâmetro\n      pedidos.repo.ts             # SQL ou Prisma\n      pedidos.test.ts             # vitest + supertest\n    estoque/\n      index.ts\n      interno/\n  shared/\n    errors.ts                     # AppError → ProblemDetails\n    db.ts\n    logger.ts                     # pino\n.dependency-cruiser.cjs           # as regras que o framework não impõe\nmigrations/                       # node-pg-migrate, Prisma ou Knex\n\n# Express não impõe nada: a estrutura e o depcruise são a sua arquitetura", "fastapi-tree.txt": "pyproject.toml                    # uv, ruff, mypy, pytest, import-linter\nsrc/loja/\n  main.py                         # create_app(): inclui routers, middlewares\n  config.py                       # pydantic-settings: env tipado\n  db.py                           # engine async, sessionmaker, get_session\n  pedidos/\n    __init__.py\n    router.py                     # APIRouter: só HTTP\n    schemas.py                    # Pydantic: DTO de entrada e saída\n    models.py                     # SQLAlchemy 2: tabela (persistência)\n    dominio.py                    # regra pura, opcional quando há regra de verdade\n    service.py                    # caso de uso\n    repository.py                 # consultas\n    dependencies.py               # Depends: sessão, usuário, serviço\n  estoque/\n    __init__.py                   # API pública do módulo\n    interno.py\nalembic/\n  env.py\n  versions/                       # migrations\ntests/\n  conftest.py                     # app, banco de teste, overrides de Depends\n  pedidos/test_router.py\n  pedidos/test_service.py\n\n# import-linter no CI: camadas por módulo + módulos independentes", "hexagonal.ts": "// pedidos/aplicacao/portas.ts · o caso de uso declara do que precisa\nexport interface PedidosRepo { salvar(p: Pedido): Promise<void> }\nexport interface Estoque { reservar(sku: string, qtd: number): Promise<boolean> }\n\n// pedidos/aplicacao/criar-pedido.ts · porta de entrada (driving)\nexport type CriarPedido = { clienteId: string; itens: Item[] };   // DTO de entrada\n\nexport function criarPedidoUseCase(deps: { repo: PedidosRepo; estoque: Estoque;\n                                           novoId: () => string }) {\n  return async (cmd: CriarPedido) => {\n    const pedido = Pedido.criar(deps.novoId(), cmd.clienteId, cmd.itens);  // domínio\n    for (const i of pedido.itens)\n      if (!(await deps.estoque.reservar(i.sku, i.qtd)))\n        return { erro: `sem estoque: ${i.sku}` };\n    await deps.repo.salvar(pedido);\n    return { id: pedido.id, total: pedido.total };                // DTO de saída\n  };\n}\n\n// pedidos/infra/pedidos-repo-memoria.ts · adaptador de saída (driven)\nexport class PedidosRepoMemoria implements PedidosRepo {\n  readonly dados = new Map<string, Pedido>();\n  async salvar(p: Pedido) { this.dados.set(p.id, p); }\n}\n\n// pedidos/infra/estoque-adapter.ts · fala com outro módulo pela API pública\nimport { reservar } from '../../estoque/index.ts';\nexport const estoqueAdapter: Estoque = { reservar };\n\n// main.ts · composition root: o único lugar que conhece todas as implementações\nlet n = 0;\nconst criar = criarPedidoUseCase({ repo: new PedidosRepoMemoria(),\n                                   estoque: estoqueAdapter, novoId: () => `p-${++n}` });\nconsole.log(await criar({ clienteId: 'c1', itens: [{ sku: 'caneta', qtd: 2, preco: 3.5 }] }));\n// { id: 'p-1', total: 7 }\nconsole.log(await criar({ clienteId: 'c1', itens: [{ sku: 'caderno', qtd: 1, preco: 20 }] }));\n// { erro: 'sem estoque: caderno' }", "monorepo-tree.txt": "pnpm-workspace.yaml               # packages: [\"apps/*\", \"packages/*\"]\npackage.json                      # scripts que delegam ao turbo ou ao nx\nturbo.json                        # Turborepo: tarefas, dependências, cache\nnx.json                           # ou Nx: cache, affected, regras de fronteira\napps/\n  web/                            # Next\n  api/                            # NestJS\n  worker/                         # consumidor de filas\npackages/\n  contratos/                      # schemas zod e tipos gerados do OpenAPI\n  ui/                             # design system\n  dominio-pedidos/                # regra compartilhada entre api e worker\n  config-ts/  config-eslint/      # tsconfig e lint base\ndocs/adr/                         # decisões de arquitetura versionadas\n\n# Nx: project.json com tags [\"scope:pedidos\", \"type:domain\"]\n# eslint: @nx/enforce-module-boundaries\n#   type:app → pode tudo · type:feature → domain, ui, util\n#   type:domain → util · scope:pedidos não importa scope:pagamentos\n# pnpm: \"dominio-pedidos\": \"workspace:*\" no package.json de quem usa", "nest-tree.txt": "src/\n  main.ts                         # bootstrap, ValidationPipe global\n  app.module.ts                   # importa os módulos de feature\n  config/\n    configuration.ts              # @nestjs/config + validação do env\n  common/                         # guards, filters, interceptors, decorators\n  pedidos/\n    pedidos.module.ts             # providers + exports: só o que é público\n    pedidos.controller.ts         # HTTP: rotas, DTO, status\n    pedidos.service.ts            # regra (ou application/criar-pedido.use-case.ts)\n    pedidos.repository.ts         # Prisma / TypeORM / Drizzle\n    dto/\n      criar-pedido.dto.ts         # class-validator ou zod\n      pedido.response.ts\n    domain/\n      pedido.ts                   # entidade sem decorators de ORM\n    pedidos.service.spec.ts       # unitário ao lado do código\n  estoque/\n    estoque.module.ts             # exports: [EstoqueService]\n    estoque.service.ts\n    internal/                     # nunca importado de fora\ntest/\n  pedidos.e2e-spec.ts             # supertest contra o app inteiro\nprisma/\n  schema.prisma\n  migrations/\n\n# outro módulo usa EstoqueService só se EstoqueModule exportar e PedidosModule importar", "next-tree.txt": "app/                              # Next 16 app router: só roteamento e layout\n  layout.tsx\n  (loja)/produtos/[id]/page.tsx   # fina: importa a página de src/pages\n  (loja)/carrinho/page.tsx\n  api/webhooks/route.ts\nproxy.ts                          # ex-middleware: redireciona sem sessão\nsrc/                              # Feature-Sliced Design: camadas de cima para baixo\n  app/                            # providers, estilos globais, init\n  pages/                          # composição de cada tela\n    produto/ui/ProdutoPage.tsx\n  widgets/                        # blocos grandes reutilizados\n    header/  carrinho-lateral/\n  features/                       # ações do usuário com valor de negócio\n    adicionar-ao-carrinho/\n      ui/BotaoAdicionar.tsx\n      model/acao.ts               # Server Action ou mutation\n      index.ts                    # API pública do slice\n  entities/                       # conceitos do negócio\n    produto/  usuario/\n      model/  api/  ui/  index.ts\n  shared/                         # sem negócio: ui kit, api client, lib, config\n    ui/  api/  lib/\n\n# regra FSD: camada só importa das de baixo; entre slices, só pelo index.ts\n# app/ do Next e src/app/ do FSD convivem; Steiger e eslint-plugin-boundaries checam", "pyproject.toml": "[tool.importlinter]\nroot_package = \"loja\"\n\n[[tool.importlinter.contracts]]\nname = \"Camadas do módulo pedidos\"\ntype = \"layers\"\nlayers = [\n  \"loja.pedidos.api\",\n  \"loja.pedidos.servicos\",\n  \"loja.pedidos.repositorio\",\n  \"loja.pedidos.dominio\",\n]\n\n[[tool.importlinter.contracts]]\nname = \"Estoque só pela API pública\"\ntype = \"forbidden\"\nsource_modules = [\"loja.pedidos\"]\nforbidden_modules = [\"loja.estoque.interno\"]\n\n[[tool.importlinter.contracts]]\nname = \"Módulos independentes\"\ntype = \"independence\"\nmodules = [\"loja.pedidos\", \"loja.estoque\"]", "spring-tree.txt": "src/main/java/com/loja/\n  LojaApplication.java\n  pedidos/                        # módulo: o pacote-base é a API pública\n    PedidoService.java            #   usado por outros módulos\n    PedidoCriado.java             #   evento publicado (record)\n    package-info.java             #   @ApplicationModule(allowedDependencies = \"estoque\")\n    web/\n      PedidoController.java       #   interno: só este módulo enxerga\n      CriarPedidoRequest.java     #   DTO (record)\n    dominio/\n      Pedido.java                 #   entidade; JPA aqui é concessão consciente\n    infra/\n      PedidoRepository.java       #   Spring Data, interno\n  estoque/\n    EstoqueService.java\n    internal/\n      Reservas.java\n  compartilhado/                  # tipos de valor estáveis: Dinheiro, TenantId\nsrc/main/resources/\n  application.yaml\n  db/migration/V1__cria_pedidos.sql      # Flyway (ou Liquibase)\nsrc/test/java/com/loja/\n  ModulosTest.java                # ApplicationModules.verify()\n  pedidos/PedidoModuleTests.java  # @ApplicationModuleTest: sobe só este módulo\n  ArquiteturaTest.java            # ArchUnit para regras extras\n\n# evento entre módulos: @ApplicationModuleListener + Event Publication Registry\n# (a outbox do próprio Spring Modulith) em vez de chamada direta"};
+const TR = {"aks": ["Trilha AKS", "https://claude.ai/artifact/4AALP9pjCkhZKLj33Y55Jt"], "bt": ["Preparatório Big Tech", "https://claude.ai/artifact/D41cC1PQp7JBMqC374v7Wd"], "cs": ["Trilha C# e ASP.NET Core", "https://claude.ai/artifact/3FnqWLabs1uKFSTvv5dQ2h"], "db": ["Bancos de Dados a Fundo", "https://claude.ai/artifact/D5qfvfVmLDbksCvzCcePwv"], "front": ["Frontend React e Angular", "https://claude.ai/artifact/82dx1RPfVRGxJDDCV3BbqP"], "ia": ["Trilha de IA Aplicada", "https://claude.ai/artifact/Gtmpv99QxE2WfcHhNTyP5S"], "kafka": ["Trilha Kafka e Event Hubs", "https://claude.ai/artifact/GeQFN8WPLdszvFermpzAcd"], "node": ["Trilha Node e TypeScript", "https://claude.ai/artifact/8uwZSSQkCqzRyx6sBvz1Rr"], "sec": ["Segurança de Aplicação", "https://claude.ai/artifact/9iJpzcUyk2d7SMzP8oX7pq"], "staff": ["Do Pleno ao Staff", "https://claude.ai/artifact/PeJ8q1fooiXfmrpMLzNv7V"], "tf": ["Trilha Terraform", "https://claude.ai/artifact/L8dCTMv3pvC9bmqv8A7XL5"], "tl": ["Tech Lead na Prática", "https://claude.ai/artifact/DJXB1CHv8icLCt9rbPqvmH"], "v01": ["Vol 1 · Mensageria e Caches", "https://claude.ai/artifact/VwX2XzCPC2fBdsKoYQVxui"], "v02": ["Vol 2 · Frontend", "https://claude.ai/artifact/5mFgBQsoRtGswPcBbSig83"], "v03": ["Vol 3 · Bancos de Dados", "https://claude.ai/artifact/D88RDNGULzL2WTJtXnRFSt"], "v04": ["Vol 4 · Runtimes e Linguagens", "https://claude.ai/artifact/7sEeFHtHamDndKLP1gAakV"], "v05": ["Vol 5 · Cloud", "https://claude.ai/artifact/DXP7TMZzSKgcwAo3mUi8vj"], "v06": ["Vol 6 · System Design", "https://claude.ai/artifact/FXzt6vk63EK2BNpCsM4hzb"], "v07": ["Vol 7 · Algoritmos", "https://claude.ai/artifact/2JQfJQWTggkrVcP2XJq8Pp"], "v08": ["Vol 8 · Asterisk e Telefonia", "https://claude.ai/artifact/YUoVcgYGuHmRh9KR7WNLNU"], "v09": ["Vol 9 · LLMs no Dev em Equipe", "https://claude.ai/artifact/Cpw5kxYQeHkMyiSyk2HwSc"], "v10": ["Vol 10 · Gestão de Projetos", "https://claude.ai/artifact/SZ8i5b6WZAcRf4fhbnP1G8"], "v11": ["Vol 11 · Criar Sua Empresa", "https://claude.ai/artifact/EDdLKpfBhhDMSKe4jKvGp2"], "v12": ["Vol 12 · Ferramentas e Integrações", "https://claude.ai/artifact/DNtrGnKWtsETQFcYjgjgJ9"], "v13": ["Vol 13 · Observabilidade", "https://claude.ai/artifact/YADQ8HKbmZGfRvmZEDBYPe"], "v14": ["Vol 14 · Segurança de Aplicações", "https://claude.ai/artifact/9yCgp3VEe1YrF5SGTiDXmV"], "v15": ["Vol 15 · Engenharia de IA a Fundo", "https://claude.ai/artifact/DGd9um2Vx2A3xxqA9ov56F"], "v16": ["Vol 16 · Fundamentos de Eng. de Software", "https://claude.ai/artifact/LyMxzwtQwq8NafUaJuE6sU"], "v17": ["Vol 17 · Dados e Analytics", "https://claude.ai/artifact/TvGPDb2WNA5mMx9WKpdj1k"], "v19": ["Vol 19 · Carreira e Entrevistas", "https://claude.ai/artifact/MQBobSKqVbrgtRfMM2Lwv8"], "v20": ["Vol 20 · Roteiro Mestre de 24 Meses", "https://claude.ai/artifact/4BgtWQxbSqsptsXajVVzST"], "v21": ["Vol 21 · Tech Lead na Prática", "https://claude.ai/artifact/KSgiUxx5i6gzHEZVgPZtAx"], "v22": ["Vol 22 · Staff e Arquitetura Evolutiva", "https://claude.ai/artifact/MWQ7t69MffQWDgfJ6KtBJk"], "v23": ["Vol 23 · Dev Assistido por IA Avançado", "https://claude.ai/artifact/CcrumVXMBChNZmRhE31yhV"], "v18": ["Vol 18 · Negócios e Produto", "https://claude.ai/artifact/HvkoKSv7kESMDmHzV7B4a4"], "v24": ["Vol 24 · IA Corporativa Avançada", "https://claude.ai/artifact/8Bbz2YasfmkV4L2c5Ff7Rv"], "nml": ["Nova · ML e Deep Learning", "https://claude.ai/artifact/NLnZkY9Vx7Bpugqe8VXDB3"], "npy": ["Nova · Python para Backend e IA", "https://claude.ai/artifact/MTkKYpn6kqoSquZBisBjAw"], "nso": ["Nova · Redes, SO e Concorrência", "https://claude.ai/artifact/NUGEuT3YNmZKaNnxLv73cv"], "ndist": ["Nova · Sistemas Distribuídos", "https://claude.ai/artifact/UVUYs3qffaRD6XVAJDJeBd"], "naws": ["Nova · AWS na Prática", "https://claude.ai/artifact/AeCtzjwsMWZNNM7bhZXLAy"], "nsaas": ["Nova · Arquitetura SaaS", "https://claude.ai/artifact/8sE59aNWrPp6A6diu1jbUG"], "nperf": ["Nova · Performance e Caos", "https://claude.ai/artifact/3FBZKY6f96FpdYrmPx4NeB"], "nfinal": ["Nova · Projeto Final", "https://claude.ai/artifact/1P1ptWhdJDmhvnUvxiozhx"], "c104": ["Cert · AZ-104 Azure Administrator", "https://claude.ai/artifact/2vQSPhzkktHrRcf3cXeAaF"], "c305": ["Cert · AZ-305 Solutions Architect", "https://claude.ai/artifact/Kz9hszY2RjBTnQbMVJSfvV"], "c200": ["Cert · AI-200 AI Cloud Developer", "https://claude.ai/artifact/SXVRooYta7kWModxrWVasi"], "c103": ["Cert · AI-103 AI Apps and Agents", "https://claude.ai/artifact/QNj8nhvHHCATJ5ZZ6njysp"], "c400": ["Cert · AZ-400 DevOps Engineer", "https://claude.ai/artifact/BPVxPFNRATbP5eK8iDrRUA"], "csaa": ["Cert · AWS Solutions Architect Associate", "https://claude.ai/artifact/EswiAKw96PRFVzkDSSNDYb"], "ccka": ["Cert · CKA Kubernetes Administrator", "https://claude.ai/artifact/M5VHmLJ5R4kWK6LUUbwwsz"], "ckafka": ["Cert · Confluent Kafka", "https://claude.ai/artifact/NoBhACi1UnfH1WTjvg4owg"], "csc500": ["Cert · SC-500 Cloud and AI Security", "https://claude.ai/artifact/PhJmPwwXH1A4zaQoywZmkU"], "csc100": ["Cert · SC-100 Cybersecurity Architect", "https://claude.ai/artifact/Fg63ZrBdBQC4mWJrPB3Jmh"], "csc2003": ["Cert · SC-200 e SC-300", "https://claude.ai/artifact/AiAtvk2jwqACoPN32mYu6S"], "c901": ["Cert · AI-901 AI Fundamentals", "https://claude.ai/artifact/E5sF2gdYzJkQhoTuPqnnJ1"], "cdp700": ["Cert · DP-700 Fabric Data Engineer", "https://claude.ai/artifact/StB9Z2V1nRRLeiHqLqzrKX"], "cpl300": ["Cert · PL-300 Power BI", "https://claude.ai/artifact/YNPpL7WWufh7Lub5aRKRqk"], "nnet": ["Nova · Node/TS para C#/ASP.NET", "https://claude.ai/artifact/4QE5egh7BN3FTDLnpD15P4"], "nddd": ["Nova · DDD Estratégico e BDD", "https://claude.ai/artifact/55HAvKNZCcMru49J14HT9L"], "nplat": ["Nova · Platform Engineering e FinOps", "https://claude.ai/artifact/2gEj4biSYPQfkWNqk6e5Q7"], "nfront": ["Nova · Frontend Avançado e IA para UI", "https://claude.ai/artifact/HiRHNdQG5dPHgmatXLRznp"], "naiops": ["Nova · IA para DevOps e AIOps", "https://claude.ai/artifact/Ud6TL7ef8LJedXEgVsLf2k"], "niagestao": ["Nova · IA na Gestão de Projetos e Times", "https://claude.ai/artifact/PrRtahuM8fRh1DjgHAUhuy"], "dsd": ["Decisão · System Design Aprofundado", "https://claude.ai/artifact/Kvv86wZi2thj7j3k2CSdmH"], "dapi": ["Decisão · APIs, Contratos e Integração", "https://claude.ai/artifact/Y6MBSiEQRwgusWeWAYzYJX"], "ddados": ["Decisão · Dados, Consistência e Cache", "https://claude.ai/artifact/Q84iAmEPD4BwaD3TA4UiGH"], "dnuvem": ["Decisão · Onde Rodar Cada Coisa na Nuvem", "https://claude.ai/artifact/Rp73hmdEYS4TwasScVNHhH"], "dauth": ["Decisão · Autenticação e Autorização", "https://claude.ai/artifact/GhPinQqwEb98KGc7wvXfgh"], "destr": ["Decisão · Estrutura de Código e Pastas", "https://claude.ai/artifact/L7Yf9Boiw8Rf5UPYWTiGdF"]};
+// ===================== AJUDANTES DE CENA =====================
+const B = (t, s, tag, tc) => `<b>${t}</b>${s ? `<small>${s}</small>` : ''}${tag ? `<span class="tag ${tc || ''}">${tag}</span>` : ''}`;
+const UL = (...xs) => '<ul class="ul">' + xs.map(x => `<li><span>${x}</span></li>`).join('') + '</ul>';
+const NOTE = (txt, cor) => `<small style="font:12px var(--f-mono);color:var(--st-${cor || 'ink'})">${txt}</small>`;
+const VISTO = (txt) => ({at:0, x:36,y:470,w:888,h:36, cls:'ext', html:`<small style="font:12px var(--f-mono);color:var(--st-amber)">já visto · ${txt}</small>`});
+const S = (file, key, lang = 'cs') => ({type:'code', file, lang, code: SNIP[key]});
+const T = (...lines) => ({type:'term', lines});
+const CK = (...items) => ({type:'check', items});
+// Grade automática: GRID(n colunas, [ [titulo, sub, [itens], cls], ... ], {y, h, gap, rodape})
+function GRID(cols, cards, o = {}){
+  const W = 888, gap = o.gap ?? 24, x0 = 36, y0 = o.y ?? 92;
+  const rows = Math.ceil(cards.length / cols);
+  const avail = (o.rodape ? 452 : 504) - y0;
+  const maxIt = Math.max(...cards.map(c => (c[2] || []).length));
+  const h = o.h ?? Math.min(Math.floor((avail - (rows - 1) * 20) / rows), Math.max(150, 70 + 30 * maxIt));
+  const w = Math.floor((W - (cols - 1) * gap) / cols);
+  const items = cards.map((c, i) => {
+    const r = Math.floor(i / cols), k = i % cols;
+    const [t, s, xs, cls] = c;
+    return {at: o.at ? o.at[i] : +(0.8 + i * (o.step ?? 2.6)).toFixed(1), x: x0 + k * (w + gap), y: y0 + r * (h + 20), w, h, cls: cls || '', html: B(t, s || '') + (xs && xs.length ? UL(...xs) : '')};
+  });
+  if (o.rodape) items.push({at: +(0.8 + cards.length * (o.step ?? 2.6)).toFixed(1), x:36, y:466, w:888, h:40, cls:'ext', html: NOTE(o.rodape)});
+  return {type:'boxes', items};
+}
+// Fluxo horizontal de etapas: FLOW([ [titulo, sub, cls], ... ], {y, h, nota:[titulo, [itens]]})
+function FLOW(steps, o = {}){
+  const n = steps.length, gap = 18, W = 888, y = o.y ?? 120, h = o.h ?? 92;
+  const w = Math.floor((W - (n - 1) * gap) / n);
+  const items = [], lines = [];
+  steps.forEach((s, i) => {
+    const x = 36 + i * (w + gap), at = +(0.8 + i * (o.step ?? 1.6)).toFixed(1);
+    items.push({at, x, y, w, h, cls: s[2] || 'blue', html: B(s[0], s[1] || '')});
+    if (i) lines.push({at, d:`M${x - gap} ${y + h/2} L ${x} ${y + h/2}`, cls:'flow'});
+  });
+  let t = 0.8 + n * (o.step ?? 1.6) + 1;
+  (o.cards || []).forEach((c, i, arr) => {
+    const cw = Math.floor((W - (arr.length - 1) * 24) / arr.length);
+    items.push({at: +(t + i * 2.5).toFixed(1), x: 36 + i * (cw + 24), y: y + h + 40, w: cw, h: o.ch ?? (500 - (y + h + 40)), cls: c[3] || (i % 2 ? 'green' : 'amber'), html: B(c[0], c[1] || '') + (c[2] ? UL(...c[2]) : '')});
+  });
+  return {type:'boxes', items, lines};
+}
+
+// ===================== Decisão · Estrutura de Código e Pastas por Stack =====================
+const CONF = {
+  title: 'Decisão: Estrutura de Código e Pastas', file: 'Decisão - Estrutura de Código e Pastas por Stack', key: 'destr',
+  eyebrow: 'Decisões de engenharia · estrutura', h1: 'Onde cada coisa mora, e quem pode importar quem',
+  lead: 'Referência de decisão para sênior que mira staff: camadas, Clean Architecture, Hexagonal, Onion, Vertical Slice e feature folders; monólito modular ou microsserviços; regras de dependência forçadas com ArchUnit, Spring Modulith, NetArchTest, dependency-cruiser, eslint-plugin-boundaries, Nx e import-linter; árvores de pastas concretas para .NET em projetos ou slices, Spring Boot por feature, NestJS, Express, FastAPI, Next com Feature-Sliced Design e monorepo com Nx, Turborepo e pnpm; onde ficam testes, config, migrations, DTOs e mapeamento; quando a abstração é demais e como evoluir do simples ao modular.',
+  pills: ['Camadas', 'Clean e Hexagonal', 'Vertical Slice', 'Monólito modular', 'Regras de dependência', 'Árvores por stack', 'Feature-Sliced Design', 'YAGNI'],
+  term: 'bash · ~/estrutura-lab',
+  faqPlaceholder: 'Buscar: Clean, hexagonal, vertical slice, MediatR, Modulith, depcruise, monorepo…',
+  matriz: {title: 'Estilo por tamanho de time e de domínio', desc: 'O estilo certo depende de quantas pessoas mexem no código e de quanta regra de negócio existe. Comece pela linha que descreve você hoje e leia a última coluna para saber quando mudar.', cols: ['Contexto', 'Estilo recomendado', 'Como forçar as regras', 'Sinal para evoluir'], tag: false},
+};
+const TITLE = {k: 'Decisões de engenharia · estrutura', h: 'Estrutura de código e pastas por stack',
+  p: 'Arquitetura de código é uma lista curta de regras sobre quem pode importar quem, mais uma árvore de pastas que torna essas regras óbvias. O resto é cerimônia. Esta trilha mostra os estilos, como forçá-los e a árvore concreta em cada stack.',
+  chips: ['camadas', 'ports & adapters', 'slices', 'módulos', 'fronteiras', 'ArchUnit', 'depcruise', 'FSD', 'YAGNI']};
+const OUTRO = {k: 'Fim do roteiro', h: 'Regra que não roda no CI é sugestão',
+  p: 'Abaixo do vídeo estão a matriz por time e domínio, as cenas relacionadas de outras trilhas, a documentação oficial das ferramentas, o checklist e as perguntas de entrevista sobre arquitetura de código.',
+  chips: ['dependência para dentro', 'módulo com API pública', 'slice por caso de uso', 'teste de arquitetura', 'composition root', 'evolua por sinal']};
+
+const MAIS = (g, ...xs) => (g.items.push(...xs), g);
+const MONO = (t, px) => `<div style="margin-top:8px;font:${px || 14}px/1.7 var(--f-mono)">` + t + '</div>';
+
+const SCENES = [
+/* ---------- O MAPA ---------- */
+{ id:'intro', ch:'O mapa', title:'Pastas são a arquitetura visível',
+  say:'Quem abre o repositório pela primeira vez lê a arquitetura nas pastas. Se elas dizem controllers, services e repositories, o sistema parece um CRUD; se dizem pedidos, pagamentos e estoque, ele conta o negócio. Esta trilha decide três coisas: como fatiar o código, quem pode importar quem e como o CI garante isso. Para cada estilo, critério de uso, árvore concreta em .NET, Spring, NestJS, Express, FastAPI, Next e monorepo, e um laboratório que quebra as regras de propósito para ver a ferramenta pegar.',
+  v:{type:'title'} },
+
+{ id:'eixos', ch:'O mapa', title:'Três decisões independentes',
+  say:'Separe três decisões que costumam vir misturadas. A primeira é o corte principal: por camada técnica, horizontal, ou por funcionalidade, vertical. A segunda é a direção das dependências dentro de cada fatia: se o domínio conhece o banco ou o banco conhece o domínio. A terceira é a unidade de implantação: um processo, um monólito com módulos, ou vários serviços. Dá para ter monólito com slices e hexagonal no módulo mais complexo. Quem confunde as três acaba criando microsserviços para resolver bagunça de pastas.',
+  v:{type:'boxes', defs:[
+    ['1. Corte principal','camada técnica × funcionalidade', .8],
+    ['2. Direção da dependência','domínio no centro ou no meio', 3.2],
+    ['3. Unidade de implantação','monólito, modular, serviços', 5.6],
+    ['Combinação comum','monólito modular + slices', 8],
+    ['Erro comum','microsserviço para arrumar pasta', 10.4],
+  ], items:[
+    {at:12, x:470,y:92,w:454,h:190, cls:'region', html:'<span class="rl">horizontal × vertical</span>'+MONO('controllers/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pedidos/<br>services/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pagamentos/<br>repositories/ &nbsp;&nbsp;&nbsp;&nbsp;estoque/<br>models/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compartilhado/', 14)},
+    {at:15, x:470,y:302,w:454,h:200, cls:'green', html:B('O que mede uma boa estrutura','')+UL('mudança comum toca uma pasta só','dá para apagar uma feature inteira','novato acha o código pelo nome do negócio','regra de import roda no CI')},
+  ]}},
+
+/* ---------- OS ESTILOS ---------- */
+{ id:'camadas', ch:'Os estilos', title:'Camadas (N-tier)',
+  say:'O clássico: apresentação chama serviço, serviço chama repositório, repositório fala com o banco. Cada camada só conhece a de baixo. É fácil de explicar, todo framework gera assim e funciona bem para CRUD com pouca regra. Os problemas aparecem com o tamanho: uma funcionalidade se espalha por quatro pastas, o serviço vira um balde de duzentas linhas por entidade e, como a regra depende do repositório, o domínio acaba sabendo do ORM. Use para sistemas pequenos ou como camada interna de um módulo, não como corte principal de um sistema grande.',
+  v:MAIS(FLOW([
+    ['Apresentação','controller, rota','blue'],
+    ['Serviço','regra de negócio','green'],
+    ['Repositório','acesso a dados','amber'],
+    ['Banco','tabelas','ext'],
+  ], {y:96, h:86, step:1.8, ch:180, cards:[
+    ['Quando serve','',['CRUD com pouca regra','time pequeno, um domínio','API interna simples','gerador do framework ajuda'],'green'],
+    ['Quando dói','',['feature espalhada em 4 pastas','service de 2 mil linhas','domínio depende do ORM','mudança toca tudo'],'ext'],
+  ]}),
+    {at:16, x:36,y:422,w:888,h:80, cls:'region', html:'<span class="rl">dependência</span>'+MONO('Controller → Service → Repository → DbContext · a regra depende da persistência', 14)}) },
+
+{ id:'clean', ch:'Os estilos', title:'Clean, Hexagonal e Onion',
+  say:'Clean Architecture, Hexagonal e Onion são variações da mesma ideia: inverter a dependência para que o domínio fique no centro e não conheça nada de fora. Hexagonal, de Alistair Cockburn, fala em portas, as interfaces que a aplicação declara, e adaptadores, as implementações de HTTP, banco e fila. Onion desenha anéis; Clean, de Robert Martin, adiciona casos de uso como camada explícita. A regra comum: setas de import apontam para dentro. O ganho é testar regra sem banco e trocar infraestrutura; o custo é mais tipos e mais indireção.',
+  v:MAIS(GRID(3, [
+    ['Hexagonal','Cockburn, 2005',['portas: interfaces da aplicação','adaptadores: HTTP, banco, fila','entrada (driving) e saída (driven)'],'blue'],
+    ['Onion','Palermo, 2008',['anéis concêntricos','domínio no centro','infra na borda'],'amber'],
+    ['Clean','Martin, 2012',['entidades e casos de uso','controllers e gateways fora','regra da dependência'],'green'],
+  ], {h:200, step:4}),
+    {at:13, x:36,y:312,w:888,h:190, cls:'region', html:'<span class="rl">a regra comum: dependências apontam para dentro</span>'+MONO('HTTP, CLI, fila (entrada) ──▶ casos de uso ──▶ domínio<br>banco, e-mail, API externa (saída) ──implementa──▶ portas declaradas pelos casos de uso<br>composition root (Program.cs, main.ts, @Configuration) liga porta ao adaptador<br>custo: interfaces, DTOs e mapeamentos a mais · ganho: regra testável sem I/O', 13)}) },
+
+{ id:'hexagonal', ch:'Os estilos', title:'Ports & adapters em código',
+  say:'Em código, hexagonal é menos cerimônia do que parece. O caso de uso declara as portas de que precisa, aqui um repositório e o estoque, e recebe as implementações por parâmetro. A entidade valida a regra, o caso de uso orquestra e devolve um DTO de saída. O adaptador em memória implementa a porta, e o adaptador de estoque chama outro módulo pela API pública dele. O main é o composition root, o único arquivo que conhece tudo. Rodei em Node vinte e dois com TypeScript nativo: pedido criado com total sete e caderno sem estoque.',
+  v:S('hexagonal.ts','hexagonal.ts','ts')},
+
+{ id:'vertical', ch:'Os estilos', title:'Vertical Slice',
+  say:'Vertical Slice, popularizado por Jimmy Bogard, corta por caso de uso: criar pedido, cancelar pedido, listar pedidos. Cada slice contém entrada, validação, lógica, acesso a dados e rota, e escolhe a própria técnica: a escrita passa pelo domínio rico, a listagem faz uma projeção direta em SQL. Acoplamento alto dentro do slice, baixo entre slices. Adicionar uma feature é adicionar um arquivo, não editar cinco camadas. O risco é duplicação e regra de negócio repetida em slices; a resposta é empurrar regra comum para o domínio, não criar uma camada de serviço genérica.',
+  v:MAIS(GRID(2, [
+    ['Por que funciona','',['mudança fica num arquivo','cada slice escolhe a técnica','leitura simples, escrita rica','apagar feature é apagar pasta'],'green'],
+    ['Onde tropeça','',['regra copiada entre slices','slice chamando slice','sem domínio vira script','precisa de convenção forte'],'amber'],
+  ], {h:200, step:4}),
+    {at:12, x:36,y:312,w:888,h:190, cls:'region', html:'<span class="rl">um slice = um caso de uso</span>'+MONO('Features/Pedidos/CriarPedido.cs &nbsp;&nbsp;&nbsp;→ comando · validação · handler · rota · usa Pedido (domínio)<br>Features/Pedidos/ListarPedidos.cs → query · Select direto no DbContext · sem domínio<br>Features/Pedidos/CancelarPedido.cs → comando · pedido.Cancelar() · evento<br>regra comum → Dominio/Pedido.cs, nunca um PedidoService genérico', 13)}) },
+
+{ id:'feature-folders', ch:'Os estilos', title:'Feature folders × package-by-layer',
+  say:'Feature folders é o passo mais barato e de maior retorno: em vez de uma pasta por tipo técnico, uma pasta por funcionalidade, com controller, serviço, repositório e testes juntos. No Java chama package by feature, e tem um bônus: com classes package-private, o compilador esconde o interno do pacote. Não exige Clean nem slices; é só mudar o critério de agrupamento. A pasta compartilhada precisa de vigilância, porque vira o depósito de tudo. Regra prática: algo só sobe para compartilhado quando três features usam.',
+  v:{type:'boxes', items:[
+    {at:.8, x:36,y:92,w:430,h:300, cls:'ext', html:B('Por camada técnica','a feature se espalha')+MONO('controllers/<br>&nbsp;&nbsp;PedidoController<br>&nbsp;&nbsp;PagamentoController<br>services/<br>&nbsp;&nbsp;PedidoService<br>&nbsp;&nbsp;PagamentoService<br>repositories/<br>&nbsp;&nbsp;PedidoRepository<br>dtos/ · mappers/ · validators/', 13)},
+    {at:4, x:494,y:92,w:430,h:300, cls:'green', html:B('Por funcionalidade','a feature mora junto')+MONO('pedidos/<br>&nbsp;&nbsp;PedidoController<br>&nbsp;&nbsp;PedidoService<br>&nbsp;&nbsp;PedidoRepository<br>&nbsp;&nbsp;CriarPedidoRequest<br>&nbsp;&nbsp;PedidoServiceTest<br>pagamentos/<br>&nbsp;&nbsp;...<br>compartilhado/ &nbsp;← vigie', 13)},
+    {at:9, x:36,y:412,w:888,h:90, cls:'region', html:'<span class="rl">regras práticas</span>'+MONO('Java: classes sem public ficam invisíveis fora do pacote · C#: internal + InternalsVisibleTo para testes<br>compartilhado só recebe o que três features usam · teste mora ao lado ou espelha a pasta', 13)},
+  ]}},
+
+{ id:'modular', ch:'Os estilos', title:'Monólito modular × microsserviços',
+  say:'Monólito modular é um processo e um deploy, dividido em módulos com fronteira explícita: cada um tem API pública, dados próprios, de preferência schema próprio, e conversa por chamada à API ou por evento em processo. Dá quase todo o benefício de microsserviços para o código, sem rede, sem consistência eventual forçada e sem dez pipelines. Microsserviços se justificam por escala independente, deploy independente de times grandes, isolamento de falha ou tecnologia diferente. Comece modular; extrair um módulo bem cortado depois é engenharia, não arqueologia.',
+  v:MAIS(GRID(3, [
+    ['Monólito simples','',['um projeto, feature folders','deploy e debug triviais','vira bola de lama sem regra'],'blue'],
+    ['Monólito modular','',['módulos com API pública','schema por módulo','eventos em processo','fronteira testada no CI'],'green'],
+    ['Microsserviços','',['deploy e escala independentes','rede, versão de contrato','dados distribuídos, sagas','custo de plataforma alto'],'amber'],
+  ], {h:220, step:4}),
+    {at:14, x:36,y:332,w:888,h:150, cls:'region', html:'<span class="rl">extraia um serviço quando houver um destes sinais</span>'+MONO('time próprio que precisa de deploy no seu ritmo · escala ou SLA muito diferente<br>falha que não pode derrubar o resto · tecnologia ou compliance diferente<br>e nunca antes do módulo já ter fronteira limpa dentro do monólito', 13)}) },
+
+/* ---------- FORÇAR REGRAS ---------- */
+{ id:'regras', ch:'Forçar regras', title:'Regras de dependência que valem',
+  say:'Você não precisa de cinquenta regras. Cinco cobrem quase tudo. Domínio não importa framework, banco nem HTTP. Caso de uso conhece portas, nunca implementações. Módulo só entra em outro pela API pública, o index ou o pacote-base. Nenhum ciclo entre módulos. E só o composition root conhece todas as implementações. Escreva-as como teste ou lint que quebra o build, comece com as que o código já cumpre, e trate as violações antigas como dívida listada, com uma linha de base, em vez de desligar a regra.',
+  v:{type:'boxes', defs:[
+    ['Domínio puro','sem framework, banco, HTTP', .8],
+    ['Caso de uso','conhece porta, não adaptador', 3],
+    ['API pública','entre módulos só pelo index', 5.2],
+    ['Sem ciclos','módulos formam um DAG', 7.4],
+    ['Composition root','só ele conhece tudo', 9.6],
+  ], items:[
+    {at:11, x:470,y:92,w:454,h:200, cls:'green', html:B('Como introduzir sem parar o time','')+UL('comece pelas regras já cumpridas','violações antigas numa linha de base','quebra o build só o que é novo','revise a lista a cada trimestre')},
+    {at:15, x:470,y:312,w:454,h:190, cls:'region', html:'<span class="rl">regra que não roda no CI</span>'+NOTE('é sugestão; em seis meses alguém faz o atalho e ninguém percebe','amber')},
+  ]}},
+
+{ id:'ferramentas', ch:'Forçar regras', title:'A ferramenta de cada stack',
+  say:'Cada ecossistema tem a sua. No Java, ArchUnit escreve regras como teste JUnit, e o Spring Modulith verifica módulos sozinho. No .NET, separar em projetos já faz o compilador barrar referência proibida; dentro de um projeto, NetArchTest ou ArchUnitNET. No TypeScript, dependency-cruiser analisa o grafo de imports, eslint-plugin-boundaries aponta a violação no editor e o Nx impõe tags entre bibliotecas do monorepo. No Python, import-linter tem contratos de camadas, proibição e independência. Todas rodam no pipeline.',
+  v:MAIS(GRID(4, [
+    ['Java','',['ArchUnit (JUnit)','Spring Modulith verify','package-private','jMolecules'],'amber'],
+    ['.NET','',['projetos separados','NetArchTest.Rules','ArchUnitNET','internal'],'blue'],
+    ['TypeScript','',['dependency-cruiser','eslint-plugin-boundaries','Nx module boundaries','Steiger (FSD)'],'green'],
+    ['Python','',['import-linter','layers, forbidden','independence','grimp por baixo'],'ext'],
+  ], {h:220, step:1.6, rodape:'regra no editor (lint) dá feedback cedo; regra no CI (teste) dá garantia'}),
+    {at:12, x:36,y:332,w:888,h:116, cls:'region', html:'<span class="rl">no pipeline</span>'+MONO('mvn test (ArchUnit, Modulith) · dotnet test (NetArchTest)<br>npx depcruise src · npx eslint . · nx affected -t lint · lint-imports', 13)}) },
+
+{ id:'archunit', ch:'Forçar regras', title:'ArchUnit e Spring Modulith',
+  say:'No Java, o ArchUnit carrega o bytecode e avalia regras como testes. Aqui: domínio não depende de Spring, infra nem web; controller não fala com repositório; e nenhum ciclo entre os pacotes de primeiro nível. O Spring Modulith dois, de novembro de dois mil e vinte e cinco, vai além: cada subpacote direto da aplicação é um módulo, só o pacote-base é API e os subpacotes são internos. O verify recusa ciclos, acesso a interno e dependência fora do allowedDependencies, e o Documenter gera diagramas dos módulos.',
+  v:S('ArquiteturaTest.java','ArquiteturaTest.java','java')},
+
+{ id:'netarch', ch:'Forçar regras', title:'NetArchTest no .NET',
+  say:'No .NET, a primeira barreira é física: com projetos separados, o Domain não tem referência para a Infrastructure, então o compilador barra o import. O que o compilador não pega, o NetArchTest pega como teste xUnit: domínio sem dependência de EF Core nem de ASP.NET Core, aplicação sem conhecer infra, e convenções como handlers selados e internos. Quando tudo mora num projeto só, como em vertical slice, esse teste é a única barreira, então ele precisa existir desde o primeiro dia. O ArchUnitNET é a alternativa com sintaxe do ArchUnit.',
+  v:S('ArquiteturaTests.cs','ArquiteturaTests.cs','cs')},
+
+{ id:'depcruise', ch:'Forçar regras', title:'dependency-cruiser no TypeScript',
+  say:'O dependency-cruiser lê os imports do projeto e avalia regras proibidas. Quatro regras: domínio só importa domínio e módulos do Node; aplicação não importa infra nem HTTP; um módulo só entra em outro pelo index ponto ts, usando o grupo capturado no from para liberar o próprio módulo; e nenhum ciclo. Rodei a versão dezoito no projeto do laboratório: limpo, zero violações. Depois quebrei de propósito, e ele pegou as quatro, incluindo dois ciclos que eu nem tinha planejado. O eslint-plugin-boundaries dá o mesmo aviso no editor.',
+  v:S('.dependency-cruiser.cjs','dependency-cruiser.cjs','js')},
+
+{ id:'importlinter', ch:'Forçar regras', title:'import-linter no Python',
+  say:'No Python, o import-linter declara contratos no pyproject. Layers diz que cada camada só importa as de baixo: api, serviços, repositório, domínio. Forbidden proíbe pedidos de importar o interno do estoque. Independence diz que dois módulos não se importam em nenhuma direção, útil para preparar extração. Rodei a versão dois ponto quinze num pacote com dois atalhos: os três contratos quebraram, e o relatório mostra arquivo e linha de cada import proibido. No FastAPI, isso é o que separa router, service e repository de verdade.',
+  v:S('pyproject.toml','pyproject.toml','txt')},
+
+/* ---------- ÁRVORES POR STACK ---------- */
+{ id:'dotnet-sln', ch:'Árvores por stack', title:'.NET: solution com projetos',
+  say:'A Clean Architecture clássica em .NET usa um projeto por anel. Domain sem pacote nenhum, Application com casos de uso e portas, Infrastructure com EF Core, migrations e adaptadores, e Api como composition root. As setas de referência fazem a regra virar física. Directory Build props liga Nullable e warnings como erro em todos, e Directory Packages props centraliza versões. No .NET dez, dotnet new sln gera o formato slnx. O mapeamento do EF fica em classes de configuração na infra, para a entidade não carregar atributos de banco.',
+  v:S('estrutura (Clean)','dotnet-clean.txt','txt')},
+
+{ id:'dotnet-slices', ch:'Árvores por stack', title:'.NET: slices, com ou sem MediatR',
+  say:'A alternativa enxuta: um projeto, pasta Features, um arquivo por caso de uso com comando, handler e rota juntos, e um módulo por feature que registra serviços e mapeia o grupo de rotas. O handler é uma classe comum na DI, chamada direto pela rota; o EF Core é usado sem repositório genérico por cima. Sobre o MediatR: desde a versão treze, de julho de dois mil e vinte e cinco, a licença é comercial, gratuita para empresas com receita anual abaixo de cinco milhões de dólares. Wolverine e o gerador Mediator são alternativas, e muitas vezes nenhum é necessário.',
+  v:S('Features/Pedidos/CriarPedido.cs','CriarPedido.cs','cs')},
+
+{ id:'dotnet-tree2', ch:'Árvores por stack', title:'.NET: a árvore do slice',
+  say:'Esta é a árvore que acompanha o código anterior. O Program ponto cs só chama AddPedidos e MapPedidos de cada feature. Leituras fazem projeção direta com Select, sem passar pelo domínio; escritas passam pela entidade rica em Dominio. Há um DbContext só, com as configurações agrupadas por feature, e uma pasta Comum para o que é transversal, como ProblemDetails e autenticação. Os testes espelham os slices. E o teste de arquitetura impede que um slice importe outro de outra feature: compartilhar é papel do domínio.',
+  v:S('estrutura (slices)','dotnet-slices.txt','txt')},
+
+{ id:'spring-tree', ch:'Árvores por stack', title:'Spring Boot: por feature e Modulith',
+  say:'No Spring Boot, package by feature com Spring Modulith. Cada pacote direto sob com ponto loja é um módulo; o que está no pacote-base, como PedidoService e o evento PedidoCriado, é API, e web, domínio e infra são internos. O package info declara de quais módulos ele pode depender. Migrations com Flyway em db migration. O ApplicationModuleTest sobe só um módulo no teste de integração. E módulos conversam por evento com ApplicationModuleListener, com o registro de publicações do Modulith fazendo papel de outbox.',
+  v:S('estrutura (Spring Boot)','spring-tree.txt','txt')},
+
+{ id:'nest-tree', ch:'Árvores por stack', title:'NestJS: módulos são as fronteiras',
+  say:'O NestJS já nasce modular: cada feature é um módulo com controller, service e providers, e só o que está em exports pode ser injetado por quem importa o módulo. Isso já é uma fronteira de runtime. DTOs ficam numa pasta dto, com class-validator ou zod; a entidade de domínio pode ficar livre de decorators de ORM. Testes unitários ao lado do código com ponto spec, e testes de ponta a ponta na pasta test, com supertest. A fronteira de import, porém, o Nest não vigia: um import direto do arquivo interno compila, então adicione dependency-cruiser.',
+  v:S('estrutura (NestJS)','nest-tree.txt','txt')},
+
+{ id:'express-tree', ch:'Árvores por stack', title:'Express: disciplina sem framework',
+  say:'O Express não impõe estrutura nenhuma, então a estrutura é a sua arquitetura. Separe app de server, para testar o app sem abrir porta. Configuração validada com zod na partida. Uma pasta por módulo com rotas, schema, service, repositório e teste, e um index que expõe só o router e o que for público. O service recebe dependências por parâmetro, que é injeção sem contêiner. Erros viram ProblemDetails num handler só. E o dependency-cruiser no CI substitui as regras que um framework daria. O mesmo desenho vale para Fastify e Hono.',
+  v:S('estrutura (Express)','express-tree.txt','txt')},
+
+{ id:'fastapi-tree', ch:'Árvores por stack', title:'FastAPI: routers por domínio',
+  say:'No FastAPI, agrupe por domínio, não por tipo de arquivo. Cada pacote tem router com APIRouter só de HTTP, schemas em Pydantic como DTO, models em SQLAlchemy dois como persistência, service com o caso de uso, repository com consultas e dependencies com os Depends. Separar schemas de models é importante: o que entra pela API não é a tabela. Layout src, configuração com pydantic-settings, migrations com Alembic e um conftest que sobrescreve dependências para os testes. O import-linter garante que router não pula o service.',
+  v:S('estrutura (FastAPI)','fastapi-tree.txt','txt')},
+
+{ id:'next-tree', ch:'Árvores por stack', title:'Next: app router e FSD',
+  say:'No Next dezesseis, a pasta app é roteamento: páginas finas que importam a composição de outro lugar. O proxy ponto ts substituiu o middleware. Para o resto, o Feature-Sliced Design organiza em camadas de cima para baixo: app, pages, widgets, features, entities e shared. Uma camada só importa as de baixo, e cada slice expõe um index como API pública. A pasta app do Next e a camada app do FSD convivem, com o FSD dentro de src. O Steiger, linter oficial do FSD, e o eslint-plugin-boundaries checam as regras.',
+  v:S('estrutura (Next + FSD)','next-tree.txt','txt')},
+
+{ id:'monorepo', ch:'Árvores por stack', title:'Monorepo: Nx, Turborepo, pnpm',
+  say:'Monorepo junta apps e pacotes num repositório. O pnpm workspaces resolve dependências locais com workspace estrela. O Turborepo, hoje na série dois, orquestra tarefas com cache local e remoto, e é o mais simples de adotar. O Nx faz o mesmo, roda só o afetado pela mudança e, o que importa aqui, impõe fronteiras: cada projeto ganha tags de escopo e de tipo, e a regra enforce module boundaries do ESLint impede, por exemplo, que domínio importe feature ou que pedidos importe pagamentos. Contratos compartilhados num pacote próprio.',
+  v:S('estrutura (monorepo)','monorepo-tree.txt','txt')},
+
+/* ---------- ONDE FICA O QUÊ ---------- */
+{ id:'onde-fica', ch:'Onde fica o quê', title:'Testes, config e migrations',
+  say:'Testes: no .NET e no Java, projetos ou pastas de teste espelhando a estrutura; no TypeScript, o unitário ao lado do arquivo e o de ponta a ponta numa pasta própria; no Python, uma pasta tests espelhando o pacote. Configuração: um ponto de entrada tipado e validado na partida, nunca leitura de variável de ambiente espalhada. Migrations: junto da infraestrutura que as gera, versionadas e aplicadas no pipeline, não na partida da aplicação em produção. E decisões de arquitetura em ADRs dentro do repositório, ao lado do código que elas explicam.',
+  v:GRID(3, [
+    ['Testes','',['.NET/Java: projeto espelhado','TS: .spec ao lado + e2e/','Python: tests/ espelhado','arquitetura: teste próprio'],'blue'],
+    ['Configuração','',['Options + ValidateOnStart','@ConfigurationProperties','zod no env · pydantic-settings','segredo fora do repositório'],'green'],
+    ['Migrations e ADRs','',['junto da infra que gera','aplicadas no pipeline','uma por mudança, revisada','docs/adr/ no repositório'],'amber'],
+  ], {h:230, step:4, rodape:'regra: quem procura um arquivo deve achar pelo nome da feature, sem perguntar a ninguém'}) },
+
+{ id:'dto-entidade', ch:'Onde fica o quê', title:'DTO, entidade e mapeamento',
+  say:'Entidade é o modelo do domínio ou da tabela; DTO é o contrato que cruza a fronteira da API. Expor a entidade direto vaza colunas, quebra o cliente quando o banco muda e abre mass assignment. Mapeie na borda: no handler ou no controller. Mapeamento manual é explícito e o compilador avisa campo novo; para muitos tipos, use gerador em tempo de compilação, como Mapperly no .NET e MapStruct no Java. O AutoMapper, também comercial desde a versão quinze, esconde erro até a execução. No TypeScript, zod infere o tipo; no Python, Pydantic com from attributes.',
+  v:MAIS(GRID(2, [
+    ['Entidade','dentro da fronteira',['regra e invariantes','mapeada pelo ORM','nunca sai na resposta','muda com o banco'],'blue'],
+    ['DTO','na fronteira',['record imutável','versionado com a API','validação de entrada','um por caso de uso'],'green'],
+  ], {h:200, step:4}),
+    {at:12, x:36,y:312,w:888,h:190, cls:'region', html:'<span class="rl">mapeamento por stack</span>'+MONO('.NET &nbsp;&nbsp;&nbsp;manual ou Mapperly (source generator) · AutoMapper 15+: licença comercial<br>Java &nbsp;&nbsp;&nbsp;records + MapStruct (gera código no build)<br>TS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z.infer&lt;typeof Schema&gt; · função toResponse() explícita<br>Python Pydantic: Model.model_validate(obj, from_attributes=True)', 13)}) },
+
+/* ---------- EVOLUIR ---------- */
+{ id:'yagni', ch:'Evoluir', title:'Quando a abstração é demais',
+  say:'Sinais de que a arquitetura está cara demais para o problema: cinco projetos para dez endpoints de CRUD; interface com uma única implementação que só existe para mock; repositório genérico em cima do EF Core que reexpõe IQueryable; um mediador em toda chamada sem nenhum comportamento transversal; três classes idênticas de DTO, comando e entidade copiadas campo a campo. A abstração se paga quando existe uma segunda implementação real, um teste que precisa dela ou uma regra que muda com frequência. Antes disso, é custo.',
+  v:MAIS(GRID(2, [
+    ['Sinais de excesso','',['5 projetos para 10 endpoints','interface com 1 implementação','repositório genérico sobre ORM','mediador sem comportamento','DTO = comando = entidade'],'ext'],
+    ['Quando se paga','',['2ª implementação real','teste sem I/O necessário','regra que muda muito','time grande no mesmo código','fronteira de módulo'],'green'],
+  ], {h:230, step:4}),
+    {at:13, x:36,y:342,w:888,h:140, cls:'region', html:'<span class="rl">teste rápido</span>'+MONO('para adicionar um campo, quantos arquivos eu edito? &gt; 5 com regra trivial: excesso<br>apagar esta interface quebraria algo além dos testes? não: provavelmente YAGNI')}) },
+
+{ id:'evoluir', ch:'Evoluir', title:'Do simples ao modular, por sinal',
+  say:'Evolua por sinal, não por moda. Comece num projeto com feature folders e testes de integração. Quando o código passar de um time ou aparecerem módulos óbvios, declare módulos com API pública e ligue as regras de fronteira no CI. Nos módulos com regra complexa, e só neles, aplique hexagonal ou domínio rico; CRUD continua CRUD. Se um módulo precisar de deploy, escala ou time próprio, ele já tem fronteira limpa e dados separados, e a extração vira serviço com strangler fig. Cada passo é reversível e pago pelo problema que resolve.',
+  v:MAIS(FLOW([
+    ['1. Feature folders','um projeto, testes','blue'],
+    ['2. Módulos','API pública + CI','green'],
+    ['3. Hexagonal local','só onde há regra','amber'],
+    ['4. Extrair serviço','por sinal real','ext'],
+  ], {y:96, h:86, step:1.8, ch:180, cards:[
+    ['Sinais para subir um degrau','',['merge conflict constante','mudança quebra outra feature','teste lento por I/O na regra','time precisa de deploy próprio'],'blue'],
+    ['Sinais para descer','',['abstração sem 2º uso','novato leva semanas','PR simples toca 8 arquivos','serviços sempre deployados juntos'],'amber'],
+  ]}),
+    {at:16, x:36,y:422,w:888,h:80, cls:'region', html:'<span class="rl">extração</span>'+MONO('strangler fig: rota nova aponta para o serviço; o módulo antigo morre por partes', 14)}) },
+
+{ id:'escolha', ch:'Evoluir', title:'A escolha por time e domínio',
+  say:'Resumo por contexto. Uma a três pessoas e CRUD: um projeto com feature folders, sem cerimônia. Até dez pessoas com regras moderadas: vertical slices e domínio rico onde há regra. Vários times no mesmo produto: monólito modular com fronteiras no CI, hexagonal nos módulos centrais. Domínio central complexo, como cobrança ou pricing: Clean ou hexagonal naquele módulo. Muitos times com ritmos de deploy diferentes: microsserviços extraídos de módulos maduros. A matriz abaixo do vídeo traz também como forçar e quando evoluir.',
+  v:GRID(3, [
+    ['1–3 pessoas, CRUD','',['feature folders','um projeto','testes de integração'],'blue'],
+    ['até 10, regra moderada','',['vertical slices','domínio rico onde dói','teste de arquitetura'],'green'],
+    ['vários times, 1 produto','',['monólito modular','API pública por módulo','Modulith, Nx, depcruise'],'green'],
+    ['core complexo','',['hexagonal no módulo','portas e adaptadores','resto continua simples'],'amber'],
+    ['muitos times, deploys','',['microsserviços','extraídos de módulos','contratos versionados'],'ext'],
+    ['front grande','',['Feature-Sliced Design','monorepo com tags','Steiger + boundaries'],'blue'],
+  ], {step:1.6, h:170, rodape:'o estilo é por módulo, não por sistema: CRUD e core complexo convivem no mesmo repositório'}) },
+
+/* ---------- LABORATÓRIO ---------- */
+{ id:'lab-run', ch:'Laboratório', title:'Lab: quebrar as regras de propósito',
+  say:'O laboratório roda o caso de uso hexagonal em Node com TypeScript nativo e passa o dependency-cruiser no projeto limpo: zero violações. Depois uma cópia com dois atalhos, o domínio importando o repositório da infra e o adaptador entrando no interno do estoque. A ferramenta aponta as quatro violações e sai com erro, o que quebra o pipeline. No Python, o import-linter num pacote com atalhos parecidos quebra os três contratos, com arquivo e linha. Desafio: ligue o mesmo teste no seu repositório com uma linha de base.',
+  v:T('c|node src/main.ts', 'o|{ id: \'p-1\', total: 7 } · { erro: \'sem estoque: caderno\' } · erro de domínio: pedido sem itens',
+      'c|npx depcruise src', 'ok|✔ no dependency violations found (8 modules, 11 dependencies cruised)',
+      'c|cd viol && npx depcruise src                 # domínio → infra · adapter → estoque/interno',
+      'err|error sem-ciclos: dominio/pedido.ts → infra/pedidos-repo-memoria.ts → dominio/pedido.ts',
+      'err|error sem-ciclos: aplicacao/portas.ts → dominio/pedido.ts → infra/... → aplicacao/portas.ts',
+      'err|error modulo-pela-api-publica: pedidos/infra/estoque-adapter.ts → estoque/interno/reservas.ts',
+      'err|error dominio-puro: pedidos/dominio/pedido.ts → pedidos/infra/pedidos-repo-memoria.ts',
+      'err|x 4 dependency violations (4 errors, 0 warnings). exit 4',
+      'c|lint-imports                                  # import-linter 2.15',
+      'err|Camadas do módulo pedidos BROKEN · loja.pedidos.dominio -> loja.pedidos.repositorio (l.1)',
+      'err|Estoque só pela API pública BROKEN · loja.pedidos.servicos -> loja.estoque.interno (l.2)',
+      'err|Módulos independentes BROKEN · Contracts: 0 kept, 3 broken.')},
+
+{ id:'check', ch:'Laboratório', title:'Checklist de estrutura',
+  say:'Antes de dizer que a estrutura está boa: o corte principal é por funcionalidade, o domínio não importa framework, casos de uso dependem de portas, cada módulo tem API pública e dados próprios, não há ciclos, só o composition root conhece as implementações, as regras rodam no CI, DTO e entidade estão separados, testes, config e migrations têm lugar óbvio, não há abstração sem segundo uso, existe um ADR explicando o estilo e você sabe qual sinal faria evoluir para o próximo degrau.',
+  v:CK('Corte por funcionalidade', 'Domínio sem framework', 'Caso de uso depende de porta', 'Módulo com API pública', 'Sem ciclos entre módulos', 'Composition root único', 'Regras no CI', 'DTO separado da entidade', 'Testes e migrations no lugar óbvio', 'Sem abstração de uso único', 'ADR do estilo escolhido', 'Sinal de evolução definido')},
+
+{ id:'outro', ch:'Laboratório', title:'Próximo passo',
+  say:'Abaixo do vídeo estão a matriz por time e domínio, os links para as cenas de engenharia de software, DDD, monólito e frontend das outras trilhas, a documentação das ferramentas, o checklist e as perguntas de entrevista. O exercício que mais rende: escolha um repositório seu, escreva três regras de dependência que ele já deveria cumprir, ligue o dependency-cruiser, o ArchUnit, o NetArchTest ou o import-linter, e veja quantas violações aparecem. A lista é o seu mapa de dívida de arquitetura.',
+  v:{type:'outro'} },
+];
+
+const JA_VISTO = [
+  ['Arquitetura de software', 'v16', 'arquitetura', 'Os estilos no volume de fundamentos'],
+  ['Inversão de dependência', 'v16', 'dip', 'O princípio que sustenta portas e adaptadores'],
+  ['Quando não aplicar', 'v16', 'quando-nao', 'Padrões que custam mais do que entregam'],
+  ['DDD tático', 'v16', 'ddd-tatico', 'Entidades, value objects e agregados'],
+  ['Acoplamento', 'v16', 'acoplamento', 'O que a estrutura tenta reduzir'],
+  ['Bounded contexts', 'nddd', 'contextos', 'De onde vêm as fronteiras dos módulos'],
+  ['Agregados', 'nddd', 'agregados', 'O que mora dentro do domínio de cada módulo'],
+  ['Quando não usar DDD', 'nddd', 'quando-nao', 'CRUD continua CRUD'],
+  ['Monólito ou microsserviços', 'v22', 'monolito', 'A decisão de implantação com mais profundidade'],
+  ['Onde cortar', 'v22', 'cortar', 'Critérios para extrair um serviço'],
+  ['Fitness functions', 'v22', 'fitness', 'Regras de arquitetura como teste automatizado'],
+  ['Monólito no SaaS', 'nsaas', 'monolito', 'Monólito modular num produto multi-tenant'],
+  ['Monorepo no frontend', 'nfront', 'monorepo', 'Nx e Turborepo vistos do lado do front'],
+  ['Pastas que a IA entende', 'v23', 'repo-pastas', 'Estrutura que ajuda agentes de código'],
+  ['Golden paths', 'nplat', 'golden-paths', 'Templates com a estrutura padrão da empresa'],
+  ['Minimal API e Controllers', 'nnet', 'controllers', 'A camada de entrada no ASP.NET Core'],
+  ['DI nativa', 'nnet', 'di', 'O composition root no .NET'],
+  ['FastAPI', 'npy', 'fastapi', 'A camada HTTP no Python'],
+  ['Fronteiras no system design', 'v06', 'fronteiras', 'Como fronteiras aparecem na entrevista'],
+];
+
+const MATRIZ = [
+  ['1–3 pessoas, CRUD ou MVP', 'Um projeto, feature folders', 'Revisão de código; lint simples', 'Mais de um time ou merge conflict constante'],
+  ['Até 10 pessoas, regra moderada', 'Vertical slices + domínio rico onde há regra', 'NetArchTest, ArchUnit, depcruise: slice não importa slice', 'Features compartilhando muita regra'],
+  ['Vários times, um produto', 'Monólito modular com API pública e schema por módulo', 'Spring Modulith, Nx tags, depcruise, import-linter', 'Módulo precisa de deploy ou escala própria'],
+  ['Core de domínio complexo', 'Hexagonal ou Clean só naquele módulo', 'Projetos separados ou regras de camada', 'Regra estável e simples: rebaixe para slice'],
+  ['Integrações pesadas (muitos sistemas externos)', 'Hexagonal: um adaptador por sistema', 'Domínio sem SDK externo (teste)', 'Adaptador virando regra: mova para o domínio'],
+  ['Muitos times, deploys independentes', 'Microsserviços extraídos de módulos maduros', 'Contratos versionados, testes de contrato', 'Serviços sempre deployados juntos: junte de novo'],
+  ['API Node pequena', 'Express ou Fastify com módulos e index público', 'dependency-cruiser no CI', 'Muitos módulos: NestJS ou monorepo'],
+  ['API Node média ou grande', 'NestJS com módulo por feature', 'exports do módulo + depcruise para imports', 'Times separados: monorepo Nx'],
+  ['Python FastAPI', 'Pacote por domínio: router, schemas, models, service', 'import-linter: layers e independence', 'Módulo independente pronto para extração'],
+  ['Spring Boot', 'Package-by-feature + Spring Modulith', 'ApplicationModules.verify() + ArchUnit', 'Módulo com evento e dados próprios: extraia'],
+  ['.NET', 'Slices num projeto, ou Clean em projetos', 'Referências de projeto + NetArchTest', 'Cerimônia demais: junte projetos'],
+  ['Frontend grande (React/Next)', 'Feature-Sliced Design ou features/ + shared/', 'Steiger, eslint-plugin-boundaries', 'Times separados por área: monorepo ou MFE'],
+  ['Vários apps e libs', 'Monorepo pnpm + Turborepo ou Nx', 'Nx enforce-module-boundaries com tags', 'Ciclos de release muito diferentes: repos separados'],
+];
+
+const STUDY = [
+  ['Spring Modulith: fundamentos', 'Módulos, pacotes internos e named interfaces', 'https://docs.spring.io/spring-modulith/reference/2.0/fundamentals.html', 'spring-tree'],
+  ['Spring Modulith: verificação', 'verify(), regras e jMolecules', 'https://docs.spring.io/spring-modulith/reference/2.0/verification.html', 'archunit'],
+  ['Spring Modulith 2.0 GA', 'Anúncio da versão para Spring Boot 4', 'https://spring.io/blog/2025/11/21/spring-modulith-2-0-ga-1-4-5-and-1-3-11-released/', 'archunit'],
+  ['eslint-plugin-boundaries', 'Tipos de elemento e regras de dependência', 'https://github.com/javierbrea/eslint-plugin-boundaries', 'ferramentas'],
+  ['Nx: enforce module boundaries', 'Tags e depConstraints no monorepo', 'https://nx.dev/docs/technologies/eslint/eslint-plugin/guides/enforce-module-boundaries', 'monorepo'],
+  ['import-linter: contrato de camadas', 'Layers, forbidden e independence', 'https://import-linter.readthedocs.io/en/latest/contract_types/layers/', 'importlinter'],
+  ['.NET 10: slnx por padrão', 'dotnet new sln gera o novo formato', 'https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/10.0/dotnet-new-sln-slnx-default', 'dotnet-sln'],
+  ['MediatR e AutoMapper comerciais', 'Licença dupla e critérios da edição gratuita', 'https://www.jimmybogard.com/automapper-and-mediatr-commercial-editions-launch-today/', 'dotnet-slices'],
+  ['Next.js 16', 'proxy.ts e o app router atual', 'https://nextjs.org/blog/next-16', 'next-tree'],
+  ['FastAPI: aplicações maiores', 'Routers e organização em pacotes', 'https://fastapi.tiangolo.com/tutorial/bigger-applications/', 'fastapi-tree'],
+  ['Feature-Sliced Design', 'Camadas, slices e API pública', 'https://feature-sliced.design/', 'next-tree'],
+];
+
+const CHECK = [
+  ['Diagnóstico', 'Contar arquivos tocados para adicionar um campo', 'yagni'],
+  ['Diagnóstico', 'Desenhar o grafo de módulos do seu sistema', 'modular'],
+  ['Estilos', 'Reescrever um caso de uso com portas', 'hexagonal'],
+  ['Estilos', 'Converter uma pasta por camada em feature folder', 'feature-folders'],
+  ['Estilos', 'Escrever um slice completo num arquivo', 'dotnet-slices'],
+  ['Regras', 'Listar as cinco regras do seu repositório', 'regras'],
+  ['Regras', 'ArchUnit ou Modulith verify num projeto Spring', 'archunit'],
+  ['Regras', 'NetArchTest com domínio sem EF Core', 'netarch'],
+  ['Regras', 'dependency-cruiser com linha de base', 'depcruise'],
+  ['Regras', 'import-linter com contrato de camadas', 'importlinter'],
+  ['Stacks', 'Módulo NestJS que exporta só o necessário', 'nest-tree'],
+  ['Stacks', 'Separar schemas de models no FastAPI', 'fastapi-tree'],
+  ['Stacks', 'Tags de escopo e tipo no Nx', 'monorepo'],
+  ['Fronteira', 'Trocar entidade exposta por DTO', 'dto-entidade'],
+  ['Evolução', 'ADR com o estilo e o sinal de evolução', 'evoluir'],
+];
+
+const FAQ = [
+ ['Estilos','Qual a diferença entre Clean Architecture, Hexagonal e Onion?',`<p>São variações da mesma regra: dependências apontam para dentro, e o domínio não conhece infraestrutura. Hexagonal enfatiza portas (interfaces declaradas pela aplicação) e adaptadores (HTTP, banco, fila), com lados de entrada e saída. Onion desenha anéis. Clean adiciona casos de uso como camada explícita e nomeia a "regra da dependência". Na prática, a diferença está mais no vocabulário do que no código.</p>`],
+ ['Estilos','Vertical Slice ou Clean Architecture?',`<p>Slice corta por caso de uso e minimiza a mudança: uma feature mora num arquivo ou pasta, e cada slice escolhe a técnica (projeção direta para leitura, domínio rico para escrita). Clean corta por responsabilidade técnica e protege o domínio. Para CRUD e regras moderadas, prefiro slices com domínio rico onde há regra; para um core complexo com muitas integrações, hexagonal naquele módulo. Os dois podem conviver.</p>`],
+ ['Estilos','O que é um monólito modular e por que começar por ele?',`<p>Um deploy único dividido em módulos com fronteira explícita: API pública, dados próprios (idealmente schema próprio), comunicação por chamada à API ou evento em processo, e regras verificadas no CI. Dá isolamento de código sem custo de rede, consistência eventual e plataforma. Se um módulo precisar de deploy ou escala independente, a extração é simples porque a fronteira já existe.</p>`],
+ ['Regras','Como você garante que as regras de arquitetura são respeitadas?',`<p>Com testes e lint que quebram o build: ArchUnit e Spring Modulith no Java, referências de projeto e NetArchTest no .NET, dependency-cruiser, eslint-plugin-boundaries ou Nx no TypeScript, import-linter no Python. Introduzo com as regras que o código já cumpre e uma linha de base das violações antigas, para não parar o time, e reviso a lista periodicamente.</p>`],
+ ['Regras','Qual a vantagem de separar em projetos no .NET em vez de pastas?',`<p>A regra vira física: se Domain não referencia Infrastructure, o compilador barra o import. O custo é cerimônia (mais csproj, DI espalhada, navegação). Num projeto só, com slices, a barreira é um teste de arquitetura. Escolho projetos quando há times diferentes ou um domínio que precisa de proteção forte; senão, um projeto com testes de arquitetura.</p>`],
+ ['.NET','Você usaria MediatR hoje?',`<p>Só se houver comportamento transversal real no pipeline (validação, transação, log) e a licença couber: desde a versão 13 (julho de 2025) ele é comercial, grátis para empresas abaixo de US$ 5 milhões de receita. Na maioria das APIs, um handler comum registrado na DI e chamado pela rota resolve, com menos indireção. Alternativas: Wolverine ou o gerador de código Mediator.</p>`],
+ ['Fronteira','Por que não expor a entidade direto na API?',`<p>Porque acopla o contrato público ao modelo de persistência: renomear uma coluna quebra o cliente, campos internos vazam e o bind direto abre mass assignment. DTOs por caso de uso deixam a API evoluir com versão própria. O mapeamento fica na borda, manual ou com gerador em tempo de compilação (Mapperly, MapStruct).</p>`],
+ ['YAGNI','Como você identifica abstração demais?',`<p>Interface com uma implementação que só existe para mock, repositório genérico sobre o ORM, mediador sem comportamento, DTO idêntico a comando e entidade, muitos projetos para poucos endpoints. Teste prático: quantos arquivos edito para adicionar um campo? Se apagar a abstração não quebra nada além dos testes, ela provavelmente não se paga.</p>`],
+ ['Evolução','Como você evolui um sistema que começou bagunçado?',`<p>Primeiro feature folders e testes de integração para ter rede de segurança. Depois declaro módulos com API pública e ligo regras de fronteira com linha de base. Aplico hexagonal só onde há regra complexa. Se um módulo precisar de independência real, extraio com strangler fig. Cada passo é pequeno, reversível e justificado por um problema medido.</p>`],
+ ['Frontend','Como organizar um frontend grande em React ou Next?',`<p>Rotas finas na pasta app do Next e o resto organizado por domínio. Feature-Sliced Design dá camadas (app, pages, widgets, features, entities, shared) com regra de import de cima para baixo e API pública por slice, verificadas com Steiger ou eslint-plugin-boundaries. Com vários apps, monorepo com Nx e tags de escopo.</p>`],
+ ['Monorepo','Nx ou Turborepo?',`<p>Turborepo é mais simples: pipeline de tarefas e cache local e remoto em cima do workspace do gerenciador de pacotes. Nx faz isso e mais: grafo de projetos, comandos só no afetado, geradores e regras de fronteira por tags. Para poucos pacotes, Turborepo e pnpm; quando preciso impor fronteiras entre muitas bibliotecas e times, Nx.</p>`],
+ ['Estrutura','Onde ficam testes, configuração e migrations?',`<p>Testes espelhando a estrutura (projeto de teste no .NET, src/test no Java, .spec ao lado no TypeScript, tests/ no Python), mais um teste de arquitetura. Configuração num ponto tipado e validado na partida. Migrations junto da infraestrutura, versionadas e aplicadas no pipeline. ADRs em docs/adr no próprio repositório.</p>`],
+];
+
+const CMDS = [
+  ['npx depcruise src · npx depcruise --init', 'Checar e criar regras de dependência no TypeScript'],
+  ['npx depcruise src --output-type dot | dot -T svg > grafo.svg', 'Gerar o grafo de dependências'],
+  ['npx eslint . (eslint-plugin-boundaries)', 'Ver violação de fronteira no editor e no CI'],
+  ['npx nx graph · npx nx affected -t test', 'Grafo do monorepo e testes só do afetado'],
+  ['npx turbo run build test --filter=...[origin/main]', 'Turborepo só no que mudou'],
+  ['pnpm add dominio-pedidos --workspace', 'Dependência local no pnpm workspaces'],
+  ['lint-imports', 'Rodar contratos do import-linter'],
+  ['ApplicationModules.of(App.class).verify()', 'Verificar módulos do Spring Modulith'],
+  ['dotnet new sln · dotnet sln add src/**/*.csproj', 'Solution (slnx no .NET 10) com os projetos'],
+  ['dotnet add tests/Arq reference src/Loja.Domain', 'Referenciar projeto no teste de arquitetura'],
+  ['npx steiger ./src', 'Linter oficial do Feature-Sliced Design'],
+  ['tree -I node_modules -L 3', 'Ver a árvore para revisar a estrutura'],
+];
+
+// ===================== MOTOR DO VÍDEO =====================
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+
+/* ---------- tokenização simples para destacar código ---------- */
+const KW = new Set(('var new true false return using await async is FROM AS WORKDIR COPY RUN EXPOSE ENTRYPOINT USER ENV ARG CMD resource terraform provider backend variable output data features def class import from in None True False with lambda yield pass not and or SELECT FROM WHERE ORDER BY LIMIT CREATE TABLE INDEX ON USING WITH AS GROUP UNION ALL EXTENSION IF NOT EXISTS PRIMARY KEY GENERATED ALWAYS STORED ' +
+ 'const let function export default interface type extends implements public private protected static final void if else for while switch case break continue throw throws try catch finally null undefined this super of package func go defer chan struct map range echo then fi do done elif except raise assert global nonlocal print record enum readonly abstract override sealed get set yield match JOIN LEFT RIGHT INNER OUTER INSERT INTO VALUES UPDATE DELETE SET HAVING DISTINCT COUNT SUM AVG MAX MIN OVER PARTITION BEGIN COMMIT ROLLBACK REFERENCES FOREIGN UNIQUE DEFAULT CASE WHEN THEN ELSE END NULL AND OR IN LIKE BETWEEN DESC ASC').split(' '));
+const SLASH = new Set(['cs','js','ts','tsx','jsx','java','go','rust','kt','c','cpp','proto','bicep','kql']);
+const HASH = new Set(['py','bash','sh','yaml','hcl','docker','toml','ini','conf','promql','r','rb','dockerfile','env','make']);
+const QUOTES = new Set(['js','ts','tsx','jsx','py','sql','bash','sh','yaml','rb','java','go','cs','json','html','css','promql','hcl','docker']);
+function findComment(line, lang){
+  let q = null;
+  const qs = QUOTES.has(lang) ? (lang === 'cs' ? '"' : '"\'`') : '"';
+  for (let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if (q){ if (ch === '\\'){ i++; continue; } if (ch === q) q = null; continue; }
+    if (lang === 'txt' || lang === 'md') return -1;
+    if (qs.includes(ch)) { q = ch; continue; }
+    if (lang === 'sql') { if (ch === '-' && line[i+1] === '-') return i; continue; }
+    if (lang === 'html' || lang === 'xml') { if (line.startsWith('<!--', i)) return i; continue; }
+    if (lang === 'css') { if (ch === '/' && line[i+1] === '*') return i; continue; }
+    if (lang === 'ini' || lang === 'conf') { if (ch === ';') return i; continue; }
+    if (HASH.has(lang) && ch === '#' && (i === 0 || /\s/.test(line[i-1]))) return i;
+    if ((SLASH.has(lang) || lang === 'hcl') && ch === '/' && line[i+1] === '/' && line[i-1] !== ':') return i;
+  }
+  return -1;
+}
+function tokenize(line, lang){
+  const out = []; let code = line, comment = '';
+  const ci = findComment(line, lang);
+  if (ci >= 0){ code = line.slice(0, ci); comment = line.slice(ci); }
+  let m;
+  if (lang === 'yaml' && (m = code.match(/^(\s*(?:-\s+)?)([A-Za-z_][\w.\/-]*)(:)(?=\s|$)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  } else if (lang === 'hcl' && (m = code.match(/^(\s*)([A-Za-z_][\w-]*)(\s*=)/))){
+    out.push({t:m[1]}, {t:m[2], c:'k'}, {t:m[3]}); code = code.slice(m[0].length);
+  }
+  const re = (lang === 'txt' || lang === 'md') ? /("(?:[^"\\]|\\.)*"?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s|ms)?\b)|([A-Za-z_][\w]*)/g : /("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d+(?:\.\d+)?(?:m|Mi|Gi|s)?\b)|([A-Za-z_][\w]*)/g;
+  let i = 0;
+  while ((m = re.exec(code))){
+    if (m.index > i) out.push({t:code.slice(i, m.index)});
+    if (m[1]) out.push({t:m[1], c:'s'});
+    else if (m[2]) out.push({t:m[2], c:'n'});
+    else out.push({t:m[3], c: KW.has(m[3]) ? 'kw' : (['cs','py','ts','tsx','java','go','kt','rust'].includes(lang) && /^[A-Z]/.test(m[3]) ? 'ty' : null)});
+    i = re.lastIndex;
+  }
+  if (i < code.length) out.push({t:code.slice(i)});
+  if (comment) out.push({t:comment, c:'cm'});
+  return out;
+}
+
+/* ---------- linha do tempo do terminal ---------- */
+function termTiming(sc){
+  const lines = sc.v.lines.map(s => { const i = s.indexOf('|'); return {k:s.slice(0,i), x:s.slice(i+1)}; });
+  let t = .6;
+  lines.forEach((l, i) => {
+    l.typed = l.k === 'c' || l.k === 'k';
+    l.start = t;
+    l.dur = l.typed ? Math.max(.1, l.x.length / (l.k === 'c' ? 30 : 45)) : .1;
+    t += l.dur;
+    const nx = lines[i+1];
+    if (l.typed && !(nx && nx.k === 'k')) t += .5;
+    if (!l.typed && nx && nx.k === 'c') t += .7;
+  });
+  return {lines, end:t};
+}
+const CODE_CPS = 80;
+function codeTiming(sc){ return {end: .5 + sc.v.code.length / CODE_CPS}; }
+
+/* ---------- construtores de cena ---------- */
+const V = {};
+
+function card(root, d, top){
+  root.innerHTML = `${top ? '' : `<div class="grid-deco" aria-hidden="true">${Array.from({length:12},(_, i)=>`<i style="animation-delay:${(i%3)*.4 + Math.floor(i/3)*.25}s"></i>`).join('')}</div>`}
+  <div class="title-card"${top ? ` style="top:${top}px"` : ''}><span class="k">${d.k}</span><h2>${d.h}</h2><p>${d.p}</p>
+  <div class="chips">${d.chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>`;
+  return {update(){}};
+}
+V.title = { build(root){ return card(root, TITLE); } };
+V.outro = { build(root){ return card(root, OUTRO, 150); } };
+
+V.term = { build(root, sc){
+  const {lines, end} = termTiming(sc);
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(CONF.term || 'bash · ~/projeto')}</span><span class="lang">terminal</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = lines.map(l => { const d = document.createElement('div'); d.className = 'tl tl-' + l.k; d.hidden = true; inner.appendChild(d); return d; });
+  const prompt = document.createElement('div'); prompt.className = 'tl tl-c'; prompt.hidden = true; inner.appendChild(prompt);
+  let lastKey = '';
+  return { end, update(t){
+    let lastVis = null, html = [], key = '';
+    lines.forEach((l, i) => {
+      const vis = t >= l.start;
+      const n = !vis ? 0 : l.typed ? Math.min(l.x.length, Math.floor((t - l.start) / l.dur * l.x.length)) : l.x.length;
+      const typing = vis && l.typed && n < l.x.length;
+      key += n + (typing ? '*' : '') + ',';
+      html.push({vis, n, typing});
+    });
+    const done = t >= end; key += done;
+    if (key === lastKey) return; lastKey = key;
+    lines.forEach((l, i) => {
+      const h = html[i], el = els[i];
+      el.hidden = !h.vis; if (!h.vis) return;
+      lastVis = el;
+      el.innerHTML = (l.k === 'c' ? '<span class="ps">$ </span>' : '') + esc(l.x.slice(0, h.n)) + (h.typing ? '<span class="caret"></span>' : '');
+    });
+    prompt.hidden = !done;
+    if (done){ prompt.innerHTML = '<span class="ps">$ </span><span class="caret"></span>'; lastVis = prompt; }
+    if (lastVis){
+      const bottom = lastVis.offsetTop + lastVis.offsetHeight, view = body.clientHeight - 24;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.code = { build(root, sc){
+  const lang = sc.v.lang;
+  const rows = sc.v.code.split('\n').map(l => ({toks: tokenize(l, lang), len: l.length}));
+  const {end} = codeTiming(sc);
+  const langName = {cs:'C#', py:'Python', sql:'SQL', txt:'Texto', md:'Markdown', docker:'Dockerfile', hcl:'Terraform', yaml:'YAML', js:'JavaScript', ts:'TypeScript', tsx:'TSX', jsx:'JSX', json:'JSON', bash:'Shell', sh:'Shell', java:'Java', go:'Go', html:'HTML', css:'CSS', promql:'PromQL', toml:'TOML', proto:'Protobuf', rust:'Rust', ini:'Config', conf:'Asterisk', http:'HTTP', kt:'Kotlin', rb:'Ruby', bicep:'Bicep', kql:'KQL'}[lang] || lang;
+  root.innerHTML = `<div class="win"><div class="win-bar"><i></i><i></i><i></i><span>${esc(sc.v.file)}</span><span class="lang">${langName}</span></div><div class="win-body"><div class="win-inner"></div></div></div>`;
+  const inner = root.querySelector('.win-inner'), body = root.querySelector('.win-body');
+  const els = rows.map((r, i) => { const d = document.createElement('div'); d.className = 'cl'; d.innerHTML = `<span class="ln-n">${i+1}</span><span class="tx"></span>`; d.hidden = true; inner.appendChild(d); return d; });
+  let lastN = -1;
+  return { end, update(t){
+    const total = Math.floor(Math.max(0, t - .5) * CODE_CPS);
+    if (total === lastN) return; lastN = total;
+    let budget = total, curEl = null;
+    rows.forEach((r, i) => {
+      const el = els[i];
+      if (budget < 0){ el.hidden = true; return; }
+      el.hidden = false; curEl = el;
+      let b = budget, h = '';
+      for (const tk of r.toks){
+        if (b <= 0) break;
+        const part = tk.t.slice(0, b); b -= tk.t.length;
+        h += tk.c ? `<span class="t-${tk.c}">${esc(part)}</span>` : esc(part);
+      }
+      const typing = budget <= r.len;
+      el.lastChild.innerHTML = h + (typing ? '<span class="caret"></span>' : '');
+      el.classList.toggle('cur', typing);
+      budget -= r.len + 1;
+    });
+    if (curEl){
+      const bottom = curEl.offsetTop + curEl.offsetHeight, view = body.clientHeight - 30;
+      inner.style.transform = `translateY(${-Math.max(0, bottom - view)}px)`;
+    }
+  }};
+}};
+
+V.boxes = { build(root, sc){
+  const v = sc.v; let h = '';
+  (v.defs || []).forEach((d, i) => { h += `<div class="def" data-at="${d[2]}" style="top:${92 + i*53}px"><b>${d[0]}</b><span>${d[1]}</span></div>`; });
+  h += '<svg class="lines" viewBox="0 0 960 540" aria-hidden="true">' + (v.lines || []).map(l => `<path class="ln ${l.cls||''}" data-at="${l.at}" d="${l.d}"/>`).join('') + '</svg>';
+  v.items.forEach(b => { h += `<div class="bx ${b.cls||''}" data-at="${b.at}" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;${b.h ? `height:${b.h}px;` : ''}">${b.html}</div>`; });
+  root.innerHTML = h;
+  // regiões atrás das demais caixas
+  root.querySelectorAll('.bx.region,.bx.ns').forEach(e => e.style.zIndex = 0);
+  root.querySelector('svg').style.zIndex = 1;
+  root.querySelectorAll('.bx:not(.region):not(.ns)').forEach(e => e.style.zIndex = 2);
+  const els = [...root.querySelectorAll('[data-at]')];
+  const spark = root.querySelector('.spark'); let sparkAt = 0;
+  if (spark){ sparkAt = +spark.closest('[data-at]').dataset.at; spark.style.strokeDasharray = '100'; }
+  return { end: Math.max(...els.map(e => +e.dataset.at)), update(t){
+    els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at));
+    if (spark) spark.style.strokeDashoffset = String(100 - clamp((t - sparkAt) / 3, 0, 1) * 100);
+  }};
+}};
+
+V.check = { build(root, sc){
+  const items = sc.v.items; let h = '';
+  items.forEach((it, i) => {
+    const col = i < Math.ceil(items.length/2) ? 0 : 1, row = col ? i - Math.ceil(items.length/2) : i;
+    h += `<div class="ck" data-at="${(1 + i*.9).toFixed(2)}" style="left:${36 + col*456}px;top:${92 + row*70}px"><i>✓</i><span>${esc(it)}</span></div>`;
+  });
+  root.innerHTML = h;
+  const els = [...root.querySelectorAll('[data-at]')];
+  return { end: 1 + items.length*.9, update(t){ els.forEach(e => e.classList.toggle('on', t >= +e.dataset.at)); } };
+}};
+
+V.rebalance = { build(root){
+  // fases: 0–3 só A · 3–4.2 rebalanceando (B entra) · 4.2–10 A+B · 10–11.2 rebalanceando (B cai) · 11.2+ só A
+  const phase = t => t < 3 ? 'a' : t < 4.2 ? 'rb1' : t < 10 ? 'ab' : t < 11.2 ? 'rb2' : 'a2';
+  const active = t => Math.max(0, t) - clamp(t - 3, 0, 1.2) - clamp(t - 10, 0, 1.2);
+  const rowY = i => 96 + i*68;
+  let h = `<svg class="lines" viewBox="0 0 960 540" aria-hidden="true" style="z-index:1">`;
+  for (let i = 0; i < 6; i++){
+    const y = rowY(i) + 26;
+    h += `<path class="ln flow" data-pa="${i}" d="M440 ${y} C 500 ${y}, 500 170, 548 170"/>`;
+    h += `<path class="ln green" data-pb="${i}" style="stroke-dasharray:6 8;animation:dash 1.1s linear infinite" d="M440 ${y} C 500 ${y}, 690 250, 742 210"/>`;
+    h += `<path class="ln dim on" d="M440 ${y} C 490 ${y}, 500 440, 548 440"/>`;
+  }
+  h += `<path class="ln flow on" d="M150 270 C 190 270, 190 270, 220 270"/></svg>`;
+  h += `<div class="bx blue on" style="left:36px;top:236px;width:150px;height:68px;z-index:2">${B('Produtor','chave = PropostaId')}</div>`;
+  for (let i = 0; i < 6; i++){
+    h += `<div class="bx on" style="left:220px;top:${rowY(i)}px;width:220px;height:54px;z-index:2;flex-direction:row;align-items:center;gap:10px"><b style="width:28px">P${i}</b><small class="off" data-i="${i}" style="line-height:1.35"></small></div>`;
+  }
+  h += `<div class="bx region on" style="left:528px;top:84px;width:400px;height:250px;z-index:0"><span class="rl">grupo processador-pre-analise</span></div>`;
+  h += `<div class="bx green on" data-inst="A" style="left:548px;top:126px;width:170px;height:90px;z-index:2"><b>instância A</b><small class="st"></small></div>`;
+  h += `<div class="bx green" data-inst="B" style="left:742px;top:126px;width:170px;height:90px;z-index:2"><b>instância B</b><small class="st"></small></div>`;
+  h += `<div class="stat" style="left:548px;top:240px;width:364px;white-space:normal" data-status></div>`;
+  h += `<div class="bx region on" style="left:528px;top:356px;width:400px;height:150px;z-index:0;border-color:#8A6A2A"><span class="rl" style="color:var(--st-amber)">grupo auditoria</span></div>`;
+  h += `<div class="bx amber on" style="left:548px;top:400px;width:364px;height:84px;z-index:2">${B('auditoria','lê as 6 partições com offsets próprios · não sente o rebalanceamento do outro grupo')}</div>`;
+  root.innerHTML = h;
+  const PA = [...root.querySelectorAll('[data-pa]')], PB = [...root.querySelectorAll('[data-pb]')];
+  const offs = [...root.querySelectorAll('.off')], A = root.querySelector('[data-inst="A"]'), Bi = root.querySelector('[data-inst="B"]');
+  const status = root.querySelector('[data-status]');
+  let last = '';
+  return { end: 15, update(t){
+    const ph = phase(t), k = ph + Math.floor(t*4); if (k === last) return; last = k;
+    const split = ph === 'ab', rb = ph === 'rb1' || ph === 'rb2';
+    PA.forEach((p, i) => p.classList.toggle('on', !rb && (!split || i < 3)));
+    PB.forEach((p, i) => p.classList.toggle('on', split && i >= 3));
+    Bi.classList.toggle('on', t >= 3 && t < 11.2);
+    Bi.classList.toggle('amber', ph === 'rb2');
+    A.querySelector('.st').textContent = rb ? 'pausada' : split ? 'P0, P1, P2' : 'P0 … P5';
+    Bi.querySelector('.st').textContent = ph === 'rb1' ? 'entrando no grupo…' : ph === 'rb2' ? 'caiu: saindo do grupo' : 'P3, P4, P5';
+    status.innerHTML = rb ? '<b>Rebalanceando…</b> consumo pausado no grupo' : `Estável · ${split ? 2 : 1} instância${split ? 's' : ''} ativa${split ? 's' : ''}`;
+    const act = active(t);
+    offs.forEach((o, i) => {
+      const base = 400 + i*13;
+      o.innerHTML = `processador @${base + Math.floor(act*2.4)}<br>auditoria @${base + Math.floor(t*2.2)}`;
+    });
+  }};
+}};
+
+V.lag = { build(root){
+  const SIM = 22, IN = 40, CATCH = 110, STOP0 = 6, STOP1 = 12;
+  const series = [];
+  let consumed = 0;
+  for (let x = 0; x <= SIM + 1e-9; x += .1){
+    const produced = IN * x;
+    const stopped = x >= STOP0 && x < STOP1;
+    if (!stopped){ consumed = Math.min(produced, consumed + (x >= STOP1 ? CATCH : IN) * .1); }
+    series.push({x, produced, consumed, lag: Math.max(0, produced - consumed)});
+  }
+  const maxLag = Math.max(...series.map(s => s.lag));
+  const X = x => 70 + x/SIM*780, Y = l => 300 - l/maxLag*200;
+  root.innerHTML = `<div class="sc-panel" style="left:36px;top:84px;width:888px;height:330px"><span class="ph">lag do grupo processador-pre-analise (eventos) · produção constante de ${IN}/s</span>
+    <svg width="888" height="330" viewBox="0 0 888 330" style="position:absolute;inset:0">
+      <rect x="${X(STOP0)}" y="60" width="${X(STOP1)-X(STOP0)}" height="240" fill="#FF6B5E" opacity=".08"/>
+      <text x="${X(STOP0)+8}" y="78" fill="#FF6B5E" font-size="12" font-family="IBM Plex Mono, monospace">processador parado</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#8798B4">
+        <line x1="70" y1="300" x2="850" y2="300" stroke="#25385A"/><line x1="70" y1="90" x2="70" y2="300" stroke="#25385A"/>
+        <text x="40" y="304">0</text><text x="20" y="104">${Math.round(maxLag)}</text>
+        <text x="70" y="320">0 s</text><text x="820" y="320">${SIM} s</text>
+      </g>
+      <polygon class="area" fill="#F2B544" opacity=".15" points=""/>
+      <polyline class="lagl" fill="none" stroke="#F2B544" stroke-width="2.5" points=""/>
+    </svg></div>
+    <div class="stat" style="left:36px;top:436px">LOG-END <b class="s1">0</b> · CURRENT <b class="s2">0</b> · LAG <b class="s3">0</b> · <span class="s4"></span></div>
+    <div class="note" style="left:36px;top:470px;right:36px">Lag = último offset do tópico − offset confirmado pelo grupo. Lag que só cresce: consumidor lento ou parado.</div>`;
+  const area = root.querySelector('.area'), line = root.querySelector('.lagl');
+  const s1 = root.querySelector('.s1'), s2 = root.querySelector('.s2'), s3 = root.querySelector('.s3'), s4 = root.querySelector('.s4');
+  let lastK = -1;
+  return { end: SIM + 1.5, update(t){
+    const x = clamp(t - 1, 0, SIM), k = Math.round(x*10); if (k === lastK) return; lastK = k;
+    const pts = series.filter(s => s.x <= x + 1e-6);
+    const p = pts.map(s => `${X(s.x).toFixed(1)},${Y(s.lag).toFixed(1)}`);
+    line.setAttribute('points', p.join(' '));
+    area.setAttribute('points', p.length ? `${X(0)},300 ${p.join(' ')} ${X(pts[pts.length-1].x).toFixed(1)},300` : '');
+    const q = pts[pts.length-1] || series[0];
+    s1.textContent = Math.round(q.produced); s2.textContent = Math.round(q.consumed); s3.textContent = Math.round(q.lag);
+    s4.textContent = x >= STOP0 && x < STOP1 ? 'processador parado: lag crescendo' : x >= STOP1 && q.lag > 0 ? 'processador voltou: consumindo o acumulado' : 'em dia';
+    s4.style.color = x >= STOP0 && x < STOP1 ? 'var(--st-red)' : 'var(--st-green)';
+  }};
+}};
+
+/* ---------- duração e índice ---------- */
+SCENES.forEach(sc => {
+  const t = sc.v.type;
+  let end = 0;
+  if (t === 'term') end = termTiming(sc).end;
+  else if (t === 'code') end = codeTiming(sc).end;
+  else if (t === 'boxes') end = Math.max(...sc.v.items.map(i => i.at), ...(sc.v.defs || []).map(d => d[2]));
+  else if (t === 'check') end = 1 + sc.v.items.length*.9;
+  else if (t === 'rebalance') end = 15;
+  else if (t === 'lag') end = 24;
+  sc.dur = Math.max(sc.say.length / 14.5 + 2, end + 3, sc.v.min || 0);
+});
+let acc = 0; SCENES.forEach(sc => { sc.start = acc; acc += sc.dur; });
+const TOTAL = acc;
+const IDX = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+/* ---------- player ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageInner = $('stageInner');
+const state = {i:0, t:0, playing:false, rate:1, voice:false, speaking:false, speakT:0};
+let cur = null, utterId = 0;
+
+function fitStage(){ stageInner.style.transform = `scale(${stage.clientWidth / 960})`; }
+new ResizeObserver(fitStage).observe(stage); fitStage();
+
+function load(i){
+  state.i = i; const sc = SCENES[i];
+  stageInner.innerHTML = `<div class="sc-head"><span class="sc-ch">${esc(sc.ch)}</span><span class="sc-title">${esc(sc.title)}</span><span class="sc-num">${String(i+1).padStart(2,'0')}/${SCENES.length}</span></div>`;
+  const root = document.createElement('div'); root.className = 'scene'; stageInner.appendChild(root);
+  if (sc.v.type === 'title' || sc.v.type === 'outro') stageInner.firstChild.hidden = true;
+  cur = V[sc.v.type].build(root, sc);
+  $('capMeta').textContent = `Cena ${i+1} de ${SCENES.length} · ${sc.ch}`;
+  $('capTitle').textContent = sc.title;
+  $('capText').textContent = sc.say;
+  document.querySelectorAll('.ch-item').forEach(b => b.classList.toggle('active', +b.dataset.i === i));
+  const hasCode = sc.v.type === 'term' || sc.v.type === 'code';
+  $('btnCopy').disabled = !hasCode; $('btnCopy').style.opacity = hasCode ? 1 : .4;
+}
+function go(i, t = 0){
+  i = clamp(i, 0, SCENES.length - 1);
+  const changed = i !== state.i || !cur;
+  if (changed) load(i);
+  state.t = t;
+  if (changed && state.voice && state.playing) speak(SCENES[i].say);
+}
+function seekGlobal(g){
+  g = clamp(g, 0, TOTAL - .01);
+  let i = SCENES.findIndex(s => g < s.start + s.dur); if (i < 0) i = SCENES.length - 1;
+  go(i, g - SCENES[i].start);
+}
+
+/* voz (opcional, usa a síntese do navegador) */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch(e){ voices = []; } }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try {
+    const s = window.speechSynthesis; if (!s) return;
+    s.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = state.rate;
+    const v = voices.find(v => /pt[-_]BR/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)); if (v) u.voice = v;
+    const id = ++utterId; state.speaking = true; state.speakT = 0;
+    u.onend = u.onerror = () => { if (id === utterId) state.speaking = false; };
+    s.speak(u);
+  } catch(e){ state.speaking = false; }
+}
+function stopSpeech(){ utterId++; state.speaking = false; try { speechSynthesis.cancel(); } catch(e){} }
+
+function play(){
+  if (state.i === SCENES.length - 1 && state.t >= SCENES[state.i].dur - .05) go(0, 0);
+  state.playing = true; $('bigPlay').hidden = true;
+  if (state.voice) speak(SCENES[state.i].say);
+  syncPlayBtn();
+}
+function pause(){ state.playing = false; stopSpeech(); syncPlayBtn(); }
+function syncPlayBtn(){
+  $('icoPlay').innerHTML = state.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('btnPlay').setAttribute('aria-label', state.playing ? 'Pausar' : 'Reproduzir');
+}
+
+let lastTs = null;
+function frame(ts){
+  const dt = lastTs == null ? 0 : Math.min(.1, (ts - lastTs) / 1000); lastTs = ts;
+  if (state.playing){
+    state.t += dt * state.rate;
+    if (state.speaking) state.speakT += dt;
+    const sc = SCENES[state.i];
+    if (state.t >= sc.dur){
+      const wait = state.voice && state.speaking && state.speakT < sc.dur * 1.6 + 8;
+      if (wait) state.t = sc.dur;
+      else if (state.i < SCENES.length - 1) go(state.i + 1, 0);
+      else { state.t = sc.dur; pause(); }
+    }
+  }
+  const sc = SCENES[state.i];
+  cur && cur.update(Math.min(state.t, sc.dur));
+  const g = sc.start + Math.min(state.t, sc.dur), p = g / TOTAL * 100;
+  $('fill').style.width = p + '%'; $('knob').style.left = p + '%';
+  $('time').textContent = `${fmt(g)} / ${fmt(TOTAL)}`;
+  $('bar').setAttribute('aria-valuenow', Math.round(g)); $('bar').setAttribute('aria-valuetext', fmt(g));
+  requestAnimationFrame(frame);
+}
+
+/* capítulos e marcas da barra */
+(function buildChapters(){
+  const box = $('chapters'); let h = '', lastCh = null;
+  SCENES.forEach((s, i) => {
+    if (s.ch !== lastCh){ if (lastCh) h += '</div>'; h += `<div class="ch-group"><span class="ch-name">${esc(s.ch)}</span>`; lastCh = s.ch;
+      $('ticks').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${s.start / TOTAL * 100}%"></span>`); }
+    h += `<button class="ch-item" data-i="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s.title)}</span><span class="tm">${fmt(s.start)}</span></button>`;
+  });
+  box.innerHTML = h + '</div>';
+  box.addEventListener('click', e => { const b = e.target.closest('.ch-item'); if (!b) return; go(+b.dataset.i, 0); if (!state.playing) play(); else if (state.voice) speak(SCENES[state.i].say); });
+  $('bar').setAttribute('aria-valuemax', Math.round(TOTAL));
+})();
+
+/* barra de progresso */
+(function scrub(){
+  const bar = $('bar'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1) * TOTAL; };
+  bar.addEventListener('pointerdown', e => { drag = true; bar.setPointerCapture(e.pointerId); seekGlobal(at(e)); stopSpeech(); });
+  bar.addEventListener('pointermove', e => { if (drag) seekGlobal(at(e)); });
+  bar.addEventListener('pointerup', () => { drag = false; if (state.playing && state.voice) speak(SCENES[state.i].say); });
+  bar.addEventListener('keydown', e => {
+    const g = SCENES[state.i].start + state.t;
+    if (e.key === 'ArrowRight'){ seekGlobal(g + 5); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'){ seekGlobal(g - 5); e.preventDefault(); }
+  });
+})();
+
+$('bigPlay').onclick = play;
+$('btnPlay').onclick = () => state.playing ? pause() : play();
+$('btnPrev').onclick = () => { go(state.t > 2 ? state.i : state.i - 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnNext').onclick = () => { go(state.i + 1, 0); if (state.playing && state.voice) speak(SCENES[state.i].say); };
+$('btnRate').onclick = () => {
+  const r = [1, 1.25, 1.5, .75]; state.rate = r[(r.indexOf(state.rate) + 1) % r.length];
+  $('btnRate').textContent = String(state.rate).replace('.', ',') + '×';
+  if (state.playing && state.voice) speak(SCENES[state.i].say);
+};
+$('btnVoice').onclick = () => {
+  if (!('speechSynthesis' in window)){ toast('Este navegador não oferece leitura em voz alta.'); return; }
+  state.voice = !state.voice; $('btnVoice').setAttribute('aria-pressed', state.voice);
+  if (state.voice && state.playing) speak(SCENES[state.i].say); else if (!state.voice) stopSpeech();
+  toast(state.voice ? 'Narração por voz ligada' : 'Narração por voz desligada');
+};
+$('btnCopy').onclick = () => {
+  const sc = SCENES[state.i]; let txt = '';
+  if (sc.v.type === 'code') txt = sc.v.code;
+  else if (sc.v.type === 'term') txt = sc.v.lines.filter(l => /^[ck]\|/.test(l)).map(l => l.slice(2)).join('\n');
+  if (!txt) return;
+  const done = () => toast('Código da cena copiado');
+  try { navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt)); } catch(e){ fallbackCopy(txt); }
+};
+function fallbackCopy(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove(); toast(ok ? 'Código da cena copiado' : 'Não foi possível copiar; selecione o texto manualmente.');
+}
+$('btnFull').onclick = () => {
+  const p = $('player');
+  try { if (document.fullscreenElement) document.exitFullscreen(); else p.requestFullscreen().catch(() => toast('Tela cheia indisponível nesta visualização.')); }
+  catch(e){ toast('Tela cheia indisponível nesta visualização.'); }
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,summary,button,[role="slider"]')) return;
+  if (e.key === ' ' || e.key === 'k'){ e.preventDefault(); state.playing ? pause() : play(); }
+  if (e.key === 'ArrowRight') $('btnNext').click();
+  if (e.key === 'ArrowLeft') $('btnPrev').click();
+});
+
+let toastTimer;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+
+/* ===================== SEÇÕES DE ESTUDO ===================== */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e){ return []; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function jump(id){ const i = IDX[id]; if (i == null) return; go(i, 0); $('player').scrollIntoView({behavior:'smooth', block:'start'}); if (!state.playing) play(); }
+
+function renderList(boxId, progId, key, rows, grouped){
+  const box = $(boxId); const done = new Set(store.get(key));
+  let h = '', lastG = null;
+  rows.forEach((r, i) => {
+    if (grouped && r.g !== lastG){ h += `<div class="grp-t">${esc(r.g)}</div>`; lastG = r.g; }
+    const cid = `${key}-${i}`;
+    const goBtn = r.scene != null && IDX[r.scene] != null ? `<button class="go" data-scene="${r.scene}" title="Ir para a cena">▶ cena ${String(IDX[r.scene] + 1).padStart(2,'0')}</button>` : '<span></span>';
+    h += `<div class="li ${done.has(i) ? 'done' : ''}"><input type="checkbox" id="${cid}" data-i="${i}" ${done.has(i) ? 'checked' : ''}>
+      <label for="${cid}"><span>${r.html}</span>${r.sub ? `<span class="sub">${r.sub}</span>` : ''}</label>${goBtn}</div>`;
+  });
+  box.innerHTML = h;
+  const prog = () => { $(progId).innerHTML = `<b>${done.size}</b> de ${rows.length} concluídos`; };
+  prog();
+  box.addEventListener('change', e => {
+    const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+    e.target.closest('.li').classList.toggle('done', e.target.checked);
+    store.set(key, [...done]); prog();
+  });
+  box.addEventListener('click', e => { const b = e.target.closest('.go'); if (b) jump(b.dataset.scene); });
+}
+
+/* textos fixos vindos da configuração da trilha */
+(function header(){
+  $('hEyebrow').textContent = CONF.eyebrow;
+  $('hTitle').textContent = CONF.h1;
+  $('hLead').textContent = CONF.lead;
+  $('hPills').innerHTML = (CONF.pills || []).map(p => `<span class="pill">${esc(p)}</span>`).join('');
+  $('studyDesc').textContent = CONF.studyDesc || 'Documentação oficial e referências de qualidade. A marcação fica salva só neste navegador.';
+  $('checkDesc').textContent = CONF.checkDesc || 'Cada item vale quando foi aplicado na prática, não só lido. O botão ao lado leva à cena do vídeo.';
+  $('faqSearch').placeholder = CONF.faqPlaceholder || 'Buscar nas perguntas…';
+  $('cmdsTitle').textContent = CONF.cmdsTitle || 'Comandos e números de bolso';
+  $('footText').textContent = CONF.footer || 'Material de estudo pessoal. Os códigos são didáticos e não foram executados neste material. Nomes de APIs, versões e preços mudam rápido: confirme na documentação oficial antes de usar.';
+})();
+
+renderList('studyList', 'progStudy', CONF.key + '-study', STUDY.map(s => ({html:`<a href="${s[2]}" target="_blank" rel="noopener">${esc(s[0])}</a>`, sub:esc(s[1]), scene:s[3]})));
+renderList('checkList', 'progCheck', CONF.key + '-check', CHECK.map(c => ({g:c[0], html:esc(c[1]), scene:c[2]})), true);
+
+/* FAQ */
+(function faq(){
+  const cats = ['Todas', ...new Set(FAQ.map(f => f[0]))];
+  let cat = 'Todas', q = '', allOpen = false;
+  $('faqCats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  $('faq').innerHTML = FAQ.map((f, i) => `<details data-i="${i}"><summary><span>${esc(f[1])}</span><span class="cat">${esc(f[0])}</span></summary><div class="ans">${f[2]}</div></details>`).join('') + '<p class="faq-empty" hidden>Nenhuma pergunta encontrada. Tente outro termo.</p>';
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const plain = FAQ.map(f => norm(f[1] + ' ' + f[2].replace(/<[^>]+>/g, ' ')));
+  function apply(){
+    let n = 0;
+    document.querySelectorAll('#faq details').forEach(d => {
+      const i = +d.dataset.i, ok = (cat === 'Todas' || FAQ[i][0] === cat) && (!q || plain[i].includes(q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    document.querySelector('.faq-empty').hidden = n > 0;
+    $('faqCount').textContent = `${n} pergunta${n === 1 ? '' : 's'}`;
+  }
+  $('faqCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c;
+    document.querySelectorAll('#faqCats .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.c === cat)); apply(); });
+  $('faqSearch').addEventListener('input', e => { q = norm(e.target.value.trim()); apply(); });
+  $('faqToggle').onclick = () => { allOpen = !allOpen; document.querySelectorAll('#faq details').forEach(d => d.open = allOpen); $('faqToggle').textContent = allOpen ? 'Fechar todas' : 'Abrir todas'; };
+  apply();
+})();
+
+$('cmds').innerHTML = CMDS.map(c => `<div class="cmd"><pre>${esc(c[0])}</pre><span>${esc(c[1])}</span></div>`).join('');
+
+/* matriz de decisão (opcional) */
+(function matriz(){
+  const sec = $('matriz');
+  if (typeof MATRIZ === 'undefined' || !MATRIZ.length || !CONF.matriz){ sec.hidden = true; return; }
+  const m = CONF.matriz;
+  $('mzEyebrow').textContent = m.eyebrow || 'Decisão';
+  $('mzTitle').textContent = m.title;
+  $('mzDesc').textContent = m.desc || '';
+  $('mzHead').innerHTML = '<tr>' + m.cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  $('matrizBody').innerHTML = MATRIZ.map(r => '<tr>' + r.map((c, i) => i === 0 ? `<td>${esc(c)}</td>` : i === 1 && m.tag !== false ? `<td><span class="ent">${esc(c)}</span></td>` : `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+})();
+
+/* já visto em outras trilhas (opcional) */
+(function jaVisto(){
+  const sec = $('ja-visto');
+  const rows = (typeof JA_VISTO === 'undefined' ? [] : JA_VISTO).filter(r => TR[r[1]]);
+  if (!rows.length){ sec.hidden = true; return; }
+  if (CONF.jaVistoDesc) $('jvDesc').textContent = CONF.jaVistoDesc;
+  $('jaVisto').innerHTML = rows.map(([tema, t, cena, oque]) => {
+    const [nome, url] = TR[t];
+    const href = cena ? `${url}#${cena}` : url;
+    return `<div class="li jv"><span class="eyebrow" style="margin-top:3px">${esc(nome.replace('Trilha ', ''))}</span><span><a href="${href}" target="_blank" rel="noopener">${esc(tema)}</a><span class="sub">${esc(oque)}</span></span><a class="go" href="${href}" target="_blank" rel="noopener">abrir ${cena ? 'cena' : 'trilha'} ↗</a></div>`;
+  }).join('');
+})();
+
+/* início: primeira cena visível e parada */
+const cenaInicial = IDX[decodeURIComponent((location.hash || '').slice(1))];
+load(cenaInicial ?? 0); syncPlayBtn(); requestAnimationFrame(frame);
+if (cenaInicial != null) setTimeout(() => $('player').scrollIntoView({ block: 'start' }), 60);
+addEventListener('hashchange', () => { const i = IDX[location.hash.slice(1)]; if (i != null) { go(i, 0); $('player').scrollIntoView({ block: 'start' }); } });
+
+</script>
+</body></html>
