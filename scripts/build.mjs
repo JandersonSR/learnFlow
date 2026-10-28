@@ -215,6 +215,12 @@ const dados = {
     .sort((a, b) => (a.volume ?? 999) - (b.volume ?? 999) || a.nome.localeCompare(b.nome, "pt-BR")),
   guias: guias.map(({ nome, arquivo, tamanho }) => ({ nome, arquivo, tamanho })),
   projetos: proj.projetos,
+  // Repositórios onde se pratica o que os projetos guiados ensinam (cada um aponta de volta para o learnFlow)
+  repositorios: [
+    { nome: "aks-step-by-step", url: "https://github.com/JandersonSR/aks-step-by-step", papel: "laboratório: a API de CEP no AKS em 17 níveis" },
+    { nome: "kub-learn-flow", url: "https://github.com/JandersonSR/kub-learn-flow", papel: "Kubernetes local com Minikube" },
+    { nome: "squad-dotnet-kubernetes", url: "https://github.com/JandersonSR/squad-dotnet-kubernetes", papel: "gabarito do ambiente completo" },
+  ],
 };
 dados.trilhas.push(...proj.modulos);
 

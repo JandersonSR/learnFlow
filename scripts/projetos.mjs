@@ -79,6 +79,30 @@ pre.mermaid{background:var(--surface);border:1px solid var(--line);border-radius
 .lida button{font:600 15px/1 "IBM Plex Sans",system-ui,sans-serif;border-radius:10px;padding:11px 16px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff}
 .lida button[aria-pressed="true"]{background:var(--surface);color:var(--ok);border-color:var(--ok)}
 img{max-width:100%}
+.ens{margin:20px 0;padding:14px 18px;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;background:var(--surface)}
+.ens>:first-child{margin-top:0}.ens>:last-child{margin-bottom:0}
+.ens-tit{font:700 13px/1.3 "IBM Plex Sans",system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin:0 0 8px}
+.ens-tit span{opacity:.75}
+.ens-porque{border-left-color:#7A4FD0}.ens-porque .ens-tit{color:#7A4FD0}
+.ens-analogia{border-left-color:#0F8C8C}.ens-analogia .ens-tit{color:#0F8C8C}
+.ens-armadilha{border-left-color:#C2410C;background:color-mix(in srgb,#C2410C 6%,var(--surface))}.ens-armadilha .ens-tit{color:#C2410C}
+.ens-previsao,.ens-pergunta,.ens-entrevista{border-left-color:#B7791F}.ens-previsao .ens-tit,.ens-pergunta .ens-tit,.ens-entrevista .ens-tit{color:#B7791F}
+.ens-quebra{border-left-color:#C0392B}.ens-quebra .ens-tit{color:#C0392B}
+.ens-desafio{border-left-color:#16855A}.ens-desafio .ens-tit{color:var(--ok)}
+.ens-checkpoint{border-left-color:var(--ok)}.ens-checkpoint .ens-tit{color:var(--ok)}
+.ens-repo{border-left-color:var(--muted)}.ens-repo .ens-tit{color:var(--muted)}
+@media (prefers-color-scheme:dark){.ens-porque .ens-tit{color:#B69CFF}.ens-armadilha .ens-tit{color:#FB8A4C}.ens-previsao .ens-tit,.ens-pergunta .ens-tit,.ens-entrevista .ens-tit{color:#F2C46B}.ens-quebra .ens-tit{color:#FF8A7A}.ens-analogia .ens-tit{color:#4FD1D1}}
+details.ens{border-left-color:var(--muted);padding:10px 16px}
+details summary,.ens-resp summary{cursor:pointer;font-weight:600;color:var(--accent)}
+details[open]>summary{margin-bottom:8px}
+.ens-resp{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.ens-palpite{width:100%;margin-top:6px;font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+.yt{position:relative;display:block;width:100%;aspect-ratio:16/9;border:0;padding:0;border-radius:10px;overflow:hidden;background:#000;cursor:pointer;margin:4px 0 10px}
+.yt img{width:100%;height:100%;object-fit:cover;opacity:.85}
+.yt span{position:absolute;inset:0;margin:auto;width:68px;height:48px;border-radius:12px;background:#E62117;color:#fff;font-size:22px;display:grid;place-items:center}
+.yt iframe{width:100%;height:100%;border:0}
+.ens-link{font-size:14px}
+li.tarefa{list-style:none;margin-left:-1.2em}li.tarefa input{width:18px;height:18px;vertical-align:-3px;accent-color:var(--ok)}
 `;
 
 /** Gera as páginas dos projetos em dist/projetos e devolve os cartões dos módulos e um mapa de referências. */
@@ -127,6 +151,11 @@ export function gerarProjetos({ raiz, dist, barra }) {
       const src = readFileSync(join(dir, rel), "utf8");
       const link = (href) => {
         if (/^(https?:|mailto:|#)/.test(href)) return href;
+        // trilha:<slug> aponta para uma trilha do site (dist/trilhas/<slug>.html)
+        if (href.startsWith("trilha:")) {
+          const [t, a] = href.slice(7).split("#");
+          return "../".repeat(destino(rel).split("/").length + 1) + `trilhas/${t}.html` + (a ? "#" + a : "");
+        }
         const [caminho, ancora] = href.split("#");
         const alvo = posix.normalize(posix.join(posix.dirname(rel), caminho));
         if (!existe.has(alvo)) return null; // arquivo de código ou fora do curso: só o texto
@@ -147,6 +176,11 @@ export function gerarProjetos({ raiz, dist, barra }) {
 const ler=()=>{try{const v=JSON.parse(localStorage.getItem(k)||"[]");return Array.isArray(v)?v:[]}catch{return[]}};
 const pinta=()=>{const on=ler().includes(p);b.setAttribute("aria-pressed",on);b.textContent=on?"✓ Lida (desmarcar)":"Marcar como lida"};
 b.addEventListener("click",()=>{const v=ler(),i=v.indexOf(p);i<0?v.push(p):v.splice(i,1);try{localStorage.setItem(k,JSON.stringify(v))}catch{};pinta()});pinta();})();</script>` : "";
+      const interacoes = /class="(yt|ens-palpite|tarefa)/.test(r.html)
+        ? `<script>(()=>{document.querySelectorAll(".yt").forEach(b=>b.addEventListener("click",()=>{const f=document.createElement("iframe");f.src="https://www.youtube-nocookie.com/embed/"+b.dataset.id+"?autoplay=1&rel=0";f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.allowFullscreen=true;f.title=b.getAttribute("aria-label")||"Vídeo";const d=document.createElement("div");d.className="yt";d.append(f);b.replaceWith(d)},{once:true}));
+document.querySelectorAll(".tarefa input").forEach((c,i)=>{const k="lf:tarefa:"+location.pathname+":"+i;try{const v=localStorage.getItem(k);if(v!==null)c.checked=v==="1"}catch{}c.addEventListener("change",()=>{try{localStorage.setItem(k,c.checked?"1":"0")}catch{}})});
+document.querySelectorAll(".ens-palpite").forEach((t,i)=>{const k="lf:palpite:"+location.pathname+":"+i;try{t.value=localStorage.getItem(k)||""}catch{}t.addEventListener("input",()=>{try{localStorage.setItem(k,t.value)}catch{}})});})();</script>`
+        : "";
       const mermaid = r.temMermaid
         ? `<script type="module">import m from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";m.initialize({startOnLoad:true,theme:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"default"});</script>`
         : "";
@@ -160,7 +194,7 @@ ${barra.replace('href="../index.html"', `href="${sobe}index.html"`)}
 <main class="doc"><nav class="trilho" aria-label="Você está em">${trilho.join(" ")}</nav>
 ${r.html}
 ${marcar}
-</main>${mermaid}</body></html>`;
+</main>${interacoes}${mermaid}</body></html>`;
       const arq = join(dist, "projetos", nome, saida);
       mkdirSync(dirname(arq), { recursive: true });
       writeFileSync(arq, html);

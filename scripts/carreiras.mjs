@@ -118,6 +118,49 @@ export const CARREIRAS = [
   },
 
   {
+    id: "plataforma-dotnet",
+    nome: "Plataforma .NET em produção (stack atual)",
+    resumo: "ASP.NET 10 como monolito modular com DDD, OpenAPI, PostgreSQL, Dragonfly, Kafka, Kubernetes, Helm, Harbor, Argo CD, Terraform e Azure, ensinados peça por peça com o laboratório aks-step-by-step.",
+    duracao: "5 a 7 meses",
+    etapas: [
+      {
+        nome: "Arquitetura da aplicação",
+        meta: "Explicar o monolito modular e o DDD da API de CEP e entregar o módulo Parceiros com teste de fronteira.",
+        estudar: ["plataforma-dotnet:0", "Nova - De Node e Typescript para CSharp e ASP.NET", "plataforma-dotnet:1"],
+        consulta: ["Trilha C# e ASP.NET Core", "Nova - DDD Estratégico, Event Storming e BDD", "Decisão - Estrutura de Código e Pastas por Stack"],
+      },
+      {
+        nome: "Contrato, dados e cache",
+        meta: "OpenAPI publicado, migrações revisadas no PostgreSQL e cache em camadas com Dragonfly, explicados com os trade-offs.",
+        estudar: ["plataforma-dotnet:2", "plataforma-dotnet:3", "plataforma-dotnet:4"],
+        consulta: ["Decisão - APIs, Contratos e Integração", "Decisão - Dados, Consistência e Cache", "Vol 03 - Bancos de Dados"],
+      },
+      {
+        nome: "Eventos com Kafka",
+        meta: "Evento publicado, consumidor idempotente e escala pela fila com KEDA; prova CCDAK.",
+        estudar: ["Vol 01 - Mensageria e Caches", "plataforma-dotnet:5", "Kafka e Event Hubs com .NET", "Cert - Confluent Kafka Developer e Administrator"],
+      },
+      {
+        nome: "Kubernetes e Helm",
+        meta: "Subir, quebrar e consertar a API no Kubernetes com o chart Helm, e o runbook de deploy pronto.",
+        estudar: ["plataforma-dotnet:6", "plataforma-dotnet:7", "AKS na Prática com .NET"],
+        consulta: ["Cert - CKA Kubernetes Administrator"],
+      },
+      {
+        nome: "Azure, Terraform, Harbor e GitOps",
+        meta: "O ambiente inteiro recriado do zero por Terraform, imagens no Harbor e deploy pelo Argo CD; prova AZ-104.",
+        estudar: ["plataforma-dotnet:8", "plataforma-dotnet:9", "Terraform AKS e Event Hubs", "plataforma-dotnet:10", "plataforma-dotnet:11", "Cert - AZ-104 Azure Administrator"],
+        consulta: ["Cert - AZ-400 Azure DevOps Engineer", "Decisão - Onde Rodar Cada Coisa na Nuvem", "Nova - Platform Engineering e FinOps"],
+      },
+      {
+        nome: "Projeto final",
+        meta: "Um incidente simulado resolvido, com post-mortem, ADRs e apresentação ao time.",
+        estudar: ["plataforma-dotnet:12", "Decisão - System Design Aprofundado"],
+        consulta: ["Vol 22 - Staff Engineer e Arquitetura Evolutiva", "Vol 21 - Tech Lead na Prática"],
+      },
+    ],
+  },
+  {
     id: "dotnet-java-producao",
     nome: "Sênior .NET e Java em produção (OrderFlow)",
     resumo: "O sistema OrderFlow construído módulo a módulo, com ASP.NET 10 e Java/Spring ligados por Kafka e rodando no AKS, intercalado com as trilhas e as certificações de cada etapa.",

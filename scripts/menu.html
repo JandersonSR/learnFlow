@@ -374,7 +374,7 @@ function render() {
     if (!ts.length) continue;
     total += ts.length;
     html += `<section class="secao" id="cat-${c.id}">
-      <div class="secao-topo"><div><h2>${esc(c.nome)}</h2><p>${esc(c.descricao)}</p>${c.id === "projetos" ? (DADOS.projetos || []).map((pr) => `<p class="proj-links"><strong>${esc(pr.nome)}:</strong> <a href="${esc(pr.inicio)}">mapa do curso</a>${pr.sobre ? ` · <a href="${esc(pr.sobre)}">sobre o projeto</a>` : ""}</p>`).join("") : ""}</div><span class="cont">${ts.length} ${c.id === "projetos" ? "módulo" : "trilha"}${ts.length > 1 ? "s" : ""}</span></div>
+      <div class="secao-topo"><div><h2>${esc(c.nome)}</h2><p>${esc(c.descricao)}</p>${c.id === "projetos" ? (DADOS.projetos || []).map((pr) => `<p class="proj-links"><strong>${esc(pr.nome)}:</strong> <a href="${esc(pr.inicio)}">mapa do curso</a>${pr.sobre ? ` · <a href="${esc(pr.sobre)}">sobre o projeto</a>` : ""}</p>`).join("") + ((DADOS.repositorios || []).length ? `<p class="proj-links"><strong>Repositórios de prática:</strong> ${DADOS.repositorios.map((r) => `<a href="${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.papel)}">${esc(r.nome)}</a>`).join(" · ")}</p>` : "") : ""}</div><span class="cont">${ts.length} ${c.id === "projetos" ? "módulo" : "trilha"}${ts.length > 1 ? "s" : ""}</span></div>
       <div class="grade">${ts.map((t) => cartao(t)).join("")}</div></section>`;
   }
   $("lista").innerHTML = html;

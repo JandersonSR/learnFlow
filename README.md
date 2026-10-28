@@ -35,7 +35,7 @@ Os caminhos ficam em `scripts/carreiras.mjs` e podem misturar trilhas, certifica
 
 ## Projetos guiados
 
-Cursos práticos em Markdown que constroem um sistema real módulo a módulo (hoje, o **OrderFlow**). Ficam em `projetos/<nome>/`:
+Cursos práticos em Markdown, módulo a módulo. Hoje são dois: o **OrderFlow** (.NET e Java ligados por Kafka) e o **Plataforma .NET em Produção** (a stack ASP.NET + Kafka + Kubernetes + Helm + Harbor + Argo CD + Terraform + Azure, ensinada peça por peça). Ficam em `projetos/<nome>/`:
 
 ```
 projetos/orderflow/README.md        visão do projeto (vira "sobre o projeto")
@@ -46,6 +46,46 @@ projetos/orderflow/docs/**.md       lições, exercícios e perguntas de entrevi
 O build transforma cada `.md` numa página do site e cada linha da tabela "Mapa dos módulos" (`| # | Módulo | Status | Certificação |`) num cartão em **Projetos guiados**. Módulo com link e status "pronto" abre; os outros aparecem como "em breve". Cada página tem o botão **Marcar como lida**, e o progresso do módulo aparece no menu e nos caminhos de carreira.
 
 Para publicar um módulo novo: copie os `.md` para a pasta do módulo e troque a linha dele na tabela para `[Nome](modulo-02/README.md) | ✅ pronto`. Nos caminhos de carreira, um módulo entra como `"orderflow:2"`.
+
+### Blocos de ensino
+
+As lições podem usar blocos que viram componentes na página. A sintaxe é `::: tipo [título]` até `:::`, e `???` separa o que fica escondido até a pessoa clicar:
+
+````markdown
+::: previsao
+O que acontece se o pod reiniciar agora?
+???
+A resposta, que só aparece depois de a pessoa escrever o palpite e clicar.
+:::
+
+::: video Título do vídeo (canal, idioma)
+https://www.youtube.com/watch?v=ID
+Uma linha dizendo por que assistir.
+:::
+````
+
+| Tipo | Vira |
+|---|---|
+| `conceito`, `analogia`, `porque`, `armadilha`, `checkpoint`, `repo` | Caixa destacada com o rótulo do tipo |
+| `previsao` | Pergunta + campo para o palpite (salvo no navegador) + resposta escondida |
+| `pergunta`, `entrevista` | Pergunta + resposta escondida |
+| `quebra`, `desafio` | Lab de quebra e desafio sem roteiro |
+| `dica`, `solucao` | Bloco recolhido, aberto com um clique |
+| `video` | Vídeo do YouTube que só carrega ao clicar, com link para abrir no YouTube |
+
+Também funcionam listas de tarefas (`- [ ] item`, com o estado salvo no navegador) e links para trilhas do site com `[texto](trilha:<slug-da-trilha>)`.
+
+## Repositórios de prática
+
+Os projetos guiados ensinam; a prática acontece nestes repositórios, e cada um aponta de volta para cá:
+
+| Repositório | Papel |
+|---|---|
+| [aks-step-by-step](https://github.com/JandersonSR/aks-step-by-step) | Laboratório: a API de CEP no AKS em 17 níveis, com o guia de comandos de cada nível |
+| [kub-learn-flow](https://github.com/JandersonSR/kub-learn-flow) | Kubernetes local (Minikube), sem custo |
+| [squad-dotnet-kubernetes](https://github.com/JandersonSR/squad-dotnet-kubernetes) | Gabarito do ambiente completo, com as decisões registradas |
+
+A lista do menu fica em `scripts/build.mjs` (`repositorios`).
 
 ## Adicionar ou atualizar uma trilha
 
