@@ -35,7 +35,7 @@ Ler e entender dá a sensação de ter aprendido. Não é a mesma coisa que sabe
 | 6 | [Contêiner e Kubernetes do zero: imagem, pod, deployment, service, probes](modulo-06/README.md) | ✅ pronto | CKAD |
 | 7 | [Helm: empacotar, versionar e voltar um deploy](modulo-07/README.md) | ✅ pronto | CKAD |
 | 8 | [AKS de produção: CI/CD sem senha, Ingress e TLS, Key Vault, observabilidade, escala](modulo-08/README.md) | ✅ pronto | AZ-104 |
-| 9 | Terraform: infraestrutura em camadas, estado remoto e revisão em PR | 🔜 | Terraform Associate |
+| 9 | [Terraform: infraestrutura em camadas, estado remoto e revisão em PR](modulo-09/README.md) | ✅ pronto | Terraform Associate |
 | 10 | Harbor e cadeia de suprimentos: robôs, scan, bloqueio de imagem vulnerável | 🔜 | — |
 | 11 | GitOps com Argo CD: o cluster puxa, o Git é a fonte da verdade | 🔜 | — |
 | 12 | Projeto final: incidente simulado, post-mortem, ADRs e apresentação ao time | 🔜 | entrevistas staff |
