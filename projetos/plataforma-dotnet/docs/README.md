@@ -37,7 +37,7 @@ Ler e entender dá a sensação de ter aprendido. Não é a mesma coisa que sabe
 | 8 | [AKS de produção: CI/CD sem senha, Ingress e TLS, Key Vault, observabilidade, escala](modulo-08/README.md) | ✅ pronto | AZ-104 |
 | 9 | [Terraform: infraestrutura em camadas, estado remoto e revisão em PR](modulo-09/README.md) | ✅ pronto | Terraform Associate |
 | 10 | [Harbor e cadeia de suprimentos: robôs, scan, bloqueio de imagem vulnerável](modulo-10/README.md) | ✅ pronto | — |
-| 11 | GitOps com Argo CD: o cluster puxa, o Git é a fonte da verdade | 🔜 | — |
+| 11 | [GitOps com Argo CD: o cluster puxa, o Git é a fonte da verdade](modulo-11/README.md) | ✅ pronto | — |
 | 12 | Projeto final: incidente simulado, post-mortem, ADRs e apresentação ao time | 🔜 | entrevistas staff |
 
 Ordem sugerida: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12. Os módulos 1 e 7 estão prontos primeiro como piloto do formato.
