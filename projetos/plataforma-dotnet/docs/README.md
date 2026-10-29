@@ -29,7 +29,7 @@ Ler e entender dá a sensação de ter aprendido. Não é a mesma coisa que sabe
 | 0 | [Como estudar e a visão do sistema](00-visao-geral.md) | ✅ pronto | — |
 | 1 | [ASP.NET 10 como monolito modular com DDD](modulo-01/README.md) | ✅ pronto | entrevistas sênior |
 | 2 | [Contrato da API: OpenAPI, Swagger e Scalar, ProblemDetails, versionamento](modulo-02/README.md) | ✅ pronto | — |
-| 3 | PostgreSQL e EF Core em produção: migrações revisadas, usuário sem DDL, retry | 🔜 | DP-300 (conceitos) |
+| 3 | [PostgreSQL e EF Core em produção: migrações revisadas, usuário sem DDL, concorrência](modulo-03/README.md) | ✅ pronto | — |
 | 4 | Cache em camadas: HybridCache, Dragonfly e o que fazer quando o cache cai | 🔜 | — |
 | 5 | Kafka: eventos, partições, ordem, consumidor idempotente e escala pela fila (KEDA) | 🔜 | CCDAK |
 | 6 | Contêiner e Kubernetes do zero: imagem, pod, deployment, service, probes | 🔜 | CKAD |
