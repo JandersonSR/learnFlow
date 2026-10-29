@@ -58,4 +58,4 @@ Dá para usar um hook `pre-upgrade` com um Job, que roda e precisa terminar ante
 
 Explique o Lab 2 (imagem inexistente com `maxUnavailable: 0`) para alguém do suporte. Se a pessoa entender por que a API não caiu, você entendeu.
 
-**Mapa do curso:** [voltar](../README.md).
+**Próximo módulo:** [Módulo 8: AKS de produção](../modulo-08/README.md).

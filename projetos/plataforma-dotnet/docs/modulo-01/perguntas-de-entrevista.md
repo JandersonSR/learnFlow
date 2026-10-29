@@ -82,4 +82,4 @@ Se um precisa da resposta para decidir, chamada síncrona por um contrato públi
 
 Escolha três perguntas acima e explique para alguém do time que não seja de backend. Se a pessoa entender, você entendeu.
 
-**Próximo módulo:** o 2 (contrato da API) ainda vai ser escrito. Enquanto isso, o [Módulo 7: Helm](../modulo-07/README.md) já está pronto.
+**Próximo módulo:** [Módulo 2: contrato da API](../modulo-02/README.md).

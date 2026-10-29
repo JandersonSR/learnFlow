@@ -38,9 +38,9 @@ Ler e entender dá a sensação de ter aprendido. Não é a mesma coisa que sabe
 | 9 | [Terraform: infraestrutura em camadas, estado remoto e revisão em PR](modulo-09/README.md) | ✅ pronto | Terraform Associate |
 | 10 | [Harbor e cadeia de suprimentos: robôs, scan, bloqueio de imagem vulnerável](modulo-10/README.md) | ✅ pronto | — |
 | 11 | [GitOps com Argo CD: o cluster puxa, o Git é a fonte da verdade](modulo-11/README.md) | ✅ pronto | — |
-| 12 | Projeto final: incidente simulado, post-mortem, ADRs e apresentação ao time | 🔜 | entrevistas staff |
+| 12 | [Projeto final: incidente simulado, post-mortem, ADRs e apresentação ao time](modulo-12/README.md) | ✅ pronto | entrevistas staff |
 
-Ordem sugerida: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12. Os módulos 1 e 7 estão prontos primeiro como piloto do formato.
+Ordem sugerida: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12. Quem já conhece Kubernetes pode fazer o 6 antes do 2; quem vai começar pela infraestrutura do trabalho pode ir do 1 direto para o 6 e voltar depois.
 
 ## Onde está a prática de cada módulo
 
