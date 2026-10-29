@@ -79,7 +79,7 @@ sequenceDiagram
   participant DB as PostgreSQL
   participant R as Retransmissor (BackgroundService)
   participant K as Kafka
-  H->>DB: BEGIN; UPDATE Parceiros; INSERT INTO Outbox; COMMIT
+  H->>DB: BEGIN, UPDATE Parceiros, INSERT INTO Outbox, COMMIT
   loop a cada segundo
     R->>DB: SELECT ... FROM Outbox WHERE PublicadaEm IS NULL ... FOR UPDATE SKIP LOCKED
     R->>K: ProduceAsync (espera a confirmação)

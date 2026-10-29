@@ -32,7 +32,7 @@ Ler e entender dá a sensação de ter aprendido. Não é a mesma coisa que sabe
 | 3 | [PostgreSQL e EF Core em produção: migrações revisadas, usuário sem DDL, concorrência](modulo-03/README.md) | ✅ pronto | — |
 | 4 | [Cache em camadas: HybridCache, Dragonfly e o que fazer quando o cache cai](modulo-04/README.md) | ✅ pronto | — |
 | 5 | [Kafka: eventos, partições, ordem, consumidor idempotente e escala pela fila (KEDA)](modulo-05/README.md) | ✅ pronto | CCDAK |
-| 6 | Contêiner e Kubernetes do zero: imagem, pod, deployment, service, probes | 🔜 | CKAD |
+| 6 | [Contêiner e Kubernetes do zero: imagem, pod, deployment, service, probes](modulo-06/README.md) | ✅ pronto | CKAD |
 | 7 | [Helm: empacotar, versionar e voltar um deploy](modulo-07/README.md) | ✅ pronto | CKAD |
 | 8 | AKS de produção: CI/CD sem senha, Ingress e TLS, Key Vault, observabilidade, escala | 🔜 | AZ-104 |
 | 9 | Terraform: infraestrutura em camadas, estado remoto e revisão em PR | 🔜 | Terraform Associate |
