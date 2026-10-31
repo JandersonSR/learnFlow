@@ -22,13 +22,13 @@ entrevista ou num code review.
 | 0 | [Ambiente e visão geral](00-ambiente-e-visao-geral.md) | ✅ pronto | — |
 | 1 | [C# e ASP.NET 10 para quem vem de Node/TS](modulo-01/README.md) (serviço **Orders**) | ✅ pronto | base para todas |
 | 1-J | [Java 25 e Spring Boot 4 para quem sabe TS e C#](modulo-01j/README.md) (serviço **Payments**) | ✅ pronto | **Oracle Java SE (1Z0-830)** |
-| 2 | Kafka do zero: producers e consumers em **.NET e Java**, partições, offsets; Orders ↔ Payments por eventos | 🔜 | **CCDAK** (núcleo) |
-| 3 | Kafka em produção: outbox, idempotência, retry, DLT, Schema Registry (contrato entre Java e .NET); EF Core e JPA com Postgres | 🔜 | **CCDAK** |
-| 4 | Kubernetes local: Docker (imagens .NET e Java), Deployments, Services, probes, Helm | 🔜 | **CKAD** |
-| 5 | Kafka no Kubernetes: Strimzi vs Confluent Cloud vs Event Hubs; Kafka Streams (Java) | 🔜 | CCDAK + CKAD |
-| 6 | AKS de verdade: ACR, Ingress, Workload Identity, Key Vault, KEDA, Bicep/Terraform | 🔜 | **AZ-104**, AI-200 |
-| 7 | Operação: OpenTelemetry nas duas stacks, Grafana, CI/CD, deploy sem downtime, runbooks | 🔜 | AZ-400 |
-| 8 | Camada de tech lead/staff: ADRs, system design, trade-offs, revisão | 🔜 | entrevistas sênior/staff |
+| 2 | [Kafka do zero: producers e consumers em **.NET e Java**, partições, offsets; Orders ↔ Payments por eventos](modulo-02/README.md) | ✅ pronto | **CCDAK** (núcleo) |
+| 3 | [Kafka em produção: outbox, idempotência, retry, DLT, Schema Registry (contrato entre Java e .NET); EF Core e JPA com Postgres](modulo-03/README.md) | ✅ pronto | **CCDAK** |
+| 4 | [Kubernetes local: Docker (imagens .NET e Java), Deployments, Services, probes, Helm](modulo-04/README.md) | ✅ pronto | **CKAD** |
+| 5 | [Kafka no Kubernetes: Strimzi vs Confluent Cloud vs Event Hubs; Kafka Streams (Java)](modulo-05/README.md) | ✅ pronto | CCDAK + CKAD |
+| 6 | [AKS de verdade: ACR, Ingress, Workload Identity, Key Vault, KEDA, Bicep/Terraform](modulo-06/README.md) | ✅ pronto | **AZ-104**, AI-200 |
+| 7 | [Operação: OpenTelemetry nas duas stacks, Grafana, CI/CD, deploy sem downtime, runbooks](modulo-07/README.md) | ✅ pronto | AZ-400 |
+| 8 | [Camada de tech lead/staff: ADRs, system design, trade-offs, revisão](modulo-08/README.md) | ✅ pronto | entrevistas sênior/staff |
 
 Ordem sugerida: 0 → 1 → 1-J → 2. Com foco em vaga Java, dá para fazer 0 → 1-J → 1; o 1-J compara
 com o 1 o tempo todo, então leia pelo menos as lições 1.3 (domínio) e 1.7/1.8 (worker e

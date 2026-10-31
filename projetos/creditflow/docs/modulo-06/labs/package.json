@@ -1,0 +1,7 @@
+{
+  "name": "creditflow-modulo-06-labs",
+  "private": true,
+  "type": "module",
+  "description": "Protótipos do relay da outbox, da inbox e do consumidor (lições 6.3 a 6.5). Precisam de um Postgres 16 com o schema pagamentos.",
+  "dependencies": { "pg": "^8.16.0" }
+}

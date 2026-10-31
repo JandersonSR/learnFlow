@@ -20,9 +20,9 @@ serviços em linguagens diferentes.
 |---|---|
 | **Orders** (.NET 10) | ✅ API completa com fila de eventos em memória |
 | **Payments** (Java 25 + Spring Boot 4) | ✅ API completa com fila de eventos em memória (domínio e casos de uso testados; rode `./mvnw verify` para validar a camada Spring) |
-| Kafka entre os serviços | 🔜 Módulo 2 |
-| Postgres, outbox, Schema Registry | 🔜 Módulo 3 |
-| Docker, Kubernetes, AKS, observabilidade, CI/CD | 🔜 Módulos 4 a 7 |
+| Kafka entre os serviços | ✅ Módulo 2 |
+| Postgres, outbox, Schema Registry | ✅ Módulo 3 |
+| Docker, Kubernetes, AKS, observabilidade, CI/CD | ✅ Módulos 4 a 7 (código ainda não compilado/executado num cluster) |
 
 O roteiro completo está em [`docs/README.md`](docs/README.md).
 
