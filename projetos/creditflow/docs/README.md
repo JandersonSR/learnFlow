@@ -18,16 +18,16 @@ Cada lição ensina como um professor: o que é cada peça, por que esta escolha
 
 | # | Módulo | Status | Certificação que ajuda |
 |---|---|---|---|
-| 0 | Visão geral, o domínio de crédito e como estudar | 🔜 | — |
-| 1 | Do zero: solução, monolito modular, fronteiras testadas e ambiente local | 🔜 | entrevistas sênior |
-| 2 | Domínio de crédito: módulo Simulação (Price, SAC, IOF, CET) | 🔜 | — |
-| 3 | Identidade com Keycloak: OIDC, PKCE, roles e M2M | 🔜 | SC-300 (conceitos) |
-| 4 | Persistência poliglota: PostgreSQL e MongoDB | 🔜 | — |
-| 5 | Cache com Dragonfly: o que cachear em crédito e o que nunca cachear | 🔜 | — |
-| 6 | Kafka: outbox, saga de desembolso e consumidor idempotente | 🔜 | CCDAK |
-| 7 | Contêiner, Kubernetes e Helm com perfis de execução | 🔜 | CKAD |
-| 8 | Escalando Simulação e Pagamentos: HPA, KEDA e teste de carga | 🔜 | CKAD |
-| 9 | Azure com Terraform: rede, AKS, Postgres, Key Vault e Workload Identity | 🔜 | AZ-104, Terraform Associate |
+| 0 | [Visão geral, o domínio de crédito e como estudar](00-visao-geral.md) | ✅ pronto | — |
+| 1 | [Do zero: solução, monolito modular, fronteiras testadas e ambiente local](modulo-01/README.md) | ✅ pronto | entrevistas sênior |
+| 2 | [Domínio de crédito: módulo Simulação (Price, SAC, IOF, CET)](modulo-02/README.md) | ✅ pronto | — |
+| 3 | [Identidade com Keycloak: OIDC, PKCE, roles e M2M](modulo-03/README.md) | ✅ pronto | SC-300 (conceitos) |
+| 4 | [Persistência poliglota: PostgreSQL e MongoDB](modulo-04/README.md) | ✅ pronto | — |
+| 5 | [Cache com Dragonfly: o que cachear em crédito e o que nunca cachear](modulo-05/README.md) | ✅ pronto | — |
+| 6 | [Kafka: outbox, saga de desembolso e consumidor idempotente](modulo-06/README.md) | ✅ pronto | CCDAK |
+| 7 | [Contêiner, Kubernetes e Helm com perfis de execução](modulo-07/README.md) | ✅ pronto | CKAD |
+| 8 | [Escalando Simulação e Pagamentos: HPA, KEDA e teste de carga](modulo-08/README.md) | ✅ pronto | CKAD |
+| 9 | [Azure com Terraform: rede, AKS, Postgres, Key Vault e Workload Identity](modulo-09/README.md) | ✅ pronto | AZ-104, Terraform Associate |
 | 10 | Harbor e cadeia de suprimentos: scan, assinatura e bloqueio | 🔜 | — |
 | 11 | GitOps com Argo CD: app-of-apps, ambientes e promoção | 🔜 | — |
 | 12 | Operação: OpenTelemetry, SLOs, game day, post-mortem e ADRs | 🔜 | AZ-400, entrevistas staff |
