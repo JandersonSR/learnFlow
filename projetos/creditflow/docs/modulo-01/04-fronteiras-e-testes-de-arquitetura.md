@@ -20,6 +20,8 @@ public interface IConsultaDeClientes
 public sealed record PerfilDeCreditoDto(Guid ClienteId, int Score, long RendaMensalCentavos, bool ConsentimentoAnaliseDeCredito);
 ```
 
+(O contrato tem também `ObterPerfilPorUsuarioAsync(sub)`, que liga o login do Keycloak ao cliente: Propostas usa para derivar o cliente do token, módulo 3.)
+
 ::: porque Por que o DTO não tem nome nem CPF
 Simulação e Propostas precisam de score, renda e consentimento para decidir crédito. Não precisam de nome nem CPF. A LGPD tem um princípio para isso, o da **necessidade**: tratar o mínimo de dado pessoal necessário para a finalidade. O contrato público é o lugar mais barato para cumprir: o que não está no DTO não vaza para outro módulo, nem para os logs dele, nem para o cache dele.
 :::

@@ -31,7 +31,7 @@ HPA, cluster autoscaler, PDB e KEDA foram apresentados na Plataforma .NET ([liç
 
 | # | Lição | Tempo |
 |---|---|---|
-| 8.1 | [Perfis, não microssserviços (ainda)](01-perfis-nao-microsservicos.md) | 40 min |
+| 8.1 | [Perfis, não microsserviços (ainda)](01-perfis-nao-microsservicos.md) | 40 min |
 | 8.2 | [CPU-bound × I/O-bound: escolher o sinal certo](02-cpu-bound-io-bound.md) | 45 min |
 | 8.3 | [HPA da Simulação: a conta, o behavior e o que protege o pico](03-hpa-simulacao.md) | 60 min |
 | 8.4 | [KEDA do worker: lag, partições e réplicas](04-keda-worker.md) | 60 min |

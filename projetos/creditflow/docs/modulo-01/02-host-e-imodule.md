@@ -151,6 +151,8 @@ if (perfil.EhApi) { app.MapOpenApi(); app.MapScalarApiReference(); }
 app.MapModulos(catalogo, perfil);     // e. endpoints só no papel api
 ```
 
+Antes de tudo isso, o `Program.cs` trata dois modos especiais: `--healthcheck` (o `HEALTHCHECK` da imagem chiseled, que não tem `curl`, chama o próprio binário) e `migrar` (o Job de migração do Helm roda as `IMigracao` dos módulos e sai sem subir o Kestrel). Os dois aparecem no módulo 7.
+
 ::: porque Por que a Mensageria antes dos módulos
 Hosted services (serviços em segundo plano) são **iniciados na ordem de registro e parados na ordem inversa**. A Mensageria registra o "esvaziador do produtor", que no desligamento espera as mensagens pendentes saírem para o Kafka. Os módulos registram relays de outbox e consumidores, que publicam. Registrando a Mensageria primeiro, ela para **por último**: quando o esvaziador roda, ninguém mais está publicando. Ao contrário, as últimas mensagens do relay se perderiam no desligamento do pod.
 :::

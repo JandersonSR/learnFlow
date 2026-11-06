@@ -109,10 +109,10 @@ A LGPD exige base legal para tratar dado pessoal, e o CreditFlow usa consentimen
 
 ## As portas
 
-| Porta | Hoje | Depois |
+| Porta | Sem configuração (testes, primeiro `dotnet run`) | Com o compose de pé |
 |---|---|---|
-| `ITabelaDeTaxas` | `TabelaDeTaxasEmConfiguracao` (appsettings, `IOptionsMonitor`) | + decorador com HybridCache e Dragonfly (módulo 5) |
-| `ISimulacaoRepositorio` | `SimulacaoRepositorioEmMemoria`, com limite de 10.000 | MongoDB, coleção `simulacoes` (módulo 4) |
+| `ITabelaDeTaxas` | `TabelaDeTaxasEmConfiguracao` (appsettings, `IOptionsMonitor`) | + decorador com HybridCache e Dragonfly quando há `ConnectionStrings:Cache` (módulo 5) |
+| `ISimulacaoRepositorio` | `SimulacaoRepositorioEmMemoria`, com limite de 10.000, quando não há Mongo | MongoDB, coleção `simulacoes`, quando há `ConnectionStrings:Mongo` (módulo 4) |
 | `IPublicadorDeSimulacoes` | Kafka direto (`PublicarSemEsperar`) ou nulo sem Kafka | — |
 
 ::: armadilha Repositório em memória num endpoint público

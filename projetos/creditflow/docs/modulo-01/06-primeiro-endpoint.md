@@ -102,6 +102,8 @@ E a tradução do `Erro` do domínio, num lugar só ([`ResultadoHttp.cs`](https:
 Um formato padrão de corpo de erro HTTP, `application/problem+json`: `type` (URI que identifica o tipo do problema), `title`, `status`, `detail`, `instance` e extensões livres. Padronizar significa que o front escreve **um** tratador de erro, e não um por endpoint.
 :::
 
+Uma exceção de dependência fora (Mongo inacessível, timeout, falha transitória do Postgres) **não** vira 500: o [`DependenciaIndisponivelHandler`](https://github.com/JandersonSR/lending-plataform/blob/main/src/Host/CreditFlow.Host/DependenciaIndisponivelHandler.cs), um `IExceptionHandler` registrado no Host, responde **503** com `Retry-After: 5` e `code: dependencia_indisponivel`. 500 diz "bug nosso"; 503 diz "tente de novo daqui a pouco", e o cliente (e os alertas) tratam os dois de forma diferente.
+
 ::: porque O `code` e o `traceId`
 A mensagem muda (alguém corrige a gramática, traduz para inglês); o `code` não. O front e os testes comparam o `code`. O `traceId` é o mesmo id do rastreamento distribuído (módulo 12): o suporte cola o id e encontra o trace e os logs daquela requisição.
 :::
