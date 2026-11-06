@@ -2,7 +2,7 @@
 
 A [ADR 0002](https://github.com/JandersonSR/lending-plataform/blob/main/docs/adr/0002-perfis-de-execucao.md) decidiu: a **mesma imagem** sobe com `CREDITFLOW__MODULOS` e `CREDITFLOW__PAPEL` diferentes, e cada combinação é um Deployment com escala própria. O que fica para o Helm é transformar isso em YAML sem copiar quatro vezes o mesmo Deployment.
 
-Se `Chart.yaml`, `values.yaml`, `{{ .Values }}` e precedência de `-f`/`--set` ainda não estão firmes, a base está na lição [7.2 da Plataforma](../../plataforma-dotnet/docs/modulo-07/02-anatomia-do-chart.md) e na [7.3](../../plataforma-dotnet/docs/modulo-07/03-comandos-e-porques.md).
+Se `Chart.yaml`, `values.yaml`, `{{ .Values }}` e precedência de `-f`/`--set` ainda não estão firmes, a base está na lição [7.2 da Plataforma](../../../plataforma-dotnet/docs/modulo-07/02-anatomia-do-chart.md) e na [7.3](../../../plataforma-dotnet/docs/modulo-07/03-comandos-e-porques.md).
 
 ::: video What is Helm in Kubernetes? Helm and Helm Charts explained (TechWorld with Nana, em inglês)
 https://www.youtube.com/watch?v=-zuxi1a0LIC

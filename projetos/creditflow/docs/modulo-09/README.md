@@ -23,7 +23,7 @@
 
 - Módulos 7 e 8 (o chart e a escala funcionando no kind)
 - Assinatura Azure (os créditos de estudante ou de Visual Studio servem para dev), Azure CLI, Terraform 1.12+ e `kubelogin`
-- A base de Terraform (plan/apply, providers, estado, camadas) e de Key Vault + Workload Identity: módulos [9](../../plataforma-dotnet/docs/modulo-09/README.md) e [8.3](../../plataforma-dotnet/docs/modulo-08/03-key-vault-e-identidade.md) da Plataforma. Aqui não repetimos `terraform init`; aplicamos num sistema com mais peças e decisões
+- A base de Terraform (plan/apply, providers, estado, camadas) e de Key Vault + Workload Identity: módulos [9](../../../plataforma-dotnet/docs/modulo-09/README.md) e [8.3](../../../plataforma-dotnet/docs/modulo-08/03-key-vault-e-identidade.md) da Plataforma. Aqui não repetimos `terraform init`; aplicamos num sistema com mais peças e decisões
 
 ::: armadilha Custa dinheiro
 Este módulo cria recursos pagos. O ambiente dev completo fica na faixa de algumas centenas de dólares por mês **se ficar ligado** (lição 9.5). Pare o cluster quando não estiver estudando (`az aks stop`) e destrua tudo no fim (`terraform destroy` na ordem inversa).

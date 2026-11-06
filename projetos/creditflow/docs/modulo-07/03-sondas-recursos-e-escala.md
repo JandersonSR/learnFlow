@@ -1,6 +1,6 @@
 # 7.3 Sondas, recursos e escala por perfil
 
-As três sondas, `requests` x `limits` e o encerramento sem perder requisição estão explicados na lição [6.3 da Plataforma](../../plataforma-dotnet/docs/modulo-06/03-sondas-e-encerramento.md). A pergunta desta lição é diferente: **a mesma imagem** precisa de sondas e recursos **diferentes** conforme o perfil. Uma API CPU-bound e um consumidor de Kafka quebram de jeitos opostos.
+As três sondas, `requests` x `limits` e o encerramento sem perder requisição estão explicados na lição [6.3 da Plataforma](../../../plataforma-dotnet/docs/modulo-06/03-sondas-e-encerramento.md). A pergunta desta lição é diferente: **a mesma imagem** precisa de sondas e recursos **diferentes** conforme o perfil. Uma API CPU-bound e um consumidor de Kafka quebram de jeitos opostos.
 
 ## Revisão em uma tabela
 

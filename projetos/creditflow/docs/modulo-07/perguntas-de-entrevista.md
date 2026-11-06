@@ -1,6 +1,6 @@
 # Perguntas de entrevista do módulo 7
 
-Responda em voz alta antes de abrir. Decisão, motivo e custo, em menos de dois minutos. As perguntas de base (Helm x YAML puro, segredos no Helm, ConfigMap que não muda o pod) estão nas [perguntas do módulo 7 da Plataforma](../../plataforma-dotnet/docs/modulo-07/perguntas-de-entrevista.md); estas vão além.
+Responda em voz alta antes de abrir. Decisão, motivo e custo, em menos de dois minutos. As perguntas de base (Helm x YAML puro, segredos no Helm, ConfigMap que não muda o pod) estão nas [perguntas do módulo 7 da Plataforma](../../../plataforma-dotnet/docs/modulo-07/perguntas-de-entrevista.md); estas vão além.
 
 ::: entrevista
 "Vocês têm um monolito. Como escalam só a parte que precisa?"

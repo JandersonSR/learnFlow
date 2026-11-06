@@ -1,6 +1,6 @@
 # 9.5 Estado, camadas, ordem de apply e custo
 
-O que é o estado, por que ele fica remoto e por que dividir em camadas está nas lições [9.2](../../plataforma-dotnet/docs/modulo-09/02-estado.md) e [9.3 da Plataforma](../../plataforma-dotnet/docs/modulo-09/03-camadas.md). Aqui: as quatro camadas do CreditFlow, o detalhe técnico que **obriga** a existência da camada 30, a ordem de aplicar e de destruir, e quanto isso custa.
+O que é o estado, por que ele fica remoto e por que dividir em camadas está nas lições [9.2](../../../plataforma-dotnet/docs/modulo-09/02-estado.md) e [9.3 da Plataforma](../../../plataforma-dotnet/docs/modulo-09/03-camadas.md). Aqui: as quatro camadas do CreditFlow, o detalhe técnico que **obriga** a existência da camada 30, a ordem de aplicar e de destruir, e quanto isso custa.
 
 ::: video Terraform explained in 15 mins (em inglês)
 https://www.youtube.com/watch?v=l5k1ai_GBDE
@@ -79,7 +79,7 @@ Em dev, `purge_soft_delete_on_destroy = true` faz o destroy **purgar** o cofre. 
 
 ## Plan no PR, apply com aprovação
 
-O [`infra.yml`](https://github.com/JandersonSR/lending-plataform/blob/main/.github/workflows/infra.yml) faz `fmt -check` e `validate` em todo PR, `plan` das três camadas por ambiente, e `apply` só na `main`, em jobs com `environment: dev|prod` (o GitHub pede aprovação de um revisor antes de liberar o token OIDC). A identidade do CI tem `Reader` na assinatura e `Contributor` + `Role Based Access Control Administrator` só no grupo de recursos de cada ambiente: um PR malicioso no plan não consegue criar nada, e um apply aprovado não consegue mexer fora do ambiente. A troca de tokens do GitHub com a Azure é a da lição [8.1 da Plataforma](../../plataforma-dotnet/docs/modulo-08/01-ci-cd-sem-senha.md).
+O [`infra.yml`](https://github.com/JandersonSR/lending-plataform/blob/main/.github/workflows/infra.yml) faz `fmt -check` e `validate` em todo PR, `plan` das três camadas por ambiente, e `apply` só na `main`, em jobs com `environment: dev|prod` (o GitHub pede aprovação de um revisor antes de liberar o token OIDC). A identidade do CI tem `Reader` na assinatura e `Contributor` + `Role Based Access Control Administrator` só no grupo de recursos de cada ambiente: um PR malicioso no plan não consegue criar nada, e um apply aprovado não consegue mexer fora do ambiente. A troca de tokens do GitHub com a Azure é a da lição [8.1 da Plataforma](../../../plataforma-dotnet/docs/modulo-08/01-ci-cd-sem-senha.md).
 
 ## Quanto custa
 

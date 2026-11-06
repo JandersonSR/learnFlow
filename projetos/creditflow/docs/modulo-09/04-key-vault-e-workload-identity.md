@@ -1,6 +1,6 @@
 # 9.4 Key Vault e Workload Identity por dentro
 
-A lição [8.3 da Plataforma](../../plataforma-dotnet/docs/modulo-08/03-key-vault-e-identidade.md) explica o problema do "segredo para ler o segredo" e a cadeia de confiança, usando o driver CSI. O CreditFlow usa o mesmo mecanismo de identidade com outra ferramenta (External Secrets) e acrescenta uma segunda metade: as senhas **nascem** no Terraform sem passar pelo estado.
+A lição [8.3 da Plataforma](../../../plataforma-dotnet/docs/modulo-08/03-key-vault-e-identidade.md) explica o problema do "segredo para ler o segredo" e a cadeia de confiança, usando o driver CSI. O CreditFlow usa o mesmo mecanismo de identidade com outra ferramenta (External Secrets) e acrescenta uma segunda metade: as senhas **nascem** no Terraform sem passar pelo estado.
 
 ::: video Protecting Secrets in AKS with the Key Vault CSI Driver and Workload Identity (em inglês)
 https://www.youtube.com/watch?v=Xr6mHiki9yc

@@ -1,6 +1,6 @@
 # 7.1 A imagem: multi-stage, cache de restore e chiseled
 
-O básico de imagem .NET (estágios, por que copiar `.csproj` antes do código, o que é uma imagem chiseled) está na lição [6.1 do curso Plataforma .NET](../../plataforma-dotnet/docs/modulo-06/01-a-imagem.md). Leia lá se algum desses termos for novo. Aqui o problema é outro: o CreditFlow é um **monolito modular** com mais de quinze projetos, uma única imagem que vira quatro processos diferentes, e precisa rodar em `amd64` e `arm64`.
+O básico de imagem .NET (estágios, por que copiar `.csproj` antes do código, o que é uma imagem chiseled) está na lição [6.1 do curso Plataforma .NET](../../../plataforma-dotnet/docs/modulo-06/01-a-imagem.md). Leia lá se algum desses termos for novo. Aqui o problema é outro: o CreditFlow é um **monolito modular** com mais de quinze projetos, uma única imagem que vira quatro processos diferentes, e precisa rodar em `amd64` e `arm64`.
 
 ::: video Docker in 100 Seconds (Fireship, em inglês)
 https://www.youtube.com/watch?v=Gjnup-PuquQ
@@ -118,7 +118,7 @@ docker inspect --format '{{.Config.User}} {{json .State.Health}}' $(docker ps -l
 Mude uma linha de qualquer `.cs` e rode o build de novo com `--progress=plain`. Procure `CACHED` nas linhas do `restore`.
 
 ::: dica
-Para depurar um contêiner sem shell no Kubernetes, use um contêiner efêmero com ferramentas: `kubectl debug -it <pod> --image=busybox --target=creditflow`. Visto na lição [6.4 da Plataforma](../../plataforma-dotnet/docs/modulo-06/04-diagnostico.md).
+Para depurar um contêiner sem shell no Kubernetes, use um contêiner efêmero com ferramentas: `kubectl debug -it <pod> --image=busybox --target=creditflow`. Visto na lição [6.4 da Plataforma](../../../plataforma-dotnet/docs/modulo-06/04-diagnostico.md).
 :::
 
 ## Perguntas para responder sem olhar

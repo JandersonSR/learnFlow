@@ -28,8 +28,8 @@ Cada lição ensina como um professor: o que é cada peça, por que esta escolha
 | 7 | [Contêiner, Kubernetes e Helm com perfis de execução](modulo-07/README.md) | ✅ pronto | CKAD |
 | 8 | [Escalando Simulação e Pagamentos: HPA, KEDA e teste de carga](modulo-08/README.md) | ✅ pronto | CKAD |
 | 9 | [Azure com Terraform: rede, AKS, Postgres, Key Vault e Workload Identity](modulo-09/README.md) | ✅ pronto | AZ-104, Terraform Associate |
-| 10 | Harbor e cadeia de suprimentos: scan, assinatura e bloqueio | 🔜 | — |
-| 11 | GitOps com Argo CD: app-of-apps, ambientes e promoção | 🔜 | — |
-| 12 | Operação: OpenTelemetry, SLOs, game day, post-mortem e ADRs | 🔜 | AZ-400, entrevistas staff |
+| 10 | [Harbor e cadeia de suprimentos: scan, assinatura e bloqueio](modulo-10/README.md) | ✅ pronto | — |
+| 11 | [GitOps com Argo CD: app-of-apps, ambientes e promoção](modulo-11/README.md) | ✅ pronto | — |
+| 12 | [Operação: OpenTelemetry, SLOs, game day, post-mortem e ADRs](modulo-12/README.md) | ✅ pronto | AZ-400, entrevistas staff |
 
 Ordem sugerida: 0 → 12 em sequência. Cada módulo termina com um desafio sem roteiro e perguntas de entrevista.

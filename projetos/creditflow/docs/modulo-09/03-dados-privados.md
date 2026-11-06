@@ -55,7 +55,7 @@ Três bancos no mesmo servidor (`azurerm_postgresql_flexible_server_database`): 
 ::: previsao
 O B1ms tem um limite baixo de conexões. O CreditFlow em dev tem 4 perfis com 1 a 3 réplicas, cada pod com `Maximum Pool Size=40`, mais o Keycloak (pool de até 20 por instância) e o Harbor. O que acontece num pico, e o que você mudaria?
 ???
-A soma dos pools **máximos** passa fácil do limite de conexões do servidor: 6 pods de aplicação × 40 já são 240. No pico, os pods abrem conexões até o servidor recusar com `too many connections`, e os erros aparecem nos perfis que abriram por último, não necessariamente nos que causaram. Saídas: reduzir `Maximum Pool Size` por perfil (o api-simulacao nem usa Postgres), um pooler (o **PgBouncer embutido** do Flexible Server, ativado por parâmetro do servidor) e, em prod, um SKU maior. Visto em detalhe na lição [3.4 da Plataforma](../../plataforma-dotnet/docs/modulo-03/04-concorrencia-e-conexoes.md).
+A soma dos pools **máximos** passa fácil do limite de conexões do servidor: 6 pods de aplicação × 40 já são 240. No pico, os pods abrem conexões até o servidor recusar com `too many connections`, e os erros aparecem nos perfis que abriram por último, não necessariamente nos que causaram. Saídas: reduzir `Maximum Pool Size` por perfil (o api-simulacao nem usa Postgres), um pooler (o **PgBouncer embutido** do Flexible Server, ativado por parâmetro do servidor) e, em prod, um SKU maior. Visto em detalhe na lição [3.4 da Plataforma](../../../plataforma-dotnet/docs/modulo-03/04-concorrencia-e-conexoes.md).
 :::
 
 ## O MongoDB: Azure DocumentDB

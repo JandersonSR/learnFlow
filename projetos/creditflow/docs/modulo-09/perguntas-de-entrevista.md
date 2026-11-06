@@ -1,6 +1,6 @@
 # Perguntas de entrevista do módulo 9
 
-Responda em voz alta antes de abrir. Perguntas de base sobre Terraform (estado, drift, plan/apply, `prevent_destroy`) estão nas [perguntas do módulo 9 da Plataforma](../../plataforma-dotnet/docs/modulo-09/perguntas-de-entrevista.md).
+Responda em voz alta antes de abrir. Perguntas de base sobre Terraform (estado, drift, plan/apply, `prevent_destroy`) estão nas [perguntas do módulo 9 da Plataforma](../../../plataforma-dotnet/docs/modulo-09/perguntas-de-entrevista.md).
 
 ::: entrevista
 "Desenhe a rede de um AKS de produção com banco gerenciado. O que tem IP público?"

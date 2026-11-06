@@ -4,7 +4,7 @@ Quatro perfis com várias réplicas cada. Se cada pod criasse o schema ao subir 
 
 O DDL de cada módulo mora no próprio módulo (`src/Modules/<Modulo>/.../Sql/001_schema_<modulo>.sql`, módulos 1 e 4), escrito para ser **idempotente** (`CREATE ... IF NOT EXISTS`). O mesmo arquivo serve ao `docker compose` (aplicado na subida, só no ambiente local) e ao cluster (aplicado por este Job).
 
-A versão curta disso (hook `pre-upgrade` simples) e o padrão **expandir/contrair** estão na lição [3.2 da Plataforma](../../plataforma-dotnet/docs/modulo-03/02-migracoes.md) e na [7.3](../../plataforma-dotnet/docs/modulo-07/03-comandos-e-porques.md). Aqui está a versão de produção, e os três problemas que aparecem nela.
+A versão curta disso (hook `pre-upgrade` simples) e o padrão **expandir/contrair** estão na lição [3.2 da Plataforma](../../../plataforma-dotnet/docs/modulo-03/02-migracoes.md) e na [7.3](../../../plataforma-dotnet/docs/modulo-07/03-comandos-e-porques.md). Aqui está a versão de produção, e os três problemas que aparecem nela.
 
 ## O desenho
 

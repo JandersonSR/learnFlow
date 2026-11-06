@@ -24,7 +24,7 @@
 - Módulos 1 a 6 (a solução compila e roda no `docker compose`; o Kafka e a saga estão prontos)
 - Docker (com buildx), [kind](https://kind.sigs.k8s.io/), `kubectl` e Helm 3.18+ ou 4.x
 - Uns 8 GB de RAM livres para o laboratório completo
-- Kubernetes e Helm básicos. Se pod, Service, sondas e `helm upgrade` ainda são novidade, faça antes os módulos 6 e 7 do curso [Plataforma .NET](../../plataforma-dotnet/docs/modulo-06/README.md): este módulo **não repete** aquela base, ele aplica num sistema maior e vai além
+- Kubernetes e Helm básicos. Se pod, Service, sondas e `helm upgrade` ainda são novidade, faça antes os módulos 6 e 7 do curso [Plataforma .NET](../../../plataforma-dotnet/docs/modulo-06/README.md): este módulo **não repete** aquela base, ele aplica num sistema maior e vai além
 
 ## Lições
 

@@ -21,7 +21,7 @@
 
 - Módulo 9 aplicado (o Harbor sobe na camada 20-plataforma) e o Gateway com TLS (módulo 11 instala a configuração de plataforma; para este módulo basta o Harbor responder em `https://harbor.<dominio>`)
 - `cosign` 3.x e `crane` ou `docker buildx imagetools` na máquina
-- A base deste assunto está no módulo 10 da Plataforma: [Trivy e o que vem dentro da imagem](../../plataforma-dotnet/docs/modulo-10/01-cadeia-e-trivy.md), [Harbor](../../plataforma-dotnet/docs/modulo-10/02-harbor.md) e [digest, SBOM e assinatura](../../plataforma-dotnet/docs/modulo-10/03-alem-do-scan.md). Aqui não repetimos o que é um CVE nem o que é um digest; aplicamos com robôs, cache e verificação no cluster
+- A base deste assunto está no módulo 10 da Plataforma: [Trivy e o que vem dentro da imagem](../../../plataforma-dotnet/docs/modulo-10/01-cadeia-e-trivy.md), [Harbor](../../../plataforma-dotnet/docs/modulo-10/02-harbor.md) e [digest, SBOM e assinatura](../../../plataforma-dotnet/docs/modulo-10/03-alem-do-scan.md). Aqui não repetimos o que é um CVE nem o que é um digest; aplicamos com robôs, cache e verificação no cluster
 
 ## Lições
 

@@ -87,7 +87,7 @@ Sem correção: o `--ignore-unfixed` não reprova. O CI passa, e a CVE aparece n
 :::
 
 ::: armadilha O scan de hoje não vale amanhã
-A imagem aprovada hoje pode ter uma CVE publicada amanhã. O scan do CI é uma foto. Quem cobre o depois é o Harbor, que **escaneia de novo** as imagens guardadas (agendado) e pode passar a recusar o pull (lição 10.2). A lição [10.1 da Plataforma](../../plataforma-dotnet/docs/modulo-10/01-cadeia-e-trivy.md) mostra isso com duas imagens.
+A imagem aprovada hoje pode ter uma CVE publicada amanhã. O scan do CI é uma foto. Quem cobre o depois é o Harbor, que **escaneia de novo** as imagens guardadas (agendado) e pode passar a recusar o pull (lição 10.2). A lição [10.1 da Plataforma](../../../plataforma-dotnet/docs/modulo-10/01-cadeia-e-trivy.md) mostra isso com duas imagens.
 :::
 
 ::: video Security Scans for Docker Images using Trivy! (em inglês)
