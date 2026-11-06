@@ -23,13 +23,14 @@ nenhum: as propriedades `security.protocol`, `sasl.mechanism`, `sasl.username` v
 `users.yaml` gera `GroupAuthorizationException` no log (e você explica no `NOTAS.md` o que o
 KEDA faria nessa situação).
 
-## Exercício 3: Contrato de entrada do payments-streams
+## Exercício 3: O contrato da saída
 
-Alinhe o `PaymentEventMessage` com o formato **real** que o Payments publica depois do Módulo 3
-(campo ou header de tipo, JSON ou Avro). Escreva um teste que use um evento **gerado pelo código
-do Payments** (serializado pelo mesmo serializer) como entrada do `TopologyTestDriver`.
+A entrada já é Avro com o schema do Payments (lição 5.5). A saída `payments.stats.1m` ainda é
+JSON sem schema. Escreva um `.avsc` para ela, registre com compatibilidade `BACKWARD` e troque o
+`JsonSerde` da saída por Avro.
 
-**Aceite:** o teste falha se alguém renomear `occurredAt` ou o tipo no Payments.
+**Aceite:** um consumidor de teste lê a saída com o schema do registry; no `NOTAS.md`, por que
+`BACKWARD` e não `FULL_TRANSITIVE` aqui, e quem deveria ser dono desse schema.
 
 ## Exercício 4: Tolerância a falha medida
 

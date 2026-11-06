@@ -88,6 +88,12 @@ O payments-streams (lições 5.4 e 5.5) precisa de mais, e cada linha do `users.
 | `Write` + `Describe` em `transactionalId` com prefixo `payments-streams` | `exactly_once_v2` usa transações, com ids derivados do `application.id` |
 | `Describe` em `cluster` | o cliente admin interno consulta metadados do cluster |
 
+### DLTs e o Schema Registry também são clientes
+
+Os Dead Letter Topics do Módulo 3 seguem o padrão `<tópico>.<grupo>.dlt` (`orders.events.payments.dlt`, `payments.events.orders.dlt`, `orders.events.orders-notifications.dlt`). Com `auto.create.topics.enable=false`, cada um é um `KafkaTopic` em `topics.yaml`, e quem **publica** na DLT é o consumidor que falhou: por isso o usuário `payments` tem `Write` em `orders.events.payments.dlt`, e o `orders` em `payments.events.orders.dlt`. Esquecer isso é descobrir, no primeiro evento envenenado, que a DLT também falha.
+
+O **Schema Registry** (os dois serviços publicam Avro desde o Módulo 3) guarda os schemas no tópico compactado `_schemas`. Ele é mais um cliente do Kafka, com o próprio `KafkaUser` (`schema-registry`) e roda no namespace `orderflow` ([`schema-registry.yaml`](../../deploy/k8s/strimzi/schema-registry.yaml)), em `http://schema-registry.orderflow.svc.cluster.local:8081`. Os charts apontam para ele com `Kafka__SchemaRegistryUrl` (Orders) e `PAYMENTS_KAFKA_SCHEMAREGISTRYURL` (Payments). Num ambiente gerenciado, ele viria do fornecedor (Confluent Cloud) ou seria o Azure Schema Registry, com outra API (lição 5.3).
+
 ## Ligando as aplicações ao Kafka autenticado
 
 No Spring, qualquer propriedade do cliente Kafka entra por `spring.kafka.properties.*`, e, por variável de ambiente, `SPRING_KAFKA_PROPERTIES_<NOME>` (pontos viram `_`). O `values-dev.yaml e values-prod.yaml` do Payments:

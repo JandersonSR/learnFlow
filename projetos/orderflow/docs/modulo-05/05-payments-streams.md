@@ -13,10 +13,11 @@ Escalam de formas diferentes: o Payments escala pelo lag de `orders.events` (at�
 | Arquivo | Papel |
 |---|---|
 | `topology/PaymentStatsTopology.java` | a topologia, em Java puro, testável sem Spring |
+| `topology/AvroPaymentEventSerde.java` | lê o Avro do Payments (Schema Registry) e converte para o record abaixo |
 | `topology/PaymentEventMessage.java` | a visão **do consumidor** sobre o contrato (só os campos usados) |
 | `topology/Outcome.java` | tipo do evento → APPROVED/DECLINED/REFUNDED; desconhecido → ignorado |
 | `topology/WindowStats.java` | o acumulador (contagem + soma), guardado no RocksDB |
-| `topology/JsonSerde.java` | Serde JSON de 20 linhas com Jackson 3 |
+| `topology/JsonSerde.java` | Serde JSON de 20 linhas com Jackson 3 (estado, repartition e saída) |
 | `topology/OccurredAtTimestampExtractor.java` | tempo de evento (lição 5.4) |
 | `config/KafkaStreamsConfiguration.java` | liga a topologia ao Spring (`@EnableKafkaStreams`) e trata erros fatais |
 | `config/KafkaStreamsHealthIndicator.java` | estado do Kafka Streams nas probes |
@@ -47,17 +48,25 @@ Sem nome, o Kafka Streams gera nomes como `KSTREAM-AGGREGATE-STATE-STORE-0000000
 O `suppress` guarda os agregados até a janela fechar. `unbounded` = sem limite de memória: correto aqui (3 chaves × poucas janelas abertas). Com chaves de alta cardinalidade, um buffer ilimitado vira `OutOfMemoryError`; a alternativa `maxBytes(...).shutDownWhenFull()` falha de forma explícita em vez de emitir resultados parciais. Nunca use `emitEarlyWhenFull()` com `untilWindowCloses`: ele quebra a promessa de "um resultado final por janela".
 :::
 
-## O contrato de entrada
+## O contrato de entrada: Avro com Schema Registry
+
+`payments.events` é publicado pelo Payments em **Avro** (Módulo 3), no formato da Confluent: byte mágico + id do schema + dados. O schema (`java/payments/src/main/resources/avro/payments-events.avsc`) é do **Payments**; este serviço só o lê.
 
 ```java
-@JsonIgnoreProperties(ignoreUnknown = true)
-public record PaymentEventMessage(String type, UUID paymentId, UUID orderId, BigDecimal amount, Instant occurredAt) {}
+Object value = avroDeserializer.deserialize(topic, bytes);        // busca o schema pelo id no registry
+return value instanceof GenericRecord record ? fromRecord(record) : null;
 ```
 
-Esta classe **não** é compartilhada com o Payments. É o *tolerant reader*: o consumidor declara só o que usa, ignora campos novos, e trata tipos desconhecidos (`Outcome.fromEventType` devolve `null` e o `filter` descarta). Um `PaymentChargeback` novo no Payments não derruba o Streams.
+O `AvroPaymentEventSerde` usa o `KafkaAvroDeserializer` (mesma biblioteca e versão do Payments, `io.confluent:kafka-avro-serializer:8.3.2`, do repositório Maven da Confluent) e converte o `GenericRecord` para o `PaymentEventMessage`, só com os campos usados: `eventType`, `paymentId`, `orderId`, `amount` (string decimal → `BigDecimal`) e `occurredAt` (string ISO 8601 → `Instant`).
 
-::: armadilha Confira o formato real do Módulo 2/3
-Este serviço assume que o JSON de `payments.events` traz o tipo no campo `"type"` (`"PaymentApproved"`...) e o `occurredAt` em ISO 8601. Se o produtor do Módulo 2 colocar o tipo num **header** (`eventType`) ou usar Avro com Schema Registry (Módulo 3), a leitura muda: header pede a Processor API (`process(...)`) ou um `ValueTransformer` que lê o contexto do registro; Avro pede o `SpecificAvroSerde`. O Exercício 3 é alinhar com o contrato real e escrever um teste de contrato.
+::: porque Por que `GenericRecord` e não classes geradas
+Classes geradas (`SpecificAvroSerde`) exigiriam copiar o `.avsc` do Payments para este build ou publicar um artefato compartilhado: acoplamento de build entre serviços. Com `GenericRecord`, o consumidor lê **qualquer versão compatível** do schema (a compatibilidade é `FULL_TRANSITIVE`, lição 3.5): campo novo é ignorado, campo opcional que falta vira `null`. É o *tolerant reader*: tipos desconhecidos (`Outcome.fromEventType` devolve `null`) são filtrados, e um `PaymentChargeback` novo no Payments não derruba o Streams.
+:::
+
+Dois formatos ficam **dentro** deste serviço, em JSON (`JsonSerde`): o tópico interno de repartition e o estado (`WindowStats`). Ninguém mais os lê, então não precisam de schema registrado. A saída `payments.stats.1m` também é JSON: é um contrato **deste** serviço, e o Exercício 3 discute se ela deveria ir para o registry.
+
+::: armadilha O teste usa o schema de verdade
+O `PaymentStatsTopologyTest` serializa as mensagens de entrada com o `.avsc` **do projeto do Payments** (`../payments/src/main/resources/avro/payments-events.avsc`), num registry em memória (`schema.registry.url=mock://...`). Se o Payments renomear `eventType` ou mudar `amount` de tipo, o teste deste serviço quebra no CI: é um **teste de contrato do lado do consumidor**. O custo: o teste depende do layout do monorepo; num repositório separado, o schema viria do registry de homologação.
 :::
 
 ## Mensagem que não desserializa
